@@ -1,0 +1,61 @@
+name: Combat Lab CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: combat-lab-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck, Static Test, Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Show tool versions
+        run: |
+          node --version
+          npm --version
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Static tests
+        run: npm run static:test
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload build and verification artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: combat-lab-ci-artifacts-${{ github.run_number }}
+          path: |
+            dist/
+            .tmp/static-test-results.json
+          if-no-files-found: warn
+          retention-days: 14
