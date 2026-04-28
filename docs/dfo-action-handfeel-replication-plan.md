@@ -16,12 +16,15 @@
 - Raging Fury 从 8 个血柱改为当前 DFO 参考的 10 个血柱，血柱使用独立 hit group，便于回放和多段命中诊断。
 - 血柱浮空降低，避免多段期间把目标过早推出柱范围。
 - Frenzy 下支持职业技能冷却 20% 减免，当前接入 `RagingFury` 与 `Bloodlust`。
+- Frenzy 开启时支付一次 HP 成本；持续 HP 消耗继续在 HitStop 中暂停。
+- Frenzy 对支持的 Berserker 动作提供技能攻击力倍率，并在 `DamageApplied.multipliers` 中记录 `frenzy_skill_attack`。
+- Frenzy 受击时缩短普通硬直恢复，用 buff modifier 驱动，保持回放可追踪。
 - 跑动中 X 路由到 `DashAttack`，跳跃中 X 路由到 `JumpAttack`。
 - `Bloodlust` 已加入动作表，普通目标走抓取命中链，抓取免疫目标记录 `GrabFailed` 并保留抽血喷发伤害。
 
 待补：
 - Bloodlust 抓取成功后的定身/拖拽/喷发分段动画。
-- Frenzy 技能攻击力、命中/硬直恢复。
+- Frenzy 命中率、精确数值 profile、技能等级/PvE/PvP 分表。
 - 技能数据分 PvE/PvP、版本 profile。
 
 ## 被攻击链路
@@ -57,7 +60,7 @@
 下一批建议：
 1. Bloodlust：抓取判定、抓取成功控制、grab-immune 喷发替代。
 2. Bloodlust 二段化：命中抓取目标后进入短 hold，再喷发；grab-immune 目标直接喷发。
-3. Frenzy 完整化：开启 HP 成本、持续 HP 成本、技能攻击力、命中/硬直恢复。
+3. Frenzy 完整化：补命中率、等级化数值、PvE/PvP profile。
 4. 空中/倒地保护：补扫地、浮空递减、倒地保护窗口，避免无限连。
 
 ## 关键来源

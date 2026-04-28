@@ -19,7 +19,8 @@ export class ReactionResolver {
     const zDelta = attacker ? target.position.z - attacker.position.z : 0;
     const zScale = zDelta === 0 ? 0 : Math.sign(zDelta);
 
-    applyReactionHandfeel(target, reaction, profile, decision, tick);
+    const hitRecoveryMultiplier = reaction === "armor_feedback_only" ? 1 : target.buffs.find(b=>b.type==="frenzy")?.modifiers.find(modifier => modifier.key === "hit_recovery_received_stun_multiplier")?.value ?? 1;
+    applyReactionHandfeel(target, reaction, profile, decision, tick, hitRecoveryMultiplier);
     target.handfeel.visualRecoilX = reaction === "armor_feedback_only" ? 0 : Math.min(10, decision?.hitbox.impactSnapX ?? 4) * facingScale;
     target.handfeel.visualRecoilZ = reaction === "armor_feedback_only" ? 0 : Math.min(3, Math.abs(profile.knockbackZ)) * zScale;
     interruptControlForReaction(target, reaction);

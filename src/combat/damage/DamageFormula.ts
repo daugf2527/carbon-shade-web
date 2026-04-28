@@ -12,7 +12,7 @@ export interface DamageFormulaResult {
 }
 
 export class DamageFormulaResolver {
-  resolve(req: DamageRequest, flags: DamageFormulaFlags, damageAllowed = true): DamageFormulaResult {
+  resolve(req: DamageRequest, flags: DamageFormulaFlags, damageAllowed = true, extraMultipliers: Array<{ name: string; value: number }> = []): DamageFormulaResult {
     const multipliers = [{ name: "base", value: 1 }];
     let multiplier = 1;
 
@@ -29,6 +29,11 @@ export class DamageFormulaResolver {
     if (flags.isCritical && req.canTriggerCritical) {
       multiplier *= 1.5;
       multipliers.push({ name: "critical", value: 1.5 });
+    }
+
+    for (const modifier of extraMultipliers) {
+      multiplier *= modifier.value;
+      multipliers.push(modifier);
     }
 
     return {

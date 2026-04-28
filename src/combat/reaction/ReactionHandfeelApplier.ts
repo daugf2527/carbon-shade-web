@@ -1,9 +1,9 @@
 import type { Actor, HitDecision, ReactionKind } from "../types.js";
 import type { ResolvedReactionProfile } from "./ReactionProfiles.js";
 
-export function applyReactionHandfeel(target: Actor, reaction: ReactionKind, profile: ResolvedReactionProfile, decision?: HitDecision, tick = 0): void {
+export function applyReactionHandfeel(target: Actor, reaction: ReactionKind, profile: ResolvedReactionProfile, decision?: HitDecision, tick = 0, hitRecoveryMultiplier = 1): void {
   target.reactionState = reaction;
-  target.handfeel.reactionRemaining = Math.max(0, profile.hitStunFrames);
+  target.handfeel.reactionRemaining = Math.max(0, Math.floor(profile.hitStunFrames * hitRecoveryMultiplier));
   target.handfeel.downRemaining = Math.max(0, profile.downFrames);
   target.handfeel.getUpRemaining = Math.max(0, profile.getUpFrames);
   target.handfeel.lastReactionAppliedAt = tick;

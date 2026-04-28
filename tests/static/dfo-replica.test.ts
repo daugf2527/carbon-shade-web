@@ -26,6 +26,37 @@ frenzyCd.buffs.apply(frenzyCd.player, "frenzy", frenzyCd.tickCount, frenzyCd.bus
 assert.equal(frenzyCd.requestAction(frenzyCd.player, "RagingFury"), true);
 assert.equal(frenzyCd.player.cooldowns.remaining.get("RagingFury"), 72, "Frenzy should reduce supported Berserker skill cooldowns by 20%");
 
+const frenzyActivation = new CombatKernel();
+const activationHp = frenzyActivation.player.resources.hp;
+frenzyActivation.requestAction(frenzyActivation.player, "FrenzyToggle");
+assert.ok(frenzyActivation.player.resources.hp < activationHp, "Frenzy activation should pay an immediate HP cost");
+assert.ok(frenzyActivation.player.buffs.find(b => b.type === "frenzy")?.modifiers.some(m => m.key === "berserker_skill_attack"), "Frenzy should expose a skill attack modifier for supported Berserker skills");
+
+const frenzyDamage = new CombatKernel();
+const frenzyDamageTarget = frenzyDamage.actors.find(a => a.id === "grunt")!;
+frenzyDamageTarget.position.x = frenzyDamage.player.position.x + 70;
+frenzyDamage.buffs.apply(frenzyDamage.player, "frenzy", frenzyDamage.tickCount, frenzyDamage.bus);
+frenzyDamage.requestAction(frenzyDamage.player, "Bloodlust");
+frenzyDamage.runTicks(12);
+const frenzyDamageEvent = frenzyDamage.bus.archive.find(e => e.type === "DamageApplied" && e.targetActorId === frenzyDamageTarget.id)!.payload as any;
+assert.ok(frenzyDamageEvent.finalDamage > 26, "Frenzy should increase supported Berserker skill damage");
+assert.ok(frenzyDamageEvent.multipliers.some((m: { name: string }) => m.name === "frenzy_skill_attack"), "Frenzy skill damage should be replay-visible as a damage multiplier");
+
+const normalRecovery = new CombatKernel();
+const normalEnemy = normalRecovery.actors.find(a => a.id === "grunt")!;
+normalEnemy.position.x = normalRecovery.player.position.x + 60;
+normalRecovery.requestAction(normalEnemy, "EnemyBasic", "ai", "left");
+normalRecovery.runTicks(12);
+const normalReactionFrames = normalRecovery.player.handfeel.reactionRemaining;
+
+const frenzyRecovery = new CombatKernel();
+const frenzyEnemy = frenzyRecovery.actors.find(a => a.id === "grunt")!;
+frenzyEnemy.position.x = frenzyRecovery.player.position.x + 60;
+frenzyRecovery.buffs.apply(frenzyRecovery.player, "frenzy", frenzyRecovery.tickCount, frenzyRecovery.bus);
+frenzyRecovery.requestAction(frenzyEnemy, "EnemyBasic", "ai", "left");
+frenzyRecovery.runTicks(12);
+assert.ok(frenzyRecovery.player.handfeel.reactionRemaining < normalReactionFrames, "Frenzy hit recovery should shorten incoming stagger");
+
 const dash = new CombatKernel();
 dash.locomotion.armRun(dash.player, "right");
 dash.press("KeyX");

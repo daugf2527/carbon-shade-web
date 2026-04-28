@@ -414,7 +414,7 @@ export class CombatKernel {
     const targetWasBleeding = target.statusEffects.some(s => s.type === "bleed");
     const req=this.damageResolver.requestFromHit(decision,corr,attacker.currentAction?.actionName, attacker.ai?.damage);
     this.bus.emit("DamageRequested", CombatEventPriority.Damage, this.tickCount, req, {sourceActorId:attacker.id,targetActorId:target.id, correlationId:corr});
-    const damage=this.damageResolver.apply(target, req, {isCounter:decision.isCounter,isBackAttack:decision.isBackAttack,isCritical:decision.isCritical}, decision.armorDecision?.damageAllowed ?? true);
+    const damage=this.damageResolver.apply(target, req, {isCounter:decision.isCounter,isBackAttack:decision.isBackAttack,isCritical:decision.isCritical}, decision.armorDecision?.damageAllowed ?? true, this.damageMultipliersFor(attacker, req.actionName));
     this.lastHit.updateFromDamage(this.tickCount,damage);
     this.bus.emit("DamageApplied", CombatEventPriority.Damage, this.tickCount, damage, {sourceActorId:attacker.id,targetActorId:target.id, correlationId:corr});
 
@@ -468,6 +468,16 @@ export class CombatKernel {
     if (attacker.resources.hp > hpBefore) {
       this.bus.emit("BuffTicked", CombatEventPriority.Buff, this.tickCount, {actorId:attacker.id, type:"frenzy", reason:"bleeding_kill_restore", restored:attacker.resources.hp-hpBefore, hp:attacker.resources.hp}, {targetActorId:attacker.id});
     }
+  }
+
+  private damageMultipliersFor(attacker: Actor, actionName?: ActionName): Array<{name:string; value:number}> {
+    if (!actionName || !this.isFrenzySkillAttackAction(actionName)) return [];
+    const value = attacker.buffs.find(b=>b.type==="frenzy")?.modifiers.find(modifier => modifier.key === "berserker_skill_attack")?.value;
+    return value && value !== 1 ? [{name:"frenzy_skill_attack", value}] : [];
+  }
+
+  private isFrenzySkillAttackAction(actionName: ActionName): boolean {
+    return actionName === "FrenzyBasic1" || actionName === "FrenzyBasic2" || actionName === "FrenzyBasic3" || actionName === "DashAttack" || actionName === "JumpAttack" || actionName === "RagingFury" || actionName === "Bloodlust";
   }
 
   private updateScenarioFlags(decision:HitDecision, finalReaction:string, damage:{sourceKind:string; reactionPolicy:string; finalDamage:number}): void {
