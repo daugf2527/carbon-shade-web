@@ -130,7 +130,7 @@ export class CombatKernel {
     for (const a of this.actors) {
       if (a.handfeel.hitFlashRemaining && a.handfeel.hitFlashRemaining > 0) a.handfeel.hitFlashRemaining -= 1;
       if (a.handfeel.visualRecoilRemaining && a.handfeel.visualRecoilRemaining > 0) a.handfeel.visualRecoilRemaining -= 1;
-      if (this.status.tick(a, this.tickCount, this.bus, this.hitStop.isFrozen(a.id))) this.scenario.bleedObserved = true;
+      if (this.status.tick(a, this.tickCount, this.bus, this.hitStop.isFrozen(a.id), this.actors)) this.scenario.bleedObserved = true;
       this.buffs.tick(a, this.tickCount, this.bus, this.hitStop.isFrozen(a.id));
       this.cooldowns.tick(a, this.tickCount, this.bus, this.hitStop.isFrozen(a.id));
       if(a.resources.hp<=0) this.death.kill(a,this.tickCount,this.bus);
@@ -414,7 +414,7 @@ export class CombatKernel {
     const targetWasBleeding = target.statusEffects.some(s => s.type === "bleed");
     const req=this.damageResolver.requestFromHit(decision,corr,attacker.currentAction?.actionName, attacker.ai?.damage);
     this.bus.emit("DamageRequested", CombatEventPriority.Damage, this.tickCount, req, {sourceActorId:attacker.id,targetActorId:target.id, correlationId:corr});
-    const damage=this.damageResolver.apply(target, req, {isCounter:decision.isCounter,isBackAttack:decision.isBackAttack,isCritical:decision.isCritical}, decision.armorDecision?.damageAllowed ?? true, this.damageMultipliersFor(attacker, req.actionName));
+    const damage=this.damageResolver.apply(target, req, {isCounter:decision.isCounter,isBackAttack:decision.isBackAttack,isCritical:decision.isCritical}, decision.armorDecision?.damageAllowed ?? true, this.damageMultipliersFor(attacker, target, req.actionName));
     this.lastHit.updateFromDamage(this.tickCount,damage);
     this.bus.emit("DamageApplied", CombatEventPriority.Damage, this.tickCount, damage, {sourceActorId:attacker.id,targetActorId:target.id, correlationId:corr});
 
@@ -470,10 +470,15 @@ export class CombatKernel {
     }
   }
 
-  private damageMultipliersFor(attacker: Actor, actionName?: ActionName): Array<{name:string; value:number}> {
-    if (!actionName || !this.isFrenzySkillAttackAction(actionName)) return [];
-    const value = attacker.buffs.find(b=>b.type==="frenzy")?.modifiers.find(modifier => modifier.key === "berserker_skill_attack")?.value;
-    return value && value !== 1 ? [{name:"frenzy_skill_attack", value}] : [];
+  private damageMultipliersFor(attacker: Actor, target: Actor, actionName?: ActionName): Array<{name:string; value:number}> {
+    const multipliers: Array<{name:string; value:number}> = [];
+    if (actionName && this.isFrenzySkillAttackAction(actionName)) {
+      const value = attacker.buffs.find(b=>b.type==="frenzy")?.modifiers.find(modifier => modifier.key === "berserker_skill_attack")?.value;
+      if (value && value !== 1) multipliers.push({name:"frenzy_skill_attack", value});
+    }
+    const ruptureStacks = target.statusEffects.filter(status => status.type === "rupture").reduce((sum, status) => sum + status.stacks, 0);
+    if (ruptureStacks > 0) multipliers.push({name:"rupture_incoming_damage", value:1 + ruptureStacks * 0.1});
+    return multipliers;
   }
 
   private isFrenzySkillAttackAction(actionName: ActionName): boolean {

@@ -1,0 +1,41 @@
+# DFO Combat Implementation Backlog
+
+This backlog turns the current DFO/DNF research docs into small implementation batches for the local combat kernel. It does not authorize downloading or distributing official PVF/NPK assets.
+
+## References
+
+- Architecture: `docs/dnf-combat-system-reconstruction-engineering-report.md`
+- Technical route: `docs/dnf-combat-replica-implementation-technical-report.md`
+- Current mechanics gap: `docs/dnf-dfo-mechanics-gap-analysis.md`
+- Action/handfeel plan: `docs/dfo-action-handfeel-replication-plan.md`
+- Online source index: `docs/02-neople-dnf-open-api-auxiliary-material.md`
+
+## P0: Kernel Contracts
+
+- [x] Extend `FrameDataAction` with `timeline` and `emitters` aliases while keeping existing `active` windows valid.
+- [x] Treat current `HitBoxFrameWindow[]` as the first `HitEmitter[]` migration source.
+- [x] Add hitbox shape metadata for `rect`, `circle`, `sweep`, and `grab_attach`; ship only `rect` and `circle` collision in this batch.
+- [x] Keep old rectangle hit resolution and all `dfo-replica` tests unchanged.
+- [x] Add replay export metadata: `buildHash`, `combatSchemaHash`, `logicFps`, and deterministic `stateHash`.
+
+## P1: Status And Damage Fidelity
+
+- [x] Replace one-off Bleed application with profile-driven `applyStatus`.
+- [x] Add profiles for `bleed`, `poison`, `burn`, `shock`, and `rupture`.
+- [x] Keep DOT ticks on `status_tick_feedback_only`; Poison/Burn/Shock/Bleed must not trigger normal hit reaction.
+- [x] Implement Burn tick splash in a 150px radius as a table-driven profile behavior.
+- [x] Implement Rupture as a stack-based incoming direct damage multiplier.
+
+## P2: Data And Calibration
+
+- [ ] Extract more skill timing from reference material into data files instead of kernel branches.
+- [ ] Add `sweep` and `grab_attach` emitters for Bloodlust held-target and projectile-like skills.
+- [ ] Move demo normalized sprites toward trimmed atlas or multiatlas metadata with explicit anchors.
+- [ ] Calibrate action frame windows against captured gameplay references, not only community summaries.
+- [ ] Keep replay hashes stable enough for regression tests before attempting network sync semantics.
+
+## Done Criteria
+
+- `npm run typecheck`
+- `npm run static:test`
+- `npm run build`

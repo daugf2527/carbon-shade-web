@@ -5,7 +5,9 @@ import type { CombatEvent } from "../events/CombatEventBus.js";
 
 export interface ReplayInputSnapshot { tick:number; held:string[]; pressed:string[]; released:string[]; }
 export interface ReplayEventSnapshot { id:string; type:string; status:string; tick:number; sourceActorId?:string; targetActorId?:string; correlationId:string; tags:string[]; payload:unknown; }
-export interface ReplayFrame { tick:number; actors: object[]; inputs: ReplayInputSnapshot[]; events: ReplayEventSnapshot[]; eventCount:number; note?: string; }
+export interface ReplayFrame { tick:number; actors: object[]; inputs: ReplayInputSnapshot[]; events: ReplayEventSnapshot[]; eventCount:number; stateHash:string; note?: string; }
+export interface ReplayMetadata { buildHash:string; combatSchemaHash:string; logicFps:number; finalStateHash?:string; }
+export interface ReplayRecorderOptions { buildHash?:string; combatSchemaHash?:string; logicFps?:number; }
 
 function cloneJson<T>(value:T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -30,11 +32,39 @@ function cloneEvents(events: readonly CombatEvent[]): ReplayEventSnapshot[] {
   }));
 }
 
+function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== "object") return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(item => stableStringify(item)).join(",")}]`;
+  const record = value as Record<string, unknown>;
+  return `{${Object.keys(record).sort().map(key => `${JSON.stringify(key)}:${stableStringify(record[key])}`).join(",")}}`;
+}
+
+function hashString(value: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, "0");
+}
+
 export class ReplayRecorder {
   readonly frames: ReplayFrame[]=[];
-  record(tick:number, actors:Actor[], events:readonly CombatEvent[] = [], input?: RawInputFrame, note?:string): void {
-    this.frames.push({ tick, actors: actors.map(a=>cloneJson(cloneActorSnapshot(a))), inputs:cloneInput(input), events:cloneEvents(events), eventCount:events.length, note });
+  readonly metadata: ReplayMetadata;
+  constructor(options: ReplayRecorderOptions = {}) {
+    this.metadata = {
+      buildHash: options.buildHash ?? "local-dev",
+      combatSchemaHash: options.combatSchemaHash ?? "combat-schema-v1",
+      logicFps: options.logicFps ?? 60,
+    };
   }
-  export(): object { return { version:"0.2-r3", frameCount:this.frames.length, frames:this.frames }; }
+  record(tick:number, actors:Actor[], events:readonly CombatEvent[] = [], input?: RawInputFrame, note?:string): void {
+    const actorSnapshots = actors.map(a=>cloneJson(cloneActorSnapshot(a)));
+    const stateHash = hashString(stableStringify({ tick, actors:actorSnapshots }));
+    this.frames.push({ tick, actors: actorSnapshots, inputs:cloneInput(input), events:cloneEvents(events), eventCount:events.length, stateHash, note });
+  }
+  export(): object {
+    return { version:"0.2-r3", metadata:{ ...this.metadata, finalStateHash:this.frames.at(-1)?.stateHash }, frameCount:this.frames.length, frames:this.frames };
+  }
   clear(): void { this.frames.length=0; }
 }

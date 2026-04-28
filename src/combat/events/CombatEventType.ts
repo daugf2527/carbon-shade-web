@@ -7,7 +7,7 @@ export type CombatEventType =
   | "ReactionRequested" | "ReactionApplied" | "HitStopStarted" | "HitStopEnded" | "RecoilStarted" | "RecoilEnded"
   | "ResourceCostRequested" | "ResourceCostPaid" | "ResourceCostRejected" | "CooldownCheckRequested" | "CooldownReady" | "CooldownRejected" | "CooldownStarted" | "CooldownTicked" | "CooldownEnded"
   | "BuffApplyRequested" | "BuffApplied" | "BuffRefreshed" | "BuffStacked" | "BuffReplaced" | "BuffTicked" | "BuffExpired" | "BuffDispelled" | "BuffDeathCleanup"
-  | "StatusApplyRequested" | "StatusApplied" | "StatusTickRequested" | "StatusTicked" | "StatusExpired" | "StatusResisted" | "StatusDispelled" | "StatusDeathCleanup"
+  | "StatusApplyRequested" | "StatusApplied" | "StatusTickRequested" | "StatusTicked" | "StatusSplashTicked" | "StatusExpired" | "StatusResisted" | "StatusDispelled" | "StatusDeathCleanup"
   | "ActorDied" | "DeathCleanupCompleted" | "ActorRespawned"
   | "SoundRequested" | "CameraShakeRequested" | "DamageNumberRequested" | "VfxRequested"
   | "DebugActionRequested" | "DebugActionApplied"

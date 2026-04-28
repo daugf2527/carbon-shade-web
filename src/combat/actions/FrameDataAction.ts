@@ -1,4 +1,4 @@
-import type { FrameDataAction, HitBoxFrameWindow, ActionName, HitReactionProfile, RootMotionStep } from "../types.js";
+import type { FrameDataAction, HitBoxFrameWindow, ActionName, HitReactionProfile, RootMotionStep, FrameWindow } from "../types.js";
 
 const sourcePolicy = { sourceType:"baseline_tuning", confidence:"medium", requiresManualVerification:true } as const;
 const combatCancelTargets: ActionName[] = ["NormalBasic1","NormalBasic2","NormalBasic3","DashAttack","Jump","JumpAttack","FrenzyBasic1","FrenzyBasic2","FrenzyBasic3","UpwardSlash","MountainousWheel","RagingFury","Bloodlust","Backstep","Walk","Run","Idle"];
@@ -11,10 +11,14 @@ function hit(id:string, start:number, end:number, group:string, baseDamage:numbe
   return { id, start, end, hitGroupId:group, offsetX:64, offsetZ:0, offsetY:30, w:110, d:40, h:60, hitType:"slash", damageType:"physical", baseDamage, attackLevel:1, controlPower:1, canHitDowned:false, canLaunch:false, canKnockdown:false, canGrab:false, maxTargets:6, impactSnapX:4, visualRecoilFrames:5, ...opts };
 }
 function movementAction(actionName:"Walk" | "Run", speedXPerTick:number): FrameDataAction {
+  const startup: FrameWindow[] = [];
+  const active = [] as HitBoxFrameWindow[];
+  const recovery: FrameWindow[] = [];
   return {
     actionName,
     totalFrames:1,
-    startup:[], active:[], recovery:[],
+    startup, active, emitters:active, recovery,
+    timeline:{ startup, emitters:active, recovery },
     cancelPolicy:{ hitCancelFrom:0, whiffCancelFrom:0, into:combatCancelTargets },
     hitStopProfile:{frames:0, bossCapFrames:0, buildingCapFrames:0},
     recoilProfile:{frames:0, canCancelRecoil:false},
@@ -24,12 +28,16 @@ function movementAction(actionName:"Walk" | "Run", speedXPerTick:number): FrameD
   };
 }
 function action(actionName: ActionName, totalFrames:number, active:HitBoxFrameWindow[], frames=3, rootMotionFrames:RootMotionStep[]=[]): FrameDataAction {
+  const startup = [{start:1,end:Math.max(1,(active[0]?.start ?? 1)-1)}];
+  const recovery = [{start:(active.at(-1)?.end ?? 1)+1,end:totalFrames}];
   return {
     actionName,
     totalFrames,
-    startup:[{start:1,end:Math.max(1,(active[0]?.start ?? 1)-1)}],
+    startup,
     active,
-    recovery:[{start:(active.at(-1)?.end ?? 1)+1,end:totalFrames}],
+    emitters:active,
+    timeline:{ startup, emitters:active, recovery },
+    recovery,
     cancelPolicy:{hitCancelFrom: active[0]?.end, whiffCancelFrom: totalFrames-4, into:combatCancelTargets},
     hitStopProfile:{frames, bossCapFrames:2, buildingCapFrames:1},
     recoilProfile:{frames:Math.max(0,frames-1), canCancelRecoil:false},

@@ -1,5 +1,5 @@
 import type { Actor, HitBoxFrameWindow, HitQuery } from "../types.js";
-import { actorHurtRect, rectsOverlap2D5, signedFacingScale } from "../util/geometry.js";
+import { actorHurtRect, circleRectOverlap2D5, rectsOverlap2D5, signedFacingScale } from "../util/geometry.js";
 import { nextId } from "../util/ids.js";
 
 export class HitResolver2D5 {
@@ -14,6 +14,8 @@ export class HitResolver2D5 {
       actionName:attacker.currentAction?.actionName ?? "Idle",
       hitboxId:hitbox.id,
       hitGroupId:hitbox.hitGroupId,
+      shape:hitbox.shape ?? "rect",
+      radius:hitbox.radius,
       box:{ x:attacker.position.x + hitbox.offsetX*scale, z:attacker.position.z+hitbox.offsetZ, y:attacker.position.y+hitbox.offsetY, w:hitbox.w, d:hitbox.d, h:hitbox.h },
       facing,
       hitType:hitbox.hitType,
@@ -34,6 +36,8 @@ export class HitResolver2D5 {
   geometry(query: HitQuery, target: Actor): {overlap:boolean; zMismatch:boolean; yMismatch:boolean} {
     const hurt = target.hurtBoxes[0];
     if (!hurt) return {overlap:false,zMismatch:false,yMismatch:true};
-    return rectsOverlap2D5(query.box, actorHurtRect(target.position, hurt));
+    const hurtRect = actorHurtRect(target.position, hurt);
+    if (query.shape === "circle") return circleRectOverlap2D5(query.box, query.radius ?? Math.max(query.box.w, query.box.d) / 2, hurtRect);
+    return rectsOverlap2D5(query.box, hurtRect);
   }
 }

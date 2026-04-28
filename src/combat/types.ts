@@ -18,8 +18,9 @@ export type DamageSourceKind = "direct_hit" | "enemy_normal" | "status_dot" | "e
 export type DamageReactionPolicy = "normal_hit_reaction" | "no_reaction" | "status_tick_feedback_only";
 export type ActionPhase = "request" | "enter" | "startup" | "active" | "hitstop_freeze" | "cancel_window" | "recovery" | "exit" | "interrupted" | "ended";
 export type HitType = "slash" | "shockwave" | "blood_pillar" | "grab" | "debug";
+export type HitboxShape = "rect" | "circle" | "sweep" | "grab_attach";
 export type DamageType = "physical" | "status" | "debug";
-export type StatusEffectType = "bleed" | "poison" | "shock" | "burn" | "stun" | "freeze" | "stone" | "bind" | "sleep" | "slow" | "defense_down" | "attack_down" | "curse";
+export type StatusEffectType = "bleed" | "poison" | "shock" | "burn" | "rupture" | "stun" | "freeze" | "stone" | "bind" | "sleep" | "slow" | "defense_down" | "attack_down" | "curse";
 export type BuffType = "frenzy" | "derange" | "bloody_cross" | "vim_and_vigor" | "diehard";
 
 export interface Vec3 { x: number; z: number; y: number; }
@@ -119,9 +120,11 @@ export interface ActionInstance {
 export interface HitBoxFrameWindow extends FrameWindow {
   id: string;
   hitGroupId: string;
+  shape?: HitboxShape;
   offsetX: number;
   offsetZ: number;
   offsetY: number;
+  radius?: number;
   w: number;
   d: number;
   h: number;
@@ -139,6 +142,8 @@ export interface HitBoxFrameWindow extends FrameWindow {
   impactSnapX?: number;
   visualRecoilFrames?: number;
 }
+export type HitEmitter = HitBoxFrameWindow;
+export interface ActionTimeline { startup: FrameWindow[]; emitters: HitEmitter[]; recovery: FrameWindow[]; }
 
 export interface CostProfile { hpCost?: number; hpPercentCost?: number; mpCost?: number; cubeCost?: number; costTiming: "on_request" | "on_startup" | "on_active"; cannotReduceHpBelow?: number; }
 export interface CooldownProfile { actionName: ActionName; independentCooldownFrames: number; globalCooldownFrames: number; sharedCooldownGroup?: string; cooldownStartsAt: "on_request" | "on_action_enter" | "on_active"; freezesDuringHitStop: boolean; canBeReducedByFrenzy?: boolean; }
@@ -149,6 +154,8 @@ export interface FrameDataAction {
   totalFrames: number;
   startup: FrameWindow[];
   active: HitBoxFrameWindow[];
+  emitters?: HitEmitter[];
+  timeline?: ActionTimeline;
   recovery: FrameWindow[];
   cancelPolicy: { hitCancelFrom?: number; whiffCancelFrom?: number; into?: ActionName[] };
   hitStopProfile: { frames: number; bossCapFrames?: number; buildingCapFrames?: number };
@@ -171,6 +178,8 @@ export interface HitQuery {
   actionName: ActionName;
   hitboxId: string;
   hitGroupId: string;
+  shape: HitboxShape;
+  radius?: number;
   box: Rect2D5;
   facing: Facing;
   hitType: HitType;
