@@ -106,6 +106,7 @@ export class CombatKernel {
   emitLongFrameWarning(deltaMs:number): void { this.notes.push(`long-frame:${deltaMs}`); }
 
   tick(): void {
+    const replayArchiveStart = this.bus.archive.length;
     this.tickCount += 1;
     this.bus.emit("TickStarted", CombatEventPriority.Debug, this.tickCount, {tick:this.tickCount});
 
@@ -135,10 +136,12 @@ export class CombatKernel {
       if(a.resources.hp<=0) this.death.kill(a,this.tickCount,this.bus);
     }
 
-    this.bus.emit("DebugOverlayUpdated", CombatEventPriority.Debug, this.tickCount, this.debugSnapshot());
     this.bus.emit("TickEnded", CombatEventPriority.Debug, this.tickCount, {tick:this.tickCount});
     this.bus.flush();
-    if (this.options.enableReplay !== false) this.replay.record(this.tickCount, this.actors, this.bus.archive, this.inputState.snapshot(this.tickCount));
+    if (this.options.enableReplay !== false) {
+      const flushedEvents = this.bus.archive.slice(replayArchiveStart);
+      this.replay.record(this.tickCount, this.actors, flushedEvents, this.inputState.snapshot(this.tickCount));
+    }
     this.inputState.endTick();
   }
 
