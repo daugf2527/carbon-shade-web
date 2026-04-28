@@ -1,0 +1,67 @@
+{
+  "player": {
+    "frames": 68,
+    "sheet": "player_berserker_norm.png",
+    "size": [
+      3584,
+      3888
+    ],
+    "cellW": 448,
+    "cellH": 432,
+    "cols": 8,
+    "scale": 0.62,
+    "offsetY": 4
+  },
+  "goblin": {
+    "frames": 48,
+    "sheet": "goblin_norm.png",
+    "size": [
+      4032,
+      2176
+    ],
+    "cellW": 672,
+    "cellH": 272,
+    "cols": 6,
+    "scale": 0.36,
+    "offsetY": 4
+  },
+  "skeleton": {
+    "frames": 24,
+    "sheet": "skeleton_shield_norm.png",
+    "size": [
+      2176,
+      816
+    ],
+    "cellW": 272,
+    "cellH": 272,
+    "cols": 8,
+    "scale": 0.34,
+    "offsetY": 4
+  },
+  "imp": {
+    "frames": 20,
+    "sheet": "flying_imp_norm.png",
+    "size": [
+      2304,
+      816
+    ],
+    "cellW": 288,
+    "cellH": 272,
+    "cols": 8,
+    "scale": 0.34,
+    "offsetY": -52
+  },
+  "boss": {
+    "frames": 49,
+    "sheet": "minotaur_boss_norm.png",
+    "size": [
+      3072,
+      2592
+    ],
+    "cellW": 512,
+    "cellH": 288,
+    "cols": 6,
+    "scale": 0.7,
+    "offsetY": 6
+  }
+}

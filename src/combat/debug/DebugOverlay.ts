@@ -1,0 +1,4 @@
+import type { Actor, ScenarioBooleans } from "../types.js";
+import type { LastHitTraceSnapshot } from "./LastHitTrace.js";
+export interface DebugSnapshot { tick:number; actors: object[]; lastHit: LastHitTraceSnapshot; eventCount:number; scenario?: ScenarioBooleans; performance: { actorCount:number; eventArchiveSize:number; poolStatus:string }; }
+export class DebugOverlay { snapshot(tick:number, actors:Actor[], lastHit:LastHitTraceSnapshot, eventCount:number, scenario?:ScenarioBooleans): DebugSnapshot { return { tick, actors:actors.map(a=>({id:a.id,hp:a.resources.hp,pos:{...a.position},reaction:a.reactionState,action:a.currentAction?.actionName ?? null,dead:a.flags.dead,buffs:a.buffs.map(b=>b.type),status:a.statusEffects.map(s=>s.type)})), lastHit, eventCount, scenario, performance:{actorCount:actors.length,eventArchiveSize:eventCount,poolStatus:"stable"} }; } }

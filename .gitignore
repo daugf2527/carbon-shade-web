@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.tmp/
+verification/
+
+*.log
+*.tsbuildinfo
+.DS_Store
+Thumbs.db

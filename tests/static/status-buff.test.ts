@@ -1,0 +1,4 @@
+import { assert } from "./test-utils.js";
+import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+const k = new CombatKernel(); const g=k.actors.find(a=>a.id==="grunt")!; k.status.applyBleed(g,k.player.id,"ForceBleed",k.tickCount,k.bus,1); k.runTicks(31); assert.ok(k.bus.archive.some(e=>e.type==="StatusTicked")); assert.ok(k.bus.archive.some(e=>e.type==="DamageApplied" && (e.payload as any).sourceKind==="status_dot" && (e.payload as any).reactionPolicy==="status_tick_feedback_only")); assert.equal(k.bus.archive.some(e=>e.type==="HitStopStarted" && (e.correlationId?.includes("status") ?? false)), false);
+const k2 = new CombatKernel(); k2.buffs.apply(k2.player,"frenzy",0,k2.bus); const hp=k2.player.resources.hp; k2.hitStop.start([k2.player.id], 70); k2.runTicks(61); assert.equal(k2.player.resources.hp, hp, "Frenzy drain must freeze during HitStop");

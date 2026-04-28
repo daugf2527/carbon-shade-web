@@ -1,0 +1,31 @@
+import { assert } from "./test-utils.js";
+import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+
+const walkKernel = new CombatKernel();
+const walkPlayer = walkKernel.player;
+const walkStartX = walkPlayer.position.x;
+walkKernel.press("ArrowRight");
+walkKernel.tick();
+assert.equal(walkPlayer.currentAction, undefined, "Walk/Run must be locomotion, not frame-data actions");
+assert.equal(walkPlayer.locomotion.mode, "walk");
+assert.ok(walkPlayer.position.x > walkStartX, "Walk must move the player forward");
+walkKernel.release("ArrowRight");
+walkKernel.tick();
+assert.equal(walkPlayer.locomotion.mode, "idle", "Walk must end after the direction key is released");
+
+const runKernel = new CombatKernel();
+const runPlayer = runKernel.player;
+const runStartX = runPlayer.position.x;
+runKernel.press("ArrowRight");
+runKernel.tick();
+runKernel.release("ArrowRight");
+runKernel.tick();
+runKernel.press("ArrowRight");
+runKernel.tick();
+assert.equal(runPlayer.currentAction, undefined, "The second tap should not create a movement action");
+runKernel.tick();
+assert.equal(runPlayer.locomotion.mode, "run");
+assert.ok(runPlayer.position.x > runStartX + 2, "Run must move farther than Walk");
+runKernel.release("ArrowRight");
+runKernel.tick();
+assert.equal(runPlayer.locomotion.mode, "idle", "Run must end after release");

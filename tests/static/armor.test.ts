@@ -1,0 +1,4 @@
+import { assert } from "./test-utils.js";
+import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+const k = new CombatKernel(); const p=k.player; const building=k.actors.find(a=>a.id==="building")!; building.position.x=k.player.position.x + 90; const hp=building.resources.hp; k.requestAction(p,"UpwardSlash"); k.runTicks(12); assert.ok(building.resources.hp < hp, "BuildingArmor should take damage"); assert.equal(building.reactionState, "armor_feedback_only", "BuildingArmor should block launch/control"); assert.equal(building.position.y, 0);
+const boss = k.actors.find(a=>a.id==="boss")!; boss.position.x=k.player.position.x + 90; k.hitStop.clear(); k.recoil.clear(); k.requestAction(p,"UpwardSlash"); k.runTicks(12); assert.equal(boss.reactionState, "armor_feedback_only", "BossSuperArmor should not launch");

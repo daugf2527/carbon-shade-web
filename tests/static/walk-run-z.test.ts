@@ -1,0 +1,42 @@
+import { assert } from "./test-utils.js";
+import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+
+const forwardKernel = new CombatKernel();
+const forwardPlayer = forwardKernel.player;
+const startX = forwardPlayer.position.x;
+const startZ = forwardPlayer.position.z;
+forwardKernel.press("ArrowDown");
+forwardKernel.tick();
+assert.equal(forwardPlayer.currentAction, undefined, "Vertical movement should not enter frame-data Walk");
+assert.equal(forwardPlayer.locomotion.mode, "walk", "Vertical movement should start locomotion walk");
+assert.ok(forwardPlayer.position.z > startZ, "ArrowDown must move the player deeper into the scene");
+assert.equal(forwardPlayer.position.x, startX, "Vertical movement should not drift on x");
+forwardKernel.release("ArrowDown");
+forwardKernel.tick();
+assert.equal(forwardPlayer.locomotion.mode, "idle", "Walk must end after the vertical direction key is released");
+
+const horizontalKernel = new CombatKernel();
+const horizontalPlayer = horizontalKernel.player;
+const horizontalStartX = horizontalPlayer.position.x;
+horizontalKernel.press("ArrowRight");
+horizontalKernel.tick();
+const horizontalDistance = horizontalPlayer.position.x - horizontalStartX;
+horizontalKernel.release("ArrowRight");
+horizontalKernel.tick();
+assert.equal(horizontalPlayer.currentAction, undefined);
+
+const diagonalKernel = new CombatKernel();
+const diagonalPlayer = diagonalKernel.player;
+const diagonalStartX = diagonalPlayer.position.x;
+const diagonalStartZ = diagonalPlayer.position.z;
+diagonalKernel.press("ArrowRight");
+diagonalKernel.press("ArrowDown");
+diagonalKernel.tick();
+const diagonalDx = diagonalPlayer.position.x - diagonalStartX;
+const diagonalDz = diagonalPlayer.position.z - diagonalStartZ;
+const diagonalDistance = Math.hypot(diagonalDx, diagonalDz);
+assert.ok(Math.abs(horizontalDistance - diagonalDistance) < 0.02, "Diagonal movement should not be faster than single-axis movement");
+diagonalKernel.release("ArrowRight");
+diagonalKernel.release("ArrowDown");
+diagonalKernel.tick();
+assert.equal(diagonalPlayer.locomotion.mode, "idle");

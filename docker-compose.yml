@@ -1,0 +1,10 @@
+services:
+  combat-lab:
+    build: .
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    command: npm run dev

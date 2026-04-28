@@ -1,0 +1,23 @@
+{
+  "name": "combat-lab-webdemo-0.2-r3-handfeel",
+  "version": "0.2.9-handfeel-fix6-normalized-sprites",
+  "private": true,
+  "type": "module",
+  "description": "Combat Lab 0.2-R3 handfeel fix6: normalizes uploaded sprite sheets into fixed-cell Phaser spritesheets, clamps action frames, and removes crop-origin/tint flash artifacts.",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "typecheck": "node scripts/typecheck.mjs",
+    "build": "node scripts/build.mjs",
+    "static:test": "node scripts/static-test.mjs"
+  },
+  "dependencies": {
+    "phaser": "^3.90.0",
+    "vite": "^6.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

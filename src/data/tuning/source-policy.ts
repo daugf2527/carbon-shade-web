@@ -1,0 +1,1 @@
+export const sourcePolicy = { prohibited:["official assets","leaked source","private server code","client decompilation"], allowed:["original code","placeholder graphics","public mechanic descriptions","baseline tuning"] } as const;
