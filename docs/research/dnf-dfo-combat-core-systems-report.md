@@ -1,664 +1,422 @@
-# DNF战斗系统复刻实现研究报告
+# 实现类 DNF/DFO 一对一战斗系统的技术规格与可执行开发规范
 
 ## 执行摘要
 
-公开可验证资料显示，DNF/DFO 的战斗控制系统在近几年至少经历了两次核心演进：第一阶段是 2022 年上线的“无力化/Neutralize”弱点驱动系统，核心是“怪物弱点 + 异常/控制类型命中 → 无力化条削减 → 条破后进入 Groggy/爆发窗口”；第二阶段是 2025 年韩国服“中天”战斗系统重做，把原先复杂的无力化计算简化为“与角色造成伤害成比例”，并新增了个人单位的“点火/Ignite”系统，用来实时放大无力化削减效率。官方同时保留了“条破后短时间更易受伤”的爆发窗口，但**爆发窗口的时长、增伤倍率、后续回条行为**仍然明显是**怪物脚本参数**，而不是全局常量。citeturn43view0turn44view0turn5view0turn44view2turn45search2
+这份文档把“类 DNF/DFO 的 1:1 战斗系统”拆成两层来定义。第一层是**高置信、可从官方与原始资料直接确认的规则**：韩服/国际服官方公开说明了 PvP 与 PvE 在技能、冷却、装备归一化、HUD、回放、帧率上限、技能引导与独立配置上的分离；官方战斗/状态异常指南给出了中毒、灼伤、感电、出血与多种控制异常的持续时间、触发间隔、堆叠与互斥关系；官方开发者 API 明确暴露了 `coolTime`、`castingTime`、`chain.resetTime`、`skillId` 等字段，说明技能时序本身就是可数据化的；官方安全规则明确点名了调试器、反汇编器、封包修改、内存修改、宏、进程隐藏、虚拟机与远程控制等不允许行为。citeturn27view0turn29view0turn29view1turn6view0turn7view0turn18search0
 
-就“能直接指导开发”的实现层面而言，现有公开证据足够确认三件事。第一，**无力化条的当前主逻辑必须服务器权威**，因为它决定 Boss 相位、Groggy 触发、增伤窗口以及多人协作收益；客户端只能做 UI 预测与动画预演。第二，**点火是严格的个人状态**，其升降完全可由“时间 + 是否被击中”驱动，适合做确定性预测，但服务器仍应在伤害结算端重算最终的无力化削减量。第三，**无敌、霸体、格挡/招架并不是同一类保护状态**：公开补丁多次把技能某些帧从 Super Armor 改成 Invincibility，或从 Invincibility 改回 Super Armor，这说明零售客户端/服务端内部至少把这几种保护帧作为独立标志处理，而不是一个统一的“免伤等级”字段。citeturn28view0turn33view2turn34view0turn34view1turn34view2
+第二层是**由于官方未完整公开而必须工程化补足的规范**：现网精确伤害公式、现行封包结构、全部技能帧数据、全部异常成功率公式与完整 PvP 连击修正规则，并没有被官方完整公开。因此，建议采用“**服务器权威 + 客户端预测 + 有限回滚**”的现代格斗网络模型，把 PvE 与 PvP 的差异彻底收敛到数据表；把伤害、护盾、伤害吸收、伤害分摊、异常、净化、免疫、霸体、无敌、硬直、击倒、强制起身、连击修正这几类规则做成独立模块，再通过统一的 `ResolveHit()` 热路径装配。该建议与 GGPO 的确定性回滚要求、现代服务器权威回滚论文模型、以及 entity["company","Riot Games","game developer"] 的 entity["video_game","2XKO","2025 fighting game"] 官方网络架构说明高度一致。citeturn24view1turn24view0turn24view5turn39view0
 
-需要明确的是，用户要求中的“精确数值公式、客户端内存偏移、零售客户端运行时结构体布局”，公开资料**并没有完整公开**。可以确认的是资产层的组织方式：当前全球客户端公开清单显示包含大量 NPK 资源包，而公开解析仓库则已经把 PVF/NPK/IMG 的读取层拆成 `PvfReader`、`PvfScript`、`PvfNode`、`ImgFile`、`Npk` 等组件；这说明**脚本资源层与运行时战斗态之间存在明确分层**。但**运行中的 BossCombatState/PlayerCombatState 真正偏移与对象布局，未公开/未找到**。因此，本报告对“公式、状态机、网络协议、运行时结构”一律分为两类：**已确认事实**与**复刻建议**；前者严格基于官方与公开实测，后者是为 1:1 复刻目标给出的工程化近似。citeturn39search0turn20view0turn41search0turn47view0
+本文把**“可证实的 DNF/DFO 规则”**与**“建议性工程实现”**明确分开写：凡是带“建议”“规范版”“推荐值”的内容，都是为开发团队落地而给出的实现规范，而不是声称它就是现网零误差私有实现。这样既能直接指导研发，又不会把社区逆向结果误写成官方事实。citeturn23view0turn22view0turn22view1turn22view2turn35view0turn33view0
 
-## 证据与建模边界
+## 资料基础与可信度
 
-本报告采用五级证据体系。A 级为官方更新说明/官方游戏指南；B 级为全球服同步页面、中文官方职业/系统页面；C 级为韩国官方社区高质量实测帖；D 级为公开逆向/PVF/NPK 解析资料；E 级为“未公开/未找到”，只做边界标记，不把它伪装成已知事实。A/B 级用于确定机制方向与规则；C 级用于补足倍率范围、窗口时长、被击中时的边缘行为；D 级只用于说明**资源组织与脚本容器**，不等同于 retail 运行时内存偏移。citeturn45search2turn44view2turn33view2turn41search0turn47view0
+本课题最可靠的资料源，按优先级应当分为五层。第一层是韩服/国际服/国服**官方站与开发者门户**，对应 entity["company","Neople","game developer"]、entity["company","Nexon","game publisher"] 与 entity["company","Tencent","game publisher"]；第二层是**官方社区内的高质量玩家/测试文**，能说明 PvP 修正条、命中僵直、低 RP 教学 HUD 与“公平决斗场”一类细节；第三层是**公开可审计的客户端数据工具与文件索引**，主要来自 entity["company","GitHub","code host"] 与 entity["organization","SteamDB","steam database"]；第四层是英语/韩语的**长期理论社区和论坛**，如 entity["company","Reddit","social platform"] 的 r/DFO、entity["organization","Ruliweb","gaming forum"]；第五层才是低可信的泄露/私服/改包论坛，如 entity["organization","RageZone","mmo forum"]。citeturn27view0turn29view0turn29view1turn22view0turn22view1turn23view0turn35view0turn33view0turn15search2
 
-本轮公开证据能够确认：韩国服与全球服官方文档都已经存在完整的 Neutralize/Ignite/Guard 术语与 UI 说明；中文官方页面可以确认“无敌/霸体”以及“格挡/招架”在技能与装备文案中是分离概念；但**中文服、台服关于“2025 新版无力化 + 点火”的完整系统页，公开索引中未检到可直接引用页面**，因此本报告中的区服差异会把中服/台服在该项标为“未公开/未找到”。citeturn5view0turn44view2turn33view2turn34view2turn11search8turn11search2
-
-还有一个重要边界：公开官方只给出了**单调关系**，没有给出“点火从 0 到 100 的精确填充秒数”“被击后冻结多久”“条破后每次回条增长多少”“满点火时的全局公式”这一类开发最想要的数字。相反，社区实测只能给出样本，比如“同一技能在满点火与停滞点火状态下，无力化削减约为 10% 对 2%”，或“部分 Boss 的无力化 Groggy 为 +50% 10 秒，另一些 Boss 是 8 秒/15 秒，甚至与当时的伤害倍率脚本联动”。因此，严格意义上的“原厂精确常数”并未公开；本报告给出的数值模型是**复刻级工程模板**，不是声称从零售客户端拿到了真实常量。citeturn28view0turn30search0turn30search4
-
-## 无力化与 Groggy 爆发窗口系统
-
-### 已确认机制与版本演进
-
-2022 年首版 Neutralize Gauge 的设计逻辑非常清楚：Named/Boss 在特定区域与模式下带有 Neutralize Gauge；每个怪物有不同弱点与不同条量；打中其弱点并把条削空后，怪物会对异常、控制、硬直等更多减益变得脆弱；一段时间后条会恢复，而且恢复后的最大条量会比之前更高。官方后来在 Ispins 阶段又统一加上“所有攻击”与“除伤害型异常之外的所有异常”作为共通弱点，以降低职业之间因异常/控制构成不同而产生的削条差距。到了 2025 年韩国服战斗系统重做，官方把“复杂计算式”明确改为“与角色造成伤害成比例”，并且加入点火来实时提高削条率。citeturn43view0turn44view0turn5view0turn44view2
-
-韩国官方战斗系统指南还明确写明：当无力化条被削空时，怪物会进入一段“Groggy 状态”，在这段时间里承受更大伤害；而无力化条的削减与“给怪物造成的伤害量”成比例。也就是说，**新版系统的主驱动已经从“异常/控制类型命中”转到“伤害驱动”，弱点与点火变成乘区或修正器**，而不再是唯一入口。citeturn45search2turn44view2
-
-社区高质量实测又补足了三个实现层关键点。第一，旧版弱点异常在实践中常按 **2 倍** 处理；第二，部分 Boss 在特定内容里有“Hold Gate/控场门”，例如某些怪在 Hold Gauge 未满足前，只吃“홀딩 무력화”，不吃打击无力化或异常无力化，实测样本给出了大约 **8 秒**的 Hold 满足门槛；第三，Groggy 的“时长/倍率”明显是怪物脚本参数——当前内容样本里既有“无力化成功后 +50% 伤害、持续 10 秒”，也有 8 秒、15 秒甚至按 Boss 当前脚本倍率落在 125%/135%/160%/180% 档位的情况。citeturn30search2turn30search4turn30search0
-
-### 复刻参数表
-
-| 参数项 | 已确认事实 | 复刻建议 | 置信度 |
+| 资料层级 | 代表来源 | 可直接采用的内容 | 可信度 |
 |---|---|---|---|
-| 条拥有者 | 仅 Named/Boss 或特定高难怪拥有。citeturn43view0turn45search2 | `MonsterCombatState.neutralize` 仅挂在可脚本化精英/Boss 上。 | A |
-| 弱点类型 | 2022 首版按怪物弱点与异常/控制关联；Ispins 后加“所有攻击”“所有非伤害型异常”为共通弱点。citeturn43view0turn44view0 | 保留 `weaknessMask`，并支持“共通弱点层”。 | A |
-| 削条主驱动 | 2025 版明确变为“按造成伤害成比例”。citeturn5view0turn44view2 | `delta = damage * coeff * igniteMul * weaknessMul * specialMul`。 | A/B |
-| 弱点倍率 | 旧版社区实测常按 2 倍。citeturn30search2turn42search5 | 旧版模板 `weaknessMul=2.0`；新版可保留为可配参数，不写死。 | C |
-| 条破效果 | 条破后进入 Groggy，承受更多伤害；并对更多减益开放。citeturn43view0turn45search2 | `state=Groggy`，开启 `damageTakenMul>1`，放开受控/受异常标志。 | A |
-| Groggy 时长 | 官方只说“持续一段时间”；社区样本出现 6/8/10/15 秒。citeturn45search2turn30search4 | `groggyDurationMs` 做怪物脚本字段，不用全局常量。 | A/C |
-| Groggy 倍率 | 官方只说“更大伤害”；社区样本有 +50%、125%~180%、150%、250%。citeturn30search0turn30search4 | `groggyDamageMul` 做怪物脚本字段。 | A/C |
-| 回条行为 | 官方确认恢复后最大条量会更高。citeturn43view0 | 用 `recoveryTier` + 成长表控制，而不是简单倍数。 | A/B |
-| Hold Gate | 非全局系统，仅部分怪/内容存在。citeturn30search2 | `optional holdGate`；未配置时关闭。 | C |
+| 官方规则与指南 | 韩服/国际服官方战斗、状态异常、PvP 赛季说明、开放 API 文档 | 状态时长、互斥关系、技能字段、PvP 专用说明、技能引导、回放入口、帧率/界面限定 | 高 citeturn27view0turn29view0turn29view1turn6view0turn7view0 |
+| 官方补丁日志 | 韩服/国服补丁/平衡说明 | PvP/PvE 分离参数、技能前后摇、Y 轴判定、强制硬直、冷却、无敌/霸体窗口、护盾吸收率变更 | 高 citeturn3search5turn19search3turn19search9turn31search2turn31search3turn31search11 |
+| 官方社区高质量攻略/测试 | 官方社区 PvP 术语与连段修正文 | 站立/空中/倒地修正、重力修正、强制起身、低段位教学修正条、固定属性公平场 | 中高 citeturn40view0turn42view0 |
+| 公开逆向/文件工具 | 公共仓库、客户端文件清单 | `pvf`/`NPK` 包装事实、数据表与图像分离、公开提取工具存在性 | 中 citeturn23view0turn22view0turn22view1turn22view2 |
+| 泄露/私服/论坛 | 私服教程、泄露帖子 | 只能作为“存在同类工作”的弱线索，不能作为精确数值依据 | 低 citeturn10search3turn15search2 |
 
-### 状态机
+这意味着研发上应当采用一个严格原则：**官方规则与官方社区只决定“规则边界”；公开逆向只决定“数据组织方式”；低可信泄露资料只做风险线索，不进主实现。** 这样既能吸收有效信息，也能避免把私服实现偏差带入正式系统。citeturn27view0turn23view0turn15search2
 
-```mermaid
-stateDiagram-v2
-    [*] --> Protected
+## 战斗循环与数值规范
 
-    Protected --> Broken: currentGauge <= 0
-    Broken --> Groggy: onBreak
-    Groggy --> RecoverPending: groggyEndTime reached
-    RecoverPending --> Protected: recoverDelayEnd / maxGauge grows by tier
+官方资料已经足够说明：这个系统不是“技能播放后统一结算”，而是**逐帧时序 + 逐次命中 + 独立异常 + 独立连击修正**。官方 API 把技能暴露为 `coolTime`、`castingTime`、`levelInfo`、`chain.resetTime` 等字段；官方 PvP 更新又反复单独调整“前延迟、Y 轴攻击范围、攻击硬直、技能冷却、超级护甲持续时间、抓取可否成立”等细项。换句话说，最适合的战斗内核不是大招式黑盒，而是**以帧段/事件段为最小颗粒的数据驱动执行器**。citeturn6view0turn7view0turn3search5turn19search3turn19search9
 
-    Protected --> Protected: damage-based neutralize ticks
-    Protected --> Protected: weakness/status/hold modifiers
-    Protected --> Protected: holdGate active -> only hold damage accepted
-```
-
-上图中，`Broken` 与 `Groggy` 在实现上可以合并，但建议拆开：`Broken` 负责“一次性条破事件触发”，`Groggy` 负责“持续态增伤窗口”；这样更容易在脚本里挂接转阶段动画、Boss 语音、摄像机、QTE 与 UI 锁定。官方能确认“条破后有一段更易受伤时间”，社区样本进一步证明这个窗口在不同怪脚本里差异极大。citeturn45search2turn30search4turn30search0
-
-### 数值公式与实现建议
-
-**已确认的最低真值**只有三条：旧版有弱点；新版是伤害成比例；点火会实时提高削条率。基于这些证据，最接近当前版本、又适合直接落地开发的统一公式是：
-
-\[
-\Delta N = \min \Big(
-D \cdot K_{d2n} \cdot M_{ignite}(g) \cdot M_{weak}(tags, boss) \cdot M_{phase}(boss) \cdot M_{buff}(player,boss),
-N_{cur}
-\Big)
-\]
-
-其中：
-
-- \(D\)：本次命中最终有效伤害。
-- \(K_{d2n}\)：伤害转削条系数，按怪物模板配置。
-- \(M_{ignite}(g)\)：点火倍率；官方未公开，建议做可调线性/分段函数。
-- \(M_{weak}\)：弱点修正；旧版模板可用 2.0，当前版建议保留为数据项。
-- \(M_{phase}\)：按 Boss 当前相位/脚本倍率修正。
-- \(M_{buff}\)：装备、被动、内容 Buff 对削条的增减。
-
-如果要兼容 2022 旧式系统，再补一套“非伤害驱动”的前置分支即可：
-
-\[
-\Delta N_{legacy}= (H_{hit} + H_{status} + H_{hold}) \cdot M_{weak} \cdot M_{special}
-\]
-
-其中 `H_hit/H_status/H_hold` 分别对应打击削条、异常削条与 Hold 削条；当怪物存在 Hold Gate 时，只允许 `H_hold` 生效，直到 Gate 满足为止。这个分支正好对应官方首版 Neutralize 与 Ispins 改造的时代。citeturn43view0turn44view0turn30search2
-
-### 关键伪实现
-
-```cpp
-enum class NeutralizeVersion : uint8_t {
-    LegacyWeakness,   // 2022~2024
-    DamageDriven      // 2025+
-};
-
-struct HoldGateConfig {
-    bool enabled = false;
-    float requiredHoldSeconds = 0.0f;   // 样本怪可约 8s；未公开时由脚本配置
-    float accumulatedHoldSeconds = 0.0f;
-};
-
-struct GroggyConfig {
-    float durationMs = 10000.0f;        // 只作默认值；必须允许怪物覆写
-    float damageTakenMul = 1.5f;        // 1.5 = +50%
-};
-
-struct NeutralizeProfile {
-    NeutralizeVersion version;
-    float baseGauge;
-    float damageToGaugeCoeff;
-    float gaugeGrowthPerRecoveryTier;
-    float maxGaugeCap;
-    float weaknessMultiplier;           // 旧版弱点可设为 2.0
-    GroggyConfig groggy;
-    HoldGateConfig holdGate;
-    uint64_t weaknessMask;
-};
-
-struct MonsterCombatState {
-    float currentGauge;
-    float maxGauge;
-    uint8_t recoveryTier;
-    bool inGroggy;
-    uint64_t groggyEndServerMs;
-};
-
-float ComputeNeutralizeDelta(
-    const NeutralizeProfile& profile,
-    const MonsterCombatState& boss,
-    float finalDamage,
-    float igniteMul,
-    uint64_t hitTags,
-    float hitNeutralize,
-    float abnormalNeutralize,
-    float holdNeutralize)
-{
-    if (profile.holdGate.enabled &&
-        profile.holdGate.accumulatedHoldSeconds < profile.holdGate.requiredHoldSeconds) {
-        return std::min(holdNeutralize, boss.currentGauge);
-    }
-
-    float weaknessMul = ((hitTags & profile.weaknessMask) != 0)
-        ? profile.weaknessMultiplier
-        : 1.0f;
-
-    float delta = 0.0f;
-    if (profile.version == NeutralizeVersion::DamageDriven) {
-        delta = finalDamage * profile.damageToGaugeCoeff * igniteMul * weaknessMul;
-    } else {
-        delta = (hitNeutralize + abnormalNeutralize + holdNeutralize) * weaknessMul;
-    }
-    return std::min(delta, boss.currentGauge);
-}
-
-void ApplyNeutralize(
-    const NeutralizeProfile& profile,
-    MonsterCombatState& boss,
-    float delta,
-    uint64_t nowMs)
-{
-    boss.currentGauge -= delta;
-    if (boss.currentGauge > 0.0f) return;
-
-    boss.currentGauge = 0.0f;
-    boss.inGroggy = true;
-    boss.groggyEndServerMs = nowMs + static_cast<uint64_t>(profile.groggy.durationMs);
-}
-
-void EndGroggyAndRecover(const NeutralizeProfile& profile, MonsterCombatState& boss)
-{
-    boss.inGroggy = false;
-    boss.recoveryTier += 1;
-
-    float nextGauge = profile.baseGauge +
-        profile.gaugeGrowthPerRecoveryTier * static_cast<float>(boss.recoveryTier);
-
-    boss.maxGauge = std::min(nextGauge, profile.maxGaugeCap);
-    boss.currentGauge = boss.maxGauge;
-}
-```
-
-这段伪码的关键不是“数值绝对正确”，而是结构上同时容纳了**旧版弱点削条**、**新版伤害驱动削条**、**Boss 特例 Hold Gate** 与**怪物脚本化 Groggy 参数**。它与公开证据的拟合度最高，也最接近实际线上内容表现。citeturn43view0turn44view0turn5view0turn30search2turn30search4
-
-### 可直接落地的 JSON 数据模型
-
-```json
-{
-  "monsterId": 9102101,
-  "neutralize": {
-    "version": "damage_driven",
-    "baseGauge": 100000.0,
-    "damageToGaugeCoeff": 0.00012,
-    "weaknessMask": [
-      "all_attack",
-      "all_non_damage_status",
-      "freeze",
-      "stun"
-    ],
-    "weaknessMultiplier": 1.25,
-    "recovery": {
-      "growthPerTier": 12000.0,
-      "maxGaugeCap": 160000.0
-    },
-    "holdGate": {
-      "enabled": true,
-      "requiredHoldSeconds": 8.0
-    },
-    "groggy": {
-      "durationMs": 10000,
-      "damageTakenMultiplier": 1.5,
-      "unlockStatuses": true,
-      "unlockImmobility": true
-    }
-  }
-}
-```
-
-### 网络同步、预测与安全
-
-从机制权重看，无力化/Groggy 必须采用**服务器权威 + 客户端预测显示**。客户端可以在本地根据自己发出的伤害命中、当前点火值与怪物模板去预测无力化条 UI，但**不能决定条破时刻**；真正的条破、Groggy 开始、Groggy 结束、下次回条 tier 增长，都必须由服务器广播。否则任何“削条倍率补丁”“本地点火伪造”“强制进入 Groggy”都能直接破坏组队内容与排名内容。citeturn45search2turn37search6turn37search0
-
-推荐的网络策略是：客户端上报 `skillCast/inputSeq`，服务端以服务端时间轴重放技能帧并结算伤害；每次命中返回 `S_HitConfirm` 时顺带携带 `bossNeutralizeDelta` 和 `bossNeutralizeCur`。当服务端判定 `currentGauge<=0`，才下发 `S_NeutralizeBreak{monsterId, groggyEndTime, damageTakenMul}`。客户端如果本地预估已经接近 0，可以提前开始“破条闪烁”和“镜头预热”，但在收到 `S_NeutralizeBreak` 前不真正切换 Boss 逻辑态。安全上要重点防三类手段：伪造伤害转削条系数、重复发送 Hold 计数包、以及本地替换 Boss 弱点表。最稳妥的办法是把怪物弱点表和削条系数视为服务器配置，只让客户端持有只读镜像。citeturn30search2turn37search6turn37search0
-
-## 点火系统
-
-### 已确认机制
-
-韩国服 2025 战斗系统改版与全球服新版指南都确认了点火系统的核心定义：它是一个**按个人计算**的战斗节奏条；从“第一次打到怪”开始，随时间增长；点火值越高，无力化条削减效率越高；角色被怪物击中时，点火会下降并停止增长；停滞一段时间后又重新开始增长。韩国官方还明确写过“角色被击中时，点火计量条停止的时间在 First Server 对比 Live 时被进一步提高”，说明“被击后的冻结持续时长”确实是内部参数。citeturn5view0turn44view2turn45search2
-
-社区实测把这个系统的边缘条件补得很完整。首先，点火是**队员各自独立**的，某个队友被击并不会让全队点火掉条。其次，**霸体硬吃攻击仍然算被击中**，因此会掉点火；相反，**无敌或社区所称的 “Stuck” 回避**不会被当成被击，不会掉点火。再次，在一个被击后的停滞阶段里，**只有第一下真正扣点火**，后续连续挨打不再重复扣，因为系统已经被切入“Suppressed/冻结”态。最后，样本测试显示同一组技能在“满点火”与“点火停滞”两种情况下，对无力化条削减大约是 **10% 对 2%**，即约 5 倍级差距。这个 5 倍不是官方常数，但足以说明点火不是一个轻微 buff，而是当前版本**真正决定条破速度的乘区**。citeturn28view0turn45search1turn45search3
-
-### 复刻参数表
-
-| 参数项 | 已确认事实 | 复刻建议 | 置信度 |
-|---|---|---|---|
-| 作用域 | 个人单位，不共享。citeturn5view0turn28view0 | `PlayerIgniteState` 绑定角色实例。 | A |
-| 启动条件 | 第一次打到怪后开始随时间增长。citeturn5view0turn45search2 | 由 `OnFirstRelevantHit(monsterId)` 启动。 | A |
-| 初始值 | 进怪或 Boss 生成后从 0 开始增长。citeturn45search0turn45search3 | `gauge=0`，进入 `Charging`。 | C |
-| 提升效果 | 实时提高无力化削减率。citeturn5view0turn44view2 | 作为无力化公式中的独立乘区。 | A |
-| 被击行为 | 被击则下降并冻结；First Server 后冻结时长增加。citeturn5view0turn45search2 | 配置 `hitPenalty` 与 `freezeMs`。 | A/B |
-| 霸体吃击 | 霸体顶伤害也会掉点火。citeturn28view0 | `superArmor` 不改变 `isHit=true`。 | C |
-| 无敌回避 | 无敌/Stuck 规避不算被击。citeturn28view0turn45search1 | `invincible => no ignite penalty`。 | C |
-| 连续多段受击 | 停滞期只在首段受击时扣点火。citeturn28view0 | 增加 `suppressed` 态与 `firstHitOnly`。 | C |
-| 乘区范围 | 官方未公开；样本约 5 倍差。citeturn28view0 | 默认 `igniteMul=[1.0,5.0]`，支持线性/分段。 | C |
-
-### 状态机
-
-```mermaid
-stateDiagram-v2
-    [*] --> Cold
-    Cold --> Charging: firstHitOnMonster
-    Charging --> Hot: gauge == 100%
-    Hot --> Hot: maintain / not hit
-
-    Charging --> Suppressed: playerHit
-    Hot --> Suppressed: playerHit
-    Suppressed --> Charging: freezeEnd
-
-    Suppressed --> Suppressed: subsequent hits ignored for gauge loss
-```
-
-这个状态机的重点是把“扣点火”和“停增长”拆成两个动作：先应用一次 `hitPenalty`，然后进入 `Suppressed`，在 Suppressed 内不再重复扣。这样才能复现社区观测到的“第一下扣、后面不再扣”的行为。citeturn28view0
-
-### 数值公式与实现建议
-
-点火系统的官方表达是“点火值越高，无力化条削减率越高”，但没有公开函数形状。为了同时满足“官方单调关系”和“社区约 5 倍样本”，建议使用下面这套**分段线性**复刻函数：
-
-\[
-M_{ignite}(g)=
-\begin{cases}
-1.0 + 2.0g, & 0 \le g < 0.5 \\
-2.0 + 6.0(g-0.5), & 0.5 \le g \le 1.0
-\end{cases}
-\]
-
-它在 \(g=0\) 时是 1.0，在 \(g=1\) 时是 5.0；低点火阶段成长平缓，高点火阶段成长更陡，比较符合“后半段明显更有价值”的体感。如果想要更接近街机式爽感，也可以换成简单线性：
-
-\[
-M_{ignite}(g)=1.0 + 4.0g
-\]
-
-而点火本体的演化可写为：
-
-\[
-g_{t+\Delta}=
-\begin{cases}
-\min(1, g_t + r_{fill}\Delta), & \text{Charging/Hot 且未被击}\\
-\max(0, g_t - p_{hit}), & \text{进入 Suppressed 的首击}\\
-g_t, & \text{Suppressed}
-\end{cases}
-\]
-
-其中 `r_fill`、`p_hit`、`freezeMs` 都必须做数据配置，因为官方已经明确在平衡流程中调过“被击后的停止时间”。citeturn5view0turn44view2turn28view0
-
-### 关键伪实现
-
-```cpp
-enum class IgniteState : uint8_t {
-    Cold,
-    Charging,
-    Hot,
-    Suppressed
-};
-
-struct IgniteConfig {
-    float fillPerSecond = 0.20f;    // 复刻建议值；官方未公开
-    float hitPenalty = 0.25f;       // 首击扣除比例；官方未公开
-    uint32_t freezeMs = 2500;       // 被击后冻结；官方确认有该参数，但未公开具体值
-    float minMul = 1.0f;
-    float maxMul = 5.0f;
-};
-
-struct PlayerIgniteState {
-    IgniteState state = IgniteState::Cold;
-    float gauge01 = 0.0f;
-    uint64_t freezeUntilMs = 0;
-};
-
-float ComputeIgniteMul(const IgniteConfig& cfg, float gauge01) {
-    float g = std::clamp(gauge01, 0.0f, 1.0f);
-    return cfg.minMul + (cfg.maxMul - cfg.minMul) * g;
-}
-
-void OnRelevantMonsterHit(PlayerIgniteState& st) {
-    if (st.state == IgniteState::Cold) {
-        st.state = IgniteState::Charging;
-    }
-}
-
-void OnPlayerDamaged(
-    const IgniteConfig& cfg,
-    PlayerIgniteState& st,
-    bool wasInvincible,
-    bool tookBlockedByParry,
-    bool tookHitThroughSuperArmor,
-    uint64_t nowMs)
-{
-    // 无敌或成功格挡/招架不应视为 ignite hit
-    if (wasInvincible || tookBlockedByParry) return;
-
-    // 霸体硬吃攻击：仍视为 hit
-    if (st.state != IgniteState::Suppressed) {
-        st.gauge01 = std::max(0.0f, st.gauge01 - cfg.hitPenalty);
-    }
-
-    st.state = IgniteState::Suppressed;
-    st.freezeUntilMs = nowMs + cfg.freezeMs;
-}
-
-void TickIgnite(const IgniteConfig& cfg, PlayerIgniteState& st, float dt, uint64_t nowMs) {
-    if (st.state == IgniteState::Suppressed) {
-        if (nowMs >= st.freezeUntilMs) {
-            st.state = (st.gauge01 >= 1.0f) ? IgniteState::Hot : IgniteState::Charging;
-        }
-        return;
-    }
-
-    if (st.state == IgniteState::Charging || st.state == IgniteState::Hot) {
-        st.gauge01 = std::min(1.0f, st.gauge01 + cfg.fillPerSecond * dt);
-        st.state = (st.gauge01 >= 1.0f) ? IgniteState::Hot : IgniteState::Charging;
-    }
-}
-```
-
-### 可直接落地的 JSON 数据模型
-
-```json
-{
-  "ignite": {
-    "scope": "per_player",
-    "startOnFirstMonsterHit": true,
-    "fillPerSecond": 0.22,
-    "hitPenalty": 0.28,
-    "freezeMs": 2500,
-    "multiplierCurve": {
-      "type": "piecewise_linear",
-      "points": [
-        [0.0, 1.0],
-        [0.5, 2.0],
-        [1.0, 5.0]
-      ]
-    },
-    "hitRules": {
-      "superArmorCountsAsHit": true,
-      "invincibleCountsAsHit": false,
-      "parryCountsAsHit": false,
-      "onlyFirstHitAppliesPenaltyDuringFreeze": true
-    }
-  }
-}
-```
-
-### 网络同步、预测与安全
-
-点火是三套子系统里最适合做**本地预测**的一个，因为它本质上是一个单人状态机：只依赖“我有没有开始打怪”“我有没有被击中”“我是否处于冻结”。因此客户端完全可以本地推进点火条 UI，不需要每帧等服务器广播；但服务器仍应在伤害结算时使用**服务器版本的点火值**计算最终削条量，并周期性把 `igniteGauge01` 纠偏给客户端。citeturn5view0turn28view0
-
-安全风险主要有三类：第一，客户端跳过被击后的冻结；第二，把霸体受击伪装成“未命中”从而不掉点火；第三，加速点火填充。解决办法是服务端不要接受客户端上传的“当前点火值”，而只接受“技能命中事件”和“受击判定事件”；点火值由服务端根据事件时间轴自行推导。客户端提交的只是输入，不是状态。这样即使玩家本地篡改 UI，也无法影响真实的无力化削减结果。citeturn28view0turn37search6
-
-## 无敌、霸体、护甲、格挡、招架优先级系统
-
-### 术语收敛
-
-官方战斗系统指南只明确给出了两种核心保护态：**无敌**与**超级霸体**。无敌的定义是“使用特定技能时不会被怪物攻击命中”；超级霸体的定义是“即使受到攻击也不会进入硬直”。这两者已经足够说明：**无敌处理的是命中判定层，霸体处理的是受击反应层**。它们不是一回事。citeturn45search2turn9search1
-
-“格挡/招架”则是另一条线。全球服与韩服 Nabel Raid 官方页确认了一个**内容专属通用 Guard**：它可以通过 Dungeon Special Key 触发，能阻挡来袭攻击或反制特殊攻击，入场有 1 格 Guard Gauge，上限 3 格，随时间恢复；成功防住紫/白预警或带盾标攻击时还会立即返还消耗的 Guard Gauge，并可能直接打断机制或提供战斗优势。另一方面，中服官方页面又能确认职业/装备层面一直存在“格挡、招架、武器格挡、盾牌格挡、远程格挡”等独立概念，且精确格挡会强制控制敌人 2 秒。citeturn33view2turn33view0turn11search8turn11search2
-
-用户问题中的“护甲”在公开官方文档里**并没有一个单独、统一、横跨全职业的运行时状态名**。公开材料里真正出现的是“防御公式”“被击伤害减少”“护甲精通”“减伤技能”“坐骑模式 50%→20% 受伤减免”这一类内容。因此，若你要做复刻引擎，最稳妥的抽象不是给 DNF 硬套一个神秘的 `ARMOR_STATE`，而是把“护甲”建模成**伤害减免/护盾/Armor Mastery/防御换算**这一层，与“无敌/格挡/霸体”分开。citeturn43view0turn44view0
-
-### 优先级表
-
-| 机制 | 是否命中成立 | 是否吃伤害 | 是否吃硬直 | 是否影响点火受击 | 典型来源 | 复刻优先级 |
-|---|---|---|---|---|---|---|
-| 无敌 | 否。攻击直接不命中。citeturn45search2turn34view0 | 否 | 否 | 否。社区实测无敌不视为点火受击。citeturn28view0 | 角色技能帧 | 最高 |
-| 格挡/招架 | 命中先进入可格挡检查。成功则阻挡或反制。citeturn33view2turn11search8 | 一般否；内容脚本可定义反制收益 | 否 | 建议否；成功 Guard/Parry 不应掉点火。 | 通用 Guard / 职业格挡 | 高 |
-| 护甲/减伤层 | 是 | 是，但按减伤/护盾后处理。citeturn43view0turn44view0 | 取决于是否另有霸体 | 是，除非同时无敌/格挡成功 | 被动、防御、护盾 | 中 |
-| 霸体 | 是 | 是 | 否。只取消硬直。citeturn45search2turn34view2 | 是。霸体硬吃攻击会掉点火。citeturn28view0 | 技能帧/BUFF | 低于格挡 |
-| 普通受击 | 是 | 是 | 是 | 是 | 所有命中 | 最低 |
-
-这张表背后的核心证据是：官方多次在技能平衡里把同一个技能的某些帧从 Super Armor 改成 Invincibility，或反过来；这说明二者在底层不是优先级不同的同一状态，而是**两个独立标志位**。同理，通用 Guard 又是第三条处理链，因为它既有独立资源槽（Guard Gauge），也有独立触发对象（紫/白预警、盾标），还允许取消多数动作直接进入防御姿态。citeturn34view0turn34view1turn34view2turn33view2
-
-### 推荐的命中解析流程
+官方与官方社区共同证明，PvP 至少存在四类连段修正：**站立修正、空中修正、倒地修正、长连击附加命中回收/回避修正**。官方 PvP 赛季说明提到“中力修正 HUD（低 RP 显示）”；官方社区进一步解释了蓝条越界会触发更强重力修正、黄条越界会触发强制起身，且长连击会导致回避率修正与 `hit recovery` 修正上升。官方补丁也反复直接调“Hit Recovery 增减值”“强制硬直”“无视 Hit Recovery 的硬直时长”。因此，工程上不应只做一个 `combo_scale`，而应拆成四个表：`gravity_gauge`、`down_gauge`、`evasion_correction`、`hit_recovery_bonus`。citeturn27view0turn40view0turn19search3turn19search7turn19search9
 
 ```mermaid
 flowchart TD
-    A[Incoming Attack] --> B{Invincible flag?}
-    B -- Yes --> I[Ignore hit entirely]
-    B -- No --> C{Guard/Parry active\nand attack blockable?}
-    C -- Yes --> G[Negate damage\nconsume/restore guard gauge\napply counter if perfect]
-    C -- No --> D[Apply armor/shield/defense reduction]
-    D --> E{Super Armor active?}
-    E -- Yes --> F[Take damage/status\nsuppress hitstun]
-    E -- No --> H[Normal damage + hit reaction]
+A[输入采样] --> B[角色状态机推进]
+B --> C[动画帧推进与命中盒生成]
+C --> D[服务器碰撞检测]
+D --> E{是否命中}
+E -- 否 --> F[继续推进]
+E -- 是 --> G[无敌/霸体/格挡判定]
+G --> H[伤害公式]
+H --> I[护盾/吸收/分摊]
+I --> J[异常状态结算]
+J --> K[硬直/击倒/连击修正]
+K --> L[事件日志与回放帧写入]
 ```
 
-这个流程不是“我觉得应该这样”，而是最能同时解释官方和社区证据的实现方式。无敌必须先判，因为官方定义已经是“不会被命中”；Guard/Parry 必须在减伤与霸体之前，因为它的定义就是“阻挡攻击或反制特殊攻击”；护甲/减伤层是数值修正，不应替代命中结果；霸体是“受击后不硬直”，所以天然排在命中与伤害已经成立之后。citeturn45search2turn33view2turn44view0turn28view0
+上图对应的建议热路径如下。它不是复刻专有代码，而是把官方确认过的模块边界工程化。其输入输出必须全部可回放、可哈希、可重演。相关边界来自官方状态异常指南、PvP 赛季说明、GGPO 的确定性要求与现代服务器权威回滚模型。citeturn29view0turn29view1turn27view0turn24view0turn24view5
 
-### 关键伪实现
+```pseudo
+function ResolveHit(attacker, defender, hitDef, mode, frame):
+    if defender.hasInvuln(frame):
+        return MISS_INVULN
 
-```cpp
-enum ProtectionFlags : uint32_t {
-    PF_None        = 0,
-    PF_Invincible  = 1 << 0,
-    PF_SuperArmor  = 1 << 1,
-    PF_Guard       = 1 << 2,
-    PF_PerfectParry= 1 << 3,
-    PF_Shield      = 1 << 4,
-    PF_DamageReduce= 1 << 5
-};
+    if defender.hasSuperArmor(frame):
+        staggerAllowed = false
+    else:
+        staggerAllowed = true
 
-struct DefenseState {
-    uint32_t flags;
-    float damageReduceRate;       // e.g. 0.20 = 20%减伤
-    float shieldHp;
-    uint8_t guardGauge;
-    uint64_t guardWindowEndMs;
-    uint64_t perfectParryEndMs;
-};
+    if !CheckHitboxOverlap(hitDef, attacker, defender):
+        return MISS_RANGE
 
-struct AttackContext {
-    bool blockable;
-    bool parryable;
-    float rawDamage;
-    uint64_t nowMs;
-};
+    dmg = CalcDamage(attacker, defender, hitDef, mode)
+    dmg = ApplyAbsorbAndBarrier(defender, dmg, frame)
+    dmg = ApplyDamageShare(defender, dmg, frame)
 
-enum class HitResolution {
-    IgnoredByInvincible,
-    Guarded,
-    Parried,
-    DamagedWithSuperArmor,
-    DamagedNormally
-};
+    ApplyHP(defender, dmg.hpLoss)
+    ApplyMP(defender, dmg.mpLoss)
 
-HitResolution ResolveIncomingHit(
-    DefenseState& def,
-    AttackContext atk,
-    float& outFinalDamage,
-    bool& outCountsAsIgniteHit)
-{
-    // 1) 无敌
-    if (def.flags & PF_Invincible) {
-        outFinalDamage = 0.0f;
-        outCountsAsIgniteHit = false;
-        return HitResolution::IgnoredByInvincible;
-    }
+    for statusReq in hitDef.statusRequests:
+        TryApplyStatus(attacker, defender, statusReq, mode, frame)
 
-    // 2) 格挡 / 招架
-    bool guardActive = (def.flags & PF_Guard) && atk.nowMs <= def.guardWindowEndMs;
-    bool perfectActive = (def.flags & PF_PerfectParry) && atk.nowMs <= def.perfectParryEndMs;
+    if staggerAllowed:
+        ApplyStaggerOrKD(attacker, defender, hitDef, mode, frame)
 
-    if (guardActive && atk.blockable && def.guardGauge > 0) {
-        def.guardGauge -= 1;
-        outFinalDamage = 0.0f;
-        outCountsAsIgniteHit = false;
-
-        if (perfectActive && atk.parryable) {
-            return HitResolution::Parried;
-        }
-        return HitResolution::Guarded;
-    }
-
-    // 3) 护甲 / 护盾 / 减伤
-    float dmg = atk.rawDamage;
-    if (def.flags & PF_DamageReduce) {
-        dmg *= (1.0f - def.damageReduceRate);
-    }
-    if ((def.flags & PF_Shield) && def.shieldHp > 0.0f) {
-        float absorbed = std::min(def.shieldHp, dmg);
-        def.shieldHp -= absorbed;
-        dmg -= absorbed;
-    }
-
-    // 4) 霸体
-    outFinalDamage = std::max(0.0f, dmg);
-    outCountsAsIgniteHit = (outFinalDamage > 0.0f); // 霸体依然算 hit
-
-    if (def.flags & PF_SuperArmor) {
-        return HitResolution::DamagedWithSuperArmor;
-    }
-
-    // 5) 普通受击
-    return HitResolution::DamagedNormally;
-}
+    UpdateComboCorrection(attacker, defender, hitDef, mode, frame)
+    LogCombatEvent(attacker, defender, hitDef, dmg, frame)
 ```
 
-### 可直接落地的 JSON 数据模型
+### 伤害公式的规范版
+
+现行零售版本的完整装备乘区与版本乘区并没有被官方完整公开；但韩语、英语社区长期稳定的逆向结论在“基础战斗核”上是一致的：**主属性按 `1 + Stat / 250` 进入主伤害核；防御采用 `Def / (Def + 200 * 攻击者等级)` 形式折算；暴击是 1.5 倍基础暴伤；反击/Counter 常按 1.25 倍；元素伤害长期以有效属强线性进入乘区，早期常见 `/220` 或 `/222` 近似。** 这些更适合拿来定义“类 DNF 战斗核”，而不是直接拿来复刻 2026 零售端所有装备层乘区。citeturn33view0turn35view0turn35view1
+
+建议的**可执行规范版基础公式**如下：
+
+\[
+\text{BaseAttack}=
+(\text{SkillPct}\cdot \text{WeaponAtk}+\text{SkillFixed}\cdot \text{IndepAtk})
+\cdot (1+\frac{\text{MainStat}}{250})
+\]
+
+\[
+\text{ElementMult}=1+\frac{\text{ElemAtk}-\text{ElemRes}}{220}
+\]
+
+\[
+\text{DefenseMult}=1-\frac{\text{Def}}{\text{Def}+200\cdot \text{AttackerLevel}}
+\]
+
+\[
+\text{CritMult}=
+\begin{cases}
+1.5\cdot(1+\text{CritBonus}) & \text{crit} \\
+1 & \text{non-crit}
+\end{cases}
+\]
+
+\[
+\text{FinalDamage}=
+\text{BaseAttack}
+\cdot \text{ElementMult}
+\cdot \text{DefenseMult}
+\cdot \text{CounterMult}
+\cdot \text{CritMult}
+\cdot \text{ModeMult}
+\cdot \text{SkillRuleMult}
+\]
+
+其中 `CounterMult` 默认建议为 1.25；`ModeMult` 由 PvE/PvP 数据表提供；`SkillRuleMult` 用于职业/技能特殊乘区。若你要模拟现代零售 DNF 的 110/115 装备体系，请把“伤害增加、技攻、最终伤害、对象增伤、属性白字、附加伤害”全部上移到**装备系统层**，不要污染战斗热路径。citeturn33view0turn35view0turn35view1
+
+### 异常状态、净化、免疫与互斥
+
+这一部分是目前能拿到最多官方精确数据的模块。韩服官方指南确认：**中毒** 5 秒、每 0.5 秒结算；**灼伤** 5 秒、每 0.5 秒结算，并对 150px 内怪物造成原值 10% 伤害；灼伤被冰冻解除时，剩余灼伤伤害提高 10% 后一次性结算；**感电** 10 秒、每 0.5 秒结算，并按指定打击次数/攻击力分摊，打完后进入“残留状态”；**出血** 3 秒、每 0.5 秒结算。堆叠规则也被官方写明：中毒每层让“下一次中毒”提高 2%，最多 10%；感电每层提高 0.5%，最多 5%；出血每层提高 1%，最多 10%。citeturn29view0turn29view1
+
+官方同页还确认：**伤害型异常抗性影响该异常造成的伤害增减；控制型异常抗性影响该异常的成功率增减。** 同时，较早的韩服异常改版公告曾删除过“伤害型异常等级/内性决定成功率与伤害修正”的旧机制，这说明官方历史上确实更换过算法口径。对于一个类 DNF 新项目，最稳妥的做法是采用**当前官方指南表达的二分法**：伤害型异常用“命中即挂 + 伤害受异常抗性修正”，控制型异常用“命中后再做概率判定 + 控制抗性修正”。citeturn29view0turn29view1turn28search0
+
+官方还给出了多个关键互斥关系：**眩晕状态下不会再吃冰冻/石化/睡眠；冰冻下不会再吃眩晕/石化/睡眠；石化下不会再吃眩晕/冰冻/睡眠；睡眠下不会再吃眩晕/冰冻/石化。** 此外，角色被异常后可由恢复道具或技能解除；而国服官方文本又明确存在“无视异常状态抗性”“无法通过技能、消耗品解除”的例外标签，说明“净化可否生效”必须是状态实例级布尔位，不可写死。citeturn29view1turn38search0turn38search1
+
+因此推荐以下**规范版成功率算法**：
+
+```pseudo
+function TryApplyStatus(attacker, defender, req, mode, frame):
+    if defender.isStatusImmune(req.type, frame):
+        return FAIL_IMMUNE
+
+    if req.ignoreResistance:
+        chance = 1.0
+    else if req.category == DAMAGE_DOT:
+        chance = req.baseConnectChance   // 默认建议=1.0，抗性影响伤害，不影响挂上
+    else:
+        chance = clamp(
+            req.baseChance
+          + attacker.statusAcc[req.type]
+          + req.resistPenFlat
+          - defender.ccResist[req.type],
+          0.05, 0.95
+        )
+
+    if Rand(frame, attacker.id, defender.id, req.type) > chance:
+        return FAIL_ROLL
+
+    inst = BuildStatusInstance(req)
+    if req.category == DAMAGE_DOT:
+        inst.totalDamage *= (1 - defender.dotResist[req.type])
+    AddStatus(defender, inst)
+```
+
+这个线性公式不是“现网专有公式”，但它与官方当前抗性分工完全一致，且便于数值策划调试。若要做更平滑的终局平衡，可把线性部分替换为 logistic。citeturn29view0turn29view1
+
+### 护盾、伤害吸收、伤害分摊
+
+公开资料证明 DNF 系生态里至少同时存在三种防御机制：**护盾池**、**伤害吸收率**、**伤害分摊/减伤**。韩服官方职业平衡说明中，魔法护盾类技能的吸收率被直接写为“10 级时 25% → 15%，且每级固定 +1%”；国服官方职业页与补丁文字中又明确存在“守护徽章以一定比率分担队员所受伤害”“分担伤害上限”“后续把分担比率改为队友伤害减少量”的机制演化。citeturn31search2turn31search9turn31search13turn31search3turn31search11
+
+工程上必须把三种机制分开建模，推荐顺序如下：
+
+1. **无敌/格挡**：直接截断。  
+2. **伤害吸收率**：把一部分最终伤害转为“被吸收”，可落到 MP、专属资源或吸收事件。  
+3. **护盾池**：以数值池吃掉剩余伤害。  
+4. **伤害分摊**：把目标最后剩余伤害的一部分转成“二次链路伤害”施加到分摊者身上。  
+5. **生命扣减**：只在以上链路后对目标生命生效。  
+
+推荐实现如下：
+
+```pseudo
+function ApplyAbsorbAndBarrier(defender, dmg, frame):
+    absorb = 0
+    for eff in defender.absorbEffects:
+        absorb += dmg.hpLoss * eff.ratio
+    absorb = min(absorb, dmg.hpLoss)
+
+    dmg.absorbed = absorb
+    dmg.hpLoss -= absorb
+
+    for shield in defender.shields.byPriority():
+        taken = min(shield.value, dmg.hpLoss)
+        shield.value -= taken
+        dmg.hpLoss -= taken
+        if dmg.hpLoss == 0: break
+
+    return dmg
+
+function ApplyDamageShare(defender, dmg, frame):
+    if defender.linkShares.empty():
+        return dmg
+
+    shareOut = 0
+    for link in defender.linkShares:
+        amount = min(dmg.hpLoss * link.ratio, link.remainingCap(frame))
+        shareOut += amount
+        EmitLinkedDamage(link.receiver, amount, flags=NO_CRIT|NO_ONHIT|NO_REFLECT)
+
+    dmg.hpLoss -= shareOut
+    return dmg
+```
+
+这里把“分摊”做成**二次链路伤害事件**，而不是让保护者代替目标重新吃一次原伤害流程，主要是为了避免暴击、吸血、反伤、异常附带、命中回调被重复触发。国服补丁里“从分摊伤害比率改成队友伤害减少量”的历史，也说明这个模块一旦与主伤害流程耦合过深，平衡与维护成本会很高。citeturn31search3turn31search11
+
+## 网络同步与权威服务器
+
+对于 1:1 类 DNF/DFO，这里不建议使用传统延迟锁步，也不建议做“客户端命中即真”的轻权威模型；最合理的是**服务器权威、客户端输入预测、有限回滚、逐帧状态哈希**。GGPO 官方把回滚网络定义为“基于输入预测与推测执行的零感输入延迟体验”，但同时要求游戏模拟是完全确定性的；形式化论文给出的客户端-服务器模型进一步说明：客户端每 tick 发输入，服务器用权威 tick 演算，若客户端本地状态与服务器状态偏离，就回滚到最后确认帧并重放；现代格斗官方网络文又额外证明了把“时间权威”和“状态权威”放在服务器上，能更好处理滞后不对称、IP 暴露、DDoS 与 lag switch。citeturn24view1turn24view0turn24view5turn39view0
+
+从架构选择上，建议如下：
+
+| 方案 | 体感 | 公平性 | 抗作弊 | 开发复杂度 | 结论 |
+|---|---|---|---|---|---|
+| 纯延迟锁步 | 输入迟钝 | 中 | 中 | 低 | 不适合类 DNF/DFO 的连段、取消、抢招手感。citeturn24view1turn24view5 |
+| 普通 client/server 无回滚 | 稳定但延迟明显 | 高 | 高 | 中 | 可做 PvE，不适合高强度 1:1 精确对战。citeturn17search1turn17search3 |
+| 服务器权威回滚 | 最接近离线手感 | 高 | 高 | 高 | 推荐。现代格斗项目已证明显著优于前两者。citeturn24view1turn24view5turn39view0 |
+
+建议的网络时序如下。它参考了输入流 `usercmd`、服务器时钟权威、客户端重放与服务器校正的公开模型。citeturn17search2turn17search0turn24view5turn39view0
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>C: 本地立即执行输入 N
+    C->>S: InputCmd(frame=N, buttons, axes, ack)
+    S->>S: 权威推进 frame N
+    S-->>C: StateDelta(frame=N, hash, events)
+    C->>C: 哈希一致? 若否则 rollback 到 N
+    C->>C: 重放 N+1..current
+    S-->>C: Snapshot/Correction(必要时)
+```
+
+**推荐运行参数**如下：战斗模拟 60Hz；渲染独立于模拟，可 120Hz–300Hz；固定输入延迟 2–3 帧；最大自动回滚窗口 8 帧；每帧记录权威哈希，每 5 帧记录轻量快照；1:1 完整确定性快照目标 32–64KB。这里的 60Hz 与 2–3 帧固定延迟是工程建议，不是 DFO 零售端已公开常数；之所以这样定，是因为公开回滚文献与现代格斗工程实践证明这组参数在手感与回滚长度之间最容易落地，而现代官方案例里服务器侧观战快照已经压到约 50KB。citeturn24view5turn39view0
+
+### 网络包与字段建议
+
+官方没有公开 DFO 的私有战斗封包，因此下面给出的是**兼容服务器权威回滚的建议协议**。建议传输层使用 UDP 或 QUIC datagram；输入流走“无连接可靠化/乱序可丢”；校正与房间配置走可靠信道。`usercmd` 思路与现代格斗的 GVS/权威快照模型都支持这种切分。citeturn17search2turn39view0
+
+| 包名 | 方向 | 核心字段 | 说明 |
+|---|---|---|---|
+| `MatchInit` | S→C | `match_id, seed, mode_profile_id, map_id, sim_hz, input_delay, rollback_max, checksum_salt` | 开局一次性下发。 |
+| `InputCmd` | C→S | `seq, client_frame, local_ts, buttons_mask, axis_x, axis_y, facing, aim8, ack_server_frame, ack_bits, local_state_hash` | 只传输入，不传“我命中了谁”。 |
+| `StateDelta` | S→C | `server_frame, auth_hash, entity_deltas[], combat_events[]` | 主下行包。 |
+| `SnapshotFix` | S→C | `rollback_to, snapshot_id, compressed_state, replay_until` | 大偏差时发。 |
+| `Heartbeat` | 双向 | `rtt, jitter, loss, clock_offset` | 网络质量。 |
+| `IntegrityReport` | C→S | `build_id, module_hash, anti_debug_flags, input_device_flags` | 反作弊辅助。 |
+| `ReplayChunk` | S→存储 | `frame_range, inputs, auth_hashes, key_snapshots` | 回放/仲裁。 |
+
+推荐的 `InputCmd` 样例：
 
 ```json
 {
-  "skillDefenseProfile": {
-    "skillId": 44051,
-    "windows": [
-      {
-        "startMs": 0,
-        "endMs": 180,
-        "flags": ["invincible"]
-      },
-      {
-        "startMs": 181,
-        "endMs": 540,
-        "flags": ["super_armor", "damage_reduce"],
-        "damageReduceRate": 0.3
-      }
-    ],
-    "guardOverride": {
-      "allowCancelIntoGuard": true,
-      "excludeStates": ["awakening", "grabbed", "script_locked"]
-    }
-  }
+  "op": "InputCmd",
+  "seq": 18231,
+  "client_frame": 5512,
+  "local_ts_ms": 91852,
+  "buttons_mask": 4137,
+  "axis_x": -1,
+  "axis_y": 0,
+  "facing": -1,
+  "aim8": 4,
+  "ack_server_frame": 5507,
+  "ack_bits": "11101101",
+  "local_state_hash": "0x8f22da18"
 }
 ```
 
-### 网络同步、预测与安全
+需要特别强调：**客户端不得上报命中结果、暴击结果、异常挂上结果、位移结论。** 客户端只上报输入与自检哈希；服务器重建技能时序、碰撞、伤害、异常与状态变化。否则宏、内存修改和封包重放会直接把战斗核打穿。citeturn18search0turn39view0turn24view5
 
-保护状态是最容易被篡改、也最需要“体感顺滑”的部分，因此建议采用**服务端时间轴权威 + 客户端帧窗预测**。客户端根据本地技能施法与动画可提前亮起白边（无敌）、红边（霸体）或 Guard 姿态，但真正的“这一下算不算打到人”，必须由服务器根据**技能启动时间、当前帧窗配置、攻击可格挡标志、Guard 输入时戳**统一判定。Nabel 的通用 Guard 因为直接影响机制成功与失败，更不能由客户端说了算。citeturn33view2turn45search2
+## 反作弊与规则隔离
 
-在反作弊上，最危险的不是简单的“无敌全开”，而是把技能中后摇的 Super Armor 偷换成 Invincibility，或伪造 Perfect Parry 输入时戳。因为公开补丁已经证明官方经常按帧去微调“这段是霸体还是无敌”，说明这些窗口是战斗平衡的直接控制点。解决办法是：所有技能防御帧窗由服务器端技能表导出；客户端只缓存只读镜像；Guard/Parry 输入附带 `inputSeq` 和本地时间，但服务器要用接收时刻和技能状态重建判定。citeturn34view0turn34view1turn34view2
+官方规则已经把“禁止项”说得非常明确：不允许使用会影响游戏的程序/设备，尤其是**调试器、反汇编器、封包修改程序、内存修改程序、宏程序、进程隐藏、绕过安全方案、虚拟机、远程访问程序**。这说明设计战斗系统时，反作弊不应只靠客户端扫描，而必须把**服务器权威校验**当作核心设计目标。citeturn18search0
 
-## 客户端数据、网络同步与来源索引
+建议的权威校验点如下：
 
-### 资产层、脚本层与运行时层
+| 校验点 | 权威端检查 | 失败处理 |
+|---|---|---|
+| 输入频率 | 同一玩家每 tick 仅允许一个 `InputCmd` 生效，超频/回填记分 | 丢弃并记异常分 |
+| 技能释放 | 冷却、蓝耗、状态、朝向、可取消窗口、地面/空中条件、抓取合法性 | 拒绝施法并回滚校正 |
+| 位移合法性 | 每帧速度、冲刺链、跳跃阶段、Z 轴、强制位移是否来自技能事件 | 校正位置并加权封禁分 |
+| 命中合法性 | 命中盒存在、与目标重叠、目标可被击中、帧上允许多段命中次数 | 删除非法命中事件 |
+| 暴击与状态 | 随机源来自服务器；客户端不得宣称“已暴击/已挂异常” | 服务器重算 |
+| 净化与免疫 | 状态实例上是否 `cleanseable`、是否 `ignore_resistance`、是否仍在免疫窗内 | 服务器重算 |
+| 连击修正 | 重力、倒地、回避、Hit Recovery 修正只由服务器推进 | 服务器重算 |
+| 回滚完整性 | 客户端每帧哈希与服务器/GVS 哈希对比 | 发现偏差即强校正/封禁 |
+| 网络滥用 | 输入迟到率、间歇性断流模式、lag switch 特征 | 复制上次输入并记责 |
+| 自动化/宏 | 周期性输入图谱、超人类 1 帧抖动频率、设备标记异常 | 风控/人工复核 |
 
-当前全球客户端公开清单显示，DFO 的资源粒度非常细：公开清单可见 **13,459 个 NPK**、**5,263 个 REP**、**44 个 DLL** 等文件类型；而公开的 PVF/NPK 解析仓库已经把读取层拆成 `BufferReader`、`ImgFile`、`Npk`、`NpkLoader`、`Pvf`、`PvfAnimation`、`PvfDocument`、`PvfNode`、`PvfReader`、`PvfScript`、`PvfString`、`ValueType` 等类。这说明在可见资产层，DNF/DFO 的内容组织是“容器文件 + 脚本节点 + 渲染/动画数据”三层分离的。citeturn39search0turn20view0turn19view0
+这个清单与现代格斗“服务器运行一份额外对局副本、比较 checksum 来识别篡改”的思路一致；GGPO 的 `synctest` 又进一步说明，确定性错误可以用回滚执行前后状态 diff 来定位。因此，落地时必须自带三个工具：**逐帧哈希、权威回放器、回滚一致性测试器**。citeturn39view0turn24view0
 
-公开中文 PVF 资料还能确认 `.lst -> 抽象路径 -> .equ/.stk 类脚本` 这种典型组织方式：例如 `equipment.lst` 负责 ID 到抽象路径的映射，而 `.equ` 文件采用带方括号标签的结构化键值与脚本块；NPK/IMG 公开解析资料则说明了 IMG 的多版本分工，尤其是 IMGV5 大量用于技能特效并以 DDS 方式存储。对复刻项目而言，这个信息非常关键，因为它意味着**战斗规则最好不要硬写在代码里，而要分成“服务端运行态 + 可热更新模板”**。citeturn41search0turn47view0
+### PvE/PvP 规则分离的实现方式
 
-但要再次强调：**零售客户端运行时对象偏移、VTable、内存布局未公开/未找到**。因此下面这套结构体不是“泄露结构”，而是基于公开规则整理出的**推荐运行时布局**：
+官方资料足以证明 PvE/PvP 不能写成一个表：PvP 有独立技能指引、独立冷却提示保存、独立装备归一化、独立回放、独立超甲/无敌/判定修正，且“公平决斗场”还会把头像/称号/宠物/附魔等外部物品效果摘掉，改成职业固定属性。citeturn27view0turn42view0
 
-```cpp
-#pragma pack(push, 1)
-struct RuntimeIgniteState {
-    uint32_t ownerEntityId;      // 0x00
-    float gauge01;               // 0x04
-    uint64_t freezeUntilMs;      // 0x08
-    uint8_t state;               // 0x10
-    uint8_t reserved[3];         // 0x11
-};
+因此，推荐的数据结构不是 `skill(id, damage, cooldown)`，而是：
 
-struct RuntimeNeutralizeState {
-    uint32_t monsterEntityId;    // 0x00
-    float currentGauge;          // 0x04
-    float maxGauge;              // 0x08
-    uint8_t version;             // 0x0C
-    uint8_t recoveryTier;        // 0x0D
-    uint8_t inGroggy;            // 0x0E
-    uint8_t holdGateEnabled;     // 0x0F
-    uint64_t groggyEndMs;        // 0x10
-    uint64_t weaknessMaskLo;     // 0x18
-    uint64_t weaknessMaskHi;     // 0x20
-};
+- `skill_core_def`：技能身份、不随模式变的输入定义、动画资源键。  
+- `skill_exec_profile`：`mode_profile_id + skill_id` 组合键，存启动/有效/收招/伤害/硬直/霸体/无敌/击倒/冷却等。  
+- `mode_rule_profile`：统一存 PvE/PvP 的 HP、MP、暴击、属性、回避、命中、修正条、强起、时间限制规则。  
+- `equipment_normalize_profile`：只给公平 PvP 用。  
 
-struct RuntimeDefenseState {
-    uint32_t ownerEntityId;      // 0x00
-    uint32_t flags;              // 0x04
-    float damageReduceRate;      // 0x08
-    float shieldHp;              // 0x0C
-    uint8_t guardGauge;          // 0x10
-    uint8_t reserved[3];         // 0x11
-    uint64_t guardWindowEndMs;   // 0x14
-    uint64_t parryWindowEndMs;   // 0x1C
-};
-#pragma pack(pop)
-```
+**不要在战斗热路径里写 `if (isPvp)` 的散乱分支。** 正确做法是进入房间时绑定一个 `mode_profile_id`，后续所有结算都查 profile。这样既符合官方“同技能在不同模式有不同引导与参数”的事实，也能把平衡迁移成本降到最低。citeturn27view0turn42view0turn6view0turn7view0
 
-### 推荐报文模型
+## 数据表与示例
 
-为了让战斗既有 DNF 的“手感”，又有 MMO 内容需要的安全性，推荐的报文形态如下：
+官方文档已经证明技能与状态异常至少有如下字段边界；下面给出建议的关系型/配置型结构，以及一条可直接供程序员落库的示例。字段存在性依据来自官方 API 与官方指南，示例值本身是建议值，不对应任何公开职业的现网精确私有数据。citeturn6view0turn7view0turn29view0turn29view1
+
+| 表名 | 关键字段 | 用途 |
+|---|---|---|
+| `skill_core_def` | `skill_id, skill_name, input_cmd, anim_key, cost_type` | 核心技能定义 |
+| `skill_exec_profile` | `mode_profile_id, skill_id, startup_f, active_f, recovery_f, cool_ms, cast_ms, chain_reset_ms, mana_cost, superarmor_mask, invuln_mask` | 模式化技能执行参数 |
+| `skill_hitbox_frame` | `mode_profile_id, skill_id, frame_no, box_type, x, y, w, h, hit_group, max_hits_per_target` | 多段命中盒 |
+| `status_effect_def` | `status_id, category, duration_ms, tick_ms, stack_mode, max_stack, cleanseable, ignore_resistance_flag, mutex_group` | 异常定义 |
+| `mode_rule_profile` | `mode_profile_id, hp_scale, mp_scale, crit_mult, counter_mult, gravity_threshold, down_threshold, quick_stand_ms` | 模式规则 |
+| `damage_rule_profile` | `mode_profile_id, def_formula_k, elem_formula_k, pvp_global_scale, hitstop_f` | 伤害核参数 |
+| `barrier_share_profile` | `effect_id, absorb_ratio, barrier_type, share_ratio, share_cap, linked_damage_flags` | 护盾/吸收/分摊 |
+| `combat_event_log` | `match_id, frame, event_type, src_id, dst_id, payload_hash` | 回放与调试 |
+
+示例技能配置建议如下：
 
 ```json
 {
-  "C_SkillCast": {
-    "entityId": 1001,
-    "skillId": 44051,
-    "inputSeq": 991827,
-    "clientTimeMs": 1829371
+  "skill_id": 100101,
+  "skill_name": "UpperSlash_Test",
+  "core": {
+    "input_cmd": "→ + X",
+    "anim_key": "sword_upper_01"
   },
-  "C_GuardInput": {
-    "entityId": 1001,
-    "inputSeq": 991833,
-    "clientTimeMs": 1829440
-  },
-  "S_HitConfirm": {
-    "attackerId": 1001,
-    "targetId": 9102101,
-    "finalDamage": 182334.5,
-    "igniteGauge01": 0.84,
-    "neutralizeDelta": 8321.0,
-    "neutralizeCur": 14550.0
-  },
-  "S_NeutralizeBreak": {
-    "monsterId": 9102101,
-    "serverTimeMs": 1829504,
-    "groggyEndMs": 1839504,
-    "damageTakenMultiplier": 1.5
-  },
-  "S_DefenseResolution": {
-    "ownerId": 1001,
-    "result": "guarded",
-    "guardGauge": 2
-  }
+  "profiles": [
+    {
+      "mode_profile_id": "PVE",
+      "startup_f": 7,
+      "active_f": 3,
+      "recovery_f": 15,
+      "cool_ms": 5000,
+      "cast_ms": 116,
+      "chain_reset_ms": 1800,
+      "mana_cost": 15,
+      "hitstop_f": 3
+    },
+    {
+      "mode_profile_id": "PVP_FAIR",
+      "startup_f": 8,
+      "active_f": 2,
+      "recovery_f": 17,
+      "cool_ms": 6000,
+      "cast_ms": 133,
+      "chain_reset_ms": 1800,
+      "mana_cost": 12,
+      "hitstop_f": 2
+    }
+  ]
 }
 ```
 
-这套报文的原则非常简单：**客户端发输入，服务器发状态结果**。客户端绝不上传“我现在点火 83%”“我现在无敌中”“我刚刚把 Boss 破条了”，因为这些都属于可篡改状态。客户端至多上传“我在某时点按了技能/按了 Guard”；后续一切由服务端以服务端技能表与服务端时间轴重演。citeturn37search6turn37search0
+异常表推荐把官方已公开的 DOT 规则直接编码进去：
 
-### 区服差异结论
+| 异常 | 建议默认 `duration_ms` | `tick_ms` | `max_stack` | 公开规则依据 |
+|---|---:|---:|---:|---|
+| 中毒 `POISON` | 5000 | 500 | 5 | 5 秒、0.5 秒一跳、每层 +2% 下一次中毒，最高 10%。citeturn29view0 |
+| 灼伤 `BURN` | 5000 | 500 | 1 | 5 秒、0.5 秒一跳、150px 溅射 10%、被冰冻解除时剩余伤害 ×1.1 立即结算。citeturn29view0 |
+| 感电 `SHOCK` | 10000 | 500 | 10 | 10 秒、按打击次数分配、打完后进入残留、每层 +0.5%，最高 5%。citeturn29view0 |
+| 出血 `BLEED` | 3000 | 500 | 10 | 3 秒、0.5 秒一跳、每层 +1%，最高 10%。citeturn29view0 |
+| 眩晕 `STUN` | 3000 | 0 | 1 | 3 秒，可连打缩短，且与部分控制互斥。citeturn29view1 |
+| 冰冻 `FREEZE` | 5000 | 0 | 1 | 5 秒，控制互斥。citeturn29view1 |
+| 石化 `PETRIFY` | 10000 | 0 | 1 | 10 秒，可连打缩短，控制互斥。citeturn29view1 |
+| 睡眠 `SLEEP` | 10000 | 0 | 1 | 10 秒，控制互斥。citeturn29view1 |
 
-可公开确认的演进路径是：韩国服 2022 建立初版 Neutralize Gauge；同年 Ispins 调整为加入共通弱点；2025 韩国服“中天”把无力化改成伤害驱动并加入点火；全球服随后提供了对应的 Neutralize/Ignite 指南与 Nabel Guard 官方页面。中文官方页面能确认无敌/霸体与格挡/招架概念一直独立存在，但本轮没有在公开索引中拿到中服/台服关于“新版点火 + 伤害驱动无力化”的完整系统页，因此在该项上只能标注为“未公开/未找到”。citeturn42search0turn44view0turn5view0turn44view2turn33view2turn34view2turn11search8
+## 测试调试、术语与局限
 
-### 主要来源索引
+如果要把这套系统做成“能上线而不是能演示”，测试应分成**确定性、规则正确性、网络压力、反作弊、数值回归**五组。GGPO 官方 `synctest` 已经给了很好的范式：每帧强制回滚一次，对比初次执行与回滚执行的状态是否一致；若不一致，直接 diff 日志。现代服务器权威格斗案例又证明，对局服务端应长期保存权威哈希与关键快照，以做仲裁、观战与作弊定位。citeturn24view0turn39view0
 
-以下来源都可作为继续向实现细节深挖时的起点，其中多条页面自带官方 UI 截图或机制示意图：
+| 测试项 | 条件 | 断言 |
+|---|---|---|
+| 确定性回放 | 同 seed、同输入流、跑 10 万帧 | 客户端/服务器/离线回放哈希完全一致 |
+| 回滚一致性 | 每帧随机回滚 1–8 帧 | 重放后状态一致，无额外事件 |
+| 命中热路径 | 多段、多目标、霸体、无敌、抓取不可抓 | 只产生合法事件，不重复伤害 |
+| 连击修正 | 长连、空连、倒地追击、强起 | 修正条、强起、Hit Recovery 加成符合 profile |
+| 异常系统 | 灼伤→冰冻、感电多段分摊、互斥控制、净化后免疫窗 | 官方规则与项目规范一致 |
+| 护盾/吸收/分摊 | 吸收率 + 护盾池 + 链接伤害同时存在 | 次序稳定，不触发重复暴击/吸血/反伤 |
+| 网络波动 | 0–180ms RTT、10% 抖动、5% 丢包 | 体感可控；回滚窗口不爆；可责任定位 |
+| 宏与 lag switch | 周期性 1 帧输入、间歇断流 | 服务端复制上次输入并记责，不影响对手 |
+| 回归比较 | 新老版本 profile 对同回放输入比较 | 只在预期技能上出现结果差异 |
 
-- 韩服《Season 10. 中天 : THE NEW WAVE》战斗系统改版页，含“伤害驱动无力化 + 点火”总说明与 First Server 调整说明。citeturn5view0
-- 韩服/全球《战斗系统》与《Neutralize Gauge》指南，含无力化、点火、无敌、霸体的 UI 示意。citeturn45search2turn44view2
-- 韩服/全球《Nabel Raid Guard》官方页，含 Guard 图示、Gauge、可取消动作范围。citeturn33view0turn33view2
-- 2022 首版 Neutralize 系统与 2022 Ispins 共通弱点改造说明。citeturn42search0turn44view0
-- 韩国官方社区高质量实测：点火独立性、霸体受击是否掉点火、无敌是否算被击、满点火与停滞点火的削条差。citeturn28view0turn45search1
-- 韩国官方社区高质量实测：Boss 无力化 Groggy 时间/倍率样本、Hold Gate 样本。citeturn30search0turn30search2turn30search4
-- 中文官方页面中关于“无敌/霸体转换”“格挡/招架术语”的技能与装备文案。citeturn34view2turn11search8turn11search2
-- 公开客户端资源与解析资料：当前客户端文件构成、公开 PVF/NPK 解析仓库、PVF/NPK/IMG 结构说明。citeturn39search0turn20view0turn19view0turn41search0turn47view0
+建议至少做四个调试工具：**逐帧事件浏览器、状态哈希面板、命中盒/受击盒可视化、回放差分器**。官方 PvP 更新已经强调回放下载与回放区；Steam 客户端文件清单里也能看到大量 `rep` 文件类型，说明“把战斗过程固化成可下载/可读回放对象”本身就是成熟方向。citeturn27view0turn23view0
 
-综合来看，如果目标真的是“1:1 复刻 DNF/DFO 当前战斗控制系统”，最可靠的工程路线不是去赌某个所谓“泄露公式”，而是采用本报告给出的三层建模：**怪物脚本化 Neutralize/Groggy、个人状态机式 Ignite、按命中层级解析的防御优先级链**。公开资料已经足够把这三层做得非常接近线上体验；真正仍然缺失的，是零售客户端未公开的常数与内存偏移，这些部分应明确标注为“未公开/未找到”，不要在实现文档里伪装成已知。citeturn5view0turn44view2turn33view2turn20view0
+最后给出中英韩关键术语对照；韩文优先采用韩服官方用语或公开开发者 API 字段名。citeturn29view1turn7view0turn24view1turn39view0
+
+| 中文 | English | 한국어 |
+|---|---|---|
+| 硬直 | hitstun | 경직 |
+| 命中恢复 | hit recovery | 히트 리커버리 |
+| 霸体 | super armor | 슈퍼아머 |
+| 无敌 | invulnerability | 무적 상태 |
+| 强制硬直 | forced stagger | 강제 경직 |
+| 站立修正 | standing correction | 스탠딩 보정 |
+| 空中修正 | aerial correction | 에어리얼 보정 |
+| 倒地修正 | down correction | 다운 보정 |
+| 重力修正 | gravity correction | 중력 보정 |
+| 强制起身 | forced wake-up | 강제기상 |
+| 反击 | counter | 카운터 |
+| 冷却时间 | cooldown time | 쿨타임 |
+| 施放时间 | casting time | castingTime / 시전시간 |
+| 技能链重置时间 | chain reset time | chain.resetTime |
+| 中毒 | poison | 중독 |
+| 灼伤 | burn | 화상 |
+| 感电 | shock / electrocute | 감전 |
+| 出血 | bleed | 출혈 |
+| 眩晕 | stun | 기절 |
+| 冰冻 | freeze | 빙결 |
+| 石化 | petrify | 석화 |
+| 睡眠 | sleep | 수면 |
+| 净化 | cleanse / purify | 정화 |
+| 免疫 | immunity | 면역 |
+| 护盾 | barrier / shield | 보호막 |
+| 伤害吸收 | damage absorb | 데미지 흡수 |
+| 伤害分摊 | damage share | 피해 분담 |
+| 服务器权威 | server authority | 서버 권위 |
+| 回滚 | rollback | 롤백 |
+| 输入命令 | user command / input command | usercmd / 입력 |
+
+**未决问题与局限**需要明确保留三项。第一，零售版本完整伤害乘区与现行全部装备系统，并没有被官方完整公开，因此本文只把“基础战斗核”写成规范，而没有声称还原全部线上装备经济。第二，私有战斗封包 opcode、压缩细节、对战频道具体网关拓扑未公开，因此协议部分是**推荐设计**而非现网镜像。第三，泄露/私服资料存在法律与正确性双风险，本文只做来源分层和可信度评价，没有复用任何泄露代码。对开发团队来说，这三项并不妨碍先做出一个高度接近 DNF/DFO 体验、而且在工程上更可维护的 1:1 战斗系统。citeturn6view0turn23view0turn15search2turn18search0
