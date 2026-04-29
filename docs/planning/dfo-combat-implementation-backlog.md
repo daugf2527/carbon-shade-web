@@ -2,7 +2,7 @@
 
 This backlog turns the current DFO/DNF research docs into small implementation batches for the local combat kernel. It does not authorize downloading or distributing official PVF/NPK assets.
 
-> **状态更新 (2026-04-29):** P0 和 P1 已完成 ✅。P2 部分完成（normalized spritesheets 已落地，sprite 系统支持 fixed-cell frame-index 渲染）。
+> **状态更新 (2026-04-29):** P0 和 P1 已完成 ✅。P2 部分完成：normalized spritesheets 已落地 ✅（`SpriteFrameLibrary.ts` 支持 fixed-cell frame-index 渲染）。剩余 P2 项（skill timing extraction, sweep/grab_attach emitters, action frame calibration, stable replay hashes）为实际未完成项。
 
 ## References
 

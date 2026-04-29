@@ -1,6 +1,8 @@
 # GitHub 开发闭环流程 v0.1
 
-> 定位：定义本项目后续如何基于 Web ChatGPT、虚拟沙箱、GitHub、GitHub Actions 进行开发、验证和交付。  
+> **Note:** This document was written during the project's initial setup. The AI agent referenced is now **Claude Code** (not ChatGPT). The workflow principles remain valid but the specific tool names are historical.
+>
+> 定位：定义本项目后续如何基于 Web Claude Code、虚拟沙箱、GitHub、GitHub Actions 进行开发、验证和交付。  
 > 原则：GitHub 是源码真源头，GitHub Actions 是真实验收环境，虚拟沙箱只做辅助加工。
 
 ---
@@ -13,7 +15,7 @@
 - 判断产品方向、世界观、玩法优先级
 - 审核最终效果
 
-### ChatGPT
+### Claude Code（文档写作时为 ChatGPT）
 
 - 分析截图和问题根因
 - 读取 GitHub 仓库代码
@@ -50,7 +52,7 @@
 ```text
 用户提出需求 / 上传截图 / 上传素材
   ↓
-ChatGPT 分析问题并读取 GitHub 代码
+AI 分析问题并读取 GitHub 代码
   ↓
 先给根因与修复方案
   ↓

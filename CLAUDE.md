@@ -19,7 +19,7 @@ Browser screenshot verification scripts are intentionally excluded from npm comm
 
 ## Documentation module
 
-All design, planning, and research decisions are stored in `docs/`. This is the project's long-term knowledge base — consult it before making architectural changes. Documents are organized into five functional directories.
+All design, planning, and research decisions are stored in `docs/`. This is the project's long-term knowledge base — consult it before making architectural changes. Documents are organized into five functional directories. See `docs/README.md` for a navigable index categorized by status (current, historical, aspirational, research).
 
 ### design/ — Project design & identity
 
@@ -91,7 +91,7 @@ Acceptable as backlog:
 
 Known constraints:
 - Commit `c4d3b22` fixed replay history blowup — replay frames must only store that frame's newly flushed events, never clone the full archive.
-- For runtime optimization, prefer small dirty-check changes: avoid repeated `setTexture`/`setText`/`setSize`/`setColor` when values haven't changed; lower debug HUD update frequency; guard debug text work behind visibility checks.
+- For future optimization, consider dirty-checking values that are set every frame: `setTexture`, `setText`, `setSize`, `setColor` in `CombatScene.ts` are currently called unconditionally — adding guards when values haven't changed would reduce repeated GPU calls; similarly, debug HUD text and FPS display could be throttled or guarded behind visibility checks.
 
 ## Git workflow
 

@@ -1,8 +1,8 @@
 # Training Ground R1 + R2 开发指导方案
 
-> **状态：基本完成 (~90%)** — 2026-04-29 核查
+> **状态：已完成 ✅** — 2026-04-29 核查
 > 
-> 核心交付（Walk/Run、EnemyAI、Phaser 场景、视觉、音效）已落地。实现过程中产生了一项重要的架构决策变更：Walk/Run 最终采用了 `LocomotionController` 直接位移模型，而非原方案中的 FrameDataAction + 白名单方案。剩余 ~10% 为 A 段视觉架构优化（独立类抽取 + 对象池）和 E 段打击感物理。详见下方 §2.2 和 `training-ground-r3-r4-restoration-plan.md`。
+> 核心交付（Walk/Run、EnemyAI、Phaser 场景、视觉、音效）已落地。实现过程中产生了一项重要的架构决策变更：Walk/Run 最终采用了 `LocomotionController` 直接位移模型，而非原方案中的 FrameDataAction + 白名单方案。原计划中遗留的 A 段视觉架构优化（独立类抽取 + 对象池）和 E 段打击感物理已迁移至 `training-ground-r3-r4-restoration-plan.md`。
 >
 > 范围：把 Combat Lab 0.2-R3 从"内核 + 静态截图验证"升级为"可手动操作的 2.5D 横版站桩验证场"。
 > 本文档不是新规格，是 `combat-lab-0.2-r3-final-integrated-development-spec.md` 在**表现层**的落地指导。所有内核红线（HitResolver2D5 决定命中、FeedbackController 不写战斗状态、Phaser Scene 不决定命中等）继续守住。

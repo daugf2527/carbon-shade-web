@@ -8,6 +8,8 @@ Base: `combat-lab-webdemo-0.2-r3-handfeel-fix4-assets`
 - Actor sprites now anchor by each cropped frame bottom-center using `setDisplayOrigin(crop.x + crop.w / 2, crop.y + crop.h)`.
 - This fixes player/enemy/boss sprites appearing far above or offset from their labels, HP bars, shadows, and logic foot positions.
 
+> **Note:** This fix was superseded by the normalized sprite pipeline in fix6, which replaced `setCrop()` + `setDisplayOrigin()` with fixed-cell Phaser spritesheets and `setTexture(key, frame)`.
+
 ## Not changed
 
 - No combat tuning changes.

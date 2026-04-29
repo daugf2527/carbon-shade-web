@@ -1,8 +1,10 @@
 # Core Concept Document v0.1
 
-> 定位：用 1 到 3 页纸描述“做什么游戏、为谁做、为什么能成功”。  
+> **Status: v0.1 Draft.** Sections 6 (competitor comparison) and 7 (key metrics) remain incomplete. Core vision, gameplay loops, and target audience definitions are still directionally valid. Project naming was tentative — see `01-project-identity.md` for the official name (碳影 / Carbon Shade).
+>
+> 定位：用 1 到 3 页纸描述”做什么游戏、为谁做、为什么能成功”。  
 > 当前状态：概念框架已形成，商业化指标与竞品数据待补。  
-> 项目名：暂定。
+> 项目名：暂定 → 已定名：碳影 / Carbon Shade（见 `01-project-identity.md`）。
 
 ---
 
