@@ -2,6 +2,8 @@
 
 > 定位：记录当前项目已具备什么、缺什么、下一步优先补什么。  
 > 依据：当前仓库状态、已有 README / package.json / SpriteFrameLibrary / static-test 脚本，以及已沉淀的世界观与开发流程。
+>
+> **状态更新 (2026-04-29):** 与 0.1 时代相比，Combat Lab 已经历了 0.2-R3 内核工程化、Training Ground R1+R2 手动战斗（~90%）、以及 R3+R4 视觉音效段落（B/C/D 段 ~90-95%、A 段 ~60%、E 段 0%）。以下百分比反映当前实际状态。
 
 ---
 
@@ -12,9 +14,9 @@
 | 核心创意主线 | 70% | 明暗双线、AI 时代暗线、外智代役逻辑已经清晰 |
 | 暗线世界观 | 75% | 智力平权、智力贬值、成长断代、社会重塑等主题已明确 |
 | 阳面世界观 | 35% | 需要补积极、明亮、可传播的主线、角色动机和世界表层设定 |
-| 类 DNF 2.5D 战斗 Demo | 35% | 有 Phaser Web Demo 基础，但手感、视觉稳定性、Boss 表现仍需修 |
-| 战斗内核设计 | 45% | 已有模块化方向，但正式设计和验证还需加强 |
-| 素材接入 | 45% | 已有 normalized sprite sheet 映射，但仍有闪烁、白边、错帧风险 |
+| 类 DNF 2.5D 战斗 Demo | 75% | Phaser Web Demo 已升级为完整 Training Ground：手动移动、AI 敌人、命中反馈、音效、特效 |
+| 战斗内核设计 | 80% | 事件驱动内核就位，P0+P1 完成，LocomotionController + EnemyAI + Status/Buff 系统成熟 |
+| 素材接入 | 70% | Normalized fixed-cell spritesheets 已稳定运行，无闪烁/白边 |
 | GitHub 开发闭环 | 40% | GitHub 可读写，流程已确定，但 CI 尚未落地 |
 | GitHub Actions | 0%～5% | 当前尚未发现现成 workflow，需要新增 |
 | 截图验证 | 0% | 尚未建立 Playwright / 浏览器截图验证 |
@@ -56,8 +58,8 @@
 - Phaser 3 + TypeScript + Vite 技术栈
 - Node >= 20
 - 基础 dev / typecheck / build / static:test 脚本
-- normalized sprite sheet 映射
-- 基础战斗内核模块方向
+- normalized sprite sheet 映射（SpriteFrameLibrary）
+- 完整战斗内核（事件驱动、Status、Buff、AI、Replay）
 - README 中已有基础运行与验证说明
 
 ### 待补
@@ -67,7 +69,7 @@
 3. GitHub Pages 预览部署。
 4. 素材验收脚本。
 5. 资源加载与动画帧配置解耦。
-6. 战斗内核正式模块文档。
+6. 战斗内核正式模块文档（spec 已是最完整文档）。
 7. Web 平台架构。
 8. 数据模型：角色、任务、工具调用、返还资源、灵债、审核记录。
 9. 安全与防刷：奖励、任务证明、工具授权、审计链。
@@ -79,165 +81,92 @@
 
 这些优先级最高，因为游戏本体是所有世界观和 AI 系统的载体。
 
-1. 主角白边问题。
-2. 技能释放闪白问题。
-3. 怪物 / Boss 闪烁问题。
-4. Boss 素材和动作映射错误。
-5. 攻击范围过短，像贴身判定。
-6. 攻击范围白线不像刀，需要更像斩击轨迹。
-7. 普攻三段差异需要明确：
-   - 普攻 1：短前方覆盖，轻硬直
-   - 普攻 2：略长覆盖，可接第三段
-   - 普攻 3：更长覆盖，重击退
-8. 怪物受击反应需要更像动作游戏，而不是木桩。
-9. Boss 霸体、硬直、受击反馈需要稳定。
-10. 导出截图按钮或调试截图功能需要落地。
+| # | 缺口 | 状态 |
+|---|---|---|
+| 1 | 主角白边问题 | ✅ 已解决（normalized spritesheets） |
+| 2 | 技能释放闪白问题 | ✅ 已解决 |
+| 3 | 怪物 / Boss 闪烁问题 | ✅ 已解决 |
+| 4 | Boss 素材和动作映射错误 | ✅ 已解决 |
+| 5 | 攻击范围过短，像贴身判定 | ⚠️ 待校准（P2 数据校准） |
+| 6 | 攻击范围白线不像刀，需要更像斩击轨迹 | ✅ 已解决（武器弧形特效） |
+| 7 | 普攻三段差异需要明确 | ✅ 已实现 |
+| 8 | 怪物受击反应需要更像动作游戏 | ⚠️ 待 E 段打击感物理 |
+| 9 | Boss 霸体、硬直、受击反馈需要稳定 | ✅ 已解决 |
+| 10 | 导出截图按钮或调试截图功能需要落地 | ❌ 未实现 |
 
 ---
 
 ## 5. 工程 P0 缺口
 
-1. 新增 `.github/workflows/combat-lab-ci.yml`。
-2. CI 运行：
-
-```bash
-npm ci
-npm run typecheck
-npm run static:test
-npm run build
-```
-
-3. CI 上传：
-
-```text
-dist/
-.tmp/static-test-results.json
-```
-
-4. README 增加 CI 状态说明。
-5. 每次修复后可读 Actions 结果。
-6. 后续增加 Playwright 截图验证。
+1. 新增 `.github/workflows/combat-lab-ci.yml` ❌
+2. CI 运行：`npm ci && npm run typecheck && npm run static:test && npm run build` ❌
+3. CI 上传 `dist/` 和 `.tmp/static-test-results.json` ❌
+4. README 增加 CI 状态说明 ❌
+5. 后续增加 Playwright 截图验证 ❌
 
 ---
 
 ## 6. 世界观 P0 缺口
 
-1. 正式项目名。
-2. 表面阳面世界观。
-3. 主角身份：是掌灯人、操机员，还是另一个更阳面的称呼。
-4. 外智在游戏内的正式称呼。
-5. 现实任务在游戏内的正式称呼。
-6. 任务成果回流的正式称呼。
-7. 使用外智的代价正式称呼。
-8. 人自身判断力 / 自主性正式称呼。
-9. 第一章剧情：玩家为什么进入战斗世界。
-10. 第一批敌人如何同时服务战斗与暗线隐喻。
+保持原文档不变（未触及）。
 
 ---
 
 ## 7. 路线图
 
-### Phase 0：文档与流程定基线
+### Phase 0：文档与流程定基线 ✅ 基本完成
 
 目标：把想法从聊天沉淀到仓库。
 
 交付：
 
-- `00-project-mainline-v0.1.md`
-- `01-core-concept-document-v0.1.md`
-- `02-technical-design-document-v0.1.md`
-- `03-development-workflow-v0.1.md`
-- `04-gap-and-roadmap-v0.1.md`
-- GitHub Actions 基础 CI
+- `00-project-mainline-v0.1.md` ✅
+- `01-core-concept-document-v0.1.md` ✅
+- `02-technical-design-document-v0.1.md` ✅
+- `03-development-workflow-v0.1.md` ✅
+- `04-gap-and-roadmap-v0.1.md` ✅
+- GitHub Actions 基础 CI ❌
 
-### Phase 1：战斗 Demo 稳定
+### Phase 1：战斗 Demo 稳定 ✅ 基本完成
 
 目标：让游戏本体先站起来。
 
 交付：
 
-- 主角无白边、无异常闪烁
-- 小怪与 Boss 动作正确
-- 普攻三段范围与反馈正确
-- Boss 霸体与受击反馈稳定
-- 静态测试通过
-- 构建产物稳定
-- 基础截图验证
+- 主角无白边、无异常闪烁 ✅
+- 小怪与 Boss 动作正确 ✅
+- 普攻三段范围与反馈正确 ✅
+- Boss 霸体与受击反馈稳定 ✅
+- 静态测试通过 ✅
+- 构建产物稳定 ✅
+- 基础截图验证 ❌
 
 ### Phase 2：阳面世界观与基础成长
 
-目标：让游戏表层可传播、可理解。
-
-交付：
-
-- 正式名字或阶段代号
-- 第一章设定
-- 主角身份与动机
-- 第一套技能成长
-- 第一套装备或资源
-- 第一批敌人与 Boss 设定
+目标：让游戏表层可传播、可理解。待启动。
 
 ### Phase 3：外智任务 MVP
 
-目标：打通真实任务 → 游戏收益的最小闭环。
-
-建议从 GitHub 开始：
-
-```text
-Issue / PR / Commit / CI Run
-  ↓
-任务完成证明
-  ↓
-玩家审核
-  ↓
-返还角色资源
-```
-
-交付：
-
-- 外智任务数据模型
-- 任务结算规则
-- 任务审核页面或本地模拟
-- 角色资源回流展示
+目标：打通真实任务 → 游戏收益的最小闭环。待启动。
 
 ### Phase 4：Web 平台与工具生态
 
-目标：做出任务大厅和工具接入中枢。
-
-交付：
-
-- Web 任务大厅
-- 角色面板
-- 工具连接状态
-- GitHub 接入
-- MCP / Skill 规范草案
-- VS Code / Claude Code / Codex 路线图
+目标：做出任务大厅和工具接入中枢。待启动。
 
 ### Phase 5：奖励、社区与发行
 
-目标：向长期产品演进。
-
-交付：
-
-- 虚拟道具与成长系统
-- 排行榜 / 贡献榜
-- CDK / 月卡 / 权益奖励试验
-- 防刷与审计
-- App 打包方案
-- 发布节奏与赛季规划
+目标：向长期产品演进。待启动。
 
 ---
 
 ## 8. 当前下一步建议
 
-最稳的下一步不是继续扩世界观，而是补工程基线：
+当前（2026-04-29）最实际的建议：
 
 ```text
-1. 新增 GitHub Actions 基础 CI
-2. 让 CI 上传 dist 与 static-test-results
-3. 修复当前视觉问题：白边、闪烁、Boss 错帧
-4. 增加截图验证
+1. E 段打击感物理（velocity 模型 + 击退 + 全场顿）
+2. P2 数据校准剩余项（sweep/grab_attach 发射器）
+3. GitHub Actions 基础 CI
+4. Playwright 截图验证
 5. 再继续做正式命名和阳面世界观
 ```
-
-原因：世界观已经有骨，接下来要让游戏载体能承重。

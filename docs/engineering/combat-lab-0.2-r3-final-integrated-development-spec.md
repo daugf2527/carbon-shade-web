@@ -2462,7 +2462,7 @@ DebugOverlay 显示当前阶段；
 
 ```text
 1. baseline 可调；
-2. 所有改动必须记录在 docs/tuning-baseline.md；
+2. 所有改动必须记录在 docs/design/tuning-baseline.md；
 3. screenshot test 至少覆盖 Z mismatch、Y mismatch、Downed hit、Armor hit；
 4. DebugOverlay 必须渲染实际 hitbox，而不是配置表原始矩形；
 5. 表中的 X 轴范围表示 hitbox local width，不默认表示以 attacker 中心左右对称；
@@ -3427,8 +3427,8 @@ Verification commands:
 Deliverables:
 - Complete source code
 - README.md
-- docs/source-policy.md
-- docs/tuning-baseline.md
+- docs/design/source-policy.md
+- docs/design/tuning-baseline.md
 - verification/report.json
 - verification/screenshot.png
 - verification/replay.json when exported
