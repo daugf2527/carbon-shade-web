@@ -42,6 +42,31 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Phaser import boundary check
+        run: |
+          echo "Checking src/combat/ for Phaser imports..."
+          if grep -rq "from ['\"]phaser" src/combat/ || grep -rq "import.*phaser" src/combat/; then
+            echo "FAIL: Phaser import found in src/combat/ — kernel must remain Phaser-free"
+            grep -rn "phaser" src/combat/
+            exit 1
+          fi
+          echo "OK: No Phaser imports in combat kernel"
+
+      - name: Velocity write location audit
+        run: |
+          echo "Auditing velocity writes in src/combat/..."
+          echo "Current velocity write locations (pre-E-segment):"
+          grep -rn "\.velocity\s*[.=]" src/combat/ --include="*.ts" || echo "  (none found)"
+          echo ""
+          echo "Allowed locations (E-segment: tighten to exactly 4 files):"
+          echo "  - ActorFactory.ts (initialization: velocity: {x:0,z:0,y:0})"
+          echo "  - CombatKernel.ts updateReactionMotion() (physics simulation)"
+          echo "  - ReactionResolver.ts apply() (launch/stagger/knockback velocity)"
+          echo "Velocity audit complete."
+
+      - name: Validate sprite sheets
+        run: npm run validate:sprites
+
       - name: Typecheck
         run: npm run typecheck
 
@@ -73,6 +98,49 @@ jobs:
         uses: actions/upload-pages-artifact@v5
         with:
           path: dist
+
+  browser-smoke:
+    name: Browser Smoke Test (Playwright)
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Run browser smoke test
+        run: npm run browser:smoke
+
+      - name: Upload smoke test screenshot
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: browser-smoke-${{ github.run_number }}
+          path: verification/browser-smoke.png
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload smoke test report
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: browser-smoke-report-${{ github.run_number }}
+          path: verification/browser-smoke.json
+          if-no-files-found: warn
+          retention-days: 7
 
   deploy-pages:
     name: Deploy GitHub Pages
