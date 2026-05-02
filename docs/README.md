@@ -61,12 +61,16 @@ Documents describing desired future states, planned work, or proposed architectu
 
 Investigative reports and reference material that inform the project but do not describe implemented code. Organized into four subdirectories under `research/` plus one root-level cross-cutting file.
 
-### research/combat/ — DNF Combat Kernel Research (21 source files + audit/index)
+### research/combat/ — DNF Combat Kernel Research (21 source files + 4 synthesis docs + audit/index)
 
-DNF/DFO combat system reconstruction, replication, data models, extraction pipeline, frame AI, and mechanics gap analysis. Start with `research/combat/INDEX.md` for reading order and `research/combat/CHAPTER-AUDIT.md` for chapter-level overlap governance.
+DNF/DFO combat system reconstruction, replication, data models, extraction pipeline, frame AI, and mechanics gap analysis. Start with the four `SYNTHESIS-*.md` documents for current reading paths, then use `research/combat/INDEX.md` for source-document routing and `research/combat/CHAPTER-AUDIT.md` for chapter-level overlap governance.
 
 | Document | Title |
 |---|---|
+| `research/combat/SYNTHESIS-OVERVIEW.md` | Combat research synthesis overview and reading route |
+| `research/combat/SYNTHESIS-DATA-RUNTIME-PIPELINE.md` | Data/runtime pipeline synthesis: PVF/ANI/NPK, manifest, parser, tests, compliance |
+| `research/combat/SYNTHESIS-COMBAT-KERNEL.md` | Combat kernel synthesis: Input -> Replay chain and P2 implementation priorities |
+| `research/combat/SYNTHESIS-PERIPHERAL-SYSTEMS.md` | Peripheral systems synthesis: PvP, scoring, raid/party/buff, room/NPC/drop boundaries |
 | `research/combat/INDEX.md` | Combat research reading order, document roles, and duplicate-risk tags |
 | `research/combat/CHAPTER-AUDIT.md` | Chapter-level overlap audit and detail-preservation rules |
 | `research/combat/dnf-combat-system-reconstruction-engineering-report.md` | Combat system reverse reconstruction engineering |

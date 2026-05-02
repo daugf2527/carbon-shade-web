@@ -16,6 +16,7 @@
 
 | 主题簇 | Canonical 候选 | 重复来源 | 当前建议 |
 |---|---|---|---|
+| Synthesis reading layer | `SYNTHESIS-OVERVIEW.md`, `SYNTHESIS-DATA-RUNTIME-PIPELINE.md`, `SYNTHESIS-COMBAT-KERNEL.md`, `SYNTHESIS-PERIPHERAL-SYSTEMS.md` | 21 篇源文档 | 后续默认先读 synthesis；源文档保留为 archive/evidence，不改正文 |
 | Combat data/runtime pipeline | `dnf-dfo-combat-extraction-runtime-pipeline-report.md`, `dnf-dfo-combat-replication-implementation-report.md` | `dnf-combat-system-reconstruction-engineering-report.md`, `dnf-combat-replica-implementation-technical-report.md`, `combat-replication-tech-report.md`, `combat-replication-implementation-v1.md` | 以 extraction/runtime 作为工具链 canonical，以 replication implementation 作为运行时 canonical |
 | Frame timing / hitbox / root motion | `dnf-dfo-combat-frame-ai-implementation-report.md`, `dnf-dfo-combat-replication-implementation-report.md` | `dnf-dfo-combat-technical-pipeline-report.md`, `dnf-combat-system-reconstruction-engineering-report.md`, `dnf-combat-replica-implementation-technical-report.md`, `combat-replication-tech-report.md` | 保留逐帧、2.5D、root motion、样表与伪代码；重复概念迁入 canonical |
 | Damage/status/armor/grab | `dnf-dfo-combat-data-model-and-damage-report.md`, `dnf-dfo-combat-replication-implementation-report.md` | `dnf-combat-system-reconstruction-engineering-report.md`, `dnf-dfo-combat-frame-ai-implementation-report.md`, `combat-system-implementation-details.md`, `1v1-combat-system-spec-compact.md` | 公式和 profile 以 data/damage 为主，命中热路径以 replication implementation 为主 |
@@ -35,6 +36,7 @@
 | `dnf-combat-system-reconstruction-engineering-report.md`：`可直接落地的数据模型` | 数据模型、帧/判定 | 与 replication implementation 重复 2.5D 坐标、判定盒、时序样例 | 独有“战斗主数据表”“公开可核对尺寸/时序样例”，适合作为 schema 表格来源 | `merge into canonical` | 保留战斗主数据表、坐标单位、判定盒规范、公开尺寸/时序样例 |
 | `dnf-combat-replica-implementation-technical-report.md`：`战斗数据模型与判定几何` | 数据模型、帧/判定 | 与 reconstruction 重复数据结构和 2.5D 算法 | 独有公开可验证几何与范围样本、固定帧/输入/回放工具章节串联 | `merge into canonical` | 保留几何样本、技能判定数据结构、2.5D 推荐算法 |
 | `combat-replication-tech-report.md`：`客户端资源与数据模型`、`可导入数据样例与复刻建议` | 数据模型、PVF/ANI/NPK | 与 extraction/runtime 重复资源链路与批量抽取 | 独有 JSON/CSV 样例和资源链路字段映射，适合迁为附录 | `merge into canonical` | 保留 JSON 样例、CSV 样例、资源链路字段映射、批量抽取流水线 |
+| `dnf-dfo-combat-kernel-development-report.md`：`客户端数据与判定模型`、`网络边界合规与开发交付` | 数据模型、PVF/ANI/NPK、合规、网络/Replay | 与 extraction/runtime、technical pipeline 重复 PVF/ANI/parser/checklist | 独有 Kernel 开发视角、PVF 字符串、ANI 帧解析、ReplayCombatLog 和交付 checklist | `merge into canonical` | 保留 parser checklist、PVF/ANI 字段、ReplayCombatLog、网络边界与合规交付要求 |
 | `combat-replication-implementation-v1.md`：`从公开证据还原出的原版架构`、`资源、动画、特效与音频` | 数据模型、PVF/ANI/NPK、网络/Replay | 与 v2、technical report 重复原版架构和资源链路 | 独有服务拓扑、配置模型、包头骨架、音频优先级 | `mark historical` | 保留服务拓扑/包头骨架作为历史研究，不让其覆盖当前 clean-room 边界 |
 
 ## 2. Frame Timing / Hitbox / Root Motion
@@ -44,6 +46,7 @@
 | `dnf-dfo-combat-frame-ai-implementation-report.md`：`技能判定框与帧数据`、`主角动作系统、逆硬直与空中规则` | 帧/判定、输入/取消、AI | 与 technical-pipeline、replication implementation 重复 hitbox/frame/action state | 覆盖技能判定框、伤害属性、怪物受击、主角动作、网络同步，是帧/AI综合 canonical | `keep canonical` | 保留帧数据字段、逆硬直、空中规则、术语对照和实现清单 |
 | `dnf-dfo-combat-replication-implementation-report.md`：`判定框、帧数据与位移` | 帧/判定、输入/取消 | 与 frame-ai 重复坐标系、帧表、判定重叠 | 独有根位移与技能强制位移、判定重叠推荐算法 | `keep canonical` | 保留坐标单位、帧表模板、root motion、overlap 算法 |
 | `dnf-dfo-combat-technical-pipeline-report.md`：`技能判定框与帧数据模型`、`伤害算法与碰撞交互` | 帧/判定、伤害、数据模型 | 与 reconstruction 和 replica implementation 重复通用判定模型 | 独有主要职业样例表、事件总线/冷却资源内核、服务器/客户端权责划分 | `merge into canonical` | 保留主要职业样例表、事件总线、冷却资源、关键伪代码 |
+| `dnf-dfo-combat-kernel-development-report.md`：`客户端数据与判定模型` | 帧/判定、数据模型、测试 | 与 frame-ai、technical pipeline 重复判定模型和帧数据 | 独有从 kernel 开发落地角度组织 parser、hitbox、帧解析和 checklist | `merge into canonical` | 保留 hitbox/frame checklist、ANI frame parsing、ReplayCombatLog 验证入口 |
 | `combat-replication-tech-report.md`：`2.5D 判定、碰撞、抓取与异常状态`、`技能判定与核心动作帧表` | 帧/判定、状态 | 与多个 canonical 重复 2.5D 和 hitbox | 独有三轴命名、空间投影、单段/持续/多 hitbox、2.5D 命中伪代码 | `merge into canonical` | 保留三轴命名、持续命中、多 hitbox、伪代码 |
 | `dnf-combat-system-reconstruction-engineering-report.md`：`动画根位移与强制位移`、`输入到伤害的关键流程` | 帧/判定、输入/取消 | 与 replication implementation 重复 root motion 和输入到伤害流程 | 独有工程蓝图式流程和公开样例串联 | `merge into canonical` | 保留输入到伤害关键流程、取消窗口表、root motion 说明 |
 | `code-level-dnf-replication-gap-assessment.md`：`三、判定系统`、`九、Sprite/Asset 系统` | 当前代码差距、帧/判定 | 与 research-vs-current 重复当前手写 hitbox 和无 NPK/ANI pipeline | 独有代码级完成度、具体文件行数和缺口列表 | `keep canonical` | 保留 `HitResolver2D5.ts`、normalized sprite sheets、无 parser/unit test 的差距证据 |
@@ -54,6 +57,7 @@
 |---|---|---|---|---|---|
 | `dnf-dfo-combat-data-model-and-damage-report.md`：`伤害公式与属性算法`、`判定、碰撞与 2.5D 坐标`、`抓取、怪物 AI、仇恨与伤害分发` | 伤害、状态、帧/判定、AI | 与 frame-ai、replication implementation 重复公式、属性、抓取、仇恨 | 公式章节是最完整的 damage canonical，含经典版本和现代乘区规则 | `keep canonical` | 保留百分比/固伤主线、属性差、防御、现代乘区、CSV 模板 |
 | `dnf-dfo-combat-replication-implementation-report.md`：`伤害、属性与受击规则` | 伤害、状态、帧/判定 | 与 data/damage 重复公式和属性 | 独有 dual profile 建模、命中判定顺序、霸体/无敌/抓取/受击反应热路径 | `keep canonical` | 保留双 Profile、命中判定顺序、armor/grab/reaction 处理顺序 |
+| `dnf-dfo-combat-kernel-development-report.md`：`伤害公式与状态生命周期` | 伤害、状态、测试 | 与 data/damage 和 replication implementation 重复 damage/status 热路径 | 独有状态生命周期、kernel checklist 和交付视角 | `merge into canonical` | 保留状态生命周期、profile checklist、测试/交付清单 |
 | `dnf-combat-system-reconstruction-engineering-report.md`：`伤害、属性、异常状态与判定` | 伤害、状态 | 与 data/damage 重复现代伤害桶、属性算法、异常状态 | 独有异常状态完整体系、状态生命周期与事件钩子、结算伪代码 | `merge into canonical` | 保留异常状态体系、状态生命周期、事件钩子、伤害结算伪代码 |
 | `combat-system-implementation-details.md`：`技能施放、读条、打断、霸体与施法保护`、`同 Tick 裁决、随机种子与命中系统` | 状态、伤害、网络/Replay | 与 1v1 spec 和 reconstruction 重复热路径裁决 | 独有同 Tick 优先级、随机种子、命中率/回避/Miss、暴击/格挡/穿透顺序 | `merge into canonical` | 保留同 Tick 冲突伪代码、随机种子、Miss/暴击/格挡/穿透边界 |
 | `1v1-combat-system-spec-compact.md`：`伤害公式的规范版`、`异常状态、净化、免疫与互斥`、`护盾、伤害吸收、伤害分摊` | 伤害、状态、网络/Replay | 与 PvE damage 文档重复公式和状态 | 独有 PvP/PvE profile 隔离、护盾/吸收/分摊、服务器权威回滚视角 | `raw reference only` | 保留 PvE/PvP 规则隔离、ResolveHit 热路径、网络包字段建议 |
@@ -69,6 +73,7 @@
 | `combat-system-implementation-details.md`：`技能槽位、快捷键、技能锁定与技能封印` | 输入/取消、状态 | 与 1v1 spec 重复快捷键/命令锁 | 独有技能槽/快捷键数据模型、命令锁/封印/动作封印、UI 输入伪代码 | `merge into canonical` | 保留技能槽模型、锁定/封印规则、配置与战斗网络包示例 |
 | `dnf-dfo-combat-1v1-spec-report.md`：`速度系统公式与帧模型`、`输入系统与手搓奖励` | 输入/取消、帧/判定、网络/Replay | 与 reconstruction 重复输入匹配和取消帧 | 独有手搓奖励、速度断点、PvP 硬直恢复与组合保护 | `raw reference only` | 保留手搓奖励系统、速度来源优先级、模式 profile 边界 |
 | `dnf-dfo-combat-replication-implementation-report.md`：`玩家状态机与怪物 AI` | 输入/取消、AI | 与 reconstruction/replica 重复状态机和取消策略 | 独有最小可复刻状态机、取消/攻速/速度策略、PvP 连段保护借鉴 | `merge into canonical` | 保留最小状态机、速度策略、PvP 可借鉴但不混入 PvE 的边界 |
+| `dnf-dfo-combat-kernel-development-report.md`：`动作输入交互与怪物AI` | 输入/取消、AI、测试 | 与 reconstruction、frame-ai 重复输入交互和 AI | 独有 kernel 开发 checklist 与输入/AI 同章串联 | `merge into canonical` | 保留输入交互 checklist、怪物 AI 开发交付项 |
 
 ## 5. Monster AI / Boss / Pattern
 
@@ -130,7 +135,8 @@
 
 ## 后续合并规则
 
-1. 合并正文前先从 `INDEX.md` 选择该主题 canonical，不从最长文档开始合并。
-2. 表格、公式、伪代码、流程图、数据字段、来源链接、测试用例一律先迁移到 canonical，再考虑删除重复叙述。
-3. 任何涉及 PVF/NPK/IMG/ANI、serverfiles、协议、私服资料的章节必须保留合规提示，不把风险样本写成真值。
-4. 1v1/PvP、raid/party/buff、房间/NPC/掉落、评分奖励属于扩展资料；除非当前任务明确进入这些系统，否则不参与 DFO 动作/手感 P2 主线。
+1. 合并正文前先从 `INDEX.md` 选择 synthesis 主文档，不从最长源文档开始合并。
+2. 4 篇 synthesis 是后续合并目标：`SYNTHESIS-OVERVIEW.md` 收入口，`SYNTHESIS-DATA-RUNTIME-PIPELINE.md` 收数据工具链，`SYNTHESIS-COMBAT-KERNEL.md` 收当前实现主线，`SYNTHESIS-PERIPHERAL-SYSTEMS.md` 收扩展系统。
+3. 表格、公式、伪代码、流程图、数据字段、来源链接、测试用例一律先迁移到 canonical，再考虑删除重复叙述。
+4. 任何涉及 PVF/NPK/IMG/ANI、serverfiles、协议、私服资料的章节必须保留合规提示，不把风险样本写成真值。
+5. 1v1/PvP、raid/party/buff、房间/NPC/掉落、评分奖励属于扩展资料；除非当前任务明确进入这些系统，否则不参与 DFO 动作/手感 P2 主线。

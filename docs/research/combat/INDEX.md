@@ -1,8 +1,17 @@
 # Combat Research Index
 
-> Scope: `docs/research/combat` 下 21 篇战斗研究文档。本文用于判断“先读哪篇”和“哪些文档有重复风险”，不替代正文。
+> Scope: `docs/research/combat` 下 21 篇战斗研究源文档 + 4 篇 synthesis。21 篇源文档保留为 archive/evidence；后续默认先读 synthesis，再按 source map 回查原文。
 
 ## 推荐阅读路线
+
+### 先读 4 篇 synthesis
+
+1. `SYNTHESIS-OVERVIEW.md` — 总入口：21 篇资料收束成 4 条主线，说明当前 DFO 手感 P2 应读什么、不应读什么。
+2. `SYNTHESIS-COMBAT-KERNEL.md` — 当前实现最常用：Input -> Replay 主链、P2 缺口、FrameDataAction manifest、hit/hurt frame、Damage/Status profile、AI pattern data、Replay hash/schema。
+3. `SYNTHESIS-DATA-RUNTIME-PIPELINE.md` — 数据管线：PVF/ANI/NPK、manifest、runtime data、parser/test/checklist、合规边界。
+4. `SYNTHESIS-PERIPHERAL-SYSTEMS.md` — 扩展边界：PvP/1v1、评分奖励、raid/party/buff、房间/NPC/掉落、剧情演出，不进入当前 PvE handfeel 默认参数。
+
+> 只有需要表格、公式、伪代码、来源链接、测试用例或历史边界时，再回查下面 21 篇源文档。
 
 ### 当前实现差距优先
 
@@ -62,7 +71,8 @@
 
 ## 合并前检查
 
-1. 先查 `CHAPTER-AUDIT.md` 的主题簇，确认 canonical。
-2. 合并时只删重复叙述，不丢表格、公式、伪代码、流程图、来源链接和测试用例。
-3. 涉及 PVF/NPK/IMG/ANI、serverfiles、协议和私服资料时，保留合规边界。
-4. 当前实现差距相关结论以三件套为准：`dnf-dfo-research-vs-current-system-technical-report.md`、`code-level-dnf-replication-gap-assessment.md`、`dnf-dfo-mechanics-gap-analysis.md`。
+1. 先读 4 篇 synthesis，确认当前主题的主文档。
+2. 再查 `CHAPTER-AUDIT.md` 的主题簇，确认源文档 canonical。
+3. 合并时只删重复叙述，不丢表格、公式、伪代码、流程图、来源链接和测试用例。
+4. 涉及 PVF/NPK/IMG/ANI、serverfiles、协议和私服资料时，保留合规边界。
+5. 当前实现差距相关结论以三件套为准：`dnf-dfo-research-vs-current-system-technical-report.md`、`code-level-dnf-replication-gap-assessment.md`、`dnf-dfo-mechanics-gap-analysis.md`；实现引用优先看 `SYNTHESIS-COMBAT-KERNEL.md`。
