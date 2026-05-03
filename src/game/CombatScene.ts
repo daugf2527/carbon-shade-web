@@ -8,6 +8,7 @@ import { CameraController } from "./CameraController.js";
 import { AudioUnlockGate } from "./audio/AudioUnlockGate.js";
 import { DebugLayer } from "./layers/DebugLayer.js";
 import { getCombatSpriteSpec, type SpriteSpec } from "./SpriteFrameLibrary.js";
+import { getRuntimeEvidenceCollector, recordKernelCombatEvidence } from "../runtime/evidence/RuntimeEvidenceCollector.js";
 
 interface ActorSnapshot {
   id: string;
@@ -41,7 +42,7 @@ interface ActorView {
   state: Phaser.GameObjects.Text;
 }
 
-type CombatLabRuntime = { scene?: CombatScene; kernel?: CombatKernel; evidence?: { combat?: Record<string, unknown> } };
+type CombatLabRuntime = { scene?: CombatScene; kernel?: CombatKernel };
 type GameplayKeyEvent = { code: string; repeat: boolean; preventDefault(): void };
 
 export class CombatScene extends Phaser.Scene {
@@ -103,8 +104,8 @@ export class CombatScene extends Phaser.Scene {
     runtime.combatLab = runtime.combatLab ?? {};
     runtime.combatLab.scene = this;
     runtime.combatLab.kernel = this.kernel;
-    runtime.combatLab.evidence = runtime.combatLab.evidence ?? {};
-    runtime.combatLab.evidence.combat = { ...(runtime.combatLab.evidence.combat ?? {}), sceneReady: true };
+    getRuntimeEvidenceCollector().recordCombatSceneReady();
+    this.recordRuntimeEvidence();
 
     this.refresh();
   }
@@ -139,6 +140,7 @@ export class CombatScene extends Phaser.Scene {
   runScenario(): void {
     this.kernel.runDeterministicScenario();
     this.refresh();
+    this.recordRuntimeEvidence();
   }
 
   reset(): void {
@@ -150,6 +152,11 @@ export class CombatScene extends Phaser.Scene {
     this.playerHitFlashUntil = 0;
     for (const graphics of this.feedbackGraphics) graphics.clear();
     this.refresh();
+    this.recordRuntimeEvidence();
+  }
+
+  private recordRuntimeEvidence(): void {
+    recordKernelCombatEvidence(getRuntimeEvidenceCollector(), this.kernel);
   }
 
   refresh(): void {

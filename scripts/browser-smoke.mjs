@@ -232,6 +232,7 @@ async function collectRuntimeEvidence(page) {
     const kernel = runtime.kernel;
     const replay = kernel?.replay?.export?.() ?? null;
     const events = Array.isArray(kernel?.bus?.archive) ? kernel.bus.archive : [];
+    const exportedEvidence = runtime.evidence?.export?.() ?? {};
     const eventTypes = {};
     for (const event of events) {
       const type = event?.type ?? "unknown";
@@ -239,10 +240,11 @@ async function collectRuntimeEvidence(page) {
     }
 
     return {
-      buildHash: runtime.evidence?.buildHash ?? replay?.metadata?.buildHash ?? null,
-      assets: runtime.evidence?.assets ?? { expected: [], loaded: [], failed: [] },
+      ...exportedEvidence,
+      buildHash: exportedEvidence.buildHash ?? replay?.metadata?.buildHash ?? null,
+      assets: exportedEvidence.assets ?? { expected: [], loaded: [], failed: [], missingKeys: [] },
       combat: {
-        ...(runtime.evidence?.combat ?? {}),
+        ...(exportedEvidence.combat ?? {}),
         sceneReady: Boolean(runtime.scene),
         tick: kernel?.tickCount ?? null,
         eventCount: events.length,
@@ -290,6 +292,7 @@ async function main() {
 
     mkdirSync(verificationDir, { recursive: true });
     writeFileSync(path.join(verificationDir, "browser-smoke.json"), JSON.stringify(payload, null, 2));
+    writeFileSync(path.join(verificationDir, "runtime-evidence.json"), JSON.stringify(report.runtimeEvidence, null, 2));
     console.log(JSON.stringify(payload, null, 2));
 
     if (report.passed) {
