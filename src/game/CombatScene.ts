@@ -41,7 +41,7 @@ interface ActorView {
   state: Phaser.GameObjects.Text;
 }
 
-type CombatLabRuntime = { scene?: CombatScene; kernel?: CombatKernel };
+type CombatLabRuntime = { scene?: CombatScene; kernel?: CombatKernel; evidence?: { combat?: Record<string, unknown> } };
 type GameplayKeyEvent = { code: string; repeat: boolean; preventDefault(): void };
 
 export class CombatScene extends Phaser.Scene {
@@ -103,6 +103,8 @@ export class CombatScene extends Phaser.Scene {
     runtime.combatLab = runtime.combatLab ?? {};
     runtime.combatLab.scene = this;
     runtime.combatLab.kernel = this.kernel;
+    runtime.combatLab.evidence = runtime.combatLab.evidence ?? {};
+    runtime.combatLab.evidence.combat = { ...(runtime.combatLab.evidence.combat ?? {}), sceneReady: true };
 
     this.refresh();
   }

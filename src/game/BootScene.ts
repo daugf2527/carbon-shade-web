@@ -2,6 +2,23 @@ import Phaser from "phaser";
 import { AudioUnlockGate } from "./audio/AudioUnlockGate.js";
 import { NORMALIZED_SPRITE_SHEETS } from "./SpriteFrameLibrary.js";
 
+type RuntimeEvidence = {
+  buildHash?: string;
+  assets?: {
+    expected: { key: string; url: string }[];
+    loaded: { key: string; url?: string }[];
+    failed: { key: string; url?: string; error?: string }[];
+  };
+  combat?: Record<string, unknown>;
+};
+
+function runtimeEvidence(): RuntimeEvidence {
+  const runtime = window as typeof window & { combatLab?: { evidence?: RuntimeEvidence } };
+  runtime.combatLab = runtime.combatLab ?? {};
+  runtime.combatLab.evidence = runtime.combatLab.evidence ?? {};
+  return runtime.combatLab.evidence;
+}
+
 export class BootScene extends Phaser.Scene {
   private readonly audioGate = new AudioUnlockGate();
 
@@ -10,6 +27,26 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload(): void {
+    const evidence = runtimeEvidence();
+    evidence.buildHash = typeof __BUILD_HASH__ !== "undefined" ? __BUILD_HASH__ : "local-dev";
+    evidence.assets = {
+      expected: Object.values(NORMALIZED_SPRITE_SHEETS).map(sheet => ({ key: sheet.key, url: sheet.url })),
+      loaded: [],
+      failed: [],
+    };
+
+    this.load.on(Phaser.Loader.Events.FILE_COMPLETE, (key: string) => {
+      const sheet = Object.values(NORMALIZED_SPRITE_SHEETS).find(candidate => candidate.key === key);
+      if (!sheet || evidence.assets?.loaded.some(item => item.key === key)) return;
+      evidence.assets?.loaded.push({ key, url: sheet.url });
+    });
+
+    this.load.on(Phaser.Loader.Events.FILE_LOAD_ERROR, (file: { key?: string; src?: string; url?: string }) => {
+      const key = file.key ?? "unknown";
+      if (evidence.assets?.failed.some(item => item.key === key)) return;
+      evidence.assets?.failed.push({ key, url: file.src ?? file.url, error: "loaderror" });
+    });
+
     for (const sheet of Object.values(NORMALIZED_SPRITE_SHEETS)) {
       this.load.spritesheet(sheet.key, sheet.url, {
         frameWidth: sheet.cellW,
@@ -19,6 +56,9 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
+    const evidence = runtimeEvidence();
+    evidence.combat = { ...(evidence.combat ?? {}), bootSceneReady: true };
+
     const { width, height } = this.cameras.main;
     this.cameras.main.setBackgroundColor("#0b1220");
 

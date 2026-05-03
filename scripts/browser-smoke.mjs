@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { buildBrowserSmokePayload } from "./browser-smoke-evidence.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
@@ -76,18 +77,40 @@ function startServer() {
 async function runSmokeTest(url) {
   const results = [];
   let passed = true;
+  let runtimeEvidence = {};
 
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
   const page = await context.newPage();
 
   const consoleErrors = [];
+  const pageErrors = [];
+  const failedRequests = [];
+  const badResponses = [];
   page.on("console", (msg) => {
     if (msg.type() === "error") consoleErrors.push(msg.text());
   });
 
   page.on("pageerror", (err) => {
-    consoleErrors.push(err.message);
+    pageErrors.push(err.message);
+  });
+
+  page.on("requestfailed", (request) => {
+    failedRequests.push({
+      url: request.url(),
+      method: request.method(),
+      resourceType: request.resourceType(),
+      failure: request.failure()?.errorText ?? "unknown",
+    });
+  });
+
+  page.on("response", (response) => {
+    if (response.status() < 400) return;
+    badResponses.push({
+      url: response.url(),
+      status: response.status(),
+      statusText: response.statusText(),
+    });
   });
 
   try {
@@ -106,8 +129,8 @@ async function runSmokeTest(url) {
     // Wait for Phaser to finish initializing
     await page.waitForTimeout(4000);
 
-    if (consoleErrors.length > 0) {
-      results.push({ check: "console_errors", passed: false, errors: consoleErrors });
+    if (consoleErrors.length > 0 || pageErrors.length > 0) {
+      results.push({ check: "console_errors", passed: false, errors: consoleErrors, pageErrors });
       passed = false;
     } else {
       results.push({ check: "console_errors", passed: true });
@@ -161,6 +184,24 @@ async function runSmokeTest(url) {
       results.push({ check: "scenario_screenshot", passed: false, error: err.message });
       passed = false;
     }
+
+    runtimeEvidence = await collectRuntimeEvidence(page);
+    const assetSummary = runtimeEvidence.assets ?? {};
+    const missingKeys = findMissingAssetKeys(assetSummary);
+    const failedAssets = Array.isArray(assetSummary.failed) ? assetSummary.failed : [];
+    const sceneReady = Boolean(runtimeEvidence.combat?.sceneReady);
+    const networkClean = failedRequests.length === 0 && badResponses.length === 0;
+    const runtimePassed = sceneReady && missingKeys.length === 0 && failedAssets.length === 0 && networkClean;
+    results.push({
+      check: "runtime_evidence",
+      passed: runtimePassed,
+      sceneReady,
+      missingAssetKeys: missingKeys,
+      failedAssets,
+      failedRequests,
+      badResponses,
+    });
+    if (!runtimePassed) passed = false;
   } catch (err) {
     results.push({ check: "exception", passed: false, error: err.message });
     passed = false;
@@ -168,7 +209,52 @@ async function runSmokeTest(url) {
     await browser.close();
   }
 
-  return { passed, results };
+  return {
+    passed,
+    results,
+    runtimeEvidence,
+    diagnostics: { consoleErrors, pageErrors, failedRequests, badResponses },
+  };
+}
+
+async function collectRuntimeEvidence(page) {
+  return await page.evaluate(() => {
+    const runtime = window.combatLab ?? {};
+    const kernel = runtime.kernel;
+    const replay = kernel?.replay?.export?.() ?? null;
+    const events = Array.isArray(kernel?.bus?.archive) ? kernel.bus.archive : [];
+    const eventTypes = {};
+    for (const event of events) {
+      const type = event?.type ?? "unknown";
+      eventTypes[type] = (eventTypes[type] ?? 0) + 1;
+    }
+
+    return {
+      buildHash: runtime.evidence?.buildHash ?? replay?.metadata?.buildHash ?? null,
+      assets: runtime.evidence?.assets ?? { expected: [], loaded: [], failed: [] },
+      combat: {
+        ...(runtime.evidence?.combat ?? {}),
+        sceneReady: Boolean(runtime.scene),
+        tick: kernel?.tickCount ?? null,
+        eventCount: events.length,
+        scenario: kernel?.scenario ?? null,
+        replay: replay
+          ? {
+            metadata: replay.metadata,
+            frameCount: replay.frameCount,
+          }
+          : null,
+        eventTypes,
+      },
+    };
+  });
+}
+
+function findMissingAssetKeys(assets) {
+  const expected = Array.isArray(assets.expected) ? assets.expected : [];
+  const loaded = new Set((Array.isArray(assets.loaded) ? assets.loaded : []).map(item => item?.key).filter(Boolean));
+  const failed = new Set((Array.isArray(assets.failed) ? assets.failed : []).map(item => item?.key).filter(Boolean));
+  return expected.map(item => item?.key).filter(key => key && !loaded.has(key) && !failed.has(key));
 }
 
 async function main() {
@@ -184,7 +270,14 @@ async function main() {
     console.log(`Server ready at ${url}. Running smoke test...`);
 
     const report = await runSmokeTest(url);
-    const payload = { passed: report.passed, url, timestamp: new Date().toISOString(), results: report.results };
+    const payload = buildBrowserSmokePayload({
+      passed: report.passed,
+      url,
+      timestamp: new Date().toISOString(),
+      results: report.results,
+      runtimeEvidence: report.runtimeEvidence,
+      diagnostics: report.diagnostics,
+    });
 
     mkdirSync(verificationDir, { recursive: true });
     writeFileSync(path.join(verificationDir, "browser-smoke.json"), JSON.stringify(payload, null, 2));
@@ -199,7 +292,15 @@ async function main() {
     }
   } catch (err) {
     console.error(`Browser smoke test error: ${err.message}`);
-    const payload = { passed: false, url, timestamp: new Date().toISOString(), error: err.message, results: [] };
+    const payload = buildBrowserSmokePayload({
+      passed: false,
+      url,
+      timestamp: new Date().toISOString(),
+      error: err.message,
+      results: [],
+      runtimeEvidence: {},
+      diagnostics: {},
+    });
     mkdirSync(verificationDir, { recursive: true });
     writeFileSync(path.join(verificationDir, "browser-smoke.json"), JSON.stringify(payload, null, 2));
     exitCode = 1;

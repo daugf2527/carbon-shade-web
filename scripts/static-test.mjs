@@ -12,9 +12,9 @@ if (compile.status !== 0) {
   process.exit(compile.status ?? 1);
 }
 
-function walk(dir){ const out=[]; for(const entry of readdirSync(dir)){ const file=path.join(dir, entry); const st=statSync(file); if(st.isDirectory()) out.push(...walk(file)); else if(file.endsWith('.test.js')) out.push(file); } return out.sort(); }
-const tests = walk(path.join(compiledRoot, 'tests', 'static'));
-const jsTests = walk(path.join(root, 'tests', 'static-js')).filter(file => file.endsWith('.test.mjs'));
+function walk(dir, suffix){ const out=[]; for(const entry of readdirSync(dir)){ const file=path.join(dir, entry); const st=statSync(file); if(st.isDirectory()) out.push(...walk(file, suffix)); else if(file.endsWith(suffix)) out.push(file); } return out.sort(); }
+const tests = walk(path.join(compiledRoot, 'tests', 'static'), '.test.js');
+const jsTests = walk(path.join(root, 'tests', 'static-js'), '.test.mjs');
 let passed=true; const results=[];
 for(const file of tests){ const r=spawnSync(process.execPath,[file],{cwd:root,encoding:'utf8'}); const ok=r.status===0; results.push({file:path.relative(compiledRoot,file),passed:ok,stdout:r.stdout,stderr:r.stderr,status:r.status ?? 1}); if(!ok) passed=false; }
 for(const file of jsTests){ const r=spawnSync(process.execPath,[file],{cwd:root,encoding:'utf8'}); const ok=r.status===0; results.push({file:path.relative(root,file),passed:ok,stdout:r.stdout,stderr:r.stderr,status:r.status ?? 1}); if(!ok) passed=false; }
