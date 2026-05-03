@@ -37,7 +37,7 @@ const frenzyDamageTarget = frenzyDamage.actors.find(a => a.id === "grunt")!;
 frenzyDamageTarget.position.x = frenzyDamage.player.position.x + 70;
 frenzyDamage.buffs.apply(frenzyDamage.player, "frenzy", frenzyDamage.tickCount, frenzyDamage.bus);
 frenzyDamage.requestAction(frenzyDamage.player, "Bloodlust");
-frenzyDamage.runTicks(12);
+frenzyDamage.runTicks(24);
 const frenzyDamageEvent = frenzyDamage.bus.archive.find(e => e.type === "DamageApplied" && e.targetActorId === frenzyDamageTarget.id)!.payload as any;
 assert.ok(frenzyDamageEvent.finalDamage > 26, "Frenzy should increase supported Berserker skill damage");
 assert.ok(frenzyDamageEvent.multipliers.some((m: { name: string }) => m.name === "frenzy_skill_attack"), "Frenzy skill damage should be replay-visible as a damage multiplier");
@@ -80,6 +80,46 @@ assert.equal(bloodlust.requestAction(bloodlust.player, "Bloodlust" as never), tr
 bloodlust.runTicks(12);
 assert.ok(boss.resources.hp < bossHp, "Bloodlust should still damage grab-immune targets through its blood discharge fallback");
 assert.ok(bloodlust.bus.archive.some(e => e.type === "GrabFailed" && e.targetActorId === boss.id), "Bloodlust must record grab failure on grab-immune targets");
+
+const bloodlustGrab = new CombatKernel();
+const grabbedGrunt = bloodlustGrab.actors.find(a => a.id === "grunt")!;
+grabbedGrunt.position.x = bloodlustGrab.player.position.x + 70;
+const grabbedHp = grabbedGrunt.resources.hp;
+assert.equal(bloodlustGrab.requestAction(bloodlustGrab.player, "Bloodlust" as never), true);
+bloodlustGrab.runTicks(8);
+assert.ok(bloodlustGrab.bus.archive.some(e => e.type === "GrabSucceeded" && e.targetActorId === grabbedGrunt.id), "Bloodlust should record a successful grab on normal targets");
+assert.equal(grabbedGrunt.reactionState, "grabbed", "Bloodlust successful grab should hold the victim in grabbed reaction");
+const heldX = grabbedGrunt.position.x;
+bloodlustGrab.runTicks(4);
+assert.equal(grabbedGrunt.reactionState, "grabbed", "Bloodlust victim should remain grabbed during the hold window");
+assert.equal(grabbedGrunt.position.x, heldX, "Bloodlust hold should lock the victim to the attacker-facing attach point");
+assert.equal(grabbedGrunt.resources.hp, grabbedHp, "Bloodlust successful grab should defer damage until the eruption");
+bloodlustGrab.runTicks(10);
+assert.ok(grabbedGrunt.resources.hp < grabbedHp, "Bloodlust eruption should damage the grabbed victim after the hold");
+assert.ok(grabbedGrunt.reactionState !== "grabbed", "Bloodlust victim should exit grabbed reaction after the eruption");
+assert.ok(bloodlustGrab.bus.archive.some(e => (e.type as string) === "GrabAttached" && e.targetActorId === grabbedGrunt.id), "Bloodlust hold attachment should be replay-visible");
+assert.ok(bloodlustGrab.bus.archive.some(e => (e.type as string) === "BloodlustEruptionReleased" && e.targetActorId === grabbedGrunt.id), "Bloodlust eruption release should be replay-visible");
+
+function bloodlustReplayHash(): string {
+  const kernel = new CombatKernel();
+  const target = kernel.actors.find(a => a.id === "grunt")!;
+  target.position.x = kernel.player.position.x + 70;
+  kernel.requestAction(kernel.player, "Bloodlust" as never);
+  kernel.runTicks(28);
+  assert.ok(kernel.replay.frames.some(frame => frame.events.some(event => event.type === "GrabSucceeded")), "Bloodlust replay should include the grab branch events");
+  assert.ok(kernel.replay.frames.some(frame => frame.events.some(event => (event.type as string) === "BloodlustEruptionReleased")), "Bloodlust replay should include the eruption branch events");
+  return kernel.replay.frames.at(-1)?.stateHash ?? "";
+}
+assert.equal(bloodlustReplayHash(), bloodlustReplayHash(), "Bloodlust grab branch should keep deterministic replay final stateHash");
+
+const bloodlustWhiff = new CombatKernel();
+for (const actor of bloodlustWhiff.actors) {
+  if (actor.id !== bloodlustWhiff.player.id) actor.position.x = bloodlustWhiff.player.position.x + 600;
+}
+assert.equal(bloodlustWhiff.requestAction(bloodlustWhiff.player, "Bloodlust" as never), true);
+bloodlustWhiff.runTicks(18);
+assert.ok(bloodlustWhiff.bus.archive.some(e => e.type === "BloodlustWhiffEruption" && e.sourceActorId === bloodlustWhiff.player.id), "Bloodlust should emit a short blood eruption VFX even when the grab whiffs");
+assert.equal(bloodlustWhiff.bus.archive.some(e => e.type === "DamageApplied" && e.sourceActorId === bloodlustWhiff.player.id), false, "Bloodlust whiff eruption should not invent damage without a target");
 
 const noVim = new CombatKernel();
 const noVimGrunt = noVim.actors.find(a => a.id === "grunt")!;

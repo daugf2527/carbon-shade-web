@@ -1,4 +1,4 @@
-import type { Actor, ActionName, ScenarioBooleans, HitDecision, Facing, HandfeelReport } from "../types.js";
+import type { Actor, ActionName, ScenarioBooleans, HitDecision, Facing, HandfeelReport, HitBoxFrameWindow } from "../types.js";
 import { createActor } from "../actors/ActorFactory.js";
 import { getAction } from "../actions/FrameDataAction.js";
 import { BrowserInputState, CommandInputParser, InputBuffer, type BufferedInput } from "../input/BrowserInputState.js";
@@ -27,6 +27,18 @@ import { EnemyAIController } from "../ai/EnemyAI.js";
 
 export interface CombatKernelOptions { enableReplay?: boolean; }
 
+interface BloodlustGrabHold {
+  attackerId: string;
+  targetId: string;
+  actionInstanceId: string;
+  startedTick: number;
+  releaseTick: number;
+  attachOffsetX: number;
+  attachOffsetZ: number;
+  decision: HitDecision;
+  correlationId: string;
+}
+
 export class CombatKernel {
   tickCount = 0;
   readonly bus = new CombatEventBus();
@@ -53,6 +65,8 @@ export class CombatKernel {
   readonly runDetector = new RunCommandDetector();
   readonly enemyAI = new EnemyAIController();
   readonly replay = new ReplayRecorder();
+  readonly bloodlustGrabHolds = new Map<string, BloodlustGrabHold>();
+  readonly bloodlustWhiffEruptions = new Set<string>();
   readonly worldBounds = { xMin: 64, xMax: 1820, zMin: -120, zMax: 120 };
   scenario: ScenarioBooleans = {
     normalHitObserved:false,
@@ -99,6 +113,8 @@ export class CombatKernel {
     this.recoil.clear();
     this.death.clear();
     this.replay.clear();
+    this.bloodlustGrabHolds.clear();
+    this.bloodlustWhiffEruptions.clear();
     this.scenario = { normalHitObserved:false, launchObserved:false, ragingFuryMultiHitObserved:false, armorHitObserved:false, buildingArmorBlockedControlObserved:false, bleedObserved:false, quickReboundObserved:false };
   }
 
@@ -122,6 +138,8 @@ export class CombatKernel {
     this.tickEnemyAI();
     this.updateActions();
     this.applyRootMotion();
+    this.updateBloodlustGrabHolds();
+    this.updateBloodlustWhiffEruptions();
     this.push.resolve(this.actors);
     for (const actor of this.actors) this.clampToBounds(actor);
     this.resolveHitQueries();
@@ -410,6 +428,10 @@ export class CombatKernel {
       this.bus.emit("GrabAttempted", CombatEventPriority.HitDecision, this.tickCount, decision, {sourceActorId:attacker.id,targetActorId:target.id, correlationId:corr});
       this.bus.emit(decision.grabDecision.success ? "GrabSucceeded" : "GrabFailed", CombatEventPriority.HitDecision, this.tickCount, decision, {sourceActorId:attacker.id,targetActorId:target.id, correlationId:corr});
     }
+    if (this.shouldStartBloodlustGrab(attacker, decision)) {
+      this.startBloodlustGrabHold(attacker, target, decision, corr);
+      return;
+    }
 
     const targetWasBleeding = target.statusEffects.some(s => s.type === "bleed");
     const req=this.damageResolver.requestFromHit(decision,corr,attacker.currentAction?.actionName, attacker.ai?.damage);
@@ -458,6 +480,130 @@ export class CombatKernel {
     }
     if(req.actionName==="RagingFury" && decision.hitbox.hitType==="blood_pillar" && attacker.buffs.some(b=>b.type==="vim_and_vigor")) this.status.applyBleed(target,attacker.id,"RagingFury",this.tickCount,this.bus,1);
     this.updateScenarioFlags(decision, finalReaction, damage);
+  }
+
+  private shouldStartBloodlustGrab(attacker: Actor, decision: HitDecision): boolean {
+    return attacker.currentAction?.actionName === "Bloodlust" && decision.hitbox.hitType === "grab" && decision.grabDecision?.success === true;
+  }
+
+  private startBloodlustGrabHold(attacker: Actor, target: Actor, decision: HitDecision, correlationId: string): void {
+    const attachOffsetX = 42;
+    const attachOffsetZ = 0;
+    const hold: BloodlustGrabHold = {
+      attackerId: attacker.id,
+      targetId: target.id,
+      actionInstanceId: attacker.currentAction?.id ?? "none",
+      startedTick: this.tickCount,
+      releaseTick: this.tickCount + 10,
+      attachOffsetX,
+      attachOffsetZ,
+      decision,
+      correlationId,
+    };
+    this.bloodlustGrabHolds.set(target.id, hold);
+    this.attachBloodlustTarget(attacker, target, hold);
+    target.reactionState = "grabbed";
+    target.velocity.x = 0;
+    target.velocity.z = 0;
+    target.velocity.y = 0;
+    target.handfeel.reactionRemaining = Math.max(target.handfeel.reactionRemaining, 12);
+    this.bus.emit("GrabAttached", CombatEventPriority.Grab, this.tickCount, {attackerId:attacker.id,targetId:target.id, releaseTick:hold.releaseTick, attachOffsetX, attachOffsetZ}, {sourceActorId:attacker.id,targetActorId:target.id, correlationId});
+  }
+
+  private updateBloodlustGrabHolds(): void {
+    for (const hold of [...this.bloodlustGrabHolds.values()]) {
+      const attacker = this.actors.find(a => a.id === hold.attackerId);
+      const target = this.actors.find(a => a.id === hold.targetId);
+      if (!attacker || !target || attacker.flags.dead || target.flags.dead) {
+        this.bloodlustGrabHolds.delete(hold.targetId);
+        continue;
+      }
+      if (attacker.currentAction?.id !== hold.actionInstanceId) {
+        this.releaseBloodlustGrabHold(attacker, target, hold, false);
+        continue;
+      }
+      this.attachBloodlustTarget(attacker, target, hold);
+      target.reactionState = "grabbed";
+      target.velocity.x = 0;
+      target.velocity.z = 0;
+      target.velocity.y = 0;
+      if (this.tickCount >= hold.releaseTick) this.releaseBloodlustGrabHold(attacker, target, hold, true);
+    }
+  }
+
+  private attachBloodlustTarget(attacker: Actor, target: Actor, hold: BloodlustGrabHold): void {
+    const facingScale = attacker.currentAction?.lockedFacing === "left" ? -1 : 1;
+    target.previousPosition = cloneVec3(target.position);
+    target.position.x = attacker.position.x + hold.attachOffsetX * facingScale;
+    target.position.z = attacker.position.z + hold.attachOffsetZ;
+    target.position.y = attacker.position.y;
+    this.clampToBounds(target);
+  }
+
+  private releaseBloodlustGrabHold(attacker: Actor, target: Actor, hold: BloodlustGrabHold, applyDamage: boolean): void {
+    this.bloodlustGrabHolds.delete(hold.targetId);
+    if (!applyDamage) {
+      if (target.reactionState === "grabbed") target.reactionState = "none";
+      return;
+    }
+    const eruptionDecision = this.toBloodlustEruptionDecision(hold.decision);
+    this.bus.emit("BloodlustEruptionReleased", CombatEventPriority.HitDecision, this.tickCount, eruptionDecision, {sourceActorId:attacker.id,targetActorId:target.id, correlationId:hold.correlationId});
+    this.applyBloodlustEruptionDamage(attacker, target, eruptionDecision, hold.correlationId);
+  }
+
+  private toBloodlustEruptionDecision(decision: HitDecision): HitDecision {
+    const hitbox: HitBoxFrameWindow = {
+      ...decision.hitbox,
+      id: "bloodlust_eruption",
+      hitGroupId: "bloodlust_eruption",
+      shape: "grab_attach",
+      canGrab: false,
+      baseDamage: 34,
+      hitType: "grab",
+      impactSnapX: 7,
+      visualRecoilFrames: 8,
+      reactionProfile: { hitStunFrames:18, knockbackX:8.8, knockbackZ:0.25, horizontalFriction:0.74 },
+    };
+    return { ...decision, hitbox, grabDecision:{ attempted:false, success:false, failedReason:"not_grab_action" } };
+  }
+
+  private applyBloodlustEruptionDamage(attacker: Actor, target: Actor, decision: HitDecision, correlationId: string): void {
+    const targetWasBleeding = target.statusEffects.some(s => s.type === "bleed");
+    const req=this.damageResolver.requestFromHit(decision,correlationId,"Bloodlust");
+    this.bus.emit("HitConfirmed", CombatEventPriority.HitDecision, this.tickCount, decision, {sourceActorId:attacker.id,targetActorId:target.id, correlationId});
+    this.bus.emit("DamageRequested", CombatEventPriority.Damage, this.tickCount, req, {sourceActorId:attacker.id,targetActorId:target.id, correlationId});
+    const damage=this.damageResolver.apply(target, req, {isCounter:decision.isCounter,isBackAttack:decision.isBackAttack,isCritical:decision.isCritical}, decision.armorDecision?.damageAllowed ?? true, this.damageMultipliersFor(attacker, target, req.actionName));
+    this.lastHit.updateFromDamage(this.tickCount,damage);
+    this.bus.emit("DamageApplied", CombatEventPriority.Damage, this.tickCount, damage, {sourceActorId:attacker.id,targetActorId:target.id, correlationId});
+    const finalReaction=this.reactionResolver.resolve(target,decision);
+    this.lastHit.updateFromHit(this.tickCount,decision,finalReaction,correlationId);
+    this.bus.emit("ReactionRequested", CombatEventPriority.Reaction, this.tickCount, {targetId:target.id, finalReaction}, {targetActorId:target.id, correlationId});
+    this.reactionResolver.apply(target,finalReaction,decision,attacker,this.tickCount);
+    this.bus.emit("ReactionApplied", CombatEventPriority.Reaction, this.tickCount, {targetId:target.id, finalReaction}, {targetActorId:target.id, correlationId});
+    const action=getAction("Bloodlust");
+    this.hitStop.start([attacker.id], action.hitStopProfile.frames);
+    this.hitStop.start([target.id], action.hitStopProfile.frames);
+    if(action.hitStopProfile.frames>0) this.bus.emit("HitStopStarted", CombatEventPriority.Reaction, this.tickCount, {actorIds:[attacker.id,target.id], frames:action.hitStopProfile.frames, attackerFrames:action.hitStopProfile.frames, victimFrames:action.hitStopProfile.frames}, {sourceActorId:attacker.id,targetActorId:target.id, correlationId});
+    this.recoil.start(attacker.id, action.recoilProfile.frames);
+    if(action.recoilProfile.frames>0) this.bus.emit("RecoilStarted", CombatEventPriority.Reaction, this.tickCount, {actorId:attacker.id, frames:action.recoilProfile.frames}, {sourceActorId:attacker.id, correlationId});
+    this.bus.emit("DamageNumberRequested", CombatEventPriority.Feedback, this.tickCount, {actorId:target.id, amount:damage.finalDamage, sourceKind:damage.sourceKind}, {targetActorId:target.id, correlationId});
+    this.bus.emit("VfxRequested", CombatEventPriority.Feedback, this.tickCount, {actorId:target.id, vfx:"bloodlust_eruption"}, {targetActorId:target.id, correlationId});
+    if(damage.hpAfter<=0) {
+      this.applyFrenzyBleedKillRestore(attacker, targetWasBleeding);
+      this.death.kill(target,this.tickCount,this.bus,undefined,correlationId);
+    }
+    this.updateScenarioFlags(decision, finalReaction, damage);
+  }
+
+  private updateBloodlustWhiffEruptions(): void {
+    for (const actor of this.actors) {
+      const inst = actor.currentAction;
+      if (!inst || inst.actionName !== "Bloodlust" || inst.localFrame !== 14 || inst.hitConfirmed || this.bloodlustWhiffEruptions.has(inst.id)) continue;
+      this.bloodlustWhiffEruptions.add(inst.id);
+      const corr = nextId("corr");
+      this.bus.emit("BloodlustWhiffEruption", CombatEventPriority.Feedback, this.tickCount, {actorId:actor.id, actionInstanceId:inst.id}, {sourceActorId:actor.id, correlationId:corr});
+      this.bus.emit("VfxRequested", CombatEventPriority.Feedback, this.tickCount, {actorId:actor.id, vfx:"bloodlust_whiff_eruption"}, {sourceActorId:actor.id, correlationId:corr});
+    }
   }
 
   private applyFrenzyBleedKillRestore(attacker: Actor, targetWasBleeding: boolean): void {

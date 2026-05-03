@@ -14,9 +14,11 @@ if (compile.status !== 0) {
 
 function walk(dir){ const out=[]; for(const entry of readdirSync(dir)){ const file=path.join(dir, entry); const st=statSync(file); if(st.isDirectory()) out.push(...walk(file)); else if(file.endsWith('.test.js')) out.push(file); } return out.sort(); }
 const tests = walk(path.join(compiledRoot, 'tests', 'static'));
+const jsTests = walk(path.join(root, 'tests', 'static-js')).filter(file => file.endsWith('.test.mjs'));
 let passed=true; const results=[];
 for(const file of tests){ const r=spawnSync(process.execPath,[file],{cwd:root,encoding:'utf8'}); const ok=r.status===0; results.push({file:path.relative(compiledRoot,file),passed:ok,stdout:r.stdout,stderr:r.stderr,status:r.status ?? 1}); if(!ok) passed=false; }
-const payload = {passed, command:'node scripts/run-tsc.mjs -p tsconfig.test.json && node .tmp/test-js/tests/static/*.test.js', status:passed?0:1, results};
+for(const file of jsTests){ const r=spawnSync(process.execPath,[file],{cwd:root,encoding:'utf8'}); const ok=r.status===0; results.push({file:path.relative(root,file),passed:ok,stdout:r.stdout,stderr:r.stderr,status:r.status ?? 1}); if(!ok) passed=false; }
+const payload = {passed, command:'node scripts/run-tsc.mjs -p tsconfig.test.json && node .tmp/test-js/tests/static/*.test.js && node tests/static-js/*.test.mjs', status:passed?0:1, results};
 mkdirSync(path.join(root,'.tmp'),{recursive:true}); writeFileSync(path.join(root,'.tmp','static-test-results.json'),JSON.stringify(payload,null,2));
 if(!passed){ console.error(JSON.stringify(payload,null,2)); process.exit(1); }
 console.log(JSON.stringify(payload,null,2));

@@ -11,7 +11,17 @@ const verificationDir = path.join(root, "verification");
 const TIMEOUT_MS = 30000;
 const BASE_PATH = "/carbon-shade-web/";
 const PORT = 5173;
-const URL = `http://localhost:${PORT}${BASE_PATH}`;
+const DEFAULT_URL = `http://localhost:${PORT}${BASE_PATH}`;
+
+export function stripAnsi(text) {
+  return text.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, "");
+}
+
+export function detectViteReadyUrl(text) {
+  const normalized = stripAnsi(text);
+  const match = normalized.match(/Local:\s*(https?:\/\/localhost:\d+\/\S*)/);
+  return match?.[1] ?? null;
+}
 
 function startServer() {
   const viteBin = path.join(root, "node_modules", "vite", "bin", "vite.js");
@@ -22,26 +32,28 @@ function startServer() {
 
   return new Promise((resolve, reject) => {
     let resolved = false;
+    let serverOutput = "";
     const timer = setTimeout(() => {
       if (!resolved) {
         resolved = true;
         server.kill();
-        reject(new Error(`Server did not start within ${TIMEOUT_MS}ms`));
+        reject(new Error(`Server did not start within ${TIMEOUT_MS}ms\n${stripAnsi(serverOutput).trim()}`.trim()));
       }
     }, TIMEOUT_MS);
 
-    server.stdout.on("data", (data) => {
+    const handleOutput = (data) => {
       const text = data.toString();
-      if (!resolved && text.includes("Local:")) {
+      serverOutput += text;
+      const readyUrl = detectViteReadyUrl(text) ?? detectViteReadyUrl(serverOutput);
+      if (!resolved && readyUrl) {
         resolved = true;
         clearTimeout(timer);
-        resolve(server);
+        resolve({ server, url: readyUrl });
       }
-    });
+    };
 
-    server.stderr.on("data", (data) => {
-      // Vite writes some info to stderr, don't treat as error
-    });
+    server.stdout.on("data", handleOutput);
+    server.stderr.on("data", handleOutput);
 
     server.on("error", (err) => {
       if (!resolved) {
@@ -61,7 +73,7 @@ function startServer() {
   });
 }
 
-async function runSmokeTest(server) {
+async function runSmokeTest(url) {
   const results = [];
   let passed = true;
 
@@ -79,7 +91,7 @@ async function runSmokeTest(server) {
   });
 
   try {
-    await page.goto(URL, { timeout: TIMEOUT_MS, waitUntil: "domcontentloaded" });
+    await page.goto(url, { timeout: TIMEOUT_MS, waitUntil: "domcontentloaded" });
     results.push({ check: "page_loaded", passed: true });
 
     // Wait for Phaser to create a canvas element
@@ -159,35 +171,44 @@ async function runSmokeTest(server) {
   return { passed, results };
 }
 
-let exitCode = 1;
-let server = null;
+async function main() {
+  let exitCode = 1;
+  let server = null;
+  let url = DEFAULT_URL;
 
-try {
-  console.log("Starting Vite dev server...");
-  server = await startServer();
-  console.log("Server ready. Running smoke test...");
+  try {
+    console.log("Starting Vite dev server...");
+    const ready = await startServer();
+    server = ready.server;
+    url = ready.url;
+    console.log(`Server ready at ${url}. Running smoke test...`);
 
-  const report = await runSmokeTest(server);
-  const payload = { passed: report.passed, url: URL, timestamp: new Date().toISOString(), results: report.results };
+    const report = await runSmokeTest(url);
+    const payload = { passed: report.passed, url, timestamp: new Date().toISOString(), results: report.results };
 
-  mkdirSync(verificationDir, { recursive: true });
-  writeFileSync(path.join(verificationDir, "browser-smoke.json"), JSON.stringify(payload, null, 2));
-  console.log(JSON.stringify(payload, null, 2));
+    mkdirSync(verificationDir, { recursive: true });
+    writeFileSync(path.join(verificationDir, "browser-smoke.json"), JSON.stringify(payload, null, 2));
+    console.log(JSON.stringify(payload, null, 2));
 
-  if (report.passed) {
-    console.log("\nBrowser smoke test PASSED");
-    exitCode = 0;
-  } else {
-    console.error("\nBrowser smoke test FAILED");
+    if (report.passed) {
+      console.log("\nBrowser smoke test PASSED");
+      exitCode = 0;
+    } else {
+      console.error("\nBrowser smoke test FAILED");
+      exitCode = 1;
+    }
+  } catch (err) {
+    console.error(`Browser smoke test error: ${err.message}`);
+    const payload = { passed: false, url, timestamp: new Date().toISOString(), error: err.message, results: [] };
+    mkdirSync(verificationDir, { recursive: true });
+    writeFileSync(path.join(verificationDir, "browser-smoke.json"), JSON.stringify(payload, null, 2));
     exitCode = 1;
+  } finally {
+    if (server) server.kill();
+    process.exit(exitCode);
   }
-} catch (err) {
-  console.error(`Browser smoke test error: ${err.message}`);
-  const payload = { passed: false, url: URL, timestamp: new Date().toISOString(), error: err.message, results: [] };
-  mkdirSync(verificationDir, { recursive: true });
-  writeFileSync(path.join(verificationDir, "browser-smoke.json"), JSON.stringify(payload, null, 2));
-  exitCode = 1;
-} finally {
-  if (server) server.kill();
-  process.exit(exitCode);
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  await main();
 }
