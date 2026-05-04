@@ -8,6 +8,10 @@
 
 正式仓库名 / Pages 路径标准：`carbon-shade-web`。
 
+## Project Wiki
+
+- `docs/wiki/Home.md` — project understanding, architecture, runbook, CI/CD, combat-kernel overview, asset pipeline and maintenance checklist.
+
 ## Project direction
 
 《碳影》是一款关于借力、成长、代价与归途的 2.5D 战斗养成寓言。
