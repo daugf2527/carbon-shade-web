@@ -4,6 +4,10 @@
 
 Describe what changed and why.
 
+## Linked Issues
+
+Closes or relates to: <!-- #123 -->
+
 ## Change Area
 
 - [ ] Combat kernel (`src/combat/`)
@@ -16,9 +20,9 @@ Describe what changed and why.
 
 ## Risk Level
 
-- [ ] Low — docs, comments, or isolated test changes
-- [ ] Medium — localized behavior or asset changes
-- [ ] High — combat logic, CI/CD, deployment, or runtime evidence changes
+- [ ] Low — docs, comments, isolated tests, or template-only changes
+- [ ] Medium — localized behavior, asset, or UI changes
+- [ ] High — combat logic, CI/CD, deployment, runtime evidence, or build output changes
 
 ## Validation Performed
 
@@ -28,13 +32,15 @@ Describe what changed and why.
 - [ ] `npm run static:test`
 - [ ] `npm run build`
 - [ ] `npm run browser:smoke`
+- [ ] Docker smoke: `docker compose up --build`
 - [ ] Not run — explain below
 
 ## Runtime / Visual Evidence
 
 Attach or link relevant evidence when applicable:
 
-- Screenshots
+- Screenshots or short capture
+- `verification/build.json`
 - `verification/runtime-evidence.json`
 - `verification/browser-smoke.json`
 - Playwright report
@@ -46,6 +52,7 @@ Attach or link relevant evidence when applicable:
 - [ ] Velocity writes remain limited to approved files
 - [ ] New or changed combat behavior is covered by static tests
 - [ ] New or changed visual behavior is mapped through the rendering layer, not the kernel
+- [ ] Death / hit stop / recoil / reaction / armor changes include deterministic evidence
 
 ## Deployment Impact
 
@@ -53,7 +60,12 @@ Attach or link relevant evidence when applicable:
 - [ ] GitHub Pages output changed intentionally
 - [ ] CI/CD changed intentionally
 - [ ] Artifact or evidence output changed intentionally
+- [ ] Docker startup behavior changed intentionally
 
-## Notes for Reviewers
+## Review Focus
 
-Add review focus, known tradeoffs, or follow-up tasks here.
+Tell reviewers exactly what to inspect first.
+
+## Notes / Follow-ups
+
+Add known tradeoffs, deferred work, or follow-up issues here.
