@@ -1,4 +1,5 @@
 # DNF DFO战斗系统复刻实施研究报告
+> **Status: [SUPPORTING] — Replay/network/debug 细节：战斗日志、回放验证、连招保护**
 
 ## 执行摘要
 

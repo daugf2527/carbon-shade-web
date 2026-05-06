@@ -1,5 +1,7 @@
 # Data And Runtime Pipeline Synthesis
 
+> **Status: [SYNTHESIS]** — PVF/ANI/NPK、manifest、parser、runtime data 和测试治理综合
+
 ## Purpose
 
 这篇解决“资料里的 PVF/ANI/NPK、manifest、runtime data、parser、测试和合规边界到底怎么收束”的问题。它是数据工具链和 runtime data migration 的首读文档。

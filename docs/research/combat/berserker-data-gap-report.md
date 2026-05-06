@@ -1,4 +1,5 @@
 # DNF Berserker Combat Data — 最终差距报告
+> **Status: [BERSERKER] — API vs wiki vs local baseline 数据差距跟踪**
 
 > 日期: 2026-05-04
 > 基于: 官方 API + DFO Wiki + Namu Wiki + DFO 补丁记录 + dcalc 源码 + PVF/NPK 提取管线设计

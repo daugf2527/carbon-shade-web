@@ -1,5 +1,7 @@
 # DNF/DFO 战斗系统复刻实现研究报告
 
+> **Status: [CANONICAL]** — 运行时实现路线：静态数据层→动画帧层→命中热路径
+
 ## 执行摘要
 
 公开资料已经足够证明：这套战斗系统不是“几段动画 + 几个碰撞盒”的简单拼接，而是**脚本层、动画帧层、判定层、状态层、位移层、评分层、网络同步层**共同驱动的数据化系统。官方开发者文档与公开技能页表明，技能数据至少包含冷却、施放时间、成长表、范围信息、特殊功能等描述；公开解析代码进一步显示，动画帧里还带有 `attackBox` / `damageBox`、`delay`、`x/y` 偏移、循环、插值、翻转、音效、伤害类型等字段。citeturn7search10turn26search8turn41search2turn18view0turn15view0
@@ -506,6 +508,165 @@ sequenceDiagram
 高层级逆向线索也已经足够指向一条安全而有效的工具链：优先使用**官方 API + 公开动画解析代码 + 逐帧可视化工具**来重建数据，不要把“上线联机问题”寄希望于客户端自判。citeturn26search8turn18view0turn37search0turn24view0
 
 ## 开发落地建议
+
+---
+
+## Appended: Replica Implementation ‚Äî Âõ∫ÂÆöÂ∏ß/ËæìÂÖ•ÂÖºÂÆπ/ÂõûÊîæ/ÊåâÈîÆ‰ΩìÁ≥ª (from dnf-combat-replica-implementation-technical-report.md)
+
+> ‰ª•‰∏ãÂÜÖÂÆπÊù•Ëá™ [SUPPORTING] dnf-combat-replica-implementation-technical-report.mdÔºåÊåâ CHAPTER-AUDIT ÂêàÂπ∂ËßÑÂàôËøÅÁßª„ÄÇ‰øùÁïôÔºöBackstep Upgrade„ÄÅÂõ∫ÂÆöÈÄªËæëÂ∏ß‰º™‰ª£ÁÝÅ„ÄÅÂõûÊîæ‰∫ã‰ª∂ÊÄªÁ∫ø„ÄÅÊåâÈîÆ‰ΩìÁ≥ª„ÄÇ
+
+## 系统工具、固定帧、输入兼容与回放
+
+### 固定逻辑帧与渲染帧分离
+
+要做出 DNF 这种动作判定与输入容错都稳定的系统，建议采用**固定逻辑帧 + 可变渲染帧**。这是为了保证 hitbox、取消窗口、输入缓存、回放、乃至未来若要上同步/回滚网络，都能依赖同一套确定性 tick。固定 timestep 的经典做法是 accumulator loop：逻辑以固定 dt 运行，渲染按最近两个逻辑态插值。citeturn9search0
+
+DNF 官方对控制器支持的公告也间接支持这种做法：控制器可重映射，支持固定键位输入某些副本机制，模拟摇杆可按倾斜程度区分走/跑。这些都要求输入采样和动作消费有一个**稳定的逻辑消费点**，而不是完全依赖渲染帧。citeturn10view6turn10view8
+
+```cpp
+constexpr double LOGIC_DT = 1.0 / 60.0;
+double accumulator = 0.0;
+GameState prevState, currState;
+
+while (running) {
+    double frameTime = Clamp(ReadRealDelta(), 0.0, 0.25);
+    accumulator += frameTime;
+
+    PollRawInputDevices(); // keyboard + controller
+
+    while (accumulator >= LOGIC_DT) {
+        prevState = currState;
+        InputSnapshot in = SampleAndNormalizeInputs(); // 只在逻辑 tick 采样
+        PushToInputBuffer(in, currState.logicTick);
+        StepLogic(currState, LOGIC_DT);
+        accumulator -= LOGIC_DT;
+    }
+
+    double alpha = accumulator / LOGIC_DT;
+    Render(Interpolate(prevState.renderPose, currState.renderPose, alpha));
+}
+```
+
+如果目标平台是 PC 且以 PvE 为主，`logic=60Hz, render=120Hz/144Hz` 通常是最实用的折中；如果日后考虑类格斗化 PvP 或回滚联网，优先保证**逻辑 determinism**，必要时把位移、动画根运动、物理推挤都从浮点改成定点或整数 px。citeturn9search0turn9search5
+
+### 输入兼容与按键体系
+
+官方已经公开：
+- Hotkey 可按角色保存。
+- 控制器支持 XBOX / PS 类型，支持重映射与震动。
+- 某些副本中的“固定键模式”可由控制器映射输入。
+- 技能有普通技能槽与扩展技能槽。citeturn10view7turn10view6turn10view8turn26search10
+
+因此，建议输入系统做成三段式：
+
+1. **Raw Layer**：键盘、手柄、宏键、触屏（若以后上移动）。
+2. **Action Layer**：MoveX、MoveY、Jump、Attack、Skill1..N、DungeonSpecial、OptionControl。
+3. **Command Layer**：方向 + 技能键组合，进入输入缓存。
+
+下表是推荐的输入兼容数据结构。
+
+| 层级 | 字段 | 说明 |
+|---|---|---|
+| Raw | keyCode / padButton / axisValue | 设备原始值 |
+| Action | `MoveX`, `MoveY`, `Jump`, `BasicAtk`, `Skill[n]` | 抽象玩家意图 |
+| Command | `Down+Skill3`, `Backstep`, `OptionControl` | 能进入战斗消费器的指令 |
+| Profile | perCharacter / perDevice | 与官方“每角色热键保存”一致 |
+| Compatibility | deadZone / analogWalkThreshold / SOCD policy | 保证手柄/键盘一致消费 |
+
+### 回放系统、战斗报告与事件总线
+
+公开资料能确定三件事：
+第一，官方客户端里大量存在“技能 Replay / 预览视频 / Talisman Encyclopedia 回放放大播放”等能力，说明客户端已有“技能片段回放”的资产与 UI 机制；第二，训练场早就有 Damage Report、Reset、Stopwatch、Timer、可调 HP 百分比与 Buff 开关；第三，新副本里甚至有 Combat Reporting。也就是说，**官方已经把“回放/报告/训练”当作战斗系统的一部分，而不是外挂工具**。citeturn26search0turn26search12turn27search1turn27search0
+
+但官方没有公开“完整战斗回放”的底层格式，所以如果你们要自己做，最稳妥的方案仍然是**输入日志回放**而不是“每帧状态快照流”。推荐记录以下内容：
+
+| 字段 | 说明 |
+|---|---|
+| `buildHash` | 资源版本校验 |
+| `combatSchemaHash` | 技能表/状态表/异常表版本 |
+| `seed` | RNG 稳定种子 |
+| `playerLoadout` | 技能、加点、装备、Buff 初始集 |
+| `spawnScriptHash` | 房间脚本版本 |
+| `inputEvents[]` | `logicTick, playerId, action, value` |
+| `syncChecks[]` | 每 N tick 记录少量校验哈希 |
+| `eventBusTrace[]` | 仅调试/开发模式启用 |
+
+下面这条事件总线足以覆盖 DNF 风格战斗的关键信息流。它不是官方枚举，而是根据官方系统能力与战斗规则整理的**建议落地总线**。
+
+| 事件名 | 触发时机 | 消费方 |
+|---|---|---|
+| `InputAccepted` | 输入缓存被消费 | 动作状态机、UI |
+| `StateChanged` | 主状态变化 | 动作/AI/音效 |
+| `SpawnHitbox` | 技能激活段开始 | 判定系统、特效 |
+| `HitConfirmed` | 命中成立 | 伤害、连击、镜头 |
+| `DamageApplied` | 伤害结算完成 | HP、评分、掉血表现 |
+| `AbnormalApplied` | 异常加上/刷新/移除 | 图标、DoT、Neutralize |
+| `NeutralizeChanged` | 无力化条增减/破坏 | Boss UI、软控权重 |
+| `TargetRetargeted` | 追踪改锁新目标 | 导弹/投射物 |
+| `CounterTriggered` | 反击命中 | 伤害修正、提示字 |
+| `CameraShake` | 需要震屏 | 摄像机、怪物血条 shake |
+| `ReplayMarker` | 命中、阶段切换、死亡等关键帧 | 回放/编辑器 |
+| `CombatReportTick` | 周期性采样 | 训练报告、统计 |
+
+### 关键流程图
+
+下面三张图是可直接交给程序、TA 与 QA 对齐接口的流程图。它们描述的是**建议实现**，其行为边界由前文的官方规则支持。citeturn10view1turn10view3turn10view4turn10view8turn9search0
+
+```mermaid
+flowchart LR
+    A[输入采样] --> B[输入缓存]
+    B --> C[状态机检查]
+    C --> D[技能启动]
+    D --> E[生成hitbox]
+    E --> F[几何判定]
+    F --> G{命中?}
+    G -- 否 --> H[进入后摇/待机]
+    G -- 是 --> I[伤害家族计算]
+    I --> J[异常/无力化/反击修正]
+    J --> K[HP与状态落地]
+    K --> L[屏幕反馈/震屏/UI]
+    L --> M[连击数/评分/战斗报告]
+```
+
+```mermaid
+sequenceDiagram
+    participant InputLog as 输入日志
+    participant Core as 固定逻辑核心
+    participant RNG as RNG
+    participant Report as 校验/报告
+    participant Renderer as 渲染器
+
+    InputLog->>Core: 按tick回放输入
+    RNG->>Core: 固定seed
+    Core->>Core: 逐tick推进状态机/判定/伤害
+    Core->>Report: 周期性hash与事件trace
+    Core->>Renderer: 输出可插值render pose
+    Report-->>Core: 若hash不一致则触发反查
+```
+
+```mermaid
+flowchart TD
+    A[Acquire Target] --> B{有脚本目标?}
+    B -- 是 --> C[执行脚本招式]
+    B -- 否 --> D[按仇恨/距离/可见性评分]
+    D --> E{到位?}
+    E -- 否 --> F[Chase / Position]
+    E -- 是 --> G[Cast Pattern]
+    G --> H{被打断/无力化?}
+    H -- 是 --> I[React / Neutralized]
+    H -- 否 --> J[Recover]
+    I --> A
+    J --> A
+```
+
+### 镜头反馈、血条 Shake、碰撞推挤、死亡复活闭环
+
+官方已经直接把怪物 HP UI 的 shake 与伤害强度绑定，而且会改进 Invincibility / Hold 的显示；同时部分更新会修正“某技能异常改变镜头视角”，另一些职业改动会专门优化 screen-shake effect。由此可知，屏幕反馈至少应当拆成：**镜头控制**、**血条 shake**、**角色受击/命中抖动**、**文字/图标层** 四层，而不是只做一个 CameraShake。citeturn10view9turn11view6turn11view4
+
+碰撞与推挤方面，公告直接出现过“Black Tortoise will no longer push enemies”这类改动，说明“推挤”在 DNF 里是一个可被单独改掉的技能属性，不应默认为所有带位移技能都会推人。建议把碰撞拆成 `block`, `push`, `pull`, `hold`, `throw`, `teleportSnap` 六类。citeturn6search5
+
+死亡复活闭环若要做成 DNF 风格，则应按“**死亡 -> 死亡保护判定 -> 角色/队伍/道具复活源判定 -> 起身保护 -> Buff 重建 -> 事件广播**”设计。现代公开资料里能看到职业级的复活/保命逻辑以及 HP/Barrier、Buff 图标与副本中的 Combat Reporting，但没有统一公开的全局复活协议，因此这部分应作为**你们自己的统一化抽象**。citeturn10view7turn14view0turn23search1turn16view0
+
 
 ### 先做工具，再做手感
 

@@ -1,4 +1,5 @@
 # DNF DFO 战斗系统复刻研究报告
+> **Status: [EXTENSION] — PvP/1v1 规格**
 
 ## 执行摘要
 

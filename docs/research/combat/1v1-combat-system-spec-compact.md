@@ -1,5 +1,7 @@
 # 实现类 DNF/DFO 一对一战斗系统的技术规格与可执行开发规范
 
+> **Status: [EXTENSION]** — PvP compact spec
+
 ## 执行摘要
 
 这份文档把“类 DNF/DFO 的 1:1 战斗系统”拆成两层来定义。第一层是**高置信、可从官方与原始资料直接确认的规则**：韩服/国际服官方公开说明了 PvP 与 PvE 在技能、冷却、装备归一化、HUD、回放、帧率上限、技能引导与独立配置上的分离；官方战斗/状态异常指南给出了中毒、灼伤、感电、出血与多种控制异常的持续时间、触发间隔、堆叠与互斥关系；官方开发者 API 明确暴露了 `coolTime`、`castingTime`、`chain.resetTime`、`skillId` 等字段，说明技能时序本身就是可数据化的；官方安全规则明确点名了调试器、反汇编器、封包修改、内存修改、宏、进程隐藏、虚拟机与远程控制等不允许行为。citeturn27view0turn29view0turn29view1turn6view0turn7view0turn18search0

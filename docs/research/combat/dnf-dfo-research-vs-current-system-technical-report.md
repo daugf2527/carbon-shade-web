@@ -1,5 +1,7 @@
 # DNF/DFO Research vs Current Combat System Technical Report
 
+> **Status: [CANONICAL]** — 当前代码差距主线，首读决定下一批工程工作
+
 日期：2026-04-29
 
 ## 结论摘要

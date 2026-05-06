@@ -1,4 +1,5 @@
 # DNF战斗系统复刻技术研究报告
+> **Status: [EXTENSION] — Raid/party/buff/equipment 外围系统**
 
 ## 执行摘要
 

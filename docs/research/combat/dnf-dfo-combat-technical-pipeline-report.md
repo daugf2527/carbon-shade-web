@@ -1,4 +1,5 @@
 # DNF/DFO 战斗系统复刻开发研究报告
+> **Status: [OVERLAPPING] — 与 canonical 大量重复，保留职业样例和事件总线**
 
 ## 执行摘要
 

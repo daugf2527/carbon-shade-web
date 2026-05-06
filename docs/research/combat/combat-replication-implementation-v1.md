@@ -1,4 +1,7 @@
 # DNF战斗系统复刻实施研究报告
+> **Status: [HISTORICAL] — 已被 v2 覆盖，仅保留服务拓扑/配置模型/包头骨架历史参考**
+
+> ⚠️ **HISTORICAL** — 已被 `combat-replication-implementation-v2.md` 覆盖。仅保留服务拓扑、配置模型、包头骨架、音频优先级的历史参考。实现引用请使用 v2。
 
 ## 执行摘要
 

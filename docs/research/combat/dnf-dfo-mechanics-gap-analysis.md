@@ -1,5 +1,7 @@
 # DNF/DFO Mechanics Gap Analysis
 
+> **Status: [CANONICAL]** — 短版 mechanics gap，快速复查当前 match/gap/supplement order
+
 Date: 2026-04-28
 
 ## Sources Checked

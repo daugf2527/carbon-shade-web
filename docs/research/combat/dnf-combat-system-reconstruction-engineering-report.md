@@ -1,5 +1,7 @@
 # 地下城与勇士战斗系统逆向重建与工程实现报告
 
+> **Status: [SUPPORTING]** — 高层工程蓝图，含战斗主数据表和取消窗口表
+
 ## 执行摘要
 
 这份报告的结论可以先说在前面：**公开可验证资料已经足够重建 DNF/DFO 战斗系统的“引擎契约”与大部分数值层规则，但不足以仅凭网页资料直接拿到“全职业、全技能、逐帧、逐盒”的完整 hitbox/hurtbox 与帧表**。能公开证实的部分包括：游戏是 PC 端、横版卷轴动作 RPG；官方开发者 API 暴露了职业与技能列表/详情接口；官方指南、更新公告和补丁文档明确暴露了 Counter、Invincibility、Super Armor、Aerial、Down、Grab-immune、Neutralize、Rupture 与异常状态体系；官方还公开了控制器映射、每角色技能热键、以及若干以 px 为单位的范围/判定数据。另一方面，开源工具明确证明客户端存在 `Script.pvf` 与 `.NPK` 资源包，并且有面向台湾分支的 PVF 解包/回包工具，但这些公开网页资料并没有直接给出“完整逐帧判定盒表”。citeturn8search1turn15view0turn16view0turn30view1turn31view0turn31view2turn36search8turn43view0turn10view0turn10view1turn10view2

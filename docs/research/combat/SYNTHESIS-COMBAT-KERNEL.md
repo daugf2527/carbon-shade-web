@@ -1,5 +1,7 @@
 # Combat Kernel Synthesis
 
+> **Status: [SYNTHESIS]** — Input→Replay 主链、P2 缺口和下一批实现方向
+
 ## Purpose
 
 这篇是后续实现最常用的综合文档，用于把帧数据、2.5D 判定、输入/取消、伤害、状态、armor/grab、AI、Replay 和 current-code gap 收束到同一条工程主线。

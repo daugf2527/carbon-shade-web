@@ -35,7 +35,7 @@
 | `deep-research-paper-doll-avatar-compositor.md` | `deep-research-npk-img-art-pipeline-spec.md` | 11 槽纸娃娃系统、hide mask/z-override 规则、V4/V6 调色板染色、官方 Showroom 数据(69K 物品) |
 | `dnf-dfo-neutralize-ignite-defense-report.md` | `dnf-dfo-combat-core-systems-report.md` | Neutralize 计量表消耗、Ignite 倍率、Suppression/hold chain、2026 技能链(4 槽, reinput gating)、目标状态标签 |
 | `dnf-dfo-research-vs-current-system-technical-report.md` | `code-level-dnf-replication-gap-assessment.md` | 同一代码库的差距评估，同样结论(15-20% 完成度，架构正确、内容填充低)，同样的子系统打分 |
-| `deep-research-combat-system-freeze-replication.md` | `deep-research-spk-npk-img-pvf-compatible-replication.md` | SPK 补丁格式、NPK 打包、IMG V2/V4/V5/V6 字段、PVF 容器、NDC 2014 优化数据 |
+| `combat-system-freeze-replication.md` | `deep-research-spk-npk-img-pvf-compatible-replication.md` | SPK 补丁格式、NPK 打包、IMG V2/V4/V5/V6 字段、PVF 容器、NDC 2014 优化数据 |
 | `dnf-dfo-combat-kernel-development-report.md` | `dnf-dfo-combat-extraction-runtime-pipeline-report.md` | 技能数据表(SkillDef/HitEmitter/StateRule)、2.5D 碰撞、伤害公式版本化、自动瞄准/Y 轴修正、怪物 AI |
 | `dnf-combat-system-reconstruction-engineering-report.md` | `dnf-dfo-combat-kernel-development-report.md` | 2.5D 碰撞、SkillDef/ActionTimeline 数据模型、伤害公式版本化、怪物 AI 状态机、异常状态分类 |
 
@@ -103,7 +103,7 @@
 
 3. **《项目差距评估》** —— 合并 `code-level-dnf-replication-gap-assessment.md` + `dnf-dfo-research-vs-current-system-technical-report.md`
 
-4. **《美术资源格式规格》** —— 合并 `deep-research-npk-img-art-pipeline-spec.md` + `deep-research-spk-npk-img-pvf-compatible-replication.md` + `deep-research-combat-system-freeze-replication.md`
+4. **《美术资源格式规格》** —— 合并 `deep-research-npk-img-art-pipeline-spec.md` + `deep-research-spk-npk-img-pvf-compatible-replication.md` + `combat-system-freeze-replication.md`
 
 5. **《美术管线实施指南》** —— 合并 `deep-research-paper-doll-avatar-compositor.md` + `deep-research-art-system-dnf-1to1.md` + `deep-research-art-pipeline-dev-guide.md`
 

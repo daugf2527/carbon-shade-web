@@ -1,4 +1,5 @@
 # DNF/DFO战斗子系统 clean-room 复刻技术报告
+> **Status: [EXTENSION] — 掉落/房间/NPC/剧情 外围系统**
 
 ## 执行摘要
 

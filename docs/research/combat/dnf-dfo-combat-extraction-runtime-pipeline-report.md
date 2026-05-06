@@ -1,5 +1,7 @@
 # DNF/DFO 战斗系统复刻技术报告
 
+> **Status: [CANONICAL]** — PVF/ANI/NPK 抽取工具链主线，按目标/数据表/测试用例组织
+
 ## 执行摘要
 
 这份报告的结论很明确：如果目标是给开发团队提供**可落地的 1:1 复刻资料**，公开资料能直接给到的，主要是**战斗系统骨架**、**现代伤害层的数学规则**、**状态异常与无力化/反击等系统规则**、**资源包与脚本文件的解析入口**；而**“全职业全部技能”的逐技能命中框、受击框、逐帧启动/持续/后摇表**，公开官方资料并没有完整发布，必须通过**合法取得的正式客户端**中的 `Script.pvf` 与 `ImagePacks2/*.npk` 自动化抽取，再用实机录制或脚本回放做拟合校准。官方 API 可以枚举职业、技能与部分技能链数据，但不能直接提供 hitbox/hurtbox/frame data。citeturn10view0turn8search7turn45view0turn13view3turn25view1
@@ -771,6 +773,431 @@ def apply_hpbar_feedback(last_damage, ref_hp):
 | 自动更新 | 客户端小版本升级后重跑抽取 | 新旧版本差异自动出报告 |
 | 回归对比 | 同一技能新旧版本 frame/hitbox 对比 | 差异落到可审阅 diff 表 |
 
+
+---
+
+## Appended: Reconstruction Blueprint — 战斗主数据模型 (from dnf-combat-system-reconstruction-engineering-report.md)
+
+> 以下内容来自 [SUPPORTING] dnf-combat-system-reconstruction-engineering-report.md，按 CHAPTER-AUDIT 合并规则迁移到此 canonical 文件。保留：战斗主数据表、坐标单位、判定盒规范、公开时序样例。
+
+## 可直接落地的数据模型
+
+官方文档说明 DNF 现有职业/技能是可查询的，而且当前国际服已经是 “16 classes / 60+ advancements” 级别的体量；同时，游戏仍然是典型的横版卷轴动作 RPG。这个规模决定了一个结论：**不能用手写 if/else 去复刻战斗，必须是数据驱动**。建议把战斗数据拆成五张主表：`SkillDefinition`、`ActionTimeline`、`HitEmitter`、`StateRule`、`AIProfile`。职业/技能 API 负责给你索引；PVF/NPK 抽取负责给你动作与资源；官方规则页负责给你系统标签与交互约束。citeturn8search1turn19search1turn16view0turn10view0turn10view1
+
+### 战斗主数据表
+
+| 表名 | 主键 | 关键字段 | 用途 |
+|---|---|---|---|
+| `SkillDefinition` | `skill_id` | `job_id`, `branch_id`, `attack_type`, `cooldown_ms`, `resource_cost`, `element_policy`, `cancel_tags`, `can_cast_air`, `can_cast_downed`, `grab_mode`, `counter_bonus_tag`, `rear_attack_tag` | 技能总表 |
+| `ActionTimeline` | `action_id` | `logic_fps`, `startup_frames`, `active_windows[]`, `recovery_frames`, `input_buffer_open`, `cancel_open`, `root_motion_curve`, `speed_scale_type` | 动作/帧序总表 |
+| `HitEmitter` | `emitter_id` | `shape`, `offset_x`, `offset_y`, `offset_z`, `size_x`, `size_y`, `size_z`, `radius`, `max_targets`, `hit_interval_f`, `once_per_target`, `force_move`, `status_payload` | 每段打点/判定盒 |
+| `StateRule` | `state_id` | `super_armor`, `invincible`, `downed`, `airborne`, `can_turn`, `can_buffer`, `can_guard_cancel`, `can_backstep_upgrade`, `hurtbox_profile` | 状态机规则 |
+| `AIProfile` | `ai_id` | `aggro_weights`, `pattern_tree`, `counter_windows`, `grab_immune`, `super_armor_rules`, `neutralize_profile`, `status_tolerance` | 怪物战斗 AI |
+
+这套设计不是凭空拍脑袋。官方 API 明确区分职业、转职与技能；官方训练模式把 `Aerial / Down / Counterattack / Super Armor / Grab-immune / Boss / Named` 暴露为系统级测试开关；官方指南又把 `Invincible`、`Super Armor`、`Counter`、`Abnormal Status` 单独拿出来讲。这些都在告诉你：**“技能”只是数据引用点，真正的引擎实体是动作段、标签位、判定发射器与状态图**。citeturn16view0turn30view1turn36search8turn43view1
+
+### 2.5D 坐标与单位
+
+官方更新反复使用 `px` 表示范围与判定，包括 150px、500px、750px、800px、900px 这类整数值，而且多次强调 **Y-axis attack range**、**tracking range**、**around target 150 px**。这足以说明 DNF 战斗判定不是纯圆形 2D，更不是完整 3D physics，而是**地面平面上的 X/Y 判定 + 单独的空中 Z 层**。citeturn18search7turn18search11turn18search4turn36search1turn31view0turn31view2
+
+| 维度 | 建议定义 | 依据 | 实现建议 |
+|---|---|---|---|
+| `X` | 面向方向前后轴 | 横版卷轴动作 | 用整数 px 或定点数 |
+| `Y` | 纵深轴 | 官方多次写 `Y-axis range` | 与 X 独立判定，不与 Z 混合 |
+| `Z` | 跳跃高度层 | 官方有 `Aerial`, 空中施放、空中连斩 | 只影响空中/地面重叠与落地 |
+| 朝向 | `facing = +1 / -1` | Rear Attack/Back Attack、背后追踪 | Hitbox 本地坐标乘朝向镜像 |
+| 单位 | `1 logic unit = 1 px` | 官方范围值直接以 px 给出 | 逻辑层全部整数化，渲染层插值 |
+
+### 判定盒与受击盒规范
+
+公开网页没有给出“全技能完整坐标盒表”，但足够指导**应当怎样存**。由于官方范围值明显存在矩形纵深维度、圆形半径与追踪距离三种表达，所以 `HitEmitter.shape` 至少要支持 `rect_xy_z`、`circle_xy`、`swept_segment`、`attach_holder` 四类。
+
+| 字段 | 类型 | 说明 | 备注 |
+|---|---|---|---|
+| `shape` | enum | `RECT / CIRCLE / SWEEP / GRAB_ATTACH` | 技能使用不同判定拓扑 |
+| `offset_x/y/z` | int | 相对角色锚点偏移 | 建议锚点在盆骨/脚底中心 |
+| `size_x/y/z` | int | 盒尺寸 | 矩形判定专用 |
+| `radius` | int | 半径 | 圆形/爆炸/溅射 |
+| `active_from/to_f` | int | 逻辑帧窗口 | 与动画分离 |
+| `max_targets` | int | 最大命中数 | 多目标处理 |
+| `once_per_target` | bool | 单个激活窗是否只打一次 | 防止同窗多次命中 |
+| `hit_interval_f` | int | 连续多段命中的最短间隔 | 多段/持续技 |
+| `z_policy` | enum | `GROUND_ONLY / AIR_ONLY / BOTH` | 空地分层 |
+| `rear_lock` | bool | 是否要求背击/背后附着 | 暗杀/背袭类 |
+| `grab_mode` | enum | `NONE / SOFT / HARD / ALT_ON_IMMUNE` | 抓取与抓取免疫分支 |
+
+### 公开可核对的判定尺寸样例
+
+下表不是“全技能完整盒表”，而是**网页公开能直接核对的范围值样例**。这些值非常有用，因为它们能把工程上的单位系统和 2.5D 判定标尺定下来。citeturn31view0turn31view1turn18search7turn18search11turn18search4turn36search1
+
+| 公开对象 | 类型 | 公开数值 | 工程含义 |
+|---|---|---:|---|
+| 燃烧扩散 | 圆形溅射半径 | 150px | 目标中心圆形 AoE |
+| 女圣职者 Miracle Shine 初始 Y 轴范围 | 纵深范围 | 100px → 150px | 技能可单独配置 Y 轴盒深 |
+| 男圣职者 Apocalypse 攻击范围 | 半径/范围值 | 840px → 900px（Lv10） | 大范围技能可直接使用 px 半径参数 |
+| 部分协同/装备范围 | 团队 aura 半径 | 500px / 750px | 角色周围圆形检测 |
+| 追踪/后方瞬移范围 | 目标搜索半径 | 800px | 追踪技目标搜索圈 |
+
+### 公开可核对的时序样例
+
+韩服官方站内玩家会直接按帧讨论技能施放时间；这类资料不等于官方数表，但因为发布在官方站内、且常带逐帧 GIF，对工程实现仍然很有价值。下面这张表只放**公开可核对样例**，目的是告诉你“帧表必须入库”，而不是宣称网页上已能拿到全职业全量帧表。citeturn8search2turn8search11turn18search5turn26search0turn38search1
+
+| 技能/规则 | 公开事实 | 工程解释 | 可信度 |
+|---|---|---|---|
+| 韩服社区对 `一周连环击 / 闪极连环奥义` 的逐帧分析 | 施放时间 25 帧 | `cast_total_f = 25` 可直接入表 | B |
+| 同贴对 `横步移心一击` | 施放时间 17 帧 | 属于“同技能分支动作长度变化” | B |
+| Exorcist 全技能施放动作 | 改为受 Attack Speed 影响 | `speed_scale_type = ATK_SPEED` | A |
+| 某些技能进化说明 | 可在上挑攻击激活后取消 | `cancel_open_f` 不是固定在收招末尾，而是可落在 active 期后半段 | A |
+| 某些技能进化说明 | 可空中施放、可倒地/受击时施放 | `can_cast_air / can_cast_downed = true` | A |
+
+结论很直接：**帧表、取消窗、速度缩放类型都必须是技能级字段，不是职业级默认值**。同一职业内也会存在“受攻击速度影响”“受施放速度影响”“固定速度”“可空中施放”“仅地面施放”“受击时可施放”“后摇可被连携技切断”等不同规则。citeturn18search5turn36search3turn26search0turn38search1
+
 ## 结论
+
+---
+
+## Appended: Reconstruction Blueprint — 工程落地：固定逻辑帧/回放/震屏/事件总线 (from dnf-combat-system-reconstruction-engineering-report.md)
+
+> 以下内容来自 [SUPPORTING] dnf-combat-system-reconstruction-engineering-report.md，按 CHAPTER-AUDIT 合并规则迁移。保留：回放流程图、连击评分、震屏反馈、事件总线触发点。
+
+## 工程落地：固定逻辑帧、回放、评分、震屏、碰撞与事件总线
+
+在“平台、网络需求、性能目标未指定”的前提下，最稳妥、也最接近 DNF 这类战斗的工程路线，是**60Hz 固定逻辑帧 + 变速渲染帧 + 确定性输入记录**。通用游戏工程资料与学术资料都一致指出：固定时间步更容易获得确定性仿真；而格斗/动作游戏常用的输入延迟/输入缓冲则可用环形缓冲存储输入与玩家状态。citeturn25search30turn25search33turn24search10
+
+### 固定逻辑帧与渲染帧分离伪代码
+
+```cpp
+const double LOGIC_DT = 1.0 / 60.0;
+double acc = 0.0;
+double last = NowSeconds();
+
+while (!quit) {
+    double now = NowSeconds();
+    acc += now - last;
+    last = now;
+
+    PollDeviceInputs();              // 设备层
+    PushInputToRingBuffer();         // 输入层
+
+    while (acc >= LOGIC_DT) {
+        SampleCommandsForCurrentLogicFrame();
+        UpdateBattleLogic60Hz();     // 只用固定 dt
+        SaveReplayFrameIfNeeded();
+        acc -= LOGIC_DT;
+    }
+
+    double alpha = acc / LOGIC_DT;   // 仅渲染插值
+    Render(alpha);
+}
+```
+
+### 回放系统建议
+
+公开官方网页没有给出“战斗回放系统”的技术细节，因此这里给出的是**最适合 DNF 类动作战斗的工程方案**：输入记录 + 周期快照 + 状态哈希。它和固定逻辑帧天然兼容，也最容易用于 QA 复盘、Bug 复现与平衡验证。通用资料同样表明，固定 timestep 与输入缓冲是可重现仿真的前提。citeturn25search30turn25search33turn24search10
+
+建议记录以下字段：
+
+| 字段 | 说明 |
+|---|---|
+| `build_id` | 客户端/规则版本号 |
+| `ruleset_crc` | 技能表、怪物表、状态表 CRC |
+| `map_seed` | 地图/RNG 种子 |
+| `logic_frame` | 逻辑帧号 |
+| `input_frame[]` | 各玩家/召唤物主控输入 |
+| `snapshot_every_n` | 每 N 帧快照一个完整状态 |
+| `state_hash` | 每帧或每 10 帧状态哈希 |
+| `event_log` | 可选，仅用于调试，不用于真正重播 |
+
+```cpp
+struct ReplayHeader {
+    uint32_t buildId;
+    uint32_t rulesetCrc;
+    uint64_t mapSeed;
+    uint32_t logicFps;   // 60
+};
+
+struct ReplayFrame {
+    uint32_t frame;
+    vector<InputSample> inputs;
+    uint64_t stateHash;
+};
+
+if (frame % 120 == 0) SaveFullSnapshot(worldState);
+
+void ReplayStep() {
+    auto rf = replay.frames[curFrame];
+    InjectInputs(rf.inputs);
+    UpdateBattleLogic60Hz();
+    assert(HashWorldState() == rf.stateHash || debugMode);
+}
+```
+
+### 回放流程图
+
+```mermaid
+sequenceDiagram
+    participant P as Player Input
+    participant R as Recorder
+    participant L as 60Hz Logic
+    participant S as Snapshot Store
+    participant V as Replay Verifier
+
+    P->>R: 设备输入
+    R->>L: 注入本帧输入
+    L->>L: 推进状态机/判定/伤害/AI
+    L->>R: 写入 frame + inputs + stateHash
+    L->>S: 每120帧存完整快照
+    V->>S: 读取最近快照
+    V->>R: 回放之后的输入流
+    V->>L: 重算到目标帧
+    L->>V: 返回 stateHash
+    V->>V: 比对是否一致
+```
+
+### 连击数与评分
+
+官方更新里已经存在“连击练习模式”，而塔类内容还会显式追踪 `Back Attack`、`Counter Attack`、`Hit Count`、`Skill Use` 等破解条件。这足以说明 DNF 引擎至少天然支持“按命中、按标签、按上下文”累计统计，因此你也应该把连击与评分写成**标签聚合器**。citeturn38search6turn32search9
+
+建议如下：
+
+```cpp
+if (hitConfirmed) {
+    if (frame - combo.lastHitFrame <= combo.graceFrames) combo.count++;
+    else combo.count = 1;
+
+    combo.lastHitFrame = frame;
+    combo.usedCounter |= outcome.isCounter;
+    combo.usedRear    |= outcome.isRear;
+}
+```
+
+评分建议可拆成：
+
+- `combo_score`
+- `counter_score`
+- `rear_attack_score`
+- `air_combo_score`
+- `no_damage_bonus`
+- `clear_time_bonus`
+- `style_bonus`（取消、追击、抓取免疫正确分支等）
+
+### 震屏与屏幕反馈
+
+现代官方内容提到 Monster HP UI 的 shake 会按伤害强度细调；另一处角色改版又专门修正“某技能对队友产生过多屏幕震动”。这意味着原作至少在“伤害强度分级”和“多人体验抑制”两端都有显式处理。工程上不要简单让每个命中都震。正确做法是按 **hit tier** 做分档，并给“本地自震”“队友弱震”“远端只飘字”三档。citeturn43view1turn37search11
+
+| 命中等级 | 触发条件 | 本地镜头 | 远端镜头 | 屏幕反馈 |
+|---|---|---|---|---|
+| Light | 普通轻 hit | 无或 1 帧 hit-stop | 无 | 小飘字 |
+| Medium | 技能主段 / Counter | 2–4 帧 hit-stop + 轻震 | 极弱或无 | 颜色强化 |
+| Heavy | 觉醒/破防/抓取终结 | 4–8 帧 hit-stop + 中震 | 弱震 | 大字/裂屏/低频 |
+| Finisher | 处决、最终段 | 定制镜头脚本 | 仅特效共享 | 强反馈 |
+
+### 碰撞、推挤、地图/地形交互
+
+虽然公开网页没有给出完整碰撞半径表，但 2.5D 的实现原则已经能从官方范围值、纵深 Y 轴说明与职业描述中确定下来：**移动/推挤/寻位都发生在 X/Y 平面；Z 只参与空中重叠与落地**。因此建议：
+
+- 角色地面碰撞体：`capsule/circle on XY`
+- 目标排序：先 X 再 Y
+- Push Resolution：**软推挤优先，硬穿透修正兜底**
+- 技能位移：先应用动作位移，再做墙体/怪群修正
+- 适配地形：房间是离散图，房内是 2.5D lane mesh
+
+```cpp
+Vec2 ResolvePush(Actor& self, vector<Actor*>& nearby) {
+    Vec2 push{0,0};
+    for (auto* other : nearby) {
+        Vec2 d = self.xy - other->xy;
+        double dist = Length(d);
+        double minDist = self.pushRadius + other->pushRadius;
+        if (dist < minDist && dist > 0.001) {
+            push += Normalize(d) * (minDist - dist);
+        }
+    }
+    return Clamp(push, self.maxPushPerFrame);
+}
+```
+
+### 战斗事件总线
+
+一个可维护的 DNF 式战斗系统，最后都要落在事件总线上。建议事件至少覆盖下面这些：
+
+| 事件名 | 发送方 | 订阅方 |
+|---|---|---|
+| `InputBuffered` | 输入层 | 状态机、回放 |
+| `ActionStarted` | 状态机 | 动画、音效、网络、回放 |
+| `HitEmitterSpawned` | 动作系统 | 判定系统 |
+| `HitConfirmed` | 判定系统 | 伤害、连击、镜头、音效 |
+| `DamageResolved` | 伤害系统 | 飘字、HP UI、评分 |
+| `StatusApplied` | 状态系统 | Buff/Debuff UI、AI |
+| `CounterTriggered` | 判定系统 | 评分、VFX |
+| `NeutralizeChanged` | 伤害/状态 | 怪物 UI、AI |
+| `DeathEntered` | 生存系统 | 掉落、房门、任务 |
+| `ReviveEntered` | 生存系统 | UI、无敌层 |
+| `ReplayKeyframeSaved` | 回放系统 | 调试器、文件存储 |
+
+
+---
+
+## Appended: Reconstruction Blueprint — 输入与取消规则 (from dnf-combat-system-reconstruction-engineering-report.md)
+
+> 以下内容来自 [SUPPORTING] dnf-combat-system-reconstruction-engineering-report.md，按 CHAPTER-AUDIT 合并规则迁移。保留：玩家状态机表、输入缓存伪代码、取消窗口建议表、输入到伤害流程图。
+
+## 角色动作、输入与取消规则
+
+官方训练模式和系统指南公开的标签，已经足够重建玩家状态机的骨架。训练模式明确有 `Aerial`、`Down`、`Counterattack`、`Super Armor`、`Grab-immune`；指南又单独定义了 `Counter`、`Invincible`、`Super Armor`；2022 系统更新再加入 `Backstep Upgrade`，允许角色在**技能中**或**受击/倒地时**使用强化后撤；2025 指导文档又说明某些 Guard 系统可以取消几乎任何动作，并由 Jump 反取消。这套证据串起来，说明 DNF 的动作系统不是“当前动画播完再说”，而是**显式状态机 + 多层覆盖标签 + 条件取消窗**。citeturn30view1turn31view2turn36search8turn37search1turn43view2
+
+### 玩家状态机建议表
+
+| 状态 | 进入条件 | 退出条件 | 关键标签 | 关键事件 |
+|---|---|---|---|---|
+| `Idle` | 无输入/无锁动作 | 移动、攻击、跳跃、施法 | 可缓冲 | `OnNeutral` |
+| `Walk` | 方向输入弱位移 | 无输入/冲刺/攻击 | 可转向 | `OnMoveStart` |
+| `Dash` | 方向输入阈值或双击 | 松键/攻击/跳跃 | 可切到 Dash Attack | `OnDashStart` |
+| `JumpStart` | Jump 输入 | 到达离地帧 | 地面→空中 | `OnJump` |
+| `Airborne` | 跳起后 | 落地/空中技/被击 | `airborne=true` | `OnAirborne` |
+| `BasicAttack[n]` | 普攻链输入 | 连段结束/取消/受击 | 可设置 combo branch | `OnBasicHit` |
+| `DashAttack` | 冲刺中攻击 | 动作结束/取消 | 地面高速前冲分支 | `OnDashHit` |
+| `JumpAttack` | 空中攻击 | 落地/空连下段 | `airborne=true` | `OnAirHit` |
+| `SkillStartup` | 技能启动成功 | 进 Active/被取消/被打断 | 资源已预留 | `OnSkillStart` |
+| `SkillActive` | 到达有效窗 | 进 Recovery/分段循环 | 可发射 HitEmitter | `OnHitEmit` |
+| `SkillRecovery` | Active 结束 | 中立/取消/后撤步强化 | 决定后摇 | `OnSkillRecover` |
+| `HitStun` | 可被硬直的状态下受击 | 硬直结束/倒地/霸体覆盖 | 不可输入或缩限输入 | `OnStagger` |
+| `Downed` | 吹飞/击倒/坠地 | 起身/后撤步强化/特殊受身 | `downed=true` | `OnDown` |
+| `Guard` | 特殊键进入防御态 | 成功格挡、跳跃取消、用尽层数 | 可阻挡/反击 | `OnGuard` |
+| `Dead` | HP≤0 | 复活/退出副本 | 清除可清除状态 | `OnDeath` |
+| `Revive` | 使用币/脚本复活 | 无敌结束 | `invincible=true` | `OnRevive` |
+
+### 输入兼容与设备归一化
+
+当前国际服已经有官方控制器支持：某些需要固定键位的怪物机制可映射到控制器输入，模拟摇杆的倾斜程度会区分走路/跑步，且如果通过 entity["company","Valve","pc platform company"] 平台启动，官方建议使用它的官方控制器布局；韩服开发者笔记还明确提到“每角色独立技能热键设置”。这说明原作不是简单的“键位轮询”，而是**设备输入 → 统一逻辑命令 → 每角色映射层**三段式。citeturn43view0turn23view0
+
+建议实现以下输入栈：
+
+1. **设备层**：键盘、手柄、可选街机摇杆。
+2. **归一化层**：把设备输入归一成 `MoveAxisX/Y`、`Jump`、`Basic`、`Skill[0..n]`、`Special`、`Guard`、`Backstep`。
+3. **命令层**：把方向+按钮流转成命令编码，如 `↓↘→+Skill2`。
+4. **角色映射层**：每个角色持有自己的 `SkillSlotMap`。
+5. **消费层**：由当前状态机与取消窗决定是否取走该输入。
+
+### 输入缓存与取消消费伪代码
+
+官方公开的几个关键边界非常重要：自动施放的 Buff 动作可被移动/攻击/技能取消；某些技能允许预输入；某些技能允许在受击/倒地中施放；`Backstep Upgrade` 明确允许在技能中或受击/倒地时使用，且两种用法冷却不同；Raid Guard 又能取消大多数动作并可被 Jump 取消。可见 DNF 的输入缓存不是“统一 3 帧”，而是**状态依赖、技能依赖、动作段依赖**。citeturn26search3turn26search0turn31view2turn37search1turn38search1turn43view2
+
+```cpp
+struct InputSample {
+    int logicFrame;
+    int axisX;          // -1000..1000
+    int axisY;          // -1000..1000
+    bool jump;
+    bool basic;
+    bool skill[12];
+    bool special;
+    bool guard;
+    bool backstep;
+};
+
+struct BufferedCommand {
+    int bornFrame;
+    CommandType cmd;
+    int priority;
+};
+
+bool CanConsumeCommand(const Actor& a, const SkillDefinition& s) {
+    const StateRule& st = a.stateRule();
+
+    if (!CooldownReady(a, s) || !ResourceReady(a, s)) return false;
+    if (a.isDead) return false;
+
+    if (a.isAirborne && !s.can_cast_air) return false;
+    if (a.isDowned   && !s.can_cast_downed) return false;
+
+    if (a.state == SkillRecovery && !WindowOpen(a.cancel_open_f_begin, a.cancel_open_f_end))
+        return false;
+
+    if (a.state == HitStun && !s.castable_when_hit) return false;
+
+    return MatchCommand(a.inputBuffer, s.command_pattern, s.buffer_window_f);
+}
+
+void TryConsumeBufferedInput(Actor& a) {
+    // 优先级顺序必须数据化，而不是硬编码：
+    // Guard / BackstepUpgrade > ForcedEscape > SkillCancel > SkillStart > BasicChain > Move
+    for (auto candidate : a.priorityListCurrentState()) {
+        if (candidate.kind == Guard && a.can_guard_now) {
+            EnterGuard(a);
+            Consume(candidate);
+            return;
+        }
+        if (candidate.kind == BackstepUpgrade && a.can_backstep_upgrade_now) {
+            EnterBackstepUpgrade(a);
+            Consume(candidate);
+            return;
+        }
+        if (candidate.kind == SkillStart && CanConsumeCommand(a, candidate.skill)) {
+            ReserveCost(a, candidate.skill);
+            SwitchState(a, SkillStartup, candidate.skill.action_id);
+            Consume(candidate);
+            return;
+        }
+        if (candidate.kind == BasicChain && CanChainBasic(a, candidate)) {
+            SwitchBasicChain(a, candidate.chainIndex);
+            Consume(candidate);
+            return;
+        }
+    }
+}
+```
+
+### 取消窗口建议表
+
+| 场景 | 官方/社区可证事实 | 实现规则 |
+|---|---|---|
+| 自动 Buff 动作 | 自动施放 Buff 的动作可以被移动、攻击、使用技能取消 | `auto_buff.cancel_tags = MOVE|BASIC|SKILL` |
+| 某些技能进化 | 可在有效打点激活后而非收招末尾才开放取消 | `cancel_open_f_begin` 可落在 active 期 |
+| 某些技能 | 支持预输入 | `preinput_window_f > 0` |
+| 受击/倒地特殊技 | 可在受击或倒地时施放 | `castable_when_hit`, `can_cast_downed` |
+| Backstep Upgrade | 技能中或受击/倒地时可用，且冷却不同 | 状态机对来源场景区分 CD |
+| Guard 系统 | 可取消绝大多数角色动作，Jump 可取消 Guard 本身 | `Guard` 作为高优先级全局取消层 |
+
+### 动画根位移与强制位移
+
+原作里大量职业/技能说明都指向一个事实：**动作位移不能只靠动画表现，必须逻辑化**。例如某些职业的基础/冲刺/跳跃攻击会被职业被动整体改写；某些技能具备“追踪到最强敌人后方”“后撤步射击并拉开距离”“地面与空中都能执行快速突进”的特性；官方修复还提到“空中连续斩过程中错误地允许使用 Backstep Upgrade”。这说明位移至少分三层：**动画根位移、脚本强制位移、外力位移**。citeturn37search0turn37search8turn38search1turn38search13turn39view0
+
+建议采用下面的总位移公式：
+
+```cpp
+Vec3 deltaPos =
+      SampleRootMotion(action, frameInAction)     // 动画根位移
+    + SampleForcedMove(skill, frameInAction)      // 技能脚本位移：冲刺、闪到背后、抓取拉拽
+    + ExternalImpulse(actor);                     // 外力：击退、吸附、推挤
+
+if (actor.stateRule().invincible) {
+    // 无敌并不等于不位移，通常只是不吃伤害/不吃受击
+}
+
+deltaPos = ResolveCollisionAndPush(actor, deltaPos, map, monsters);
+actor.pos += deltaPos;
+```
+
+### 输入到伤害的关键流程
+
+```mermaid
+flowchart LR
+    A[设备输入] --> B[输入归一化]
+    B --> C[命令编码与输入缓存]
+    C --> D{当前状态可消费?}
+    D -- 否 --> C
+    D -- 是 --> E[进入动作 Startup]
+    E --> F[推进逻辑帧]
+    F --> G[发射 HitEmitter]
+    G --> H{命中?}
+    H -- 否 --> I[继续动作/进入 Recovery]
+    H -- 是 --> J[判定 Counter/Back/Crit/Grab]
+    J --> K[伤害桶结算]
+    K --> L[应用异常状态/Neutralize/硬直]
+    L --> M[镜头震动/音效/飘字/事件总线]
+    M --> I
+```
+
 
 对“1:1 复刻”这个目标，现阶段最可靠的结论不是“公开网上已经有完整答案”，而是：**公开资料已经足够把 DNF/DFO 的战斗系统做成一个结构正确、层次清晰、可持续追版本的工程模型**；但真正的全量精确数据，尤其是全职业技能逐帧判定与怪物 AI 细节，必须通过**官方 API 枚举 + 合法客户端资源抽取 + 实机录像校准**三件事共同完成。换句话说，程序架构、字段设计、结算流程、状态机、异常与反馈层，今天就能落地；而“每一个技能的毫米级范围与每一段速度曲线”，应当交给你们的自动抽取流水线，而不是交给策划手填。citeturn10view0turn45view0turn40view0turn44view2turn29view0

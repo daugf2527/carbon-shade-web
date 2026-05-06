@@ -1,4 +1,5 @@
 # DNF战斗系统复刻研究报告
+> **Status: [OVERLAPPING] — 与 canonical 大量重复，保留 kernel checklist**
 
 ## 执行摘要
 
@@ -448,6 +449,169 @@ function StepMonsterAi(monster, target):
 关于怪物掉落 / 仇恨 / 生成规则，公开资料能确认的是：大量内容规则按 Named/Boss 进行掉落表和奖励表设计，Life Token 和内容时间限制也常绑定副本内容；但**通用仇恨权重公式、出生点规则、刷新上限规则**在本轮检索中未获取到统一官方定义。因此，这部分必须标记为“未指定”，并建议通过样本副本录像 + 本地客户端脚本继续抽取。citeturn31search0turn31search2turn44search0turn44search8
 
 ## 网络边界合规与开发交付
+
+---
+
+## Appended: Implementation Details — 同Tick裁决/随机种子/Miss暴击格挡穿透 (from combat-system-implementation-details.md)
+
+> 来自 [SUPPORTING] combat-system-implementation-details.md，按 CHAPTER-AUDIT 迁移。保留：同Tick冲突伪代码、随机种子、Miss/暴击/格挡/穿透边界。
+
+## 同 Tick 裁决、随机种子与命中系统
+
+### 同 Tick 优先级与冲突裁决
+
+官方没有公开服务器内部“每个 Tick 的 phase order”，但已经公开了两个足够关键的事实：**输入先由专门线程记录，再由主线程做逻辑**；**组队同步包由独立网络线程处理**。从 MMO 动作游戏的可验证体感出发，最合理的复刻方案是把同 Tick 裁决做成**稳定排序的事件队列**，而不是“谁先跑到这行代码就算谁先执行”。可信度：中。citeturn26view0
+
+推荐默认排序如下。请注意，这是**重建结论**，不是官方明确披露；可信度：中偏低，但工程上最实用。citeturn26view0turn35view0
+
+\[
+SortKey = (serverTick,\ phasePriority,\ receiveOrder,\ actorId,\ localSeq)
+\]
+
+其中建议的 `phasePriority` 为：
+
+| phasePriority | 相位 | 目的 |
+|---|---|---|
+| 0 | 权威纠正 / 房间脚本 / 过场锁定 | 先应用不能被玩家覆盖的外部状态 |
+| 1 | 状态开始 / 状态结束 | 确保进出封印、霸体、无敌窗口是稳定的 |
+| 2 | 上一 Tick 遗留 Hitbox 结算 | 防止“最后一毫秒输入”无条件抢过已存在攻击 |
+| 3 | 输入消费 / 技能启动 | 处理本 Tick 新动作 |
+| 4 | 本 Tick 新生成 Hitbox | 新动作造成的伤害在本 Tick 后段生效 |
+| 5 | 冷却、资源、死亡与广播 | 收尾并复制结果 |
+
+这样做的好处是：**持续性攻击 / 已存在判定** 优先于 **本 Tick 新输入**，能更贴近 DNF 玩家常说的“被同帧压掉起手”的体验；同时因为排序稳定，录像回放与服务器复演也更容易一致。citeturn26view0
+
+### 回滚与补偿策略
+
+公开资料只证明了“网络同步包被拆到独立线程”，并没有任何官方证据显示 DNF/DFO 使用了类似 GGPO 的全状态回滚。因此，最符合公开证据的实现不是 full rollback，而是：
+
+- **本地仅预测自己可见的起手**；
+- 服务器返回 `cast_id / startup_end_tick / authoritative flags`；
+- 客户端若预测差不超过 1 Tick，做动画时间轴纠正；
+- 若被服务器拒绝，则直接清掉起手并播失败反馈。
+
+这个方案能很好解释 DNF 一贯的“自己操作很跟手，但最终以服务器为准”的体感，而且不会引入竞技格斗那种大范围回滚闪烁。可信度：中。citeturn26view0
+
+### 同 Tick 冲突伪代码
+
+```cpp
+void ServerTick(Tick now) {
+    ApplyAuthoritativeSceneEvents(now);   // cutscene, script lock, phase changes
+    ExpireAndApplyStatuses(now);          // seal / super armor / invincible windows
+    ResolvePersistentHitboxes(now);       // hitboxes spawned in previous ticks
+    DrainInputQueueSorted(now);           // consume client requests
+    StartAcceptedSkills(now);             // startup begins here
+    ResolveNewHitboxes(now);              // hitboxes created this tick
+    AdvanceCooldownsAndResources(now);
+    BroadcastDelta(now);
+}
+```
+
+边界条件建议：
+
+- **同 Tick 获得 `SkillSeal` 且本 Tick 刚按技能**：若 `SkillSeal` 在 phase 1 生效，则技能启动应被拒绝。
+- **同 Tick 获得霸体并被打**：若霸体在 phase 1 生效、攻击在 phase 2 结算，则应正常吃伤害但不被中断。
+- **同 Tick 死亡与起手**：死亡优先。
+- **房间脚本过场**：脚本锁定优先于玩家输入。
+
+这些边界条件最好都做成自动化回放用例，而不要写死在散落的 if/else 里。可信度：中。citeturn26view0turn20view0
+
+### 随机数、伪随机与战斗种子系统
+
+关于随机种子，**唯一公开且官方明确承认的证据**来自 2025 年韩服关于概率型内容的说明：官方明确说“壶类概率内容按**各物品各自的随机种子**运行”，并且为了让概率期望更均匀，**不会频繁更换随机种子**，而是在一个基准 seed 之下推进后续概率。这是非常强的证据，表明官方至少在一类系统里采用了**长寿命 seed stream**，而不是每次行为都重新取临时随机。可信度：高。citeturn43view0
+
+但必须区分：这条官方说明谈的是**物品概率**，不是战斗 RNG。因此，把它直接等同于“战斗一定使用同一个 PRNG/同一个 seed”会越界。更稳妥的做法是把它当作**设计风格证据**，然后给战斗系统建立如下重建模型。可信度：中。citeturn43view0
+
+推荐的战斗 seed 设计：
+
+\[
+encounterSeed = H(serverSecret,\ roomId,\ dungeonEnterCounter,\ actorSetHash)
+\]
+
+\[
+actorSeed = Split(encounterSeed,\ actorId)
+\]
+
+\[
+eventSeed = Split(actorSeed,\ castId,\ eventIndex)
+\]
+
+这里的 `Split` 可以用任意可复现分流函数；如果目标是“功能上复刻”，可以用 PCG32 / xoroshiro128+；如果目标是“二进制兼容”，则目前**没有公开证据**能确认官方 PRNG 算法。可信度：低。citeturn43view0
+
+### 反作弊与可复现战斗建议
+
+由于客户端输入线程与网络线程是公开存在的，而 DFO 官方 EULA 又明确禁止反编译、反汇编和逆向确定软件中的“source code, algorithms, methods or techniques”，所以从反作弊角度出发，不应该让客户端提交任何真正决定战斗结果的随机数。可信度：高。citeturn26view0turn46search0
+
+建议实现为：
+
+- 服务器持有 `encounterSeed` 的真实值；
+- 客户端只收到 `seedHash` 或 `rngEpoch`，用于录像校验，不用于权威掷骰；
+- 服务器把关键随机结果记入 replay log：`rollIndex / purpose / result / castId`；
+- 若需要表现一致的非权威粒子/闪电分叉，可给客户端单独发 `visualSeed`；
+- 所有命中、暴击、掉落、异常命中都由服务器滚点。
+
+一个可复刻的初始化包示例如下。字段是本文给出的工程化模型，不是原始封包。可信度：中。citeturn43view0turn26view0
+
+```json
+{
+  "msg": "S2C_COMBAT_INIT",
+  "room_id": 771204,
+  "server_tick0": 880000,
+  "encounter_seed_hash": "8f0a2d5c1d7b...",
+  "rng_epoch": 12,
+  "replay_id": 5566778899
+}
+```
+
+### 命中率、回避率与 Miss
+
+在命中/回避这一块，当前**高可信公开证据**能确认三件事。第一，韩服官方能力值说明把“命中率”定义为“物理/魔法攻击失败概率按该数值下降”，把“回避率”定义为“物理/魔法攻击被回避的概率按该数值上升”。第二，2022 年 DFO Global 的官方系统更改把**回避率上限**明确设为 75%。第三，国服官方平衡说明已经明确说他们会上传并分析“技能命中率、技能空置率”等实战遥测。可信度：高。citeturn44search8turn43view1turn43view2
+
+单靠这三条，还不能直接推出完整公式；但它们足以支持一个非常稳的重建框架：**命中是“降低失败率”的量，回避是“提高被避开概率”的量，因此两者应当在 miss 层做对冲，而不是在伤害层后算。** 老版本社区测试与经验贴也长期采用“敌方命中 / 我方回避做减法”的理解，虽然这些资料年代较久、可信度较低，但和官方能力值语义是一致的。可信度：中。citeturn44search8turn42search0
+
+因此，推荐的**重建公式（可信度：中）**是：
+
+\[
+missBp = clamp(baseMissBp + targetEvasionBp - attackerHitBp + miscAdjBp,\ minMissBp,\ maxMissBp)
+\]
+
+\[
+hitBp = 10000 - missBp
+\]
+
+其中：
+
+- `attackerHitBp`：角色总命中率，单位万分比。
+- `targetEvasionBp`：目标总回避率，单位万分比；显示值上限 7500。
+- `baseMissBp`：副本或目标的基础 miss 惩罚；**公开资料未确认是否全局恒定**。
+- `miscAdjBp`：技能特性、怪物机制、背击/特殊攻击类型等附加调整。
+- `minMissBp / maxMissBp`：**建议配置化**，不要写死。
+
+把 `baseMissBp` 与上下限做成配置，是因为官方公开资料并没有给出一个“统一最低命中率 / 最高命中率”的现行 PC 公式；但国服已经在用实战命中率遥测做平衡，这恰恰说明它们很可能受到副本环境、动作模型和技能命中形态共同影响。citeturn43view2turn44search8
+
+### 暴击、格挡、穿透与判定顺序
+
+公开官方资料里，没有发现一个可验证的“全职业全怪共享 block 公式”。在 DNF 的公开补丁与能力值说明中，更常见的是：命中 / 回避、霸体 / 霸体破坏、无敌、减伤、Hold、异常抗性、穿透类技能表现。因此，对复刻最安全的做法是：**不要凭空引入独立的全局 Block 层**，除非你们用具体职业/怪物脚本抓到了证据。这个结论属于工程建议，可信度：中。citeturn44search8turn34view0
+
+推荐的判定顺序如下：
+
+1. **可选中 / 无敌 / 剧情锁定检查**。
+2. **Hitbox overlap**。
+3. **强制命中 / 强制不受回避影响 / 特殊机制豁免**。
+4. **命中 vs 回避 / Miss 掷骰**。
+5. **若命中，则进入暴击 / 伤害 / 防御 / 减伤**。
+6. **再判定霸体、硬直、浮空、Hold、霸体破坏**。
+7. **最后处理穿透、残留判定、追击段**。
+
+这一顺序的优点是不会把 Miss 与暴击、霸体混到一起，也符合“命中率是失败概率修正量”的官方说法。citeturn44search8turn34view0
+
+### 数值示例与边界条件
+
+- **回避率上限**：角色当前回避率 68%，技能临时提供 +20%，结算时应夹到 75%，不是 88%。可信度：高。citeturn43view1
+- **命令收益**：Lv. 75 技能基础 CD 40s，手搓后为 38s。可信度：高。citeturn43view1
+- **不可用回避的攻击**：社区长期观测到部分怪物攻击或机制不受回避率影响，因此 `attack.flags.nonEvadable` 应存在于怪物/技能数据层。可信度：低到中。citeturn40search7
+- **战斗分析**：国服既然能上传“技能命中率、技能空置率”，那么你们的复刻战斗日志最好也拆成 `cast_count / hit_count / whiff_count / idle_count / canceled_count` 五大指标。可信度：高。citeturn43view2
+
 
 网络/同步方面，**官方公开资料并没有披露 DNF/DFO 使用的是帧同步、状态同步、客户端预测还是回滚**；本轮检索里能确认的只有两点：一是游戏内存在 `//monitor` 来查看队友延迟，说明网络延迟会直接影响实时副本体验；二是 EULA 明确禁止协议拦截、协议模拟、packet sniffing、unauthorized connections 等行为。换言之，**官方未公开同步细节，且合规边界很严格**。因此，任何“原服协议级 1:1 联机复刻”都不应作为默认路线。citeturn41search4turn45view0
 

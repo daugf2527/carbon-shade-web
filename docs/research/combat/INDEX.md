@@ -1,5 +1,7 @@
 # Combat Research Index
 
+> **Status: [GOVERNANCE]** — 阅读顺序、文档角色表和合并入口
+
 > Scope: `docs/research/combat` 下 32 篇源文档（含 21 篇战斗研究源文档 + 4 篇 synthesis + INDEX/CHAPTER-AUDIT + 5 篇扩展：berserker-action-frame-calibration、berserker-data-gap-report、dnf-dfo-combat-technical-data-replay-report、npk-img-extraction-workflow、pvf-skl-extraction-workflow）。21 篇核心研究源文档保留为 archive/evidence；后续默认先读 synthesis，再按 source map 回查原文。
 
 ## 推荐阅读路线
@@ -31,9 +33,9 @@
 
 - 1v1/PvP：`dnf-dfo-combat-1v1-spec-report.md`、`1v1-combat-system-spec-compact.md`
 - 评分奖励与外层系统：`combat-replication-scoring.md`
-- raid/party/buff/装备耐久与强化：`deep-research-combat-technical-replication.md`
+- raid/party/buff/装备耐久与强化：`combat-technical-replication.md`
 - 房间/NPC/掉落/剧情控制：`combat-cleanroom-v2.md`
-- 早期/历史汇总：`combat-replication-implementation-v1.md`、`deep-research-combat-system-freeze-replication.md`
+- 早期/历史汇总：`combat-replication-implementation-v1.md`、`combat-system-freeze-replication.md`
 
 ## 文档角色表
 
@@ -58,8 +60,8 @@
 | `dnf-dfo-combat-1v1-spec-report.md` | `extension` | 1v1/PvP、速度、手搓、Boss 房间 | PvP supporting | 与 input/network/damage 重复 | PvP 或 Boss/room 任务再读 |
 | `1v1-combat-system-spec-compact.md` | `extension` | 1v1 compact spec，权威服务器和规则隔离 | PvP/network supporting | 与 v2 network、damage/status 重复 | 保留 PvE/PvP profile、网络包字段，不混入 PvE 默认 |
 | `combat-cleanroom-v2.md` | `extension` | 掉落、房间边界、NPC、剧情演出 | Peripheral systems | 与 scoring/room 重复 | 房间/NPC/掉落/剧情控制任务再读 |
-| `deep-research-combat-technical-replication.md` | `extension` | raid、party sync、buffer、装备套装、耐久、强化 | Peripheral systems | 与 scoring/systems 重复 | raid/party/buff/装备外层任务再读 |
-| `deep-research-combat-system-freeze-replication.md` | `historical` | 底层状态机、成长、组队、黑箱层和 clean-room 路线 | 边界摘要 | 高层概述，细节被其他报告覆盖 | 保留可信度分层和不可还原黑箱边界 |
+| `combat-technical-replication.md` | `extension` | raid、party sync、buffer、装备套装、耐久、强化 | Peripheral systems | 与 scoring/systems 重复 | raid/party/buff/装备外层任务再读 |
+| `combat-system-freeze-replication.md` | `historical` | 底层状态机、成长、组队、黑箱层和 clean-room 路线 | 边界摘要 | 高层概述，细节被其他报告覆盖 | 保留可信度分层和不可还原黑箱边界 |
 
 ## 标签含义
 

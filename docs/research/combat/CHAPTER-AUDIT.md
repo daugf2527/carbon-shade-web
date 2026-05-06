@@ -1,6 +1,10 @@
 # docs/research/combat 章节级去重审计
 
+> **Status: [GOVERNANCE]** — 9 个主题簇的章节级去重和合并规则
+
 > Scope: 仅审计 `docs/research/combat` 下 32 篇 Markdown（21 篇核心战斗研究 + 4 篇 SYNTHESIS + INDEX/CHAPTER-AUDIT + 5 篇扩展文档）。本文不删除、不重命名、不合并旧正文，只给后续资料治理与合并时的保留边界。
+> 
+> **Merge status (2026-05-06):** Phase 1 物理合并已执行 — 5 组 MAJOR 重复组的独有章节已以 `## Appended:` 章节追加到对应 canonical 文件。源文件原文保留，CHAPTER-AUDIT 合并规则已落地。
 
 ## 审计口径
 
@@ -25,7 +29,7 @@
 | Replay/network/sync | `combat-replication-implementation-v2.md`, `dnf-combat-replica-implementation-technical-report.md` | `dnf-combat-system-reconstruction-engineering-report.md`, `combat-system-implementation-details.md`, `1v1-combat-system-spec-compact.md`, `combat-replication-implementation-v1.md` | 当前代码 replay gap 用 gap 文档，网络协议建议保留为未来 multiplayer |
 | Scoring/feedback/reward | `combat-replication-scoring.md`, `dnf-dfo-combat-extraction-runtime-pipeline-report.md` | `dnf-combat-system-reconstruction-engineering-report.md`, `dnf-dfo-combat-replication-implementation-report.md`, `combat-replication-implementation-v2.md` | 评分奖励做 extension，命中反馈/震屏可迁入当前手感主线 |
 | Current-code gap assessment | `dnf-dfo-research-vs-current-system-technical-report.md`, `code-level-dnf-replication-gap-assessment.md`, `dnf-dfo-mechanics-gap-analysis.md` | 其他报告的“开发落地/实现清单”章节 | 当前实现差距首读三件套，不用从长篇研究报告重新归纳 |
-| Peripheral combat systems | `combat-cleanroom-v2.md`, `deep-research-combat-technical-replication.md`, `combat-replication-scoring.md`, `deep-research-combat-system-freeze-replication.md` | `dnf-dfo-combat-1v1-spec-report.md`, `1v1-combat-system-spec-compact.md` | 标为扩展资料，不进入当前 DFO 动作/手感 P2 主线 |
+| Peripheral combat systems | `combat-cleanroom-v2.md`, `combat-technical-replication.md`, `combat-replication-scoring.md`, `combat-system-freeze-replication.md` | `dnf-dfo-combat-1v1-spec-report.md`, `1v1-combat-system-spec-compact.md` | 标为扩展资料，不进入当前 DFO 动作/手感 P2 主线 |
 
 ## 1. Combat Data / Runtime Pipeline
 
@@ -121,8 +125,8 @@
 | 来源章节 | 主题分类 | 重复内容摘要 | 独有信息摘要 | 处理建议 | 细节保留要求 |
 |---|---|---|---|---|---|
 | `combat-cleanroom-v2.md`：`掉落、拾取与战斗内奖励物件系统`、`房间边界`、`NPC、佣兵与支援单位`、`剧情演出` | 反馈/评分、AI、网络/Replay、合规 | 与 scoring、1v1 boss/room 重复奖励/房间/NPC | 独有掉落拾取、房间边界、摄像机锁定、支援单位、剧情控制剥夺 | `raw reference only` | 保留数据结构、关键算法、网络消息、资源路径示例、法律风险；标为扩展 |
-| `deep-research-combat-technical-replication.md`：`Raid 指挥`、`队伍成员状态同步`、`奶系/Buffer/Party Buff`、`装备套装`、`耐久/修理`、`强化/增幅/附魔/继承` | 网络/Replay、状态、反馈/评分 | 与 scoring 和 1v1 spec 重复 party sync/reward | 独有 raid/party/buff/equipment durability/growth 外围系统 | `raw reference only` | 保留 raid/ping/party buff 数据字段和约束，但不参与 P2 手感主线 |
-| `deep-research-combat-system-freeze-replication.md`：`成长、SP/TP`、`组队、副本与攻坚编排`、`黑箱层` | 数据模型、状态、合规 | 与 systems/scoring 重复成长和副本 | 独有“黑箱层不可还原”边界与 clean-room 路线摘要 | `mark historical` | 保留可信度分层、黑箱层、clean-room 路线 |
+| `combat-technical-replication.md`：`Raid 指挥`、`队伍成员状态同步`、`奶系/Buffer/Party Buff`、`装备套装`、`耐久/修理`、`强化/增幅/附魔/继承` | 网络/Replay、状态、反馈/评分 | 与 scoring 和 1v1 spec 重复 party sync/reward | 独有 raid/party/buff/equipment durability/growth 外围系统 | `raw reference only` | 保留 raid/ping/party buff 数据字段和约束，但不参与 P2 手感主线 |
+| `combat-system-freeze-replication.md`：`成长、SP/TP`、`组队、副本与攻坚编排`、`黑箱层` | 数据模型、状态、合规 | 与 systems/scoring 重复成长和副本 | 独有“黑箱层不可还原”边界与 clean-room 路线摘要 | `mark historical` | 保留可信度分层、黑箱层、clean-room 路线 |
 | `dnf-dfo-combat-1v1-spec-report.md`、`1v1-combat-system-spec-compact.md` | 输入/取消、网络/Replay、伤害、状态 | 与核心战斗热路径重复大量公式/输入/网络 | 独有 PvP 规则分离、手搓奖励、速度系统、权威服务器 | `raw reference only` | 保留 PvP profile、网络字段、速度/手搓参数，不混入当前 PvE 手感默认值 |
 
 ## 高重复文档抽查

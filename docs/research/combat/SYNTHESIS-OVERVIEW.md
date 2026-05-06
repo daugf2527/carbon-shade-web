@@ -1,5 +1,7 @@
 # Combat Research Synthesis Overview
 
+> **Status: [SYNTHESIS]** — 21 篇源文档收束为 4 条主线，新阅读入口
+
 ## Purpose
 
 这篇是 `docs/research/combat` 的新总入口。现有 21 篇源文档保留为 archive/evidence；后续阅读、实现拆解和缺口讨论先读 4 篇 synthesis，再按 source map 回查源文档。
@@ -55,8 +57,8 @@
 - `combat-replication-scoring.md`
 - `combat-replication-tech-report.md`
 - `combat-system-implementation-details.md`
-- `deep-research-combat-system-freeze-replication.md`
-- `deep-research-combat-technical-replication.md`
+- `combat-system-freeze-replication.md`
+- `combat-technical-replication.md`
 - `dnf-combat-replica-implementation-technical-report.md`
 - `dnf-combat-system-reconstruction-engineering-report.md`
 - `dnf-dfo-combat-1v1-spec-report.md`

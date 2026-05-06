@@ -14,7 +14,7 @@ The boundary is documented in `design/source-policy.md`: API-backed skill metada
 
 Never commit `NEOPLE_API_KEY`; use local environment variables or a backend proxy.
 
-Current implementation audit: `research/reference/03-neople-api-combat-implementation-audit.md`.
+Current implementation audit: `research/reference/neople-api-combat-implementation-audit.md`.
 
 ---
 
@@ -88,8 +88,8 @@ DNF/DFO combat system reconstruction, replication, data models, extraction pipel
 | `research/combat/SYNTHESIS-PERIPHERAL-SYSTEMS.md` | Peripheral systems synthesis: PvP, scoring, raid/party/buff, room/NPC/drop boundaries |
 | `research/combat/INDEX.md` | Combat research reading order, document roles, and duplicate-risk tags |
 | `research/combat/CHAPTER-AUDIT.md` | Chapter-level overlap audit and detail-preservation rules |
-| `research/combat/dnf-combat-system-reconstruction-engineering-report.md` | Combat system reverse reconstruction engineering |
-| `research/combat/dnf-combat-replica-implementation-technical-report.md` | Technical route for replication implementation |
+| `research/combat/dnf-combat-system-reconstruction-engineering-report.md` | [SUPPORTING] Reverse reconstruction engineering (unique data model tables migrated to extraction-runtime canonical via Appended: sections) |
+| `research/combat/dnf-combat-replica-implementation-technical-report.md` | [SUPPORTING] Technical route for replication (unique Backstep/fixed-frame/replay content migrated to frame-AI + replication-impl canonicals) |
 | `research/combat/dnf-dfo-mechanics-gap-analysis.md` | Mechanics gap analysis: current implementation vs reference |
 | `research/combat/dnf-dfo-combat-data-model-and-damage-report.md` | Data model and damage systems |
 | `research/combat/dnf-dfo-combat-extraction-runtime-pipeline-report.md` | Extraction and runtime pipeline |
@@ -97,7 +97,7 @@ DNF/DFO combat system reconstruction, replication, data models, extraction pipel
 | `research/combat/dnf-dfo-research-vs-current-system-technical-report.md` | Research vs current system gap analysis |
 | `research/combat/dnf-dfo-combat-replication-implementation-report.md` | Overall replication implementation |
 | `research/combat/dnf-dfo-combat-kernel-development-report.md` | Kernel development approach |
-| `research/combat/dnf-dfo-combat-technical-pipeline-report.md` | Technical pipeline report |
+| `research/combat/dnf-dfo-combat-technical-pipeline-report.md` | [OVERLAPPING] Technical pipeline report (unique job samples/event bus content migrated to frame-AI canonical) |
 | `research/combat/dnf-dfo-combat-1v1-spec-report.md` | 1v1 combat specification |
 | `research/combat/1v1-combat-system-spec-compact.md` | 1v1 combat system spec (compact) |
 | `research/combat/code-level-dnf-replication-gap-assessment.md` | Code-level replication gap assessment |
@@ -105,10 +105,10 @@ DNF/DFO combat system reconstruction, replication, data models, extraction pipel
 | `research/combat/combat-replication-implementation-v1.md` | Combat system replication implementation |
 | `research/combat/combat-replication-implementation-v2.md` | Combat system replication (DFO variant) |
 | `research/combat/combat-replication-scoring.md` | Replication: version boundaries, damage formulas, scoring |
-| `research/combat/combat-replication-tech-report.md` | Replication tech: API→PVF→SKL→NUT→ANI→ATK pipeline |
-| `research/combat/combat-system-implementation-details.md` | Implementation details (thread model, tick, skill stages) |
-| `research/combat/deep-research-combat-system-freeze-replication.md` | Combat system freeze replication study |
-| `research/combat/deep-research-combat-technical-replication.md` | Combat technical replication (raid, party sync, buffs, sets, durability) |
+| `research/combat/combat-replication-tech-report.md` | [SUPPORTING] Replication tech pipeline (unique 2.5D pseudocode/JSON-CSV samples migrated to frame-AI canonical) |
+| `research/combat/combat-system-implementation-details.md` | [SUPPORTING] Implementation details (unique tick/priority/random/Miss-Crit-Guard-Pierce pseudocode migrated to kernel-dev canonical) |
+| `research/combat/combat-system-freeze-replication.md` | Combat system freeze replication study |
+| `research/combat/combat-technical-replication.md` | Combat technical replication (raid, party sync, buffs, sets, durability) |
 | `research/combat/berserker-action-frame-calibration.md` | Berserker action frame calibration against DFO reference |
 | `research/combat/dnf-dfo-combat-technical-data-replay-report.md` | Technical data replay: combat event recording and determinism |
 | `research/combat/npk-img-extraction-workflow.md` | NPK/IMG extraction workflow from DNF client |
@@ -135,15 +135,15 @@ Core subsystems (equipment/skill/fatigue), hell mode/economy/guild, account/logi
 
 | Document | Title |
 |---|---|
-| `research/systems/deep-research-core-subsystems-replication.md` | Three core subsystems: equipment growth, skill tree, fatigue/difficulty |
-| `research/systems/deep-research-hell-economy-guild-replication.md` | Classic Hell mode, auction house economy, and guild/party systems |
+| `research/systems/core-subsystems-replication.md` | Three core subsystems: equipment growth, skill tree, fatigue/difficulty |
+| `research/systems/hell-economy-guild-replication.md` | Classic Hell mode, auction house economy, and guild/party systems |
 | `research/systems/account-login-subsystem.md` | Account and login subsystem (authentication, MFA, launcher) |
 | `research/systems/assets-achievement-subsystem.md` | Assets and achievement subsystem (vault, binding, achievements) |
 | `research/systems/character-subsystems-report.md` | Character-side subsystems (creation, deletion, rename, job, slots) |
 | `research/systems/town-hub-systems.md` | Town/hub systems (lobby, AOI, NPC interaction, dungeon entrance) |
 | `research/systems/town-subsystem-details.md` | Town subsystem details (scenes, channels, player sync, movement) |
-| `research/systems/dnf-classic-hell-economy-guild-party-replication.md` | Classic DNF hell mode, economy, guild, and party system replication |
-| `research/systems/dnf-dfo-current-live-core-subsystems-report.md` | Current live DNF/DFO core subsystems report |
+| `research/systems/classic-hell-economy-guild-party-replication.md` | Classic DNF hell mode, economy, guild, and party system replication |
+| `research/systems/current-live-core-subsystems-report.md` | Current live DNF/DFO core subsystems report |
 
 ### research/reference/ — API & Wiki Reference Docs (27 files)
 
@@ -151,9 +151,9 @@ Neople Open API reference and DFO World Wiki system documentation — raw refere
 
 | Document | Title |
 |---|---|
-| `research/reference/02-neople-dnf-open-api-auxiliary-material.md` | Neople DNF Open API integration design |
-| `research/reference/03-neople-api-combat-implementation-audit.md` | Official API audit of all current DNF/DFO-aligned implementation |
-| `research/reference/04-official-api-wiki-whole-code-audit.md` | Official API + DFO wiki whole-code combat audit |
+| `research/reference/neople-dnf-open-api-auxiliary-material.md` | Neople DNF Open API integration design |
+| `research/reference/neople-api-combat-implementation-audit.md` | Official API audit of all current DNF/DFO-aligned implementation |
+| `research/reference/official-api-wiki-whole-code-audit.md` | Official API + DFO wiki whole-code combat audit |
 | `research/reference/reference-api-auction-economy.md` | Auction & economy — Neople Open API |
 | `research/reference/reference-api-character-model.md` | Character data model — Neople Open API |
 | `research/reference/reference-api-items.md` | Item data model — Neople Open API |

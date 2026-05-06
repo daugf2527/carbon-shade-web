@@ -1,4 +1,5 @@
 # NPK/IMG Frame Data Extraction Workflow
+> **Status: [EXTRACTION] — NPK/IMG 资源提取工作流**
 
 > Status: Pipeline design — NOT executed. Requires C# runtime and DNF client resources.
 > Target: Extract per-animation frame counts, frame durations, anchor points, and hitbox attachment frames from Berserker skill IMG files.

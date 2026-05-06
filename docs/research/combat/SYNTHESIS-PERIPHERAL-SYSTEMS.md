@@ -1,5 +1,7 @@
 # Peripheral Combat Systems Synthesis
 
+> **Status: [SYNTHESIS]** — PvP/评分/raid/party/buff/房间/NPC 扩展系统
+
 ## Purpose
 
 这篇解决“哪些资料要保留，但不进入当前 DFO 动作/手感 P2 主线”的问题。它覆盖 PvP/1v1、raid/party/buff、评分奖励、房间/NPC/掉落、剧情演出和历史研究边界。
@@ -20,8 +22,8 @@
 | `1v1-combat-system-spec-compact.md` | `战斗循环与数值规范`、`网络同步与权威服务器`、`PvE/PvP 规则分离` | PvP/network profile extension |
 | `combat-replication-scoring.md` | `战斗结算、评分与奖励权重模块`、`战斗任务、成就与条件挑战模块` | scoring/reward extension |
 | `combat-cleanroom-v2.md` | `掉落、拾取与战斗内奖励物件系统`、`房间边界`、`NPC、佣兵与支援单位`、`剧情演出` | room/NPC/drop/cutscene extension |
-| `deep-research-combat-technical-replication.md` | `Raid 指挥`、`队伍成员状态同步`、`奶系 / Buffer / Party Buff`、`装备套装 / 流派构筑`、`耐久 / 修理`、`强化 / 增幅 / 附魔 / 继承` | raid/party/buff/equipment extension |
-| `deep-research-combat-system-freeze-replication.md` | `成长、SP/TP`、`组队、副本与攻坚编排`、`黑箱层`、`clean-room 复刻路线` | historical boundary |
+| `combat-technical-replication.md` | `Raid 指挥`、`队伍成员状态同步`、`奶系 / Buffer / Party Buff`、`装备套装 / 流派构筑`、`耐久 / 修理`、`强化 / 增幅 / 附魔 / 继承` | raid/party/buff/equipment extension |
+| `combat-system-freeze-replication.md` | `成长、SP/TP`、`组队、副本与攻坚编排`、`黑箱层`、`clean-room 复刻路线` | historical boundary |
 | `combat-replication-implementation-v1.md` | `服务拓扑`、`包头布局与协议骨架`、`帧同步、锁步与带宽预算` | historical protocol sample |
 | `combat-replication-implementation-v2.md` | `战斗 UI 与数值表现层`、`连招保护与补正系统`、`网络与客户端交互` | feedback/replay/network extension |
 | `combat-system-implementation-details.md` | `技能槽位、快捷键、技能锁定与技能封印`、`同 Tick 裁决` | input/system rules extension |
@@ -50,6 +52,6 @@
 - `combat-replication-implementation-v2.md`
 - `combat-replication-scoring.md`
 - `combat-system-implementation-details.md`
-- `deep-research-combat-system-freeze-replication.md`
-- `deep-research-combat-technical-replication.md`
+- `combat-system-freeze-replication.md`
+- `combat-technical-replication.md`
 - `dnf-dfo-combat-1v1-spec-report.md`

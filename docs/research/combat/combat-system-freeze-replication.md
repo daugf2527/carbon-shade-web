@@ -1,4 +1,5 @@
 # DNF/DFO 战斗系统一比一复刻研究报告
+> **Status: [HISTORICAL] — 早期 freeze 研究，保留黑盒层和 clean-room 边界**
 
 ## 最核心的结论
 

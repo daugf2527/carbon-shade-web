@@ -1,4 +1,5 @@
 # DNF/DFO 战斗系统复刻技术研究报告
+> **Status: [SUPPORTING] — 2.5D/输入 伪代码和 JSON/CSV 样例来源**
 
 ## 执行摘要
 

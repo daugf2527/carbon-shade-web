@@ -1,4 +1,5 @@
 # PVF/.skl Skill Data Extraction Workflow
+> **Status: [EXTRACTION] — PVF/SKL 技能数据提取工作流**
 
 > Status: Pipeline design — NOT executed. Requires C# runtime, PVF file, and decryption tools.
 > Target: Extract skill frame phases, hitbox parameters, launch/gravity values, and attack coefficients from DNF server-side PVF files.
