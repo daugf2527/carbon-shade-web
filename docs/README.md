@@ -1,8 +1,20 @@
 # Documentation Index
 
-> Last updated: 2026-05-01
+> Last updated: 2026-05-05
 
 This index categorizes all project documentation by status. Navigate by category to find relevant documents.
+
+---
+
+## DNF/DFO Reference Rule
+
+Neople official API verification is the first golden standard for any DNF/DFO field it exposes. DFO-specific wiki references such as DFO World are the second golden standard for fields that official API/pages do not expose, after checking freshness and conflicts. Put official API evidence ahead of wiki summaries, community notes, local baseline tuning, and prior assumptions.
+
+The boundary is documented in `design/source-policy.md`: API-backed skill metadata, cooldowns, costs, option values, hit-count fields, and official text can be treated as official facts; DFO-specific wiki pages can support skill semantics, public level tables, command notes, and general mechanic descriptions when official sources are silent; Wikipedia/general encyclopedias are background-only and must not be used for combat numbers, frame data, hitboxes, damage formulas, skill scaling, AI behavior, or live balance values. Unexposed client frame data and server/network internals remain calibrated baseline unless another official source backs them.
+
+Never commit `NEOPLE_API_KEY`; use local environment variables or a backend proxy.
+
+Current implementation audit: `research/reference/03-neople-api-combat-implementation-audit.md`.
 
 ---
 
@@ -54,6 +66,9 @@ Documents describing desired future states, planned work, or proposed architectu
 | `engineering/03-development-workflow-v0.1.md` | Historical context — written for ChatGPT era; workflow principles still valid; all ChatGPT references should be read as Claude Code |
 | `planning/dnf-combat-systems-master-spec.md` | 79-system taxonomy across P0-P4 for full DNF replication |
 | `planning/dfo-action-handfeel-replication-plan.md` | Living alignment document — tracks pending DFO handfeel items |
+| `planning/runtime-observability-three-phase-plan.md` | Runtime observability: three-phase telemetry, profiling, and replay validation plan |
+| `planning/dfo-handfeel-next-backlog.md` | DFO handfeel next backlog: prioritized post-R3 sensation items |
+| `planning/pvf-skl-extraction-plan.md` | PVF/SKL extraction plan: DNF client data extraction tooling and workflow |
 
 ---
 
@@ -61,7 +76,7 @@ Documents describing desired future states, planned work, or proposed architectu
 
 Investigative reports and reference material that inform the project but do not describe implemented code. Organized into four subdirectories under `research/` plus one root-level cross-cutting file.
 
-### research/combat/ — DNF Combat Kernel Research (21 source files + 4 synthesis docs + audit/index)
+### research/combat/ — DNF Combat Kernel Research (26 source files + 4 synthesis docs + audit/index)
 
 DNF/DFO combat system reconstruction, replication, data models, extraction pipeline, frame AI, and mechanics gap analysis. Start with the four `SYNTHESIS-*.md` documents for current reading paths, then use `research/combat/INDEX.md` for source-document routing and `research/combat/CHAPTER-AUDIT.md` for chapter-level overlap governance.
 
@@ -94,6 +109,11 @@ DNF/DFO combat system reconstruction, replication, data models, extraction pipel
 | `research/combat/combat-system-implementation-details.md` | Implementation details (thread model, tick, skill stages) |
 | `research/combat/deep-research-combat-system-freeze-replication.md` | Combat system freeze replication study |
 | `research/combat/deep-research-combat-technical-replication.md` | Combat technical replication (raid, party sync, buffs, sets, durability) |
+| `research/combat/berserker-action-frame-calibration.md` | Berserker action frame calibration against DFO reference |
+| `research/combat/dnf-dfo-combat-technical-data-replay-report.md` | Technical data replay: combat event recording and determinism |
+| `research/combat/npk-img-extraction-workflow.md` | NPK/IMG extraction workflow from DNF client |
+| `research/combat/pvf-skl-extraction-workflow.md` | PVF/SKL extraction workflow for skill data |
+| `research/combat/berserker-data-gap-report.md` | Berserker data gap report: API vs wiki vs local baseline |
 
 ### research/art/ — Art Pipeline & Asset Research (7 files)
 
@@ -109,7 +129,7 @@ NPK/IMG/PVF art pipeline specifications, paper doll compositing, UI/atlas/font s
 | `research/art/deep-research-spk-npk-img-pvf-compatible-replication.md` | SPK/NPK/IMG/PVF compatible replication |
 | `research/art/deep-research-ui-panel-atlas-font.md` | UI panel, atlas, and font system replication |
 
-### research/systems/ — Game Systems Research (7 files)
+### research/systems/ — Game Systems Research (9 files)
 
 Core subsystems (equipment/skill/fatigue), hell mode/economy/guild, account/login, character, and town/hub systems.
 
@@ -122,14 +142,18 @@ Core subsystems (equipment/skill/fatigue), hell mode/economy/guild, account/logi
 | `research/systems/character-subsystems-report.md` | Character-side subsystems (creation, deletion, rename, job, slots) |
 | `research/systems/town-hub-systems.md` | Town/hub systems (lobby, AOI, NPC interaction, dungeon entrance) |
 | `research/systems/town-subsystem-details.md` | Town subsystem details (scenes, channels, player sync, movement) |
+| `research/systems/dnf-classic-hell-economy-guild-party-replication.md` | Classic DNF hell mode, economy, guild, and party system replication |
+| `research/systems/dnf-dfo-current-live-core-subsystems-report.md` | Current live DNF/DFO core subsystems report |
 
-### research/reference/ — API & Wiki Reference Docs (16 files)
+### research/reference/ — API & Wiki Reference Docs (27 files)
 
 Neople Open API reference and DFO World Wiki system documentation — raw reference material, not analysis.
 
 | Document | Title |
 |---|---|
 | `research/reference/02-neople-dnf-open-api-auxiliary-material.md` | Neople DNF Open API integration design |
+| `research/reference/03-neople-api-combat-implementation-audit.md` | Official API audit of all current DNF/DFO-aligned implementation |
+| `research/reference/04-official-api-wiki-whole-code-audit.md` | Official API + DFO wiki whole-code combat audit |
 | `research/reference/reference-api-auction-economy.md` | Auction & economy — Neople Open API |
 | `research/reference/reference-api-character-model.md` | Character data model — Neople Open API |
 | `research/reference/reference-api-items.md` | Item data model — Neople Open API |
@@ -145,6 +169,16 @@ Neople Open API reference and DFO World Wiki system documentation — raw refere
 | `research/reference/reference-dfo-pvp.md` | PvP (决斗场) — DFO World Wiki |
 | `research/reference/reference-dfo-reinforcement.md` | Reinforcement (强化) — DFO World Wiki |
 | `research/reference/reference-dfo-skill-points.md` | Skill Points (SP) — DFO World Wiki |
+| `research/reference/reference-dfo-avatar-costume.md` | Avatar & Costume — DFO World Wiki |
+| `research/reference/reference-dfo-dungeon-design.md` | Dungeon Design — DFO World Wiki |
+| `research/reference/reference-dfo-economy-adventure.md` | Economy & Adventure — DFO World Wiki |
+| `research/reference/reference-dfo-pet-quest-enchant.md` | Pet, Quest, Enchant — DFO World Wiki |
+| `research/reference/reference-dfo-status-effects.md` | Status Effects — DFO World Wiki |
+| `research/reference/community/dfo-world-wiki-berserker-skills.md` | Berserker skills — DFO World Wiki community reference |
+| `research/reference/pvf-download-sources.md` | PVF download sources and reference links |
+| `research/reference/community/df0-berserker-patch-history.md` | DFO Berserker patch history — community reference |
+| `research/reference/community/namu-wiki-berserker-skills.md` | Berserker skills — Namu Wiki reference |
+| `research/reference/community/damage-formula-audit-from-dcalc.md` | Damage formula audit from dcalc — community analysis |
 
 ### Root-level
 
