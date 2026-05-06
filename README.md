@@ -37,7 +37,7 @@ Never commit API keys. Use `NEOPLE_API_KEY` only from local environment variable
 Key identity docs:
 
 - `docs/00-project-mainline-v0.1.md` — mainline world/theme draft
-- `docs/01-project-identity.md` — naming and positioning baseline
+- `docs/02-project-identity-v0.2.md` — naming and positioning baseline
 
 ## How to run
 

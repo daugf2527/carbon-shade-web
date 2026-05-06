@@ -5,6 +5,10 @@
 ## Scope
 
 本 backlog 只覆盖下一批 DFO/Berserker 动作手感小步迭代，不展开装备、深渊、经济、公会、技能树或 PVF/NPK 解析器。目标是把已经通过 kernel 回归的动作行为继续推进到玩家可感知的运行态表现，并保持每批都能用静态测试和浏览器 smoke 验证。
+>
+> **优先级定义参见** `docs/planning/dnf-combat-systems-master-spec.md`：P0=缺了就跑不起来，P1=缺了手感就不对，P2=缺了体验就不完整。
+>
+> **优先级定义参见** `docs/planning/dnf-combat-systems-master-spec.md`：P0=缺了就跑不起来，P1=缺了手感就不对，P2=缺了体验就不完整。
 
 ## References
 

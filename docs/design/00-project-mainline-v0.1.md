@@ -1,9 +1,9 @@
 # 项目主线与明暗双线 v0.1
 
-> **状态：Historical.** Project naming was tentative at time of writing. See `01-project-identity.md` for the official project name (碳影 / Carbon Shade, repo `carbon-shade-web`). The narrative vision and dual-line concept remain relevant, but terminology has been finalized.
+> **状态：Historical.** Project naming was tentative at time of writing. See `02-project-identity-v0.2.md` for the official project name (碳影 / Carbon Shade, repo `carbon-shade-web`). The narrative vision and dual-line concept remain relevant, but terminology has been finalized.
 >
 > 状态：概念沉淀稿  
-> 当前项目名：暂定 → 已定名：碳影 / Carbon Shade（见 `01-project-identity.md`）  
+> 当前项目名：暂定 → 已定名：碳影 / Carbon Shade（见 `02-project-identity-v0.2.md`）  
 > 当前工程载体：类 DNF 的 2.5D Web 战斗 Demo  
 > 本文用途：作为后续世界观、玩法、系统、技术接入和文档创作的统一主线参考。
 

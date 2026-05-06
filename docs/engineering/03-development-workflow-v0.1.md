@@ -1,6 +1,6 @@
 # GitHub 开发闭环流程 v0.1
 
-> **Note:** This document was written during the project's initial setup. All references to "ChatGPT" below should be read as **Claude Code**. The workflow principles remain valid. The project is now officially named **碳影 / Carbon Shade** (see `design/01-project-identity.md`).
+> **Note:** This document was written during the project's initial setup. All references to "ChatGPT" below should be read as **Claude Code**. The workflow principles remain valid. The project is now officially named **碳影 / Carbon Shade** (see `design/02-project-identity-v0.2.md`).
 >
 > 定位：定义本项目后续如何基于 Claude Code、虚拟沙箱、GitHub、GitHub Actions 进行开发、验证和交付。
 > 原则：GitHub 是源码真源头，GitHub Actions 是真实验收环境，虚拟沙箱只做辅助加工。

@@ -1,10 +1,10 @@
 # Core Concept Document — 碳影 / Carbon Shade
 
-> **Status: v0.1 Draft (部分章节过时).** Sections 6 (competitor comparison) and 7 (key metrics) remain incomplete and are now deprioritized — 碳影 is a concept art game, not a commercial product. Core vision, gameplay loops, and target audience definitions remain directionally valid. See `01-project-identity.md` for official naming and `02-concept-art-game-design-v0.1.md` for the definitive design philosophy.
+> **Status: v0.1 Draft (部分章节过时).** Sections 6 (competitor comparison) and 7 (key metrics) remain incomplete and are now deprioritized — 碳影 is a concept art game, not a commercial product. Core vision, gameplay loops, and target audience definitions remain directionally valid. See `02-project-identity-v0.2.md` for official naming and `02-concept-art-game-design-v0.1.md` for the definitive design philosophy.
 >
 > 定位：用 1 到 3 页纸描述”做什么游戏、为谁做、为什么能成功”。
 > 当前状态：概念框架已形成。商业化指标与竞品数据已非 P0（项目定位为概念艺术游戏）。
-> 项目名：碳影 / Carbon Shade（已定名，见 `01-project-identity.md`）。
+> 项目名：碳影 / Carbon Shade（已定名，见 `02-project-identity-v0.2.md`）。
 
 ---
 

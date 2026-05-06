@@ -55,7 +55,7 @@
 
 | 文件 A | 文件 B | 重复内容 |
 |---|---|---|
-| `asset-update-fix4-notes.md` | `handfeel-fix5-anchor-notes.md` | 同一套 variable crop-box 渲染方案，fix4 实现、fix5 修 anchor bug，均已被 fix6 取代 |
+| `handfeel-fix4-asset-update-notes.md` | `handfeel-fix5-anchor-notes.md` | 同一套 variable crop-box 渲染方案，fix4 实现、fix5 修 anchor bug，均已被 fix6 取代 |
 | `handfeel-fix5-anchor-notes.md` | `fix6-normalized-sprite-pipeline.md` | 同一个显示原点 bug 的修复，fix5 是临时方案、fix6 是最终方案 |
 
 ---

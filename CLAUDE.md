@@ -31,7 +31,7 @@ Do not overclaim API or wiki coverage: startup/active/recovery frames, hitbox/hu
 
 - `docs/design/00-project-mainline-v0.1.md` — mainline world/theme draft with dual-layer narrative (bright surface + AI-era dark line).
 - `docs/design/01-core-concept-document-v0.1.md` — CCD: target audience, core gameplay loops, unique selling points, competitive landscape, and concept-level risks.
-- `docs/design/01-project-identity.md` — naming baseline: 碳影 / Carbon Shade, canonical repo `carbon-shade-web`, core terminology (外智, 代役, 回响/灵债, 自明, 明庭).
+- `docs/design/02-project-identity-v0.2.md` — naming baseline: 碳影 / Carbon Shade, canonical repo `carbon-shade-web`, core terminology (外智, 代役, 回响/灵债, 自明, 明庭).
 - `docs/design/source-policy.md` — original code and placeholder rendering only; no DNF/DFO client assets, leaked code, or official assets.
 - `docs/design/tuning-baseline.md` — tuning baseline values.
 
@@ -47,7 +47,7 @@ Do not overclaim API or wiki coverage: startup/active/recovery frames, hitbox/hu
 Sequential record of handfeel improvement passes:
 - `docs/changelog/handfeel-pass-notes.md` — initial handfeel pass.
 - `docs/changelog/handfeel-fix1-notes.md` through `docs/changelog/handfeel-fix3-notes.md` — early fixes.
-- `docs/changelog/asset-update-fix4-notes.md` — integrated updated player/enemy/boss sprite sheets.
+- `docs/changelog/handfeel-fix4-asset-update-notes.md` — integrated updated player/enemy/boss sprite sheets.
 - `docs/changelog/handfeel-fix5-anchor-notes.md` — fixed `setCrop()` display origin anchoring for bottom-center foot positions.
 - `docs/changelog/fix6-normalized-sprite-pipeline.md` — current pass: normalized fixed-cell spritesheets, frame-index rendering, clamp instead of modulo, disabled container rotation for sprite actors, light tint hit flash.
 

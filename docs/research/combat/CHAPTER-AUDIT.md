@@ -1,6 +1,6 @@
 # docs/research/combat 章节级去重审计
 
-> Scope: 仅审计 `docs/research/combat` 下 21 篇 Markdown。本文不删除、不重命名、不合并旧正文，只给后续资料治理与合并时的保留边界。
+> Scope: 仅审计 `docs/research/combat` 下 32 篇 Markdown（21 篇核心战斗研究 + 4 篇 SYNTHESIS + INDEX/CHAPTER-AUDIT + 5 篇扩展文档）。本文不删除、不重命名、不合并旧正文，只给后续资料治理与合并时的保留边界。
 
 ## 审计口径
 

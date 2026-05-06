@@ -1,6 +1,6 @@
 # Technical Design Document v0.1 — 碳影 / Carbon Shade
 
-> **Status: Superseded.** This document describes a desired future architecture from the project's early planning phase. Most modules listed at 0-25% completion remain unimplemented. **See `combat-lab-0.2-r3-final-integrated-development-spec.md` for the current authoritative engineering specification.** Project is now officially named **碳影 / Carbon Shade** (see `design/01-project-identity.md`).
+> **Status: Superseded.** This document describes a desired future architecture from the project's early planning phase. Most modules listed at 0-25% completion remain unimplemented. **See `combat-lab-0.2-r3-final-integrated-development-spec.md` for the current authoritative engineering specification.** Project is now officially named **碳影 / Carbon Shade** (see `design/02-project-identity-v0.2.md`).
 >
 > 定位：给程序、TA、运维、AI 开发代理看的施工蓝图（早期规划稿）。
 > 当前状态：已被 R3 spec 全面覆盖。本文保留为架构愿景参考，不作为当前工程验收依据。
@@ -398,6 +398,8 @@ playwright.config.ts
 ---
 
 ## 12. 当前 TDD 完成度判断
+
+> **此表数据截至 v0.1 编写日期（早期规划阶段），当前已由 `combat-lab-0.2-r3-final-integrated-development-spec.md` 全面取代。保留仅供历史参考。**
 
 | 模块 | 当前完成度 |
 |---|---:|

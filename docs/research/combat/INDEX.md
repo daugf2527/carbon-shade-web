@@ -1,6 +1,6 @@
 # Combat Research Index
 
-> Scope: `docs/research/combat` 下 21 篇战斗研究源文档 + 4 篇 synthesis。21 篇源文档保留为 archive/evidence；后续默认先读 synthesis，再按 source map 回查原文。
+> Scope: `docs/research/combat` 下 32 篇源文档（含 21 篇战斗研究源文档 + 4 篇 synthesis + INDEX/CHAPTER-AUDIT + 5 篇扩展：berserker-action-frame-calibration、berserker-data-gap-report、dnf-dfo-combat-technical-data-replay-report、npk-img-extraction-workflow、pvf-skl-extraction-workflow）。21 篇核心研究源文档保留为 archive/evidence；后续默认先读 synthesis，再按 source map 回查原文。
 
 ## 推荐阅读路线
 

@@ -3,7 +3,7 @@
 > 定位：记录当前项目已具备什么、缺什么、下一步优先补什么。
 > 依据：当前仓库状态、已有 README / package.json / SpriteFrameLibrary / static-test 脚本，以及已沉淀的世界观与开发流程。
 >
-> **状态更新 (2026-05-02):** 项目已正式定名 碳影 / Carbon Shade（见 `01-project-identity.md`）。Combat Lab 已经历了 0.2-R3 内核工程化、Training Ground R1+R2 手动战斗（~90%）、以及 R3+R4 视觉音效段落（B/C/D 段 ~90-95%、A 段 ~60%、E 段 0%）。叙事层：Dao哲学地基与叙事结构决定已沉淀（见 `02-concept-art-game-design-v0.1.md`）。以下百分比反映 2026-05-02 实际状态。
+> **状态更新 (2026-05-02):** 项目已正式定名 碳影 / Carbon Shade（见 `02-project-identity-v0.2.md`）。Combat Lab 已经历了 0.2-R3 内核工程化、Training Ground R1+R2 手动战斗（~90%）、以及 R3+R4 视觉音效段落（B/C/D 段 ~90-95%、A 段 ~60%、E 段 0%）。叙事层：Dao哲学地基与叙事结构决定已沉淀（见 `02-concept-art-game-design-v0.1.md`）。以下百分比反映 2026-05-02 实际状态。
 
 ---
 
@@ -23,7 +23,7 @@
 | AI 任务系统 | 10% | 概念明确，工程未落地 |
 | Web 平台 | 5% | 仅有方向，无实现 |
 | 商业化 / 虚拟奖励 | 5% | 仅有想法，需防刷、合规、审计设计 |
-| 正式项目命名 | 100% | 已定名：碳影 / Carbon Shade（见 `01-project-identity.md`） |
+| 正式项目命名 | 100% | 已定名：碳影 / Carbon Shade（见 `02-project-identity-v0.2.md`） |
 
 ---
 
@@ -41,7 +41,7 @@
 
 ### 待补
 
-1. ~~正式项目名。~~ ✅ 已定名：碳影 / Carbon Shade（见 `01-project-identity.md`）
+1. ~~正式项目名。~~ ✅ 已定名：碳影 / Carbon Shade（见 `02-project-identity-v0.2.md`）
 2. 阳面世界观：为什么这个世界值得进入，主角为什么战斗（主角定位已确定，详见 `02-concept-art-game-design-v0.1.md` 第 8.1 节）。
 3. 目标受众细分：年龄、游戏偏好、付费习惯、AI 工具使用程度。
 4. 竞品对比：DNF、晶核、暖雪、Hades、挂机/自动化游戏、AI 工具平台。

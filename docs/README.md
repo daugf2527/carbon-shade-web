@@ -24,7 +24,7 @@ Documents that accurately describe the present codebase and actively maintained 
 
 | Document | Description |
 |---|---|
-| `design/01-project-identity.md` | Official naming: 碳影 / Carbon Shade, repo `carbon-shade-web`, core terminology |
+| `design/02-project-identity-v0.2.md` | Official naming: 碳影 / Carbon Shade, repo `carbon-shade-web`, core terminology |
 | `design/02-concept-art-game-design-v0.1.md` | Concept art game design philosophy: meta-narrative paradox, three-cycle game design, emotional arc, plugin derivative strategy, project moats & gaps |
 | `design/source-policy.md` | Compliance boundaries: original code only, no DNF/DFO assets |
 | `design/tuning-baseline.md` | Living combat parameter values (currently in use) |
@@ -49,7 +49,7 @@ Documents that record past states or approaches that have been replaced by later
 | `changelog/handfeel-fix1-notes.md` | Historical — pushback, facing, weapon arc fixes |
 | `changelog/handfeel-fix2-notes.md` | Historical — direct locomotion, DNF-like pushbox |
 | `changelog/handfeel-fix3-notes.md` | Historical — sprite-reference rendering, hit reactions |
-| `changelog/asset-update-fix4-notes.md` | Partially superseded by fix6 — variable crop-box approach replaced |
+| `changelog/handfeel-fix4-asset-update-notes.md` | Partially superseded by fix6 — variable crop-box approach replaced |
 | `changelog/handfeel-fix5-anchor-notes.md` | Superseded by fix6 — `setCrop()` + `setDisplayOrigin()` approach replaced |
 | `design/00-project-mainline-v0.1.md` | Historical snapshot — naming is superseded by `01-project-identity.md`, but core narrative (dual-layer, 人群谱系, social/individual layer) remains the narrative foundation |
 | `design/01-core-concept-document-v0.1.md` | v0.1 draft — core vision & gameplay loops still valid; sections 6-7 deprioritized (concept art game, not commercial); naming finalized (碳影/Carbon Shade) |
