@@ -20,12 +20,20 @@ for (const type of ["bleed", "poison", "burn", "shock"] as const) {
   const k = new CombatKernel();
   assert.equal(k.status.profile("bleed")?.durationFrames, 180, "DFO wiki Bleed duration should be 3s at 60Hz");
   assert.equal(k.status.profile("bleed")?.tickIntervalFrames, 30, "DFO wiki Bleed tick interval should be 0.5s at 60Hz");
+  assert.equal(k.status.profile("bleed")?.dotDamagePerStack, 6, "Bleed DOT damage should remain on the local baseline profile");
   assert.equal(k.status.profile("poison")?.durationFrames, 300, "DFO wiki Poison duration should be 5s at 60Hz");
   assert.equal(k.status.profile("poison")?.tickIntervalFrames, 30, "DFO wiki Poison tick interval should be 0.5s at 60Hz");
+  assert.equal(k.status.profile("poison")?.dotDamagePerStack, 5, "Poison DOT damage should remain on the local baseline profile");
   assert.equal(k.status.profile("burn")?.durationFrames, 300, "DFO wiki Burn duration should be 5s at 60Hz");
   assert.equal(k.status.profile("burn")?.tickIntervalFrames, 30, "DFO wiki Burn tick interval should be 0.5s at 60Hz");
+  assert.equal(k.status.profile("burn")?.dotDamagePerStack, 5, "Burn DOT damage should remain on the local baseline profile");
+  assert.equal(k.status.profile("burn")?.splashRadius, 150, "Burn splash radius should remain on the local baseline profile");
+  assert.equal(k.status.profile("burn")?.splashDamagePerStack, 3, "Burn splash damage should remain on the local baseline profile");
   assert.equal(k.status.profile("shock")?.durationFrames, 600, "DFO wiki Shock duration should be 10s at 60Hz");
   assert.equal(k.status.profile("shock")?.tickIntervalFrames, 60, "DFO wiki Shock tick interval should be 1s at 60Hz");
+  assert.equal(k.status.profile("shock")?.dotDamagePerStack, 4, "Shock DOT damage should remain on the local baseline profile");
+  assert.equal(k.status.profile("rupture")?.durationFrames, 180, "Rupture duration should remain on the local baseline profile");
+  assert.equal(k.status.profile("rupture")?.incomingDirectDamageMultiplierPerStack, 0.1, "Rupture direct damage multiplier should remain on the local baseline profile");
 }
 
 {

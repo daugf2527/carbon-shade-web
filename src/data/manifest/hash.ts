@@ -1,7 +1,7 @@
 // Content-addressable hash for manifest data — deterministic hash of JSON content
 // that replaces hardcoded "combat-schema-v1" in ReplayRecorder.
 
-import type { FrameDataAction, ActionName } from "../../combat/types.js";
+import type { FrameDataAction, ActionName, StatusManifest } from "../../combat/types.js";
 
 /**
  * Deterministic stringify — sorts object keys for stable output.
@@ -32,5 +32,11 @@ function fnv1a(str: string): string {
  * Used as combatSchemaHash in ReplayRecorder — changes only when manifest content changes.
  */
 export function computeActionsHash(actions: Record<ActionName, FrameDataAction>): string {
-  return fnv1a(stableStringify(actions));
+  const jsonCompatible = JSON.parse(JSON.stringify(actions)) as Record<ActionName, FrameDataAction>;
+  return fnv1a(stableStringify(jsonCompatible));
+}
+
+export function computeStatusManifestHash(manifest: StatusManifest): string {
+  const jsonCompatible = JSON.parse(JSON.stringify(manifest)) as StatusManifest;
+  return fnv1a(stableStringify(jsonCompatible));
 }
