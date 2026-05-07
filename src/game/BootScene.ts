@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { AudioUnlockGate } from "./audio/AudioUnlockGate.js";
 import { NORMALIZED_SPRITE_SHEETS } from "./SpriteFrameLibrary.js";
 import { getRuntimeEvidenceCollector } from "../runtime/evidence/RuntimeEvidenceCollector.js";
+import { initializeActionManifestForRuntime } from "./bootActionManifest.js";
 
 export class BootScene extends Phaser.Scene {
   private readonly audioGate = new AudioUnlockGate();
@@ -66,8 +67,29 @@ export class BootScene extends Phaser.Scene {
       align: "center",
     }).setOrigin(0.5);
 
+    let errorText: Phaser.GameObjects.Text | null = null;
+    const showBootError = (error: unknown): void => {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!errorText) {
+        errorText = this.add.text(width / 2, height / 2 + 116, "", {
+          fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+          fontSize: "13px",
+          color: "#fecaca",
+          align: "center",
+          wordWrap: { width: Math.min(780, width - 80) },
+        }).setOrigin(0.5);
+      }
+      errorText.setText(`Action manifest failed to load:\n${message}`);
+    };
+
     const startCombat = async (): Promise<void> => {
       await this.audioGate.unlock().catch(() => undefined);
+      try {
+        await initializeActionManifestForRuntime();
+      } catch (error) {
+        showBootError(error);
+        throw error;
+      }
       this.game.registry.set("audioGate", this.audioGate);
       this.scene.start("combat");
     };
