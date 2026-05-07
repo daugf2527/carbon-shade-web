@@ -3,15 +3,16 @@ import { cloneActorSnapshot } from "../actors/ActorFactory.js";
 import type { RawInputFrame } from "../input/BrowserInputState.js";
 import type { CombatEvent } from "../events/CombatEventBus.js";
 import { ACTIONS } from "../actions/FrameDataAction.js";
-import { computeActionsHash } from "../../data/manifest/hash.js";
+import { computeActionsHash, computeStatusManifestHash } from "../../data/manifest/hash.js";
+import { DEFAULT_STATUS_MANIFEST } from "../../data/manifest/status.js";
 import { SOURCE_POLICY_VERSION } from "../../data/manifest/schema.js";
 
 export interface ReplayInputSnapshot { tick:number; held:string[]; pressed:string[]; released:string[]; }
 export interface ReplayEventSnapshot { id:string; type:string; status:string; tick:number; sourceActorId?:string; targetActorId?:string; correlationId:string; tags:string[]; payload:unknown; }
 export interface ReplayFrame { tick:number; actors: object[]; inputs: ReplayInputSnapshot[]; events: ReplayEventSnapshot[]; eventCount:number; stateHash:string; note?: string; }
 export interface ReplayDataSources { actions:string; status:string; damage:string; }
-export interface ReplayMetadata { buildHash:string; combatSchemaHash:string; manifestHash:string; sourcePolicyVersion:string; dataSources: ReplayDataSources; logicFps:number; finalStateHash?:string; }
-export interface ReplayRecorderOptions { buildHash?:string; combatSchemaHash?:string; manifestHash?:string; sourcePolicyVersion?:string; dataSources?:Partial<ReplayDataSources>; logicFps?:number; }
+export interface ReplayMetadata { buildHash:string; combatSchemaHash:string; manifestHash:string; statusManifestHash:string; sourcePolicyVersion:string; dataSources: ReplayDataSources; logicFps:number; finalStateHash?:string; }
+export interface ReplayRecorderOptions { buildHash?:string; combatSchemaHash?:string; manifestHash?:string; statusManifestHash?:string; sourcePolicyVersion?:string; dataSources?:Partial<ReplayDataSources>; logicFps?:number; }
 
 function cloneJson<T>(value:T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -57,10 +58,12 @@ export class ReplayRecorder {
   readonly metadata: ReplayMetadata;
   constructor(options: ReplayRecorderOptions = {}) {
     const manifestHash = options.manifestHash ?? options.combatSchemaHash ?? computeActionsHash(ACTIONS);
+    const statusManifestHash = options.statusManifestHash ?? computeStatusManifestHash(DEFAULT_STATUS_MANIFEST);
     this.metadata = {
       buildHash: options.buildHash ?? (typeof __BUILD_HASH__ !== 'undefined' ? __BUILD_HASH__ : 'local-dev'),
       combatSchemaHash: options.combatSchemaHash ?? manifestHash,
       manifestHash,
+      statusManifestHash,
       sourcePolicyVersion: options.sourcePolicyVersion ?? SOURCE_POLICY_VERSION,
       dataSources: {
         actions: options.dataSources?.actions ?? "src/combat/actions/FrameDataAction.ts#ACTIONS",

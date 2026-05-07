@@ -4,6 +4,7 @@ import { ACTIONS, getAction } from "../../src/combat/actions/FrameDataAction.js"
 import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";
 import { computeActionsHash, computeStatusManifestHash } from "../../src/data/manifest/hash.js";
 import { loadActionsManifest, loadStatusManifest } from "../../src/data/manifest/loader.js";
+import { DEFAULT_STATUS_MANIFEST } from "../../src/data/manifest/status.js";
 import { SOURCE_POLICY_VERSION, validateManifest, validateStatusManifest } from "../../src/data/manifest/schema.js";
 
 function cloneActions(): Record<ActionName, FrameDataAction> {
@@ -87,8 +88,10 @@ function cloneActions(): Record<ActionName, FrameDataAction> {
   assert.notEqual(computeActionsHash(changed), manifestHash, "action manifest hash should change when action data changes");
 
   const recorder = new ReplayRecorder();
+  const statusManifestHash = computeStatusManifestHash(DEFAULT_STATUS_MANIFEST);
   assert.equal(recorder.metadata.combatSchemaHash, manifestHash);
   assert.equal(recorder.metadata.manifestHash, manifestHash);
+  assert.equal(recorder.metadata.statusManifestHash, statusManifestHash);
   assert.equal(recorder.metadata.sourcePolicyVersion, SOURCE_POLICY_VERSION);
   assert.equal(recorder.metadata.dataSources.actions, "src/combat/actions/FrameDataAction.ts#ACTIONS");
   assert.equal(recorder.metadata.dataSources.status, "src/data/manifest/status/default.json#profiles");
