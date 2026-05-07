@@ -1,13 +1,31 @@
 
 # DNF PvE 1:1 Combat Replication Plan
 
-> **Status: [PLANNING]** — 5-Phase implementation roadmap, approved 2026-05-06
+> **Status: [PLANNING]** — 5-Phase implementation roadmap, approved 2026-05-06. Test counts are intentionally not fixed in this document; use current command output as the source of truth.
 
 ## Context
 
-碳影/Carbon Shade 当前有一条可运行的 Input → Action → Hit → Reaction → Replay 链路（21 个 Berserker 技能，36 个测试全绿），但距离 DNF PvE 1:1 复刻有本质差距：action/status 已进入 manifest v1 数据层但仍以 local baseline 为主，伤害公式 demo 级，状态系统 5/14 实现，AI 仅基础 FSM，无 PVF/ANI/NPK 数据管线。
+碳影/Carbon Shade 当前有一条可运行的 Input → Action → Hit → Reaction → Replay 链路（Berserker 竖切 + 静态回归覆盖），但距离 DNF PvE 1:1 复刻有本质差距：action/status 已进入 manifest v1 数据层但仍以 local baseline 为主，伤害公式 demo 级，状态系统 5/14 实现，AI 仅基础 FSM，无 PVF/ANI/NPK 数据管线。
 
 `docs/research/combat/` 内 21 篇研究文档 + 4 篇 synthesis 已建立完整的复刻证据体系：官方 API → 社区解析器公开字段 → 坐标系/碰撞模型 → 伤害乘区规则 → 状态/AI 参数族 → 合规边界。关键结论：**1:1 复刻必须先锁定目标版本，再以版本化数据仓驱动运行时，不能让帧数据/公式/状态表手写在 TS 源码里。**
+
+## Target Version Freeze / DoD
+
+```yaml
+policy: classic_fixed_version
+versionId: pending_user_selection
+runtimeLabelBeforeSelection: local_baseline/evidence-ready
+claimBoundary: do not claim DNF 1:1 completion until versionId is selected and source evidence is attached
+```
+
+用户已选择“经典固定版本”路线，但尚未给出具体版本号。版本号确认前，本仓只能声明“本地 baseline 已具备 evidence-ready 数据链路”，不能声称已完成 DNF 1:1 复刻。
+
+DoD 分四层：
+
+1. **source evidence**：每个 DNF-facing 字段必须能追到 official API、官方页面、版本化客户端资源抽取、或明确标注 confidence 的社区逆向资料；冲突资料必须记录 resolution policy。
+2. **runtime behavior**：对应 manifest 已被 runtime loader 使用，且静态测试覆盖 action/status/AI/damage/reaction 的可观察行为。
+3. **replay/hash metadata**：replay metadata 必须记录 build hash、action/status/AI manifest hash、source policy version、`dataSources` 路径和 final state hash。
+4. **excluded scope**：未纳入当前 PvE handfeel 范围的 PvP、raid、party/economy、全职业数据、NPK/PVF 全量 parser、UI/评分系统必须显式排除。
 
 ## DNF PvE 战斗模型：需要复刻什么
 
@@ -41,12 +59,12 @@ HitEvent → StateFlags 过滤(invincible/superArmor/unbreakable/grabImmune)
 
 | 系统 | 当前状态 | 1:1 要求 | 缺口 |
 |------|---------|---------|------|
-| **帧数据** | 21 动作已有 `actions/default.json` parity/hash gate | 版本化 manifest + ANI parser | 无抽取管线，运行时仍兼容同步 ACTIONS |
+| **帧数据** | 动作数据已有 `actions/default.json` parity/hash gate，browser boot 会先加载 manifest 再进入 combat | 版本化 manifest + ANI parser | 无抽取管线，仍保留同步 `getAction()` fallback 兼容 |
 | **碰撞判定** | rect/circle AABB 2.5D | 6-int 棱柱体 + sweep/grab_attach 形状 | shape 类型不完整，无逐帧 hurtbox |
 | **伤害公式** | `baseDamage × multiplier` | 百分比/固伤 + 防御减伤 + 属强乘区 + 词条桶 | 完整公式链缺失 |
 | **状态系统** | 5 个已实现 status 已迁入 `status/default.json` | 14 status type + resistance/tolerance/dispel | 9 种未实现，抗性空实现 |
-| **AI** | 5 种敌人 FSM | 行为树 + Boss pattern data + 仇恨模型 | 无数据驱动 AI |
-| **Replay** | 帧级输入/事件/hash，action manifest hash 已绑定 | manifest 绑定 schema hash + status hash + 判定 snapshot | status manifest hash 和判定 snapshot 未入 metadata/frame |
+| **AI** | 5 种敌人 FSM，默认 profile 已在 `src/data/manifest/ai/enemy-default.json` | 行为树 + Boss pattern data + 仇恨模型 | 普通 AI 参数已 manifest 化，pattern/仇恨/阶段仍缺 |
+| **Replay** | 帧级输入/事件/hash，action/status/AI manifest hash 已写入 metadata | manifest 绑定 schema hash + status hash + 判定 snapshot | 判定 snapshot 未入 frame |
 
 ## 实施阶段
 
@@ -64,18 +82,18 @@ HitEvent → StateFlags 过滤(invincible/superArmor/unbreakable/grabImmune)
 2. **迁移现有手写数据**
    - `FrameDataAction.ts` ACTIONS 对象 → `actions/default.json`（已完成 parity/hash gate）
    - `StatusEffectSystem.ts` 5 种已实现 status → `status/default.json`（已完成 runtime adapter）
-   - `enemyTuning.ts` 5 种敌人 → `ai/enemy-params.json`
+   - `enemyTuning.ts` 5 种敌人 → `ai/enemy-default.json`（已完成默认 profile manifest）
    - 保留 `FrameDataAction` / `StatusProfile` / `EnemyTuning` TypeScript 类型不变
    - 启动时 load + validate → runtime adapter
 
 3. **manifest schema 校验器**
    - `src/data/manifest/schema.ts`：校验 totalFrames 一致性、hitGroupId 唯一性、cancelPolicy.into[] 引用有效性
    - `src/data/manifest/hash.ts`：content hash → action/status manifest hash
-   - ReplayRecorder 构造时读 action manifest hash 写入 `combatSchemaHash` / `manifestHash`，下一步补 `statusManifestHash`
+   - ReplayRecorder 构造时优先读已加载 action manifest hash 写入 `combatSchemaHash` / `manifestHash`，并写入 `statusManifestHash` / `enemyManifestHash`
 
 4. **combatSchemaHash 自动绑定**
-   - `ReplayRecorder.ts:57` 硬编码 → `loadManifestHash()`
-   - 更新 `auto-combat` 测试 hash 期望值（一次性）
+   - `BootScene` 进入 `CombatScene` 前执行 `loadActionsManifest()` + `FrameDataAction.loadFromManifest()`
+   - `ReplayRecorder` 默认 `dataSources.actions` 指向 `src/data/manifest/actions/default.json#actions`；未加载 manifest 的测试/fallback 路径必须显式标注 fallback source
 
 **验收**：`npm run typecheck && npm run static:test && npm run build` 全绿，`auto-combat` hash 基于 manifest 内容重新计算。
 
@@ -171,14 +189,15 @@ HitEvent → StateFlags 过滤(invincible/superArmor/unbreakable/grabImmune)
 - `src/data/manifest/damage/classic-profile.json`
 - `src/data/manifest/status/default.json`
 - `src/data/manifest/status/control-profiles.json`
-- `src/data/manifest/ai/enemy-params.json`
+- `src/data/manifest/ai/enemy-default.json`
 - `src/data/manifest/ai/boss-patterns.json`
 - `src/data/manifest/schema.ts`
 - `src/data/manifest/hash.ts`
 - `src/data/manifest/loader.ts`
 
 ### 修改
-- `src/combat/actions/FrameDataAction.ts` — getAction() 改为从 manifest 加载
+- `src/combat/actions/FrameDataAction.ts` — `getAction()` 保持同步兼容，优先读取 boot-time loaded manifest
+- `src/game/BootScene.ts` — 进入 CombatScene 前加载并挂载 action manifest
 - `src/combat/hit/HitResolver2D5.ts` — sweep/grab_attach 形状、多 hurtbox、snapshot
 - `src/combat/damage/DamageFormula.ts` — 完整四路伤害链
 - `src/combat/status/StatusEffectSystem.ts` — 14 种 type + resistance
@@ -188,6 +207,7 @@ HitEvent → StateFlags 过滤(invincible/superArmor/unbreakable/grabImmune)
 
 ### 更新测试
 - `tests/static/config-validate.test.ts` — 增加 manifest schema 校验
+- `tests/static/manifest-provenance.test.ts` — action JSON manifest 与 runtime adapter/hash/source 一致
 - `tests/static/schema-hash-freshness.test.ts` — hash 计算改为基于 manifest
 - `tests/static/fuzz-combat.test.ts` — hash 值更新
 
@@ -197,4 +217,4 @@ HitEvent → StateFlags 过滤(invincible/superArmor/unbreakable/grabImmune)
 ```
 npm run typecheck && npm run static:test && npm run build
 ```
-36 个测试全绿 + build 通过才进下一 Phase。
+当前 `npm run static:test`、`npm run typecheck`、`npm run build` 输出通过后才进下一 Phase；测试数量以命令输出为准。
