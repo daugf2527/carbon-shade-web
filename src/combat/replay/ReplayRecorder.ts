@@ -2,12 +2,16 @@ import type { Actor } from "../types.js";
 import { cloneActorSnapshot } from "../actors/ActorFactory.js";
 import type { RawInputFrame } from "../input/BrowserInputState.js";
 import type { CombatEvent } from "../events/CombatEventBus.js";
+import { ACTIONS } from "../actions/FrameDataAction.js";
+import { computeActionsHash } from "../../data/manifest/hash.js";
+import { SOURCE_POLICY_VERSION } from "../../data/manifest/schema.js";
 
 export interface ReplayInputSnapshot { tick:number; held:string[]; pressed:string[]; released:string[]; }
 export interface ReplayEventSnapshot { id:string; type:string; status:string; tick:number; sourceActorId?:string; targetActorId?:string; correlationId:string; tags:string[]; payload:unknown; }
 export interface ReplayFrame { tick:number; actors: object[]; inputs: ReplayInputSnapshot[]; events: ReplayEventSnapshot[]; eventCount:number; stateHash:string; note?: string; }
-export interface ReplayMetadata { buildHash:string; combatSchemaHash:string; logicFps:number; finalStateHash?:string; }
-export interface ReplayRecorderOptions { buildHash?:string; combatSchemaHash?:string; logicFps?:number; }
+export interface ReplayDataSources { actions:string; status:string; damage:string; }
+export interface ReplayMetadata { buildHash:string; combatSchemaHash:string; manifestHash:string; sourcePolicyVersion:string; dataSources: ReplayDataSources; logicFps:number; finalStateHash?:string; }
+export interface ReplayRecorderOptions { buildHash?:string; combatSchemaHash?:string; manifestHash?:string; sourcePolicyVersion?:string; dataSources?:Partial<ReplayDataSources>; logicFps?:number; }
 
 function cloneJson<T>(value:T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -52,9 +56,17 @@ export class ReplayRecorder {
   readonly frames: ReplayFrame[]=[];
   readonly metadata: ReplayMetadata;
   constructor(options: ReplayRecorderOptions = {}) {
+    const manifestHash = options.manifestHash ?? options.combatSchemaHash ?? computeActionsHash(ACTIONS);
     this.metadata = {
       buildHash: options.buildHash ?? (typeof __BUILD_HASH__ !== 'undefined' ? __BUILD_HASH__ : 'local-dev'),
-      combatSchemaHash: options.combatSchemaHash ?? "combat-schema-v1",
+      combatSchemaHash: options.combatSchemaHash ?? manifestHash,
+      manifestHash,
+      sourcePolicyVersion: options.sourcePolicyVersion ?? SOURCE_POLICY_VERSION,
+      dataSources: {
+        actions: options.dataSources?.actions ?? "src/combat/actions/FrameDataAction.ts#ACTIONS",
+        status: options.dataSources?.status ?? "src/combat/status/StatusEffectSystem.ts#local_baseline",
+        damage: options.dataSources?.damage ?? "local_baseline",
+      },
       logicFps: options.logicFps ?? 60,
     };
   }

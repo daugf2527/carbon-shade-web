@@ -69,3 +69,19 @@ const rectQuery = resolver.buildQuery(1, player, base);
 const rectDecision = decisions.decide(1, rectQuery, base, player, rectTarget, resolver.geometry(rectQuery, rectTarget));
 assert.equal(rectQuery.shape, "rect", "Legacy hitboxes should default to rect shape");
 assert.equal(rectDecision.accepted, true, "Legacy rectangle hit behavior must remain intact");
+
+const grabAttach: HitBoxFrameWindow = {
+  ...base,
+  id: "test_grab_attach",
+  hitGroupId: "test_grab_attach",
+  shape: "grab_attach",
+  offsetX: 50,
+  w: 100,
+  d: 40,
+  h: 60,
+};
+const grabQuery = resolver.buildQuery(1, player, grabAttach);
+const grabNear = createActor("grab-near", "enemy", "enemy", player.position.x + 80, 0);
+const grabEdge = createActor("grab-edge", "enemy", "enemy", player.position.x + 40, 0);
+assert.equal(resolver.geometry(grabQuery, grabNear).overlap, true, "grab_attach should use the local narrowed grab window");
+assert.equal(resolver.geometry(grabQuery, grabEdge).overlap, false, "grab_attach should not claim official geometry beyond the local narrowed window");

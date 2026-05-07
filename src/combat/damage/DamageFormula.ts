@@ -1,12 +1,12 @@
 import type { DamageRequest } from "../types.js";
 
 // ============================================================
-// DNF Complete Damage Formula — 10-multiplier structure
-// Source: dnfcalc/dcalc audit (docs/research/reference/community/damage-formula-audit-from-dcalc.md)
+// Local baseline damage formula
 // ============================================================
 //
-// Full formula from dcalc calc_carry.py:
-//   finalDamage = skillCoeff * Π(ratio_0..ratio_9) / 1000
+// This is a small-scale deterministic demo formula. The ratio_* names are
+// trace buckets for future data import; they are not treated as an official
+// or complete DNF damage formula in runtime.
 //
 // ratio_0: 力智系数 = STR/250 + 1
 // ratio_1: 攻击力 = AtkP/AtkM/AtkI + BUFF加成
@@ -19,7 +19,8 @@ import type { DamageRequest } from "../types.js";
 // ratio_8: 防御减伤 = 1 - def / (def + 200 * 难度)
 // ratio_9: 杂项 = 属性白字等
 //
-// Prototype defaults: ratios 1,2,5,6,7,9 → 1.0 (no equipment/buff/jade system yet)
+// Prototype defaults: ratios 1,2,5,6,7,9 pass through at 1.0 because
+// equipment, buff and jade systems are not implemented yet.
 
 // Core DNF constants (verified from dcalc + DFO Wiki)
 const STR_DIVISOR       = 250;    // 每250力量翻倍基础攻击

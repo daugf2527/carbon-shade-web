@@ -1,8 +1,36 @@
-import type { FrameDataAction, HitBoxFrameWindow, ActionName, HitReactionProfile, RootMotionStep, FrameWindow } from "../types.js";
+import type { FieldProvenanceMap, FrameDataAction, HitBoxFrameWindow, ActionName, HitReactionProfile, Provenance, RootMotionStep, FrameWindow } from "../types.js";
 
-const sourcePolicy = { sourceType:"baseline_tuning", confidence:"medium", requiresManualVerification:true } as const;
+const SOURCE_CAPTURED_AT = "2026-05-03";
+const sourcePolicy = { sourceType:"local_baseline", confidence:"medium", requiresManualVerification:true } as const;
 const combatCancelTargets: ActionName[] = ["NormalBasic1","NormalBasic2","NormalBasic3","DashAttack","Jump","JumpAttack","FrenzyBasic1","FrenzyBasic2","FrenzyBasic3","UpwardSlash","MountainousWheel","RagingFury","Bloodlust","GoreCross","OutrageBreak","ExtremeOverkill","RagingFury2","BloodRuin","BloodSword","BurstFury","EarthShatter","Backstep","Walk","Run","Idle"];
 
+function provenance(sourceRef: string, sourceType: Provenance["sourceType"] = "local_baseline", confidence: Provenance["confidence"] = "medium", requiresCalibration = sourceType !== "official_api"): Provenance {
+  return { sourceType, confidence, sourceRef, capturedAt:SOURCE_CAPTURED_AT, version:"combat-data-v1", requiresCalibration };
+}
+const localBaselineProvenance = provenance("docs/design/tuning-baseline.md#action-frame-baseline");
+function defaultFieldProvenance(): FieldProvenanceMap {
+  return {
+    totalFrames: localBaselineProvenance,
+    active: localBaselineProvenance,
+    hitbox: localBaselineProvenance,
+    reactionProfile: localBaselineProvenance,
+    hitStopProfile: localBaselineProvenance,
+    recoilProfile: localBaselineProvenance,
+    cancelPolicy: localBaselineProvenance,
+    rootMotion: localBaselineProvenance,
+    costProfile: localBaselineProvenance,
+    cooldownProfile: localBaselineProvenance,
+    feedbackProfile: localBaselineProvenance,
+  };
+}
+function markOfficialApiFacts(action: FrameDataAction, sourceRef: string): void {
+  const official = provenance(sourceRef, "official_api", "high", false);
+  action.fieldProvenance = {
+    ...action.fieldProvenance,
+    costProfile: official,
+    cooldownProfile: official,
+  };
+}
 function reaction(profile: HitReactionProfile): HitReactionProfile { return profile; }
 function lunge(frames: number[], dx: number, dz = 0): RootMotionStep[] {
   return frames.map(frame => ({ frame, dx, dz, collisionPolicy:"slide" as const }));
@@ -24,7 +52,8 @@ function movementAction(actionName:"Walk" | "Run", speedXPerTick:number): FrameD
     recoilProfile:{frames:0, canCancelRecoil:false},
     rootMotion:{frames:[], speedXPerTick, appliesEveryFrame:true},
     feedbackProfile:{sound:"", vfx:"", cameraShake:0},
-    sourcePolicy
+    sourcePolicy,
+    fieldProvenance: defaultFieldProvenance()
   };
 }
 function action(actionName: ActionName, totalFrames:number, active:HitBoxFrameWindow[], frames=3, rootMotionFrames:RootMotionStep[]=[]): FrameDataAction {
@@ -43,7 +72,8 @@ function action(actionName: ActionName, totalFrames:number, active:HitBoxFrameWi
     recoilProfile:{frames:Math.max(0,frames-1), canCancelRecoil:false},
     rootMotion: rootMotionFrames.length ? { frames:rootMotionFrames } : undefined,
     feedbackProfile:{sound:"hit", vfx:"slash", cameraShake:frames},
-    sourcePolicy
+    sourcePolicy,
+    fieldProvenance: defaultFieldProvenance()
   };
 }
 
@@ -69,8 +99,28 @@ const enemyBasicAction: FrameDataAction = {
   recoilProfile:{frames:6, canCancelRecoil:false},
   rootMotion:{frames:lunge([6,7,8], 2.5)},
   feedbackProfile:{sound:"hit", vfx:"enemy_slash", cameraShake:4},
-  sourcePolicy
+  sourcePolicy,
+  fieldProvenance: defaultFieldProvenance()
 };
+
+// In-memory cache populated by loadFromManifest() — falls back to hardcoded defaults below
+let _manifestActions: Record<ActionName, FrameDataAction> | null = null;
+
+/**
+ * Override the internal action table with manifest-loaded data.
+ * Call once at startup after loadActionsManifest().
+ */
+export function loadFromManifest(actions: Record<ActionName, FrameDataAction>): void {
+  _manifestActions = actions;
+}
+
+/**
+ * Returns frame data for the given action name.
+ * Prefers manifest-loaded data; falls back to hardcoded ACTIONS.
+ */
+export function getAction(name: ActionName): FrameDataAction {
+  return (_manifestActions ?? ACTIONS)[name];
+}
 
 export const ACTIONS: Record<ActionName, FrameDataAction> = {
   Idle: action("Idle",1,[],0),
@@ -129,4 +179,10 @@ export const ACTIONS: Record<ActionName, FrameDataAction> = {
   VimAndVigor: action("VimAndVigor",1,[],0),
   EnemyBasic: enemyBasicAction
 };
-export function getAction(name: ActionName): FrameDataAction { return ACTIONS[name]; }
+
+for (const name of ["UpwardSlash", "MountainousWheel", "RagingFury", "Bloodlust"] as ActionName[]) {
+  markOfficialApiFacts(ACTIONS[name], `src/data/official/berserkerSkillFacts.ts#${name}`);
+}
+for (const name of ["QuickRebound", "Backstep", "FrenzyToggle", "Derange", "Diehard"] as ActionName[]) {
+  markOfficialApiFacts(ACTIONS[name], "src/data/official/berserkerSkillFacts.ts#common-berserker-skill-facts");
+}

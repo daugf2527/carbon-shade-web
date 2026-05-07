@@ -23,11 +23,45 @@ export type ActionPhase = "request" | "enter" | "startup" | "active" | "hitstop_
 export type HitType = "slash" | "shockwave" | "blood_pillar" | "grab" | "debug";
 export type HitboxShape = "rect" | "circle" | "sweep" | "grab_attach";
 export type DamageType = "physical" | "status" | "debug";
+export type ProvenanceSourceType = "official_api" | "official_page" | "dfo_wiki" | "local_baseline" | "needs_calibration" | "experimental";
+export type ProvenanceConfidence = "low" | "medium" | "high";
+export interface Provenance {
+  sourceType: ProvenanceSourceType;
+  confidence: ProvenanceConfidence;
+  sourceRef: string;
+  capturedAt: string;
+  version: string;
+  requiresCalibration: boolean;
+}
+export type FrameDataProvenanceField =
+  | "totalFrames"
+  | "active"
+  | "hitbox"
+  | "reactionProfile"
+  | "hitStopProfile"
+  | "recoilProfile"
+  | "cancelPolicy"
+  | "rootMotion"
+  | "costProfile"
+  | "cooldownProfile"
+  | "feedbackProfile";
+export type FieldProvenanceMap = Partial<Record<FrameDataProvenanceField, Provenance>>;
 export type StatusEffectType = "bleed" | "poison" | "shock" | "burn" | "rupture" | "stun" | "freeze" | "stone" | "bind" | "sleep" | "slow" | "defense_down" | "attack_down" | "curse";
 export type BuffType = "frenzy" | "derange" | "bloody_cross" | "vim_and_vigor" | "diehard" | "thirst" | "blood_memory";
 
 export interface Vec3 { x: number; z: number; y: number; }
 export interface Rect2D5 { x: number; z: number; y: number; w: number; d: number; h: number; }
+export interface RawBox6 { x1: number; y1: number; z1: number; x2: number; y2: number; z2: number; }
+export interface HitGeometrySnapshot {
+  queryBox: Rect2D5;
+  rawBox6: RawBox6;
+  shape: HitboxShape;
+  radius?: number;
+  hurtRects: Rect2D5[];
+  overlap: boolean;
+  zMismatch: boolean;
+  yMismatch: boolean;
+}
 export interface FrameWindow { start: number; end: number; }
 export interface ActorFlags { dead: boolean; playerControlled?: boolean; }
 export interface HandfeelState {
@@ -202,7 +236,8 @@ export interface FrameDataAction {
   costProfile?: CostProfile;
   cooldownProfile?: CooldownProfile;
   feedbackProfile: { sound: string; vfx: string; cameraShake: number };
-  sourcePolicy: { sourceType: "baseline_tuning" | "community_estimate" | "original"; confidence: "low" | "medium" | "high"; requiresManualVerification: boolean };
+  sourcePolicy: { sourceType: ProvenanceSourceType; confidence: ProvenanceConfidence; requiresManualVerification: boolean };
+  fieldProvenance?: FieldProvenanceMap;
   maxHoldFrames?: number;
 }
 
@@ -216,6 +251,7 @@ export interface HitQuery {
   hitGroupId: string;
   shape: HitboxShape;
   radius?: number;
+  rawBox6?: RawBox6;
   box: Rect2D5;
   facing: Facing;
   hitType: HitType;

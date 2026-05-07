@@ -159,8 +159,8 @@ const NON_SPRITE_ACTIONS: ActionName[] = [
 for (const name of PLAYER_COMBAT_ACTIONS) {
   assert.ok(ACTIONS[name] !== undefined, `Player action ${name} must exist in ACTIONS`);
   assert.ok(
-    ACTIONS[name]!.sourcePolicy.sourceType === "baseline_tuning",
-    `${name}: sourcePolicy.sourceType must be baseline_tuning`
+    ACTIONS[name]!.sourcePolicy.sourceType === "local_baseline",
+    `${name}: sourcePolicy.sourceType must be local_baseline`
   );
 }
 
