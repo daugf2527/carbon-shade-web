@@ -6,6 +6,16 @@
 > 
 > **Merge status (2026-05-06):** Phase 1 物理合并已执行 — 5 组 MAJOR 重复组的独有章节已以 `## Appended:` 章节追加到对应 canonical 文件。源文件原文保留，CHAPTER-AUDIT 合并规则已落地。
 
+**Appended canonical targets:**
+
+| 合并组 | Canonical 目标 | 状态 |
+|---|---|---|
+| Combat data / runtime pipeline | `dnf-dfo-combat-extraction-runtime-pipeline-report.md`, `dnf-dfo-combat-replication-implementation-report.md` | ✅ appended |
+| Frame timing / hitbox / root motion | `dnf-dfo-combat-frame-ai-implementation-report.md`, `dnf-dfo-combat-replication-implementation-report.md` | ✅ appended |
+| Damage / status / armor / grab | `dnf-dfo-combat-data-model-and-damage-report.md`, `dnf-dfo-combat-replication-implementation-report.md` | ✅ appended |
+| Input / cancel / player state | `dnf-combat-system-reconstruction-engineering-report.md`, `dnf-combat-replica-implementation-technical-report.md` | ✅ appended |
+| Monster AI / boss / pattern | `dnf-dfo-combat-frame-ai-implementation-report.md`, `dnf-dfo-combat-extraction-runtime-pipeline-report.md` | ✅ appended |
+
 ## 审计口径
 
 - 粒度：文件 -> H2/H3 章节 -> 主题簇。
