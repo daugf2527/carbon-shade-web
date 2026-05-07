@@ -724,7 +724,8 @@ export class CombatKernel {
     const bmDef = attacker.buffs.find(b=>b.type==="blood_memory")?.modifiers.find(modifier => modifier.key === "blood_memory_incoming_damage_reduction_percent")?.value;
     if (bmDef && bmDef !== 0) multipliers.push({name:"ratio_9_misc", value: 1 + bmDef / 100});
     const ruptureStacks = target.statusEffects.filter(status => status.type === "rupture").reduce((sum, status) => sum + status.stacks, 0);
-    if (ruptureStacks > 0) multipliers.push({name:"rupture_incoming_damage", value:1 + ruptureStacks * 0.1});
+    const ruptureMultiplierPerStack = this.status.profile("rupture")?.incomingDirectDamageMultiplierPerStack ?? 0.1;
+    if (ruptureStacks > 0) multipliers.push({name:"rupture_incoming_damage", value:1 + ruptureStacks * ruptureMultiplierPerStack});
     if (this.isPveComboProtectedTarget(target) && target.comboCorrection.damageScale < 1) {
       multipliers.push({name:"combo_damage_scale", value:target.comboCorrection.damageScale});
     }

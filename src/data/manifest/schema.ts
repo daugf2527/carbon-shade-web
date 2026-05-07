@@ -1,7 +1,7 @@
 // Schema validator for manifest data — validates FrameDataAction JSON manifests
 // at load time, catching structural errors before they hit runtime.
 
-import type { ActionName, FrameDataAction, FrameDataProvenanceField, Provenance } from "../../combat/types.js";
+import type { ActionName, FrameDataAction, FrameDataProvenanceField, Provenance, StatusEffectType, StatusManifest, StatusProfile, StatusProvenanceField } from "../../combat/types.js";
 
 export const SOURCE_POLICY_VERSION = "source-policy-v1";
 
@@ -24,6 +24,8 @@ const requiredRuntimeFields: FrameDataProvenanceField[] = [
   "cancelPolicy",
   "feedbackProfile",
 ];
+const implementedRuntimeStatusTypes = new Set<StatusEffectType>(["bleed", "poison", "burn", "shock", "rupture"]);
+const requiredStatusFields: StatusProvenanceField[] = ["durationFrames", "maxStacks", "dispelPolicy"];
 
 export interface ManifestValidationOptions {
   profile?: "runtime" | "archive";
@@ -156,6 +158,87 @@ export function validateManifest(
     // Cross-reference cooldownProfile.actionName
     if (action.cooldownProfile?.actionName && !knownNames.has(action.cooldownProfile.actionName)) {
       violations.push({ path: `${name}.cooldownProfile.actionName`, message: `references unknown action "${action.cooldownProfile.actionName}"` });
+    }
+  }
+
+  return violations;
+}
+
+export function validateStatusProfile(
+  type: StatusEffectType,
+  profile: StatusProfile,
+  options: ManifestValidationOptions = {}
+): SchemaViolation[] {
+  const violations: SchemaViolation[] = [];
+  const runtimeProfile = options.profile ?? "runtime";
+  const p = (field: string) => `profiles.${type}.${field}`;
+
+  if (profile.type !== type) {
+    violations.push({ path: p("type"), message: `profile type "${profile.type}" does not match key "${type}"` });
+  }
+  if (typeof profile.durationFrames !== "number" || profile.durationFrames < 1) {
+    violations.push({ path: p("durationFrames"), message: `durationFrames must be >= 1, got ${profile.durationFrames}` });
+  }
+  if (profile.tickIntervalFrames !== undefined && (typeof profile.tickIntervalFrames !== "number" || profile.tickIntervalFrames < 1)) {
+    violations.push({ path: p("tickIntervalFrames"), message: `tickIntervalFrames must be >= 1, got ${profile.tickIntervalFrames}` });
+  }
+  if (profile.dotDamagePerStack !== undefined && (typeof profile.dotDamagePerStack !== "number" || profile.dotDamagePerStack < 0)) {
+    violations.push({ path: p("dotDamagePerStack"), message: `dotDamagePerStack must be >= 0, got ${profile.dotDamagePerStack}` });
+  }
+  if (typeof profile.maxStacks !== "number" || profile.maxStacks < 1) {
+    violations.push({ path: p("maxStacks"), message: `maxStacks must be >= 1, got ${profile.maxStacks}` });
+  }
+  if (profile.splashRadius !== undefined && (typeof profile.splashRadius !== "number" || profile.splashRadius < 0)) {
+    violations.push({ path: p("splashRadius"), message: `splashRadius must be >= 0, got ${profile.splashRadius}` });
+  }
+  if (profile.splashDamagePerStack !== undefined && (typeof profile.splashDamagePerStack !== "number" || profile.splashDamagePerStack < 0)) {
+    violations.push({ path: p("splashDamagePerStack"), message: `splashDamagePerStack must be >= 0, got ${profile.splashDamagePerStack}` });
+  }
+  if (profile.incomingDirectDamageMultiplierPerStack !== undefined && (typeof profile.incomingDirectDamageMultiplierPerStack !== "number" || profile.incomingDirectDamageMultiplierPerStack < 0)) {
+    violations.push({ path: p("incomingDirectDamageMultiplierPerStack"), message: `incomingDirectDamageMultiplierPerStack must be >= 0, got ${profile.incomingDirectDamageMultiplierPerStack}` });
+  }
+
+  const provenanceFields = new Set<StatusProvenanceField>(requiredStatusFields);
+  if (profile.tickIntervalFrames !== undefined) provenanceFields.add("tickIntervalFrames");
+  if (profile.dotDamagePerStack !== undefined) provenanceFields.add("dotDamagePerStack");
+  if (profile.splashRadius !== undefined) provenanceFields.add("splashRadius");
+  if (profile.splashDamagePerStack !== undefined) provenanceFields.add("splashDamagePerStack");
+  if (profile.incomingDirectDamageMultiplierPerStack !== undefined) provenanceFields.add("incomingDirectDamageMultiplierPerStack");
+  for (const field of provenanceFields) {
+    const provenance = profile.fieldProvenance?.[field];
+    if (!provenance) {
+      violations.push({ path: p(`fieldProvenance.${field}`), message: "missing field-level provenance" });
+      continue;
+    }
+    violations.push(...validateProvenance(p(`fieldProvenance.${field}`), provenance, runtimeProfile));
+  }
+
+  return violations;
+}
+
+export function validateStatusManifest(
+  manifest: StatusManifest,
+  options: ManifestValidationOptions = {}
+): SchemaViolation[] {
+  const violations: SchemaViolation[] = [];
+  if (manifest.manifestVersion !== "status-manifest-v1") {
+    violations.push({ path: "manifestVersion", message: `expected status-manifest-v1, got ${String(manifest.manifestVersion)}` });
+  }
+  if (manifest.sourcePolicyVersion !== SOURCE_POLICY_VERSION) {
+    violations.push({ path: "sourcePolicyVersion", message: `expected ${SOURCE_POLICY_VERSION}, got ${String(manifest.sourcePolicyVersion)}` });
+  }
+
+  for (const [type, profile] of Object.entries(manifest.profiles) as [StatusEffectType, StatusProfile][]) {
+    if (!implementedRuntimeStatusTypes.has(type)) {
+      violations.push({ path: `profiles.${type}`, message: "status type is not implemented in the runtime profile" });
+      continue;
+    }
+    violations.push(...validateStatusProfile(type, profile, options));
+  }
+
+  for (const type of implementedRuntimeStatusTypes) {
+    if (!manifest.profiles[type]) {
+      violations.push({ path: `profiles.${type}`, message: "implemented status is missing from runtime manifest" });
     }
   }
 

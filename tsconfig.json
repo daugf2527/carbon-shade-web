@@ -11,6 +11,7 @@
     "exactOptionalPropertyTypes": false,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
+    "resolveJsonModule": true,
     "rootDir": ".",
     "noEmit": true
   },

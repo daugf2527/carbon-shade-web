@@ -2,9 +2,9 @@ import { assert } from "./test-utils.js";
 import type { ActionName, FrameDataAction } from "../../src/combat/types.js";
 import { ACTIONS, getAction } from "../../src/combat/actions/FrameDataAction.js";
 import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";
-import { computeActionsHash } from "../../src/data/manifest/hash.js";
-import { loadActionsManifest } from "../../src/data/manifest/loader.js";
-import { SOURCE_POLICY_VERSION, validateManifest } from "../../src/data/manifest/schema.js";
+import { computeActionsHash, computeStatusManifestHash } from "../../src/data/manifest/hash.js";
+import { loadActionsManifest, loadStatusManifest } from "../../src/data/manifest/loader.js";
+import { SOURCE_POLICY_VERSION, validateManifest, validateStatusManifest } from "../../src/data/manifest/schema.js";
 
 function cloneActions(): Record<ActionName, FrameDataAction> {
   return JSON.parse(JSON.stringify(ACTIONS)) as Record<ActionName, FrameDataAction>;
@@ -18,6 +18,8 @@ function cloneActions(): Record<ActionName, FrameDataAction> {
 {
   const loaded = await loadActionsManifest();
   assert.deepEqual(validateManifest(loaded), [], "JSON actions manifest should satisfy runtime provenance gates");
+  assert.deepEqual(loaded, cloneActions(), "JSON actions manifest should remain in JSON-structural parity with ACTIONS");
+  assert.equal(computeActionsHash(loaded), computeActionsHash(ACTIONS), "JSON actions manifest hash should match ACTIONS hash");
   assert.equal(loaded.RagingFury.fieldProvenance?.cooldownProfile?.sourceType, "official_api");
 }
 
@@ -89,5 +91,55 @@ function cloneActions(): Record<ActionName, FrameDataAction> {
   assert.equal(recorder.metadata.manifestHash, manifestHash);
   assert.equal(recorder.metadata.sourcePolicyVersion, SOURCE_POLICY_VERSION);
   assert.equal(recorder.metadata.dataSources.actions, "src/combat/actions/FrameDataAction.ts#ACTIONS");
+  assert.equal(recorder.metadata.dataSources.status, "src/data/manifest/status/default.json#profiles");
   assert.equal(recorder.metadata.dataSources.damage, "local_baseline");
+}
+
+{
+  const statusManifest = await loadStatusManifest();
+  assert.deepEqual(validateStatusManifest(statusManifest), [], "status manifest should satisfy runtime provenance gates");
+  assert.deepEqual(
+    Object.keys(statusManifest.profiles).sort(),
+    ["bleed", "burn", "poison", "rupture", "shock"],
+    "runtime status manifest should only include implemented status profiles"
+  );
+  assert.equal(statusManifest.profiles.bleed.fieldProvenance.durationFrames.sourceType, "local_baseline");
+  assert.equal(statusManifest.profiles.bleed.fieldProvenance.tickIntervalFrames.sourceType, "local_baseline");
+  assert.equal(statusManifest.profiles.bleed.fieldProvenance.dotDamagePerStack.sourceType, "local_baseline");
+  assert.equal(statusManifest.profiles.burn.fieldProvenance.splashRadius?.sourceType, "local_baseline");
+  assert.equal(statusManifest.profiles.burn.fieldProvenance.splashDamagePerStack?.sourceType, "local_baseline");
+  assert.equal(statusManifest.profiles.rupture.fieldProvenance.incomingDirectDamageMultiplierPerStack?.sourceType, "local_baseline");
+
+  const changed = JSON.parse(JSON.stringify(statusManifest)) as typeof statusManifest;
+  changed.profiles.bleed.durationFrames += 1;
+  assert.notEqual(
+    computeStatusManifestHash(changed),
+    computeStatusManifestHash(statusManifest),
+    "status manifest hash should change when status data changes"
+  );
+}
+
+{
+  const statusManifest = await loadStatusManifest();
+  const missing = JSON.parse(JSON.stringify(statusManifest)) as typeof statusManifest;
+  delete missing.profiles.bleed.fieldProvenance.dotDamagePerStack;
+  const violations = validateStatusManifest(missing);
+  assert.ok(
+    violations.some(v => v.path === "profiles.bleed.fieldProvenance.dotDamagePerStack"),
+    "status DOT damage without field provenance should fail validation"
+  );
+}
+
+{
+  for (const sourceType of ["needs_calibration", "experimental"] as const) {
+    const statusManifest = await loadStatusManifest();
+    const blocked = JSON.parse(JSON.stringify(statusManifest)) as typeof statusManifest;
+    blocked.profiles.burn.fieldProvenance.splashRadius!.sourceType = sourceType;
+    blocked.profiles.burn.fieldProvenance.splashRadius!.requiresCalibration = true;
+    const violations = validateStatusManifest(blocked);
+    assert.ok(
+      violations.some(v => v.path === "profiles.burn.fieldProvenance.splashRadius"),
+      `${sourceType} status behavior must not enter the default runtime profile`
+    );
+  }
 }

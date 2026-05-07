@@ -47,6 +47,34 @@ export type FrameDataProvenanceField =
   | "feedbackProfile";
 export type FieldProvenanceMap = Partial<Record<FrameDataProvenanceField, Provenance>>;
 export type StatusEffectType = "bleed" | "poison" | "shock" | "burn" | "rupture" | "stun" | "freeze" | "stone" | "bind" | "sleep" | "slow" | "defense_down" | "attack_down" | "curse";
+export type StatusDispelPolicy = "dispellable" | "not_dispellable" | "death_clear" | "death_keep";
+export type StatusProvenanceField =
+  | "durationFrames"
+  | "tickIntervalFrames"
+  | "dotDamagePerStack"
+  | "maxStacks"
+  | "splashRadius"
+  | "splashDamagePerStack"
+  | "incomingDirectDamageMultiplierPerStack"
+  | "dispelPolicy";
+export type StatusFieldProvenanceMap = Partial<Record<StatusProvenanceField, Provenance>>;
+export interface StatusProfile {
+  type: StatusEffectType;
+  durationFrames: number;
+  tickIntervalFrames?: number;
+  dotDamagePerStack?: number;
+  maxStacks: number;
+  splashRadius?: number;
+  splashDamagePerStack?: number;
+  incomingDirectDamageMultiplierPerStack?: number;
+  dispelPolicy: StatusDispelPolicy;
+  fieldProvenance: StatusFieldProvenanceMap;
+}
+export interface StatusManifest {
+  manifestVersion: "status-manifest-v1";
+  sourcePolicyVersion: string;
+  profiles: Partial<Record<StatusEffectType, StatusProfile>>;
+}
 export type BuffType = "frenzy" | "derange" | "bloody_cross" | "vim_and_vigor" | "diehard" | "thirst" | "blood_memory";
 
 export interface Vec3 { x: number; z: number; y: number; }
@@ -307,8 +335,8 @@ export interface DamageRequest {
 }
 export interface DamageApplied { attackerId?: ActorId; targetId: ActorId; actionName?: ActionName; sourceKind: DamageSourceKind; reactionPolicy: DamageReactionPolicy; baseDamage: number; finalDamage: number; hpBefore: number; hpAfter: number; isCounter: boolean; isBackAttack: boolean; isCritical: boolean; multipliers: Array<{name:string; value:number}>; sourceHitDecisionId?: string; sourceStatusId?: string; }
 
-export interface Buff { id: string; type: BuffType; ownerId: ActorId; sourceAction?: ActionName; appliedAtTick: number; expiresAtTick?: number; stacks: number; maxStacks: number; refreshPolicy: "refresh_duration" | "add_stack" | "replace" | "ignore" | "highest_value"; dispelPolicy: "dispellable" | "not_dispellable" | "death_clear" | "death_keep"; modifiers: Array<{key:string; value:number}>; }
-export interface StatusEffect { id: string; type: StatusEffectType; ownerId: ActorId; sourceActorId?: ActorId; sourceAction?: ActionName; appliedAtTick: number; expiresAtTick: number; tickIntervalFrames?: number; nextTickFrame?: number; dotDamagePerStack?: number; stacks: number; maxStacks: number; resistanceCheck: { accepted: boolean; reason?: string }; dispelPolicy: "dispellable" | "not_dispellable" | "death_clear" | "death_keep"; }
+export interface Buff { id: string; type: BuffType; ownerId: ActorId; sourceAction?: ActionName; appliedAtTick: number; expiresAtTick?: number; stacks: number; maxStacks: number; refreshPolicy: "refresh_duration" | "add_stack" | "replace" | "ignore" | "highest_value"; dispelPolicy: StatusDispelPolicy; modifiers: Array<{key:string; value:number}>; }
+export interface StatusEffect { id: string; type: StatusEffectType; ownerId: ActorId; sourceActorId?: ActorId; sourceAction?: ActionName; appliedAtTick: number; expiresAtTick: number; tickIntervalFrames?: number; nextTickFrame?: number; dotDamagePerStack?: number; stacks: number; maxStacks: number; resistanceCheck: { accepted: boolean; reason?: string }; dispelPolicy: StatusDispelPolicy; }
 
 export interface ScenarioBooleans {
   normalHitObserved: boolean;

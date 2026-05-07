@@ -1,9 +1,10 @@
 // Manifest loader — loads and validates JSON manifests at startup,
 // providing a single source of truth for runtime data.
 
-import type { FrameDataAction, ActionName } from "../../combat/types.js";
-import { validateManifest, type ManifestValidationOptions } from "./schema.js";
+import type { FrameDataAction, ActionName, StatusManifest } from "../../combat/types.js";
+import { validateManifest, validateStatusManifest, type ManifestValidationOptions } from "./schema.js";
 import { computeActionsHash } from "./hash.js";
+import { DEFAULT_STATUS_MANIFEST } from "./status.js";
 
 // Dynamic import for JSON — in Node tests this works with assert { type: "json" },
 // in browser/Vite this is handled by the bundler's JSON plugin.
@@ -11,6 +12,7 @@ import { computeActionsHash } from "./hash.js";
 
 let _cachedActions: Record<ActionName, FrameDataAction> | null = null;
 let _cachedHash: string | null = null;
+let _cachedStatusManifest: StatusManifest | null = null;
 
 /**
  * Loads the actions manifest from JSON.
@@ -80,4 +82,22 @@ export function getAction(name: ActionName): FrameDataAction {
     throw new Error(`Action "${name}" not found in manifest`);
   }
   return action;
+}
+
+export async function loadStatusManifest(options: ManifestValidationOptions = {}): Promise<StatusManifest> {
+  if (_cachedStatusManifest) {
+    assertValidStatusManifest(_cachedStatusManifest, options);
+    return _cachedStatusManifest;
+  }
+  assertValidStatusManifest(DEFAULT_STATUS_MANIFEST, options);
+  _cachedStatusManifest = DEFAULT_STATUS_MANIFEST;
+  return _cachedStatusManifest;
+}
+
+function assertValidStatusManifest(manifest: StatusManifest, options: ManifestValidationOptions): void {
+  const violations = validateStatusManifest(manifest, options);
+  if (violations.length > 0) {
+    const msg = violations.map(v => `${v.path}: ${v.message}`).join("\n  ");
+    throw new Error(`Status manifest validation failed with ${violations.length} violation(s):\n  ${msg}`);
+  }
 }

@@ -64,7 +64,7 @@ export class ReplayRecorder {
       sourcePolicyVersion: options.sourcePolicyVersion ?? SOURCE_POLICY_VERSION,
       dataSources: {
         actions: options.dataSources?.actions ?? "src/combat/actions/FrameDataAction.ts#ACTIONS",
-        status: options.dataSources?.status ?? "src/combat/status/StatusEffectSystem.ts#local_baseline",
+        status: options.dataSources?.status ?? "src/data/manifest/status/default.json#profiles",
         damage: options.dataSources?.damage ?? "local_baseline",
       },
       logicFps: options.logicFps ?? 60,

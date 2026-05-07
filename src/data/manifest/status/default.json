@@ -1,0 +1,265 @@
+{
+  "manifestVersion": "status-manifest-v1",
+  "sourcePolicyVersion": "source-policy-v1",
+  "profiles": {
+    "bleed": {
+      "type": "bleed",
+      "durationFrames": 180,
+      "tickIntervalFrames": 30,
+      "dotDamagePerStack": 6,
+      "maxStacks": 5,
+      "dispelPolicy": "death_clear",
+      "fieldProvenance": {
+        "durationFrames": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "docs/design/tuning-baseline.md#status-profile-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "tickIntervalFrames": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "docs/design/tuning-baseline.md#status-profile-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "dotDamagePerStack": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "maxStacks": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "dispelPolicy": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        }
+      }
+    },
+    "poison": {
+      "type": "poison",
+      "durationFrames": 300,
+      "tickIntervalFrames": 30,
+      "dotDamagePerStack": 5,
+      "maxStacks": 5,
+      "dispelPolicy": "death_clear",
+      "fieldProvenance": {
+        "durationFrames": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "docs/design/tuning-baseline.md#status-profile-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "tickIntervalFrames": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "docs/design/tuning-baseline.md#status-profile-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "dotDamagePerStack": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "maxStacks": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "dispelPolicy": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        }
+      }
+    },
+    "burn": {
+      "type": "burn",
+      "durationFrames": 300,
+      "tickIntervalFrames": 30,
+      "dotDamagePerStack": 5,
+      "splashRadius": 150,
+      "splashDamagePerStack": 3,
+      "maxStacks": 5,
+      "dispelPolicy": "death_clear",
+      "fieldProvenance": {
+        "durationFrames": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "docs/design/tuning-baseline.md#status-profile-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "tickIntervalFrames": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "docs/design/tuning-baseline.md#status-profile-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "dotDamagePerStack": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "splashRadius": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-burn-splash-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "splashDamagePerStack": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-burn-splash-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "maxStacks": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "dispelPolicy": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        }
+      }
+    },
+    "shock": {
+      "type": "shock",
+      "durationFrames": 600,
+      "tickIntervalFrames": 60,
+      "dotDamagePerStack": 4,
+      "maxStacks": 5,
+      "dispelPolicy": "death_clear",
+      "fieldProvenance": {
+        "durationFrames": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "docs/design/tuning-baseline.md#status-profile-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "tickIntervalFrames": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "docs/design/tuning-baseline.md#status-profile-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "dotDamagePerStack": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "maxStacks": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "dispelPolicy": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        }
+      }
+    },
+    "rupture": {
+      "type": "rupture",
+      "durationFrames": 180,
+      "maxStacks": 5,
+      "incomingDirectDamageMultiplierPerStack": 0.1,
+      "dispelPolicy": "death_clear",
+      "fieldProvenance": {
+        "durationFrames": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-rupture-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "maxStacks": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-rupture-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "incomingDirectDamageMultiplierPerStack": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "src/combat/kernel/CombatKernel.ts#rupture_incoming_damage",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "dispelPolicy": {
+          "sourceType": "local_baseline",
+          "confidence": "medium",
+          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-rupture-baseline",
+          "capturedAt": "2026-05-07",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        }
+      }
+    }
+  }
+}

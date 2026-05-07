@@ -1,17 +1,8 @@
-import type { Actor, StatusEffect, StatusEffectType, ActionName } from "../types.js";
+import type { Actor, StatusEffect, StatusEffectType, ActionName, StatusProfile } from "../types.js";
 import { CombatEventBus, CombatEventPriority } from "../events/CombatEventBus.js";
 import { nextId } from "../util/ids.js";
 import { DamageResolver } from "../damage/DamageResolver.js";
-
-interface StatusProfile {
-  durationFrames: number;
-  tickIntervalFrames?: number;
-  dotDamagePerStack?: number;
-  maxStacks: number;
-  splashRadius?: number;
-  splashDamagePerStack?: number;
-  dispelPolicy: StatusEffect["dispelPolicy"];
-}
+import { STATUS_PROFILES } from "../../data/manifest/status.js";
 
 interface StatusApplyOptions {
   durationFrames?: number;
@@ -20,12 +11,12 @@ interface StatusApplyOptions {
   maxStacks?: number;
 }
 
-const STATUS_PROFILES: Partial<Record<StatusEffectType, StatusProfile>> = {
-  bleed: { durationFrames:180, tickIntervalFrames:30, dotDamagePerStack:6, maxStacks:5, dispelPolicy:"death_clear" },
-  poison: { durationFrames:300, tickIntervalFrames:30, dotDamagePerStack:5, maxStacks:5, dispelPolicy:"death_clear" },
-  burn: { durationFrames:300, tickIntervalFrames:30, dotDamagePerStack:5, splashRadius:150, splashDamagePerStack:3, maxStacks:5, dispelPolicy:"death_clear" },
-  shock: { durationFrames:600, tickIntervalFrames:60, dotDamagePerStack:4, maxStacks:5, dispelPolicy:"death_clear" },
-  rupture: { durationFrames:180, maxStacks:5, dispelPolicy:"death_clear" },
+const FALLBACK_STATUS_PROFILE: StatusProfile = {
+  type: "bleed",
+  durationFrames:180,
+  maxStacks:1,
+  dispelPolicy:"death_clear",
+  fieldProvenance:{}
 };
 
 export class StatusEffectSystem {
@@ -36,7 +27,7 @@ export class StatusEffectSystem {
   }
 
   applyStatus(actor: Actor, type: StatusEffectType, sourceActorId: string | undefined, sourceAction: string | undefined, tick: number, bus: CombatEventBus, chance=1, options: StatusApplyOptions = {}): StatusEffect | null {
-    const profile = STATUS_PROFILES[type] ?? { durationFrames:180, maxStacks:1, dispelPolicy:"death_clear" as const };
+    const profile = STATUS_PROFILES[type] ?? FALLBACK_STATUS_PROFILE;
     const durationFrames = options.durationFrames ?? profile.durationFrames;
     const tickIntervalFrames = options.tickIntervalFrames ?? profile.tickIntervalFrames;
     const dotDamagePerStack = options.dotDamagePerStack ?? profile.dotDamagePerStack;
