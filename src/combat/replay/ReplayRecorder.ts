@@ -4,9 +4,11 @@ import type { RawInputFrame } from "../input/BrowserInputState.js";
 import type { CombatEvent } from "../events/CombatEventBus.js";
 import { ACTIONS } from "../actions/FrameDataAction.js";
 import { computeActionsHash, computeEnemyManifestHash, computeStatusManifestHash } from "../../data/manifest/hash.js";
+import { getManifestHash } from "../../data/manifest/loader.js";
 import { DEFAULT_ENEMY_MANIFEST } from "../../data/manifest/ai.js";
 import { DEFAULT_STATUS_MANIFEST } from "../../data/manifest/status.js";
 import { SOURCE_POLICY_VERSION } from "../../data/manifest/schema.js";
+import { ACTION_MANIFEST_DATA_SOURCE } from "../../data/manifest/sources.js";
 
 export interface ReplayInputSnapshot { tick:number; held:string[]; pressed:string[]; released:string[]; }
 export interface ReplayEventSnapshot { id:string; type:string; status:string; tick:number; sourceActorId?:string; targetActorId?:string; correlationId:string; tags:string[]; payload:unknown; }
@@ -58,9 +60,13 @@ export class ReplayRecorder {
   readonly frames: ReplayFrame[]=[];
   readonly metadata: ReplayMetadata;
   constructor(options: ReplayRecorderOptions = {}) {
-    const manifestHash = options.manifestHash ?? options.combatSchemaHash ?? computeActionsHash(ACTIONS);
+    const loadedManifestHash = getManifestHash();
+    const manifestHash = options.manifestHash ?? options.combatSchemaHash ?? loadedManifestHash ?? computeActionsHash(ACTIONS);
     const statusManifestHash = options.statusManifestHash ?? computeStatusManifestHash(DEFAULT_STATUS_MANIFEST);
     const enemyManifestHash = options.enemyManifestHash ?? computeEnemyManifestHash(DEFAULT_ENEMY_MANIFEST);
+    const defaultActionDataSource = loadedManifestHash
+      ? ACTION_MANIFEST_DATA_SOURCE
+      : "src/combat/actions/FrameDataAction.ts#ACTIONS:fallback_manifest_not_loaded";
     this.metadata = {
       buildHash: options.buildHash ?? (typeof __BUILD_HASH__ !== 'undefined' ? __BUILD_HASH__ : 'local-dev'),
       combatSchemaHash: options.combatSchemaHash ?? manifestHash,
@@ -69,7 +75,7 @@ export class ReplayRecorder {
       enemyManifestHash,
       sourcePolicyVersion: options.sourcePolicyVersion ?? SOURCE_POLICY_VERSION,
       dataSources: {
-        actions: options.dataSources?.actions ?? "src/combat/actions/FrameDataAction.ts#ACTIONS",
+        actions: options.dataSources?.actions ?? defaultActionDataSource,
         status: options.dataSources?.status ?? "src/data/manifest/status/default.json#profiles",
         ai: options.dataSources?.ai ?? "src/data/manifest/ai/enemy-default.json#profiles",
         damage: options.dataSources?.damage ?? "local_baseline",

@@ -1,13 +1,13 @@
 import { assert } from "./test-utils.js";
 import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";
 
-// Import key data modules to compute content-derived hash
-import { ACTIONS } from "../../src/combat/actions/FrameDataAction.js";
 import { computeActionsHash, computeEnemyManifestHash, computeStatusManifestHash } from "../../src/data/manifest/hash.js";
+import { loadActionsManifest } from "../../src/data/manifest/loader.js";
 import { DEFAULT_ENEMY_MANIFEST } from "../../src/data/manifest/ai.js";
 import { DEFAULT_STATUS_MANIFEST } from "../../src/data/manifest/status.js";
 
-const actionManifestHash = computeActionsHash(ACTIONS);
+const actionsManifest = await loadActionsManifest();
+const actionManifestHash = computeActionsHash(actionsManifest);
 const statusManifestHash = computeStatusManifestHash(DEFAULT_STATUS_MANIFEST);
 const enemyManifestHash = computeEnemyManifestHash(DEFAULT_ENEMY_MANIFEST);
 console.log(`Computed action manifest hash: ${actionManifestHash}`);
@@ -30,7 +30,7 @@ assert.equal(currentSchemaHash, actionManifestHash, "combatSchemaHash must match
 assert.equal(currentManifestHash, actionManifestHash, "manifestHash must match the current action manifest hash");
 assert.equal(currentStatusManifestHash, statusManifestHash, "statusManifestHash must match the current status manifest hash");
 assert.equal(currentEnemyManifestHash, enemyManifestHash, "enemyManifestHash must match the current enemy manifest hash");
-assert.equal(recorder.metadata.dataSources.actions, "src/combat/actions/FrameDataAction.ts#ACTIONS");
+assert.equal(recorder.metadata.dataSources.actions, "src/data/manifest/actions/default.json#actions");
 assert.equal(recorder.metadata.dataSources.status, "src/data/manifest/status/default.json#profiles");
 assert.equal(recorder.metadata.dataSources.ai, "src/data/manifest/ai/enemy-default.json#profiles");
 
