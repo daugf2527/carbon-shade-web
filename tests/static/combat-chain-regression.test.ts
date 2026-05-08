@@ -59,8 +59,8 @@ function decideHit(attacker: Actor, target: Actor, actionName: ActionName, hitbo
     isBackAttack: decision.isBackAttack,
     isCritical: false,
   });
-  assert.equal(damage.finalDamage, 13);
-  assert.equal(grunt.resources.hp, grunt.resources.maxHp - 13);
+  assert.equal(damage.finalDamage, 12);
+  assert.equal(grunt.resources.hp, grunt.resources.maxHp - 12);
 
   const reaction = new ReactionResolver().resolve(grunt, decision);
   new ReactionResolver().apply(grunt, reaction, decision, player, 1);

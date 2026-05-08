@@ -2,7 +2,7 @@ import type { Actor, StatusEffect, StatusEffectType, ActionName, StatusProfile }
 import { CombatEventBus, CombatEventPriority } from "../events/CombatEventBus.js";
 import { nextId } from "../util/ids.js";
 import { DamageResolver } from "../damage/DamageResolver.js";
-import { STATUS_PROFILES } from "../../data/manifest/status.js";
+import { STATUS_PROFILES, PVE_STATUS_CONFIG, getDefaultResistance } from "../../data/manifest/status.js";
 
 interface StatusApplyOptions {
   durationFrames?: number;
@@ -19,6 +19,10 @@ const FALLBACK_STATUS_PROFILE: StatusProfile = {
   fieldProvenance:{}
 };
 
+const HARD_CONTROL_TYPES: ReadonlySet<StatusEffectType> = new Set([
+  "stun", "freeze", "stone", "bind", "sleep"
+]);
+
 export class StatusEffectSystem {
   constructor(private damage = new DamageResolver()) {}
 
@@ -32,8 +36,51 @@ export class StatusEffectSystem {
     const tickIntervalFrames = options.tickIntervalFrames ?? profile.tickIntervalFrames;
     const dotDamagePerStack = options.dotDamagePerStack ?? profile.dotDamagePerStack;
     const maxStacks = options.maxStacks ?? profile.maxStacks;
+
     bus.emit("StatusApplyRequested", CombatEventPriority.Status, tick, {actorId:actor.id, type, chance}, {targetActorId:actor.id, sourceActorId});
-    if (chance < 1 && Math.random() > chance) { bus.emit("StatusResisted", CombatEventPriority.Status, tick, {actorId:actor.id, type, reason:"chance_failed"}, {targetActorId:actor.id}); return null; }
+
+    // Phase 4: resistanceCheck with tolerance mechanics
+    const isHardControl = HARD_CONTROL_TYPES.has(type) || (profile.isHardControl === true);
+    const toleranceConfig = PVE_STATUS_CONFIG.tolerance;
+    const currentTolerance = actor.statusTolerance?.[type] ?? 0;
+    const baseResistance = actor.statusResistance?.[type] ?? getDefaultResistance(type);
+    const breakThreshold = profile.breakThreshold ?? 0;
+
+    // Hard control mutex: if target already has an active hard control, resist new hard controls
+    if (isHardControl && toleranceConfig.hardControlMutex) {
+      const hasActiveHardControl = actor.statusEffects.some(s => {
+        const sp = STATUS_PROFILES[s.type];
+        return HARD_CONTROL_TYPES.has(s.type) || (sp?.isHardControl === true);
+      });
+      if (hasActiveHardControl) {
+        bus.emit("StatusResisted", CombatEventPriority.Status, tick, {actorId:actor.id, type, reason:"hard_control_mutex"}, {targetActorId:actor.id});
+        return null;
+      }
+    }
+
+    // Break threshold check: if actor's tolerance is below break threshold, auto-resist
+    const effectiveResistance = baseResistance + currentTolerance;
+    if (breakThreshold > 0 && effectiveResistance < breakThreshold) {
+      bus.emit("StatusResisted", CombatEventPriority.Status, tick, {actorId:actor.id, type, reason:"below_break_threshold"}, {targetActorId:actor.id});
+      return null;
+    }
+
+    // Tolerance threshold check: if tolerance exceeds threshold, resist
+    if (currentTolerance >= toleranceConfig.threshold) {
+      bus.emit("StatusResisted", CombatEventPriority.Status, tick, {actorId:actor.id, type, reason:"tolerance_full"}, {targetActorId:actor.id});
+      return null;
+    }
+
+    // Legacy chance-based check (fallback for backward compat)
+    if (chance < 1 && Math.random() > chance) {
+      bus.emit("StatusResisted", CombatEventPriority.Status, tick, {actorId:actor.id, type, reason:"chance_failed"}, {targetActorId:actor.id});
+      return null;
+    }
+
+    // Apply tolerance gain
+    if (!actor.statusTolerance) actor.statusTolerance = {};
+    actor.statusTolerance[type] = currentTolerance + toleranceConfig.gainPerApplication;
+
     const existing = actor.statusEffects.find(s=>s.type===type);
     if (existing) {
       existing.stacks = Math.min(existing.maxStacks, existing.stacks + 1);
@@ -41,6 +88,7 @@ export class StatusEffectSystem {
       existing.tickIntervalFrames = tickIntervalFrames;
       existing.dotDamagePerStack = dotDamagePerStack;
       if (tickIntervalFrames !== undefined && existing.nextTickFrame === undefined) existing.nextTickFrame = tick + tickIntervalFrames;
+      existing.resistanceCheck = { accepted: true, reason: "stacked" };
       bus.emit("StatusApplied", CombatEventPriority.Status, tick, {actorId:actor.id, type, stacks:existing.stacks}, {targetActorId:actor.id, sourceActorId});
       return existing;
     }
@@ -60,13 +108,29 @@ export class StatusEffectSystem {
       resistanceCheck:{accepted:true},
       dispelPolicy:profile.dispelPolicy
     };
-    actor.statusEffects.push(effect); bus.emit("StatusApplied", CombatEventPriority.Status, tick, {actorId:actor.id, type, statusId:effect.id}, {targetActorId:actor.id, sourceActorId}); return effect;
+    actor.statusEffects.push(effect);
+    bus.emit("StatusApplied", CombatEventPriority.Status, tick, {actorId:actor.id, type, statusId:effect.id}, {targetActorId:actor.id, sourceActorId});
+    return effect;
   }
 
   applyBleed(actor: Actor, sourceActorId: string | undefined, sourceAction: string | undefined, tick: number, bus: CombatEventBus, chance=1, options: StatusApplyOptions = {}): StatusEffect | null {
     return this.applyStatus(actor, "bleed", sourceActorId, sourceAction, tick, bus, chance, options);
   }
+
   tick(actor: Actor, tick: number, bus: CombatEventBus, frozen: boolean, actors: Actor[] = [actor]): boolean {
+    // Phase 4: decay status tolerance each tick
+    if (actor.statusTolerance) {
+      const decay = PVE_STATUS_CONFIG.tolerance.decayPerTick;
+      for (const key of Object.keys(actor.statusTolerance) as StatusEffectType[]) {
+        const current = actor.statusTolerance[key] ?? 0;
+        if (current > 0) {
+          actor.statusTolerance[key] = Math.max(0, current - decay);
+        } else {
+          delete actor.statusTolerance[key];
+        }
+      }
+    }
+
     if (frozen) return false;
     let appliedAny = false;
     for (const s of [...actor.statusEffects]) {
@@ -105,5 +169,9 @@ export class StatusEffectSystem {
     }
   }
 
-  deathCleanup(actor:Actor, tick:number, bus:CombatEventBus): void { const removed = actor.statusEffects.filter(s=>s.dispelPolicy!=="death_keep"); actor.statusEffects = actor.statusEffects.filter(s=>s.dispelPolicy==="death_keep"); if (removed.length) bus.emit("StatusDeathCleanup", CombatEventPriority.Status, tick, {actorId:actor.id, removed:removed.map(s=>s.type)}, {targetActorId:actor.id}); }
+  deathCleanup(actor:Actor, tick:number, bus:CombatEventBus): void {
+    const removed = actor.statusEffects.filter(s=>s.dispelPolicy!=="death_keep");
+    actor.statusEffects = actor.statusEffects.filter(s=>s.dispelPolicy==="death_keep");
+    if (removed.length) bus.emit("StatusDeathCleanup", CombatEventPriority.Status, tick, {actorId:actor.id, removed:removed.map(s=>s.type)}, {targetActorId:actor.id});
+  }
 }

@@ -1,0 +1,1 @@
+{"resistanceDefaults":{"attack_down":0,"bind":0,"bleed":0,"burn":0,"curse":0,"defense_down":0,"freeze":0,"poison":0,"rupture":0,"shock":0,"sleep":0,"slow":0,"stone":0,"stun":0},"schemaVersion":"status-pve-v1","sourcePolicyVersion":"source-policy-v1","targetVersion":"70-85","tolerance":{"decayPerTick":1,"gainPerApplication":20,"hardControlMutex":true,"threshold":100}}

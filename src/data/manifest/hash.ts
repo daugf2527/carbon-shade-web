@@ -46,3 +46,18 @@ export function computeEnemyManifestHash(manifest: EnemyManifest): string {
   const jsonCompatible = JSON.parse(JSON.stringify(manifest)) as EnemyManifest;
   return fnv1a(stableStringify(jsonCompatible));
 }
+
+export interface DamageManifest {
+  schemaVersion: string;
+  sourcePolicyVersion: string;
+  targetVersion: string;
+  description: string;
+  constants: Record<string, number>;
+  attackTypes: Record<string, { attackStat: string; primaryStat: string; description: string }>;
+  pveDefaults: Record<string, number>;
+}
+
+export function computeDamageManifestHash(manifest: DamageManifest): string {
+  const jsonCompatible = JSON.parse(JSON.stringify(manifest)) as DamageManifest;
+  return fnv1a(stableStringify(jsonCompatible));
+}

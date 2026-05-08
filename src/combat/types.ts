@@ -23,6 +23,7 @@ export type ActionPhase = "request" | "enter" | "startup" | "active" | "hitstop_
 export type HitType = "slash" | "shockwave" | "blood_pillar" | "grab" | "debug";
 export type HitboxShape = "rect" | "circle" | "sweep" | "grab_attach";
 export type DamageType = "physical" | "status" | "debug";
+export type AttackType = "physical_percent" | "magic_percent" | "physical_fixed" | "magic_fixed";
 export type ProvenanceSourceType = "official_api" | "official_page" | "dfo_wiki" | "local_baseline" | "needs_calibration" | "experimental";
 export type ProvenanceConfidence = "low" | "medium" | "high";
 export interface Provenance {
@@ -48,6 +49,7 @@ export type FrameDataProvenanceField =
 export type FieldProvenanceMap = Partial<Record<FrameDataProvenanceField, Provenance>>;
 export type StatusEffectType = "bleed" | "poison" | "shock" | "burn" | "rupture" | "stun" | "freeze" | "stone" | "bind" | "sleep" | "slow" | "defense_down" | "attack_down" | "curse";
 export type StatusDispelPolicy = "dispellable" | "not_dispellable" | "death_clear" | "death_keep";
+export type StatusTolerance = Partial<Record<StatusEffectType, number>>;
 export type StatusProvenanceField =
   | "durationFrames"
   | "tickIntervalFrames"
@@ -68,6 +70,8 @@ export interface StatusProfile {
   splashDamagePerStack?: number;
   incomingDirectDamageMultiplierPerStack?: number;
   dispelPolicy: StatusDispelPolicy;
+  isHardControl?: boolean;
+  breakThreshold?: number;
   fieldProvenance: StatusFieldProvenanceMap;
 }
 export interface StatusManifest {
@@ -191,6 +195,19 @@ export interface Actor {
   flags: ActorFlags;
   handfeel: HandfeelState;
   comboCorrection: ComboCorrectionState;
+  tolerance?: StatusTolerance;
+  statusTolerance?: StatusTolerance;
+  statusResistance?: StatusTolerance;
+  // Phase 3: DNF classic stat block (all optional for backward compat)
+  strength?: number;
+  intelligence?: number;
+  physAtk?: number;
+  magAtk?: number;
+  independentAtk?: number;
+  elemStrength?: number;
+  elemResist?: number;
+  defense?: number;
+  level?: number;
 }
 
 export interface ActionInstance {
@@ -324,14 +341,16 @@ export interface DamageRequest {
   sourceKind: DamageSourceKind;
   reactionPolicy: DamageReactionPolicy;
   baseDamage: number;
+  attackType?: AttackType;
+  attackerLevel?: number;
   canTriggerCounter: boolean;
   canTriggerBackAttack: boolean;
   canTriggerCritical: boolean;
   canTriggerDeath: boolean;
   sourceHitDecisionId?: string;
   correlationId: string;
-  attackerStats?: { strength?: number; elementalDamage?: number };
-  targetStats?: { defense?: number };
+  attackerStats?: { strength?: number; intelligence?: number; physAtk?: number; magAtk?: number; independentAtk?: number; elementalDamage?: number };
+  targetStats?: { defense?: number; elemResist?: number };
 }
 export interface DamageApplied { attackerId?: ActorId; targetId: ActorId; actionName?: ActionName; sourceKind: DamageSourceKind; reactionPolicy: DamageReactionPolicy; baseDamage: number; finalDamage: number; hpBefore: number; hpAfter: number; isCounter: boolean; isBackAttack: boolean; isCritical: boolean; multipliers: Array<{name:string; value:number}>; sourceHitDecisionId?: string; sourceStatusId?: string; }
 

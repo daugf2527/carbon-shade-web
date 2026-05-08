@@ -3,7 +3,7 @@
 
 import type { FrameDataAction, ActionName, StatusManifest } from "../../combat/types.js";
 import { validateEnemyManifest, validateManifest, validateStatusManifest, type ManifestValidationOptions } from "./schema.js";
-import { computeActionsHash } from "./hash.js";
+import { computeActionsHash, type DamageManifest, computeDamageManifestHash } from "./hash.js";
 import { DEFAULT_ENEMY_MANIFEST } from "./ai.js";
 import type { EnemyManifest } from "./aiTypes.js";
 import { DEFAULT_STATUS_MANIFEST } from "./status.js";
@@ -16,6 +16,8 @@ let _cachedActions: Record<ActionName, FrameDataAction> | null = null;
 let _cachedHash: string | null = null;
 let _cachedStatusManifest: StatusManifest | null = null;
 let _cachedEnemyManifest: EnemyManifest | null = null;
+let _cachedDamageManifest: DamageManifest | null = null;
+let _cachedDamageManifestHash: string | null = null;
 
 /**
  * Loads the actions manifest from JSON.
@@ -121,4 +123,27 @@ function assertValidEnemyManifest(manifest: EnemyManifest, options: ManifestVali
     const msg = violations.map(v => `${v.path}: ${v.message}`).join("\n  ");
     throw new Error(`Enemy manifest validation failed with ${violations.length} violation(s):\n  ${msg}`);
   }
+}
+
+export async function loadDamageManifest(): Promise<DamageManifest> {
+  if (_cachedDamageManifest) return _cachedDamageManifest;
+
+  let manifest: DamageManifest;
+  try {
+    manifest = (await import("./damage/classic-profile.json")).default as DamageManifest;
+  } catch {
+    const { readFileSync } = await import("node:fs");
+    const { join, dirname } = await import("node:path");
+    const { fileURLToPath } = await import("node:url");
+    const __dirname = dirname(fileURLToPath(import.meta.url));
+    manifest = JSON.parse(readFileSync(join(__dirname, "damage", "classic-profile.json"), "utf-8")) as DamageManifest;
+  }
+
+  _cachedDamageManifest = manifest;
+  _cachedDamageManifestHash = computeDamageManifestHash(manifest);
+  return manifest;
+}
+
+export function getDamageManifestHash(): string | null {
+  return _cachedDamageManifestHash;
 }

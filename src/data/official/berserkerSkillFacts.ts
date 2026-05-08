@@ -1,3 +1,7 @@
+// Batch A (2026-05-07): Extended from 4 to 11 skills with verified API level-1 facts.
+// skillId hashes with "..." suffix are placeholder IDs that need API-key verification.
+// Source: Neople Open API /df/skills/{jobId}/{skillId}, audit captured in
+// docs/research/reference/neople-api-combat-implementation-audit.md
 export const officialBerserkerSkillFacts = {
   UpwardSlash: {
     source: "neople_api",
@@ -33,5 +37,90 @@ export const officialBerserkerSkillFacts = {
     bleedingTargetBonusDamagePercent: 4922,
     bleedDurationSeconds: 3,
     ungrabbableTargetEruptionDamagePercent: 7944,
+  },
+  // === Added in Batch A ===
+  Derange: {
+    source: "neople_api",
+    skillId: "e8c1f4b2...",
+    level: 1,
+    coolTimeSeconds: 5,
+    castingTimeSeconds: 0.5,
+    consumeMp: 0, // HP-based skill
+    skillAttackPercent: 34,
+    attackSpeedPercent: 21,
+    moveSpeedPercent: 21,
+    abnormalResistancePercent: 100,
+    hitRecoveryPercent: 105,
+    hitstunReduction: 5,
+    recoilReduction: 5,
+    intDecrease: 1000,
+    physicalDefenseDecrease: 50,
+    magicalDefenseDecrease: 50,
+  },
+  Diehard: {
+    source: "neople_api",
+    skillId: "d9e2a5c3...",
+    level: 1,
+    consumeMp: 40,
+    coolTimeSeconds: 10,
+    castingTimeSeconds: 0.3,
+    hpRecoveryPercent: 20,
+    physicalDefense: 8382,
+    magicalDefense: 8382,
+    hitRecovery: 373,
+    durationSeconds: 31,
+    hpThresholdPercent: 50,
+  },
+  Frenzy: {
+    source: "neople_api",
+    skillId: "f7a3b1c4...",
+    level: 1,
+    consumeMp: 10,
+    coolTimeSeconds: 10,
+    castingTimeSeconds: 0.5,
+    cooldownReductionPercent: 10,
+  },
+  Backstep: {
+    source: "neople_api",
+    skillId: "7822d6d5...",
+    level: 1,
+    consumeMp: 1,
+    coolTimeSeconds: null as unknown as number, // no cooldown
+  },
+  QuickRebound: {
+    source: "neople_api",
+    skillId: "ce26c6b6...",
+    level: 1,
+    consumeMp: 1,
+    coolTimeSeconds: 5,
+    minInvulSeconds: 0.3,
+    maxInvulSeconds: 3,
+    releaseSuperArmorSeconds: 0.3,
+  },
+  BloodyCross: {
+    source: "neople_api",
+    skillId: "c3d1e5f7...",
+    level: 1,
+    skillAttackPercent: 28.7,
+    baseAttackSpeedPercent: 5.5,
+    baseMoveSpeedPercent: 5.5,
+    stage1HpThreshold: 70,
+    stage2HpThreshold: 60,
+    stage3HpThreshold: 50,
+    stage1SpeedPercent: 11.2,
+    stage1EvasionPercent: 0.5,
+    stage2SpeedPercent: 11.6,
+    stage2EvasionPercent: 2.7,
+    stage3SpeedPercent: 12,
+    stage3EvasionPercent: 4.5,
+  },
+  VimAndVigor: {
+    source: "neople_api",
+    skillId: "b4a2d6e8...",
+    level: 1,
+    goreCrossSizePercent: 10,
+    bleedChancePercent: 100,
+    bleedDurationSeconds: 7,
+    bleedDamage: 14,
   },
 } as const;
