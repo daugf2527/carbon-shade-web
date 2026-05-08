@@ -260,6 +260,110 @@
           "requiresCalibration": true
         }
       }
+    },
+    "stun": {
+      "type": "stun",
+      "durationFrames": 90,
+      "maxStacks": 1,
+      "dispelPolicy": "death_clear",
+      "isHardControl": true,
+      "fieldProvenance": {
+        "durationFrames": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
+        "maxStacks": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
+        "dispelPolicy": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true }
+      }
+    },
+    "freeze": {
+      "type": "freeze",
+      "durationFrames": 120,
+      "maxStacks": 1,
+      "dispelPolicy": "death_clear",
+      "isHardControl": true,
+      "fieldProvenance": {
+        "durationFrames": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
+        "maxStacks": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
+        "dispelPolicy": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true }
+      }
+    },
+    "stone": {
+      "type": "stone",
+      "durationFrames": 150,
+      "maxStacks": 1,
+      "dispelPolicy": "death_clear",
+      "isHardControl": true,
+      "fieldProvenance": {
+        "durationFrames": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
+        "maxStacks": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
+        "dispelPolicy": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true }
+      }
+    },
+    "bind": {
+      "type": "bind",
+      "durationFrames": 100,
+      "maxStacks": 1,
+      "dispelPolicy": "death_clear",
+      "isHardControl": true,
+      "fieldProvenance": {
+        "durationFrames": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
+        "maxStacks": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
+        "dispelPolicy": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true }
+      }
+    },
+    "sleep": {
+      "type": "sleep",
+      "durationFrames": 180,
+      "maxStacks": 1,
+      "dispelPolicy": "death_clear",
+      "isHardControl": true,
+      "fieldProvenance": {
+        "durationFrames": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
+        "maxStacks": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
+        "dispelPolicy": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true }
+      }
+    },
+    "slow": {
+      "type": "slow",
+      "durationFrames": 300,
+      "maxStacks": 3,
+      "dispelPolicy": "death_clear",
+      "fieldProvenance": {
+        "durationFrames": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
+        "maxStacks": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
+        "dispelPolicy": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true }
+      }
+    },
+    "defense_down": {
+      "type": "defense_down",
+      "durationFrames": 300,
+      "maxStacks": 3,
+      "dispelPolicy": "death_clear",
+      "fieldProvenance": {
+        "durationFrames": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
+        "maxStacks": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
+        "dispelPolicy": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true }
+      }
+    },
+    "attack_down": {
+      "type": "attack_down",
+      "durationFrames": 300,
+      "maxStacks": 3,
+      "dispelPolicy": "death_clear",
+      "fieldProvenance": {
+        "durationFrames": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
+        "maxStacks": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
+        "dispelPolicy": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true }
+      }
+    },
+    "curse": {
+      "type": "curse",
+      "durationFrames": 420,
+      "maxStacks": 1,
+      "dispelPolicy": "death_clear",
+      "fieldProvenance": {
+        "durationFrames": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
+        "maxStacks": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
+        "dispelPolicy": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true }
+      }
     }
   }
 }

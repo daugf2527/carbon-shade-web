@@ -2,6 +2,7 @@
 // at load time, catching structural errors before they hit runtime.
 
 import type { ActionName, FrameDataAction, FrameDataProvenanceField, Provenance, StatusEffectType, StatusManifest, StatusProfile, StatusProvenanceField } from "../../combat/types.js";
+import type { DamageManifest } from "./hash.js";
 import type { EnemyManifest, EnemyManifestField, EnemyManifestId, EnemyRuntimeProfile } from "./aiTypes.js";
 
 export const SOURCE_POLICY_VERSION = "source-policy-v1";
@@ -25,7 +26,7 @@ const requiredRuntimeFields: FrameDataProvenanceField[] = [
   "cancelPolicy",
   "feedbackProfile",
 ];
-const implementedRuntimeStatusTypes = new Set<StatusEffectType>(["bleed", "poison", "burn", "shock", "rupture"]);
+const implementedRuntimeStatusTypes = new Set<StatusEffectType>(["bleed", "poison", "burn", "shock", "rupture", "stun", "freeze", "stone", "bind", "sleep", "slow", "defense_down", "attack_down", "curse"]);
 const requiredStatusFields: StatusProvenanceField[] = ["durationFrames", "maxStacks", "dispelPolicy"];
 const implementedRuntimeEnemyIds = new Set<EnemyManifestId>(["grunt", "dummy", "imp", "boss", "building"]);
 const requiredEnemyFields: EnemyManifestField[] = [

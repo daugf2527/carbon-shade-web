@@ -21,6 +21,11 @@ export function toEnemyAIState(profile: EnemyRuntimeProfile): EnemyAIState {
     hp: profile.hp,
     damage: profile.damage,
     armor: profile.armor,
+    sightRange: profile.sightRange,
+    aggressiveness: profile.aggressiveness,
+    targetSwitchTime: profile.targetSwitchTime,
+    longRangeReactionChance: profile.longRangeReactionChance,
+    behaviorWeights: profile.behaviorWeights,
   };
 }
 

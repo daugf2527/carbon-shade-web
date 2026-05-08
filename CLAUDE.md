@@ -6,6 +6,56 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Carbon Shade / 碳影** — a Phaser 3 + TypeScript 2.5D combat prototype served by Vite. The current engineering name is **Combat Lab**. The canonical repository path is `carbon-shade-web`. This prototype validates DNF-style 2.5D combat feel: skill execution, monster feedback, boss behavior, normalized sprite assets, and deterministic behavior tests.
 
+## Current state (2026-05-08)
+
+**Phase**: Combat Lab 0.3 — handfeel tuning + evidence freeze. The `dnf-pve-1to1-replication-plan.md` Phase 1–5 implementation is substantially complete.
+
+**Target version**: `70-85-classic-pre-metastasis` — Level 70 cap (2012, pre-Metastasis/大转移) is preferred; 80-85 data used as fallback. Modern DNF systems (Neutralize/Ignite/restructured AI) are explicitly excluded.
+
+**Combat kernel — Input → Hit → Reaction → Replay chain**
+
+| Module | File | Status |
+|--------|------|--------|
+| Frame data | `FrameDataAction.ts` + `actions/default.json` | 36 actions, manifest priority loading, hash parity gate |
+| Hit detection | `HitResolver2D5.ts` | 4 shapes (rect/circle/sweep/grab_attach), multi-hurtbox, 6-int snapshot → replay |
+| Damage formula | `DamageFormula.ts` + `classic-profile.json` | 10-multiplier chain: 4 damage paths, elem ÷220, def reduction, crit 1.5×, counter 1.25× |
+| Status system | `StatusEffectSystem.ts` + `status/default.json` | 14 status types, hard control mutex, tolerance accumulation/decay, splash |
+| Monster AI | `EnemyAI.ts` + `ai/enemy-default.json` | FSM 6-state + behavior tree (chase/hold/retreat weights) + boss phase transitions, deterministic hash for replay |
+| Replay | `ReplayRecorder.ts` | action/status/AI manifest hash in metadata |
+| Actor stats | `types.ts` | STR/INT/physAtk/magAtk/independentAtk/elem/elemResist/defense/level |
+
+**Data layer — versioned manifests**
+
+```
+src/data/manifest/
+├── actions/default.json      ← 36 actions
+├── damage/classic-profile.json ← formula constants
+├── status/default.json       ← 14 status profiles
+├── ai/enemy-default.json     ← 5 enemy types + DNF AI params (sightRange, aggressiveness, targetSwitchTime, longRangeReactionChance, behaviorWeights)
+├── ai/boss-patterns.json     ← boss phase/pattern config
+├── schema.ts / hash.ts / loader.ts ← validation, FNV-1a hashing, async loading
+```
+
+**Evidence source layers**
+
+| Layer | Coverage | Status |
+|-------|----------|--------|
+| Neople Open API | 11 skills level-1 facts (CD/MP/hit count) | `berserkerSkillFacts.ts`, `official-api-alignment.test.ts` |
+| Wiki (DFO World Wiki + NamuWiki) | Damage formula multipliers, status effect durations, boss move lists | Documented in research but not wired to runtime |
+| PVF/ANI/NPK | Frame windows, hitbox geometry, monster AI data, monster stats | Not yet researched (Batch C pending) |
+
+**CRT tickets**: CRT-001 (version freeze) resolved; CRT-002–006 remain open for frame/hitbox/AI/armor/replay evidence.
+
+**Verification gates (all passing)**
+
+```
+npm run typecheck   → passed
+npm run static:test → 34/34 passed
+npm run build       → passed
+```
+
+**Remaining gaps**: Batch A (level 1–10 API expansion), Batch B (Wiki semantic calibration), Batch C (PVF/ANI toolchain research), CRT-002–006 evidence tickets.
+
 ## Commands
 
 - `npm install` — install dependencies (Node >= 20).

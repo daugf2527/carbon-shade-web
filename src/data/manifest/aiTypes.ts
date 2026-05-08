@@ -10,7 +10,11 @@ export type EnemyManifestField =
   | "loseAggroRange"
   | "hp"
   | "damage"
-  | "armor";
+  | "armor"
+  | "sightRange"
+  | "aggressiveness"
+  | "targetSwitchTime"
+  | "longRangeReactionChance";
 
 export interface EnemyRuntimeProfile {
   id: EnemyManifestId;
@@ -24,6 +28,12 @@ export interface EnemyRuntimeProfile {
   damage: number;
   armor: BaseArmorType;
   fieldProvenance: Partial<Record<EnemyManifestField, Provenance>>;
+  // Phase 5: DNF AI parameters
+  sightRange?: number;
+  aggressiveness?: number;
+  targetSwitchTime?: number;
+  longRangeReactionChance?: number;
+  behaviorWeights?: { chase: number; retreat: number; hold: number };
 }
 
 export interface EnemyManifest {

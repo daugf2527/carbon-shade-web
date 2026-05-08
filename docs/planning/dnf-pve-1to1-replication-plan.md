@@ -13,9 +13,16 @@
 
 ```yaml
 policy: classic_fixed_version
-versionId: pending_user_selection
+versionId: "70-85-classic-pre-metastasis"
+versionRationale: >
+  Level 70 cap (2012, pre-Metastasis/大转移) is the preferred reference version.
+  Where 70-cap specific data is unavailable, level 80-85 data (pre-Origin) is used
+  as fallback. Damage formula, stat divisors (/250 for STR/INT, /220 for elemental),
+  and classic FSM-based monster AI all originate from this era. Modern DNF (post-Origin)
+  significantly changed defense formulas, added Neutralize/Ignite systems, and
+  restructured monster AI — those are explicitly excluded from the current PvE baseline.
 runtimeLabelBeforeSelection: local_baseline/evidence-ready
-claimBoundary: do not claim DNF 1:1 completion until versionId is selected and source evidence is attached
+claimBoundary: do not claim DNF 1:1 completion until source evidence is attached per action/status/AI field
 ```
 
 用户已选择“经典固定版本”路线，但尚未给出具体版本号。版本号确认前，本仓只能声明“本地 baseline 已具备 evidence-ready 数据链路”，不能声称已完成 DNF 1:1 复刻。

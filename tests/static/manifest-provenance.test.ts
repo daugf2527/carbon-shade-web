@@ -122,8 +122,8 @@ function cloneActions(): Record<ActionName, FrameDataAction> {
   assert.deepEqual(validateStatusManifest(statusManifest), [], "status manifest should satisfy runtime provenance gates");
   assert.deepEqual(
     Object.keys(statusManifest.profiles).sort(),
-    ["bleed", "burn", "poison", "rupture", "shock"],
-    "runtime status manifest should only include implemented status profiles"
+    ["attack_down", "bind", "bleed", "burn", "curse", "defense_down", "freeze", "poison", "rupture", "shock", "sleep", "slow", "stone", "stun"],
+    "runtime status manifest should include all implemented status profiles"
   );
   assert.equal(statusManifest.profiles.bleed.fieldProvenance.durationFrames.sourceType, "local_baseline");
   assert.equal(statusManifest.profiles.bleed.fieldProvenance.tickIntervalFrames.sourceType, "local_baseline");
@@ -156,6 +156,12 @@ function profileToTuning(profile: EnemyManifest["profiles"]["grunt"]) {
     hp: profile.hp,
     damage: profile.damage,
     armor: profile.armor,
+    // Phase 5: DNF AI parameters (synced with ai.ts toEnemyAIState)
+    sightRange: profile.sightRange,
+    aggressiveness: profile.aggressiveness,
+    targetSwitchTime: profile.targetSwitchTime,
+    longRangeReactionChance: profile.longRangeReactionChance,
+    behaviorWeights: profile.behaviorWeights,
   };
 }
 
