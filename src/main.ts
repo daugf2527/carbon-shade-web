@@ -11,16 +11,21 @@ runtime.combatLab = runtime.combatLab ?? {};
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: app,
-  width: 1280,
-  height: 720,
+  width: 1920,
+  height: 1080,
   backgroundColor: "#0b1220",
   pixelArt: true,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  },
   scene: [BootScene, CombatScene],
   render: { antialias: false, pixelArt: true },
   fps: { target: 60, forceSetTimeOut: false },
 });
 
 const controls = document.createElement("div");
+(controls as any).className = "desktop-controls";
 controls.innerHTML = [
   '<button id="run-scenario">Run deterministic scenario</button>',
   '<button id="reset">Reset</button>',

@@ -9,6 +9,7 @@ import { AudioUnlockGate } from "./audio/AudioUnlockGate.js";
 import { DebugLayer } from "./layers/DebugLayer.js";
 import { getCombatSpriteSpec, type SpriteSpec } from "./SpriteFrameLibrary.js";
 import { getRuntimeEvidenceCollector, recordKernelCombatEvidence } from "../runtime/evidence/RuntimeEvidenceCollector.js";
+import { TouchControls } from "./TouchControls.js";
 
 interface ActorSnapshot {
   id: string;
@@ -52,9 +53,9 @@ export class CombatScene extends Phaser.Scene {
   private debugLayer!: DebugLayer;
   private audioGate: AudioUnlockGate | null = null;
   private readonly feedbackGraphics: Phaser.GameObjects.Graphics[] = [];
-  private readonly worldWidth = 2400;
-  private readonly worldHeight = 720;
-  private readonly groundLineY = 540;
+  private readonly worldWidth = 3600;
+  private readonly worldHeight = 1080;
+  private readonly groundLineY = 810;
   private readonly backgroundLayers: Phaser.GameObjects.Graphics[] = [];
   private groundGraphics: Phaser.GameObjects.Graphics | null = null;
   private debugText: Phaser.GameObjects.Text | null = null;
@@ -73,6 +74,7 @@ export class CombatScene extends Phaser.Scene {
   private lastTickCostMs = 0;
   private readonly actorViews = new Map<string, ActorView>();
   private readonly gameplayKeys = new Set(["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "KeyA", "KeyD", "KeyW", "KeyS", "KeyX", "KeyJ", "KeyZ", "KeyK", "KeyC", "KeyL", "Space", "F5", "F6", "F7", "F8", "F9"]);
+  private touchControls: TouchControls | null = null;
 
   constructor() {
     super("combat");
@@ -93,6 +95,7 @@ export class CombatScene extends Phaser.Scene {
     this.createDebugOverlay();
 
     this.cameraController.bind(this.cameras.main, () => this.kernel.player.position.x);
+    this.touchControls = new TouchControls(this, this.kernel);
 
     window.addEventListener("keydown", this.handleKeyDown);
     window.addEventListener("keyup", this.handleKeyUp);
@@ -174,27 +177,27 @@ export class CombatScene extends Phaser.Scene {
     sky.fillStyle(0x0f172a, 1);
     sky.fillRect(0, 0, this.worldWidth, this.worldHeight);
     sky.fillStyle(0x1e1b4b, 1);
-    sky.fillRect(0, 0, this.worldWidth, 176);
+    sky.fillRect(0, 0, this.worldWidth, 264);
     sky.fillStyle(0x312e81, 0.28);
-    sky.fillRect(0, 164, this.worldWidth, 120);
+    sky.fillRect(0, 246, this.worldWidth, 180);
     this.backgroundLayers.push(sky);
 
     const mountains = this.add.graphics().setDepth(-80).setScrollFactor(0.38);
     mountains.fillStyle(0x1e293b, 1);
-    for (let i = 0; i < 8; i += 1) {
-      const x = i * 320 - 80;
-      mountains.fillTriangle(x, 344, x + 120, 232, x + 240, 344);
-      mountains.fillTriangle(x + 120, 232, x + 240, 344, x + 360, 286);
+    for (let i = 0; i < 12; i += 1) {
+      const x = i * 480 - 120;
+      mountains.fillTriangle(x, 516, x + 180, 348, x + 360, 516);
+      mountains.fillTriangle(x + 180, 348, x + 360, 516, x + 540, 429);
     }
     this.backgroundLayers.push(mountains);
 
     const trees = this.add.graphics().setDepth(-60).setScrollFactor(0.75);
-    for (let x = 32; x < this.worldWidth + 160; x += 168) {
+    for (let x = 48; x < this.worldWidth + 240; x += 252) {
       trees.fillStyle(0x166534, 1);
-      trees.fillTriangle(x, 372, x + 22, 310, x + 44, 372);
-      trees.fillTriangle(x + 12, 348, x + 34, 288, x + 56, 348);
+      trees.fillTriangle(x, 558, x + 33, 465, x + 66, 558);
+      trees.fillTriangle(x + 18, 522, x + 51, 432, x + 84, 522);
       trees.fillStyle(0x7c2d12, 1);
-      trees.fillRect(x + 20, 372, 6, 26);
+      trees.fillRect(x + 30, 558, 9, 39);
     }
     this.backgroundLayers.push(trees);
   }
@@ -210,10 +213,10 @@ export class CombatScene extends Phaser.Scene {
     ground.fillStyle(0x0f172a, 0.16);
     ground.fillRect(0, this.groundLineY, this.worldWidth, this.worldHeight - this.groundLineY);
 
-    const horizonY = this.groundLineY - 118;
-    for (let z = -120; z <= 120; z += 24) {
+    const horizonY = this.groundLineY - 177;
+    for (let z = -180; z <= 180; z += 36) {
       const y = this.groundLineY + z;
-      const distance = Math.abs(z) / 120;
+      const distance = Math.abs(z) / 180;
       ground.lineStyle(1, 0x64748b, 0.12 + (1 - distance) * 0.18);
       ground.beginPath();
       ground.moveTo(0, y);
@@ -221,8 +224,8 @@ export class CombatScene extends Phaser.Scene {
       ground.strokePath();
     }
 
-    for (let x = 0; x <= this.worldWidth; x += 96) {
-      const alpha = x % 192 === 0 ? 0.22 : 0.12;
+    for (let x = 0; x <= this.worldWidth; x += 144) {
+      const alpha = x % 288 === 0 ? 0.22 : 0.12;
       ground.lineStyle(1, 0x94a3b8, alpha);
       ground.beginPath();
       ground.moveTo(x, this.groundLineY);
@@ -234,9 +237,9 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private createDebugOverlay(): void {
-    this.debugText = this.add.text(16, 16, "", {
+    this.debugText = this.add.text(24, 24, "", {
       fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-      fontSize: "12px",
+      fontSize: "16px",
       color: "#e2e8f0",
       backgroundColor: "rgba(15, 23, 42, 0.72)",
       padding: { left: 10, right: 10, top: 8, bottom: 8 },
@@ -249,9 +252,9 @@ export class CombatScene extends Phaser.Scene {
 
   private createHudOverlay(): void {
     this.hudGraphics = this.add.graphics().setScrollFactor(0).setDepth(210);
-    this.hudText = this.add.text(16, 58, "", {
+    this.hudText = this.add.text(24, 87, "", {
       fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-      fontSize: "12px",
+      fontSize: "16px",
       color: "#e2e8f0",
     }).setScrollFactor(0).setDepth(211);
   }
@@ -260,7 +263,7 @@ export class CombatScene extends Phaser.Scene {
     this.kernel.bus.on("ReactionApplied", event => {
       if (event.targetActorId !== "player") return;
       this.playerHitFlashUntil = this.time.now + 200;
-      this.cameras.main.shake(100, 0.004);
+      this.cameras.main.shake(100, 0.003);
     });
 
     this.kernel.bus.on("HitConfirmed", event => {
@@ -286,7 +289,7 @@ export class CombatScene extends Phaser.Scene {
 
     this.kernel.bus.on("CameraShakeRequested", event => {
       const payload = event.payload as { intensity?: number; durationMs?: number };
-      this.cameras.main.shake(payload.durationMs ?? 90, payload.intensity ?? 0.004);
+      this.cameras.main.shake(payload.durationMs ?? 90, payload.intensity ?? 0.003);
     });
 
     this.kernel.bus.on("DamageNumberRequested", event => {
@@ -295,9 +298,9 @@ export class CombatScene extends Phaser.Scene {
       if (!actor) return;
       const baseY = this.groundLineY + actor.position.z - actor.position.y;
       const amount = (event.payload as { amount?: number }).amount ?? 0;
-      const damageText = this.add.text(actor.position.x, baseY - 92, `-${amount}`, {
+      const damageText = this.add.text(actor.position.x, baseY - 138, `-${amount}`, {
         fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-        fontSize: "18px",
+        fontSize: "26px",
         color: "#ef4444",
         stroke: "#1f2937",
         strokeThickness: 3,
@@ -306,7 +309,7 @@ export class CombatScene extends Phaser.Scene {
       damageText.setDepth(260);
       this.tweens.add({
         targets: damageText,
-        y: baseY - 132,
+        y: baseY - 198,
         alpha: 0,
         duration: 700,
         ease: "Sine.easeOut",
@@ -333,16 +336,16 @@ export class CombatScene extends Phaser.Scene {
 
       if (payload.vfx === "armor_spark") {
         const effect = this.add.graphics().setDepth(255).setScrollFactor(1);
-        effect.lineStyle(4, 0xfbbf24, 0.96);
+        effect.lineStyle(6, 0xfbbf24, 0.96);
         effect.beginPath();
-        effect.moveTo(x - 18, y);
-        effect.lineTo(x + 18, y);
-        effect.moveTo(x, y - 18);
-        effect.lineTo(x, y + 18);
-        effect.moveTo(x - 13, y - 13);
-        effect.lineTo(x + 13, y + 13);
-        effect.moveTo(x - 13, y + 13);
-        effect.lineTo(x + 13, y - 13);
+        effect.moveTo(x - 27, y);
+        effect.lineTo(x + 27, y);
+        effect.moveTo(x, y - 27);
+        effect.lineTo(x, y + 27);
+        effect.moveTo(x - 19, y - 19);
+        effect.lineTo(x + 19, y + 19);
+        effect.moveTo(x - 19, y + 19);
+        effect.lineTo(x + 19, y - 19);
         effect.strokePath();
         this.fadeGraphics(effect, 140, 1.4);
       } else if (payload.vfx === "bloodlust_eruption") {
@@ -351,15 +354,15 @@ export class CombatScene extends Phaser.Scene {
         this.spawnBloodlustEruptionVfx(x, y, true);
       } else {
         const effect = this.add.graphics().setDepth(255).setScrollFactor(1);
-        effect.lineStyle(4, 0xffffff, 0.96);
+        effect.lineStyle(6, 0xffffff, 0.96);
         effect.beginPath();
-        effect.moveTo(x - 18, y - 2);
-        effect.lineTo(x + 20, y - 18);
-        effect.moveTo(x - 16, y + 8);
-        effect.lineTo(x + 18, y - 6);
-        effect.lineStyle(2, 0xef4444, 0.92);
-        effect.moveTo(x - 4, y + 12);
-        effect.lineTo(x + 24, y + 2);
+        effect.moveTo(x - 27, y - 3);
+        effect.lineTo(x + 30, y - 27);
+        effect.moveTo(x - 24, y + 12);
+        effect.lineTo(x + 27, y - 9);
+        effect.lineStyle(3, 0xef4444, 0.92);
+        effect.moveTo(x - 6, y + 18);
+        effect.lineTo(x + 36, y + 3);
         effect.strokePath();
         this.fadeGraphics(effect, 140, 1.4);
       }
@@ -368,14 +371,14 @@ export class CombatScene extends Phaser.Scene {
 
   private spawnBloodlustAttachVfx(x: number, y: number): void {
     const effect = this.add.graphics().setDepth(254).setScrollFactor(1);
-    effect.lineStyle(3, 0xdc2626, 0.86);
-    effect.strokeEllipse(x, y + 8, 54, 26);
-    effect.lineStyle(2, 0xfca5a5, 0.72);
+    effect.lineStyle(4, 0xdc2626, 0.86);
+    effect.strokeEllipse(x, y + 12, 81, 39);
+    effect.lineStyle(3, 0xfca5a5, 0.72);
     effect.beginPath();
-    effect.moveTo(x - 26, y + 7);
-    effect.lineTo(x - 10, y - 8);
-    effect.lineTo(x + 8, y + 10);
-    effect.lineTo(x + 24, y - 5);
+    effect.moveTo(x - 39, y + 10);
+    effect.lineTo(x - 15, y - 12);
+    effect.lineTo(x + 12, y + 15);
+    effect.lineTo(x + 36, y - 7);
     effect.strokePath();
     this.fadeGraphics(effect, 260, 1.18);
   }
@@ -383,19 +386,19 @@ export class CombatScene extends Phaser.Scene {
   private spawnBloodlustEruptionVfx(x: number, y: number, whiff: boolean): void {
     const effect = this.add.graphics().setDepth(256).setScrollFactor(1);
     effect.fillStyle(0x7f1d1d, whiff ? 0.36 : 0.52);
-    effect.fillEllipse(x, y + 16, whiff ? 86 : 116, whiff ? 32 : 42);
-    effect.lineStyle(whiff ? 3 : 5, 0xef4444, whiff ? 0.78 : 0.94);
+    effect.fillEllipse(x, y + 24, whiff ? 129 : 174, whiff ? 48 : 63);
+    effect.lineStyle(whiff ? 4 : 7, 0xef4444, whiff ? 0.78 : 0.94);
     effect.beginPath();
-    effect.moveTo(x - 44, y + 18);
-    effect.quadraticCurveTo(x - 18, y - 34, x + 10, y - 4);
-    effect.quadraticCurveTo(x + 32, y + 20, x + 58, y - 18);
+    effect.moveTo(x - 66, y + 27);
+    effect.quadraticCurveTo(x - 27, y - 51, x + 15, y - 6);
+    effect.quadraticCurveTo(x + 48, y + 30, x + 87, y - 27);
     effect.strokePath();
-    effect.lineStyle(2, 0xfca5a5, whiff ? 0.58 : 0.76);
+    effect.lineStyle(3, 0xfca5a5, whiff ? 0.58 : 0.76);
     effect.beginPath();
-    effect.moveTo(x - 28, y + 8);
-    effect.lineTo(x + 42, y - 22);
-    effect.moveTo(x - 16, y + 24);
-    effect.lineTo(x + 34, y + 4);
+    effect.moveTo(x - 42, y + 12);
+    effect.lineTo(x + 63, y - 33);
+    effect.moveTo(x - 24, y + 36);
+    effect.lineTo(x + 51, y + 6);
     effect.strokePath();
     this.fadeGraphics(effect, whiff ? 220 : 300, whiff ? 1.35 : 1.55);
   }
@@ -403,17 +406,17 @@ export class CombatScene extends Phaser.Scene {
   private spawnRagingFuryShockwaveVfx(): void {
     const player = this.kernel.player;
     const facingSign = player.facing === "left" ? -1 : 1;
-    const x = player.position.x + 52 * facingSign;
-    const y = this.groundLineY + player.position.z - player.position.y - 24;
+    const x = player.position.x + 78 * facingSign;
+    const y = this.groundLineY + player.position.z - player.position.y - 36;
     const effect = this.add.graphics().setDepth(252).setScrollFactor(1);
     effect.fillStyle(0x450a0a, 0.44);
-    effect.fillEllipse(x, y + 18, 132, 30);
-    effect.lineStyle(4, 0xef4444, 0.78);
+    effect.fillEllipse(x, y + 27, 198, 45);
+    effect.lineStyle(6, 0xef4444, 0.78);
     effect.beginPath();
-    effect.moveTo(x - 62 * facingSign, y + 20);
-    effect.lineTo(x + 64 * facingSign, y - 8);
-    effect.moveTo(x - 42 * facingSign, y + 30);
-    effect.lineTo(x + 58 * facingSign, y + 8);
+    effect.moveTo(x - 93 * facingSign, y + 30);
+    effect.lineTo(x + 96 * facingSign, y - 12);
+    effect.moveTo(x - 63 * facingSign, y + 45);
+    effect.lineTo(x + 87 * facingSign, y + 12);
     effect.strokePath();
     this.fadeGraphics(effect, 180, 1.28);
   }
@@ -422,25 +425,25 @@ export class CombatScene extends Phaser.Scene {
     const target = targetActorId ? this.kernel.actors.find(candidate => candidate.id === targetActorId) : undefined;
     const player = this.kernel.player;
     const ordinal = Number.parseInt(hitboxId.slice("rf_pillar_".length), 10);
-    const waveOffset = Number.isFinite(ordinal) ? (ordinal - 5.5) * 5 : 0;
+    const waveOffset = Number.isFinite(ordinal) ? (ordinal - 5.5) * 7.5 : 0;
     const x = (target?.position.x ?? player.position.x + 48) + waveOffset;
-    const y = this.groundLineY + (target?.position.z ?? player.position.z) - (target?.position.y ?? 0) - 40;
-    const height = 74 + (Number.isFinite(ordinal) ? ordinal % 3 : 0) * 8;
+    const y = this.groundLineY + (target?.position.z ?? player.position.z) - (target?.position.y ?? 0) - 60;
+    const height = 111 + (Number.isFinite(ordinal) ? ordinal % 3 : 0) * 12;
     const effect = this.add.graphics().setDepth(253).setScrollFactor(1);
     effect.fillStyle(0x7f1d1d, 0.42);
-    effect.fillEllipse(x, y + height / 2, 42, 20);
-    effect.lineStyle(4, 0xdc2626, 0.88);
+    effect.fillEllipse(x, y + height / 2, 63, 30);
+    effect.lineStyle(6, 0xdc2626, 0.88);
     effect.beginPath();
-    effect.moveTo(x - 18, y + height);
-    effect.quadraticCurveTo(x - 8, y + 24, x, y);
-    effect.quadraticCurveTo(x + 12, y + 26, x + 18, y + height);
+    effect.moveTo(x - 27, y + height);
+    effect.quadraticCurveTo(x - 12, y + 36, x, y);
+    effect.quadraticCurveTo(x + 18, y + 39, x + 27, y + height);
     effect.strokePath();
-    effect.lineStyle(2, 0xfca5a5, 0.72);
+    effect.lineStyle(3, 0xfca5a5, 0.72);
     effect.beginPath();
-    effect.moveTo(x - 4, y + height - 6);
-    effect.lineTo(x + 4, y + 16);
-    effect.moveTo(x + 8, y + height - 14);
-    effect.lineTo(x - 8, y + 28);
+    effect.moveTo(x - 6, y + height - 9);
+    effect.lineTo(x + 6, y + 24);
+    effect.moveTo(x + 12, y + height - 21);
+    effect.lineTo(x - 12, y + 42);
     effect.strokePath();
     this.fadeGraphics(effect, 170, 1.16);
   }
@@ -488,11 +491,11 @@ export class CombatScene extends Phaser.Scene {
                 : 0x365314;
       const headColor = actor.dead ? 0x334155 : isPlayer ? 0xfca5a5 : isBoss ? 0xfda4af : isBuilding ? 0x94a3b8 : actor.id === "dummy" ? 0xf59e0b : 0xa3e635;
       const legColor = actor.dead ? 0x1f2937 : isPlayer ? (frenzy ? 0x450a0a : 0x111827) : isBoss ? 0x450a0a : isBuilding ? 0x1f2937 : actor.id === "dummy" ? 0x451a03 : 0x1a2e05;
-      const hpBarWidth = isBoss ? 104 : isBuilding ? 88 : 52;
+      const hpBarWidth = isBoss ? 156 : isBuilding ? 132 : 78;
       const hpBarX = -hpBarWidth / 2;
-      const hpY = isBoss ? -136 : isPlayer ? -112 : isImp ? -106 : -88;
-      const labelY = hpY - 18;
-      const stateY = hpY + 18;
+      const hpY = isBoss ? -204 : isPlayer ? -168 : isImp ? -159 : -132;
+      const labelY = hpY - 27;
+      const stateY = hpY + 27;
       const facing = actor.lockedFacing ?? actor.facing ?? model?.facing ?? "right";
       const facingSign = facing === "left" ? -1 : 1;
       const hitFlash = (actor.hitFlashRemaining ?? model?.handfeel.hitFlashRemaining ?? 0) > 0;
@@ -518,14 +521,14 @@ export class CombatScene extends Phaser.Scene {
       view.body.setFillStyle(visibleBodyColor, 1);
       view.body.setStrokeStyle(1, 0x0f172a, 1);
       view.head.setFillStyle(visibleHeadColor, 1);
-      view.head.setPosition(facingSign === 1 ? -8 : -12, -72);
-      view.face.setPosition(facingSign === 1 ? 7 : -13, -66);
+      view.head.setPosition(facingSign === 1 ? -12 : -18, -108);
+      view.face.setPosition(facingSign === 1 ? 10 : -19, -99);
       view.face.setFillStyle(hitFlash ? 0x111827 : 0x0f172a, 1);
       view.head.setStrokeStyle(1, 0x0f172a, 1);
       view.legsL.setFillStyle(legColor, 1);
       view.legsR.setFillStyle(legColor, 1);
       view.shadow.setFillStyle(0x000000, actor.dead ? 0.18 : 0.34);
-      view.shadow.setSize(isBoss ? 120 : isBuilding ? 88 : isImp ? 48 : 52, isBoss ? 20 : isImp ? 9 : 12);
+      view.shadow.setSize(isBoss ? 180 : isBuilding ? 132 : isImp ? 72 : 78, isBoss ? 30 : isImp ? 13 : 18);
 
       if (spriteSpec) {
         // Normalized spritesheets use fixed-size cells and Phaser frame indices.
@@ -555,9 +558,9 @@ export class CombatScene extends Phaser.Scene {
       }
 
       view.hpBack.setPosition(hpBarX, hpY);
-      view.hpBack.setSize(hpBarWidth, 5);
+      view.hpBack.setSize(hpBarWidth, 7);
       view.hpFill.setPosition(hpBarX, hpY);
-      view.hpFill.setSize(hpBarWidth * hpRatio, 5);
+      view.hpFill.setSize(hpBarWidth * hpRatio, 7);
       view.hpBack.setFillStyle(0x7f1d1d, 1);
       view.hpFill.setFillStyle(actor.dead ? 0x334155 : isBoss ? 0xf59e0b : isBuilding ? 0x22c55e : 0x22c55e, 1);
 
@@ -580,27 +583,27 @@ export class CombatScene extends Phaser.Scene {
           const frenzyColor = frenzy ? 0xef4444 : 0xd1d5db;
           const attackFacing = model?.currentAction?.lockedFacing ?? facing;
           const facingSign = attackFacing === "left" ? -1 : 1;
-          const arcRadius = actor.action === "RagingFury" ? 92 : actor.action === "UpwardSlash" ? 70 : actor.action === "NormalBasic3" ? 72 : actor.action === "NormalBasic2" ? 62 : 52;
-          const bladeY = actor.action === "UpwardSlash" ? -60 : -44;
+          const arcRadius = actor.action === "RagingFury" ? 138 : actor.action === "UpwardSlash" ? 105 : actor.action === "NormalBasic3" ? 108 : actor.action === "NormalBasic2" ? 93 : 78;
+          const bladeY = actor.action === "UpwardSlash" ? -90 : -66;
           if (active) {
             view.weapon.lineStyle(10, 0x7f1d1d, 0.82);
             view.weapon.beginPath();
             if (actor.action === "UpwardSlash") {
-              view.weapon.arc(34 * facingSign, -44, arcRadius, attackFacing === "left" ? 2.55 : -0.95, attackFacing === "left" ? 4.35 : 1.05, false);
+              view.weapon.arc(51 * facingSign, -66, arcRadius, attackFacing === "left" ? 2.55 : -0.95, attackFacing === "left" ? 4.35 : 1.05, false);
             } else {
-              view.weapon.arc(40 * facingSign, bladeY, arcRadius, attackFacing === "left" ? 2.55 : -0.65, attackFacing === "left" ? 3.95 : 0.78, false);
+              view.weapon.arc(60 * facingSign, bladeY, arcRadius, attackFacing === "left" ? 2.55 : -0.65, attackFacing === "left" ? 3.95 : 0.78, false);
             }
             view.weapon.strokePath();
             view.weapon.lineStyle(5, frenzy ? 0xef4444 : 0xfef3c7, 0.95);
             view.weapon.beginPath();
             if (actor.action === "UpwardSlash") {
-              view.weapon.arc(34 * facingSign, -44, arcRadius - 7, attackFacing === "left" ? 2.58 : -0.9, attackFacing === "left" ? 4.25 : 0.95, false);
+              view.weapon.arc(51 * facingSign, -66, arcRadius - 10, attackFacing === "left" ? 2.58 : -0.9, attackFacing === "left" ? 4.25 : 0.95, false);
             } else {
-              view.weapon.arc(40 * facingSign, bladeY, arcRadius - 7, attackFacing === "left" ? 2.6 : -0.58, attackFacing === "left" ? 3.82 : 0.66, false);
+              view.weapon.arc(60 * facingSign, bladeY, arcRadius - 10, attackFacing === "left" ? 2.6 : -0.58, attackFacing === "left" ? 3.82 : 0.66, false);
             }
             view.weapon.strokePath();
             view.weapon.fillStyle(0xef4444, 0.6);
-            view.weapon.fillCircle((66 + (actor.action === "NormalBasic3" ? 28 : 0)) * facingSign, bladeY + 4, actor.action === "NormalBasic3" ? 5 : 3);
+            view.weapon.fillCircle((99 + (actor.action === "NormalBasic3" ? 42 : 0)) * facingSign, bladeY + 6, actor.action === "NormalBasic3" ? 7 : 4);
           }
         }
       }
@@ -611,49 +614,49 @@ export class CombatScene extends Phaser.Scene {
     const container = this.add.container(0, 0);
     container.setScrollFactor(1);
 
-    const shadow = this.add.ellipse(0, 10, 40, 12, 0x000000, 0.34);
+    const shadow = this.add.ellipse(0, 15, 60, 18, 0x000000, 0.34);
     shadow.setOrigin(0.5, 0.5);
 
     const sprite = this.add.image(0, 0, "player_berserker_norm");
     sprite.setOrigin(0.5, 1);
     sprite.setVisible(false);
 
-    const legsL = this.add.rectangle(-12, -12, 9, 18, 0x111827);
+    const legsL = this.add.rectangle(-18, -18, 13, 27, 0x111827);
     legsL.setOrigin(0.5, 0.5);
-    const legsR = this.add.rectangle(3, -12, 9, 18, 0x111827);
+    const legsR = this.add.rectangle(4, -18, 13, 27, 0x111827);
     legsR.setOrigin(0.5, 0.5);
 
-    const body = this.add.rectangle(-16, -52, 32, 40, 0x2563eb);
+    const body = this.add.rectangle(-24, -78, 48, 60, 0x2563eb);
     body.setOrigin(0, 0);
     body.setStrokeStyle(1, 0x0f172a, 1);
 
-    const head = this.add.rectangle(-10, -72, 20, 18, 0xfca5a5);
+    const head = this.add.rectangle(-15, -108, 30, 27, 0xfca5a5);
     head.setOrigin(0, 0);
     head.setStrokeStyle(1, 0x0f172a, 1);
 
-    const face = this.add.rectangle(7, -66, 4, 4, 0x0f172a);
+    const face = this.add.rectangle(10, -99, 6, 6, 0x0f172a);
     face.setOrigin(0.5, 0.5);
 
     const weapon = this.add.graphics().setScrollFactor(1).setDepth(140);
 
-    const hpBack = this.add.rectangle(-21, -82, 42, 5, 0x7f1d1d);
+    const hpBack = this.add.rectangle(-31, -123, 63, 7, 0x7f1d1d);
     hpBack.setOrigin(0, 0);
 
-    const hpFill = this.add.rectangle(-21, -82, 42, 5, 0x22c55e);
+    const hpFill = this.add.rectangle(-31, -123, 63, 7, 0x22c55e);
     hpFill.setOrigin(0, 0);
     hpFill.setScale(1, 1);
 
-    const label = this.add.text(0, -74, id, {
+    const label = this.add.text(0, -111, id, {
       fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-      fontSize: "11px",
+      fontSize: "16px",
       color: "#f8fafc",
       align: "center",
     });
     label.setOrigin(0.5, 0.5);
 
-    const state = this.add.text(0, -60, "", {
+    const state = this.add.text(0, -90, "", {
       fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-      fontSize: "10px",
+      fontSize: "14px",
       color: "#cbd5e1",
       align: "center",
     });
@@ -687,17 +690,17 @@ export class CombatScene extends Phaser.Scene {
 
     this.hudGraphics.clear();
     this.hudGraphics.fillStyle(0x0f172a, 0.75);
-    this.hudGraphics.fillRoundedRect(12, 12, 340, 72, 10);
+    this.hudGraphics.fillRoundedRect(18, 18, 510, 108, 15);
     this.hudGraphics.lineStyle(1, 0x334155, 1);
-    this.hudGraphics.strokeRoundedRect(12, 12, 340, 72, 10);
+    this.hudGraphics.strokeRoundedRect(18, 18, 510, 108, 15);
     this.hudGraphics.fillStyle(0x7f1d1d, 1);
-    this.hudGraphics.fillRect(24, 32, 180, 10);
+    this.hudGraphics.fillRect(36, 48, 270, 15);
     this.hudGraphics.fillStyle(0x22c55e, 1);
-    this.hudGraphics.fillRect(24, 32, 180 * hpRatio, 10);
+    this.hudGraphics.fillRect(36, 48, 270 * hpRatio, 15);
     this.hudGraphics.fillStyle(0x334155, 1);
-    this.hudGraphics.fillRect(24, 52, 180, 8);
+    this.hudGraphics.fillRect(36, 78, 270, 12);
     this.hudGraphics.fillStyle(0xef4444, 1);
-    this.hudGraphics.fillRect(24, 52, 180 * frenzyRatio, 8);
+    this.hudGraphics.fillRect(36, 78, 270 * frenzyRatio, 12);
 
     this.hudText.setText([
       `HP ${player.resources.hp}/${maxHp}`,
@@ -735,12 +738,12 @@ export class CombatScene extends Phaser.Scene {
     const player = this.kernel.player;
     const baseY = this.groundLineY + player.position.z - player.position.y;
     const x = player.position.x - 16;
-    const y = baseY - 48;
+    const y = baseY - 72;
 
     const flash = this.feedbackGraphics[0] ?? this.add.graphics().setDepth(240).setScrollFactor(1);
     this.feedbackGraphics[0] = flash;
-    flash.lineStyle(2, 0xf43f5e, 0.95);
-    flash.strokeRect(x - 3, y - 3, 38, 54);
+    flash.lineStyle(3, 0xf43f5e, 0.95);
+    flash.strokeRect(x - 4, y - 4, 57, 81);
   }
 
   private handleKeyDown = (event: GameplayKeyEvent): void => {
@@ -794,6 +797,8 @@ export class CombatScene extends Phaser.Scene {
   };
 
   private shutdown = (): void => {
+    this.touchControls?.destroy();
+    this.touchControls = null;
     (window as any).removeEventListener?.("keydown", this.handleKeyDown);
     (window as any).removeEventListener?.("keyup", this.handleKeyUp);
     (window as any).removeEventListener?.("blur", this.handleBlur);
