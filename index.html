@@ -2,14 +2,55 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>碳影 Carbon Shade | Combat Lab</title>
     <style>
-      :root { color-scheme: light; }
-      body { margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; background: #f8fafc; color: #111827; }
-      #app { padding: 16px; }
-      canvas { border: 1px solid #cbd5e1; background: #fff; display: block; }
-      button { margin-right: 8px; margin-bottom: 8px; }
+      :root { color-scheme: dark; }
+      body {
+        margin: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background: #0b1220;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        color: #e2e8f0;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        overscroll-behavior: none;
+      }
+      #app {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      canvas {
+        display: block !important;
+        border: none !important;
+        background: #0b1220 !important;
+      }
+      .desktop-controls {
+        position: fixed;
+        bottom: 8px;
+        left: 8px;
+        z-index: 10;
+      }
+      .desktop-controls button {
+        font-size: 11px;
+        margin-right: 6px;
+        margin-bottom: 4px;
+        background: rgba(15,23,42,0.85);
+        color: #e2e8f0;
+        border: 1px solid #334155;
+        border-radius: 4px;
+        padding: 4px 8px;
+        cursor: pointer;
+      }
+      @media (max-width: 768px), (pointer: coarse) {
+        .desktop-controls { display: none; }
+      }
       pre { font-size: 11px; white-space: pre-wrap; word-break: break-word; }
     </style>
   </head>

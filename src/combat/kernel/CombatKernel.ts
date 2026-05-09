@@ -68,7 +68,7 @@ export class CombatKernel {
   readonly replay = new ReplayRecorder();
   readonly bloodlustGrabHolds = new Map<string, BloodlustGrabHold>();
   readonly bloodlustWhiffEruptions = new Set<string>();
-  readonly worldBounds = { xMin: 64, xMax: 1820, zMin: -120, zMax: 120 };
+  readonly worldBounds = { xMin: 96, xMax: 2730, zMin: -180, zMax: 180 };
   scenario: ScenarioBooleans = {
     normalHitObserved:false,
     launchObserved:false,
@@ -99,12 +99,12 @@ export class CombatKernel {
     this.tickCount=0;
     this.actors.length=0;
     this.actors.push(
-      createActor("player","player","player",260,0),
-      createActor("grunt","enemy","enemy",520,0),
-      createActor("dummy","dummy","enemy",720,28),
-      createActor("imp","enemy","enemy",930,-36),
-      createActor("boss","boss","enemy",1210,-20),
-      createActor("building","building","enemy",1560,0),
+      createActor("player","player","player",390,0),
+      createActor("grunt","enemy","enemy",780,0),
+      createActor("dummy","dummy","enemy",1080,28),
+      createActor("imp","enemy","enemy",1395,-36),
+      createActor("boss","boss","enemy",1815,-30),
+      createActor("building","building","enemy",2340,0),
     );
     this.bus.clear();
     this.inputBuffer.clearAll();
@@ -878,11 +878,11 @@ export class CombatKernel {
     const grunt=this.actors.find(a=>a.id==="grunt")!;
     const boss=this.actors.find(a=>a.id==="boss")!;
     const building=this.actors.find(a=>a.id==="building")!;
-    grunt.position.x=350; this.requestAction(player,"NormalBasic1"); this.runTicks(9); this.hitStop.clear(); this.recoil.clear();
-    grunt.position.x=350; this.requestAction(player,"UpwardSlash"); this.runTicks(12); this.hitStop.clear(); this.recoil.clear();
-    grunt.position.x=350; grunt.reactionState="downed"; this.requestAction(player,"RagingFury"); this.runTicks(36); this.hitStop.clear(); this.recoil.clear();
-    boss.position.x=350; this.requestAction(player,"UpwardSlash"); this.runTicks(12); this.hitStop.clear(); this.recoil.clear(); boss.position.x=1210;
-    building.position.x=350; this.requestAction(player,"UpwardSlash"); this.runTicks(12); this.hitStop.clear(); this.recoil.clear(); building.position.x=1560;
+    grunt.position.x=525; this.requestAction(player,"NormalBasic1"); this.runTicks(9); this.hitStop.clear(); this.recoil.clear();
+    grunt.position.x=525; this.requestAction(player,"UpwardSlash"); this.runTicks(12); this.hitStop.clear(); this.recoil.clear();
+    grunt.position.x=525; grunt.reactionState="downed"; this.requestAction(player,"RagingFury"); this.runTicks(36); this.hitStop.clear(); this.recoil.clear();
+    boss.position.x=525; this.requestAction(player,"UpwardSlash"); this.runTicks(12); this.hitStop.clear(); this.recoil.clear(); boss.position.x=1815;
+    building.position.x=525; this.requestAction(player,"UpwardSlash"); this.runTicks(12); this.hitStop.clear(); this.recoil.clear(); building.position.x=2340;
     this.status.applyBleed(grunt,player.id,"ForceBleed",this.tickCount,this.bus,1); this.runTicks(31);
     player.reactionState="downed"; this.press("KeyC"); this.tick(); this.release("KeyC"); this.tick();
     this.bus.drainAll();
