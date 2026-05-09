@@ -1,1 +1,57 @@
-{"attackTypes":{"magic_fixed":{"attackStat":"independentAtk","description":"Magic fixed damage — uses independentAtk × fixed coefficient with INT scaling","primaryStat":"intelligence"},"magic_percent":{"attackStat":"magAtk","description":"Magic percent damage — uses magAtk × skill% with INT scaling","primaryStat":"intelligence"},"physical_fixed":{"attackStat":"independentAtk","description":"Physical fixed damage — uses independentAtk × fixed coefficient with STR scaling","primaryStat":"strength"},"physical_percent":{"attackStat":"physAtk","description":"Physical percent damage — uses physAtk × skill% with STR scaling","primaryStat":"strength"}},"constants":{"counterMultiplier":1.25,"critMultiplier":1.5,"defenseDivisor":200,"eleBase":1.05,"eleCoefficient":0.0045,"eleFactorDivisor":220,"finalDivisor":1,"strIntDivisor":250},"description":"DNF 70-85 classic PvE damage formula parameters for Combat Lab","pveDefaults":{"attackerLevel":70,"difficultyFactor":100,"monsterDefense":100,"monsterElemResist":0,"playerDefense":50,"playerElemStrength":0,"playerIndependentAtk":900,"playerIntelligence":1000,"playerMagAtk":100,"playerPhysAtk":100,"playerStrength":1000},"schemaVersion":"damage-manifest-v1","sourcePolicyVersion":"1.0.0","targetVersion":"70-85"}
+{
+  "attackTypes": {
+    "magic_fixed": {
+      "attackStat": "independentAtk",
+      "description": "Magic fixed damage — uses independentAtk × fixed coefficient with INT scaling",
+      "primaryStat": "intelligence"
+    },
+    "magic_percent": {
+      "attackStat": "magAtk",
+      "description": "Magic percent damage — uses magAtk × skill% with INT scaling",
+      "primaryStat": "intelligence"
+    },
+    "physical_fixed": {
+      "attackStat": "independentAtk",
+      "description": "Physical fixed damage — uses independentAtk × fixed coefficient with STR scaling",
+      "primaryStat": "strength"
+    },
+    "physical_percent": {
+      "attackStat": "physAtk",
+      "description": "Physical percent damage — uses physAtk × skill% with STR scaling",
+      "primaryStat": "strength"
+    }
+  },
+  "constants": {
+    "counterMultiplier": 1.25,
+    "critMultiplier": 1.5,
+    "defenseDivisor": 200,
+    "eleBase": 1.05,
+    "eleCoefficient": 0.0045,
+    "eleFactorDivisor": 220,
+    "finalDivisor": 1,
+    "strIntDivisor": 250
+  },
+  "description": "DNF 70-85 classic PvE damage formula parameters for Combat Lab",
+  "pveDefaults": {
+    "attackerLevel": 70,
+    "difficultyFactor": 100,
+    "monsterDefense": 100,
+    "monsterElemResist": 0,
+    "playerDefense": 50,
+    "playerElemStrength": 0,
+    "playerIndependentAtk": 900,
+    "playerIntelligence": 1000,
+    "playerMagAtk": 100,
+    "playerPhysAtk": 100,
+    "playerStrength": 1000
+  },
+  "schemaVersion": "damage-manifest-v1",
+  "sourcePolicyVersion": "1.0.0",
+  "targetVersion": "70-85",
+  "sourceProvenance": {
+    "source": "community_audit",
+    "verifiedAt": "2026-05-09",
+    "confidence": "high",
+    "notes": "Formula constants verified by Batch B dcalc audit against community damage formula research"
+  }
+}

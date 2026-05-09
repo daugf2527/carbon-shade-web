@@ -34,6 +34,14 @@ export interface Provenance {
   version: string;
   requiresCalibration: boolean;
 }
+export type ProvenanceSource = 'local_baseline' | 'neople_api' | 'dfo_world_wiki' | 'namu_wiki' | 'pvf_extraction' | 'ani_extraction' | 'community_audit';
+export interface SourceProvenance {
+  source: ProvenanceSource;
+  verifiedAt?: string;
+  sourceUrl?: string;
+  confidence: 'low' | 'medium' | 'high';
+  notes?: string;
+}
 export type FrameDataProvenanceField =
   | "totalFrames"
   | "active"
@@ -73,11 +81,13 @@ export interface StatusProfile {
   isHardControl?: boolean;
   breakThreshold?: number;
   fieldProvenance: StatusFieldProvenanceMap;
+  sourceProvenance?: SourceProvenance;
 }
 export interface StatusManifest {
   manifestVersion: "status-manifest-v1";
   sourcePolicyVersion: string;
   profiles: Partial<Record<StatusEffectType, StatusProfile>>;
+  sourceProvenance?: SourceProvenance;
 }
 export type BuffType = "frenzy" | "derange" | "bloody_cross" | "vim_and_vigor" | "diehard" | "thirst" | "blood_memory";
 

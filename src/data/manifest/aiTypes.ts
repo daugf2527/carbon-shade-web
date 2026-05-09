@@ -14,7 +14,12 @@ export type EnemyManifestField =
   | "sightRange"
   | "aggressiveness"
   | "targetSwitchTime"
-  | "longRangeReactionChance";
+  | "longRangeReactionChance"
+  // CRT-004: Hit-reaction substate durations
+  | "flinchDurationTicks"
+  | "launchDurationTicks"
+  | "knockdownDurationTicks"
+  | "getupDurationTicks";
 
 export interface EnemyRuntimeProfile {
   id: EnemyManifestId;
@@ -34,6 +39,11 @@ export interface EnemyRuntimeProfile {
   targetSwitchTime?: number;
   longRangeReactionChance?: number;
   behaviorWeights?: { chase: number; retreat: number; hold: number };
+  // CRT-004: Hit-reaction substate durations (in ticks at 60fps)
+  flinchDurationTicks?: number;
+  launchDurationTicks?: number;
+  knockdownDurationTicks?: number;
+  getupDurationTicks?: number;
 }
 
 export interface EnemyManifest {

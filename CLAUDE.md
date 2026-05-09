@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Carbon Shade / 碳影** — a Phaser 3 + TypeScript 2.5D combat prototype served by Vite. The current engineering name is **Combat Lab**. The canonical repository path is `carbon-shade-web`. This prototype validates DNF-style 2.5D combat feel: skill execution, monster feedback, boss behavior, normalized sprite assets, and deterministic behavior tests.
 
-## Current state (2026-05-08)
+## Current state (2026-05-09)
 
 **Phase**: Combat Lab 0.3 — handfeel tuning + evidence freeze. The `dnf-pve-1to1-replication-plan.md` Phase 1–5 implementation is substantially complete.
 
@@ -16,11 +16,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | Module | File | Status |
 |--------|------|--------|
-| Frame data | `FrameDataAction.ts` + `actions/default.json` | 36 actions, manifest priority loading, hash parity gate |
+| Frame data | `FrameDataAction.ts` + `actions/default.json` | 38 actions, manifest priority loading, hash parity gate |
 | Hit detection | `HitResolver2D5.ts` | 4 shapes (rect/circle/sweep/grab_attach), multi-hurtbox, 6-int snapshot → replay |
 | Damage formula | `DamageFormula.ts` + `classic-profile.json` | 10-multiplier chain: 4 damage paths, elem ÷220, def reduction, crit 1.5×, counter 1.25× |
 | Status system | `StatusEffectSystem.ts` + `status/default.json` | 14 status types, hard control mutex, tolerance accumulation/decay, splash |
-| Monster AI | `EnemyAI.ts` + `ai/enemy-default.json` | FSM 6-state + behavior tree (chase/hold/retreat weights) + boss phase transitions, deterministic hash for replay |
+| Monster AI | `EnemyAI.ts` + `ai/enemy-default.json` | FSM 9-state (idle/approach/windup/attacking/recover + flinched/launched/knocked_down/getting_up) + behavior tree + boss phase transitions, deterministic hash for replay |
 | Replay | `ReplayRecorder.ts` | action/status/AI manifest hash in metadata |
 | Actor stats | `types.ts` | STR/INT/physAtk/magAtk/independentAtk/elem/elemResist/defense/level |
 
@@ -28,12 +28,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```
 src/data/manifest/
-├── actions/default.json      ← 36 actions
-├── damage/classic-profile.json ← formula constants
-├── status/default.json       ← 14 status profiles
-├── ai/enemy-default.json     ← 5 enemy types + DNF AI params (sightRange, aggressiveness, targetSwitchTime, longRangeReactionChance, behaviorWeights)
+├── actions/default.json      ← 38 actions (sourceProvenance metadata attached)
+├── damage/classic-profile.json ← formula constants (8/8 community-audit verified)
+├── status/default.json       ← 14 status profiles (Rupture fixed: 3-stack 5/7/8% per Batch B)
+├── ai/enemy-default.json     ← 5 enemy types + DNF AI params + CRT-004 hit-reaction timers
 ├── ai/boss-patterns.json     ← boss phase/pattern config
-├── schema.ts / hash.ts / loader.ts ← validation, FNV-1a hashing, async loading
+├── schema.ts / hash.ts / loader.ts ← validation + sourceProvenance, FNV-1a hashing (strips metadata), async loading
 ```
 
 **Evidence source layers**

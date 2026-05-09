@@ -1,0 +1,31 @@
+{
+  "capturedAt": "2026-05-09",
+  "apiEndpoint": "/df/skills/41f1cdc2ff58bb5fdc287be0db2a8df3/7822d6d52e10964a6755f142c666b494",
+  "name": "백스텝",
+  "type": "active",
+  "desc": "약간 뒤로 뛰어서 적의 공격을 피한다.",
+  "descDetail": "약간 뒤로 뛰어서 적의 공격을 피한다.",
+  "consumeItem": null,
+  "descSpecial": [
+    "[백스텝 강화 습득 시]\n- 스킬 시전/피격/다운 중 백스텝 가능\n- 별도 쿨타임 적용\n- 백스텝 강화 발동 시 무적"
+  ],
+  "maxLevel": 1,
+  "requiredLevel": 1,
+  "requiredLevelRange": 1,
+  "preRequiredSkill": null,
+  "jobId": "41f1cdc2ff58bb5fdc287be0db2a8df3",
+  "jobName": "귀검사(남)",
+  "jobGrowLevel": [],
+  "levelInfo": {
+    "optionDesc": null,
+    "rows": [
+      {
+        "level": 1,
+        "consumeMp": 1,
+        "coolTime": null,
+        "castingTime": null,
+        "optionValue": null
+      }
+    ]
+  }
+}

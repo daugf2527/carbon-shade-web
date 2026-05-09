@@ -1,0 +1,401 @@
+{
+  "capturedAt": "2026-05-09",
+  "apiEndpoint": "/df/skills/41f1cdc2ff58bb5fdc287be0db2a8df3/0ed3148658fe37b3336ccb718dc0fdb0",
+  "name": "폭주",
+  "type": "active",
+  "desc": "일정 시간동안 폭주 상태에 돌입한다.\n폭주 상태가 되면 지능과 물리 방어력, 마법 방어력이 떨어지지만 스킬 공격력/이동 속도/공격 속도/기절,수면 상태 이상 내성/히트리커버리가 증가한다.\n폭주 시전 중에는 프렌지 기본 공격과 붕산격, 고어 크로스 스킬의 경직이 증가하고 역경직이 감소한다.",
+  "descDetail": "일정 시간동안 폭주 상태에 돌입한다.\n폭주 상태가 되면 지능과 물리 방어력, 마법 방어력이 떨어지지만 스킬 공격력/이동 속도/공격 속도/기절,수면 상태 이상 내성/히트리커버리가 증가한다.\n폭주 시전 중에는 프렌지 기본 공격과 붕산격, 고어 크로스 스킬의 경직이 증가하고 역경직이 감소한다.",
+  "consumeItem": null,
+  "maxLevel": 20,
+  "requiredLevel": 25,
+  "requiredLevelRange": 3,
+  "preRequiredSkill": null,
+  "jobId": "41f1cdc2ff58bb5fdc287be0db2a8df3",
+  "jobName": "귀검사(남)",
+  "jobGrowLevel": [],
+  "levelInfo": {
+    "optionDesc": "지속 시간 : {value1}초\n기본/스킬 공격력 증가율 : {value2}%\n공격 속도 증가 : {value3}%\n이동 속도 증가 : {value4}%\n기절,수면 상태 이상 내성 증가 : {value5}%\n지능 감소 : {value6}\n물리 방어력 감소 : {value7}%\n마법 방어력 감소 : {value8}%\n히트 리커버리 증가 : {value9}\n고어 크로스, 붕산격, 프렌지 기본 공격 경직 증가 : {value10}%\n고어 크로스, 붕산격, 프렌지 기본 공격 역경직 감소 : {value11}%",
+    "rows": [
+      {
+        "level": 1,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 0.5,
+        "optionValue": {
+          "value1": "-",
+          "value2": 34,
+          "value3": 21,
+          "value4": 21,
+          "value5": 100,
+          "value6": 105,
+          "value7": 5,
+          "value8": 5,
+          "value9": 1000,
+          "value10": 50,
+          "value11": 50
+        }
+      },
+      {
+        "level": 2,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 0.5,
+        "optionValue": {
+          "value1": "-",
+          "value2": 36,
+          "value3": 22,
+          "value4": 22,
+          "value5": 100,
+          "value6": 109,
+          "value7": 5,
+          "value8": 5,
+          "value9": 1000,
+          "value10": 50,
+          "value11": 50
+        }
+      },
+      {
+        "level": 3,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 0.5,
+        "optionValue": {
+          "value1": "-",
+          "value2": 38,
+          "value3": 23,
+          "value4": 23,
+          "value5": 100,
+          "value6": 113,
+          "value7": 5,
+          "value8": 5,
+          "value9": 1000,
+          "value10": 50,
+          "value11": 50
+        }
+      },
+      {
+        "level": 4,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 0.5,
+        "optionValue": {
+          "value1": "-",
+          "value2": 40,
+          "value3": 24,
+          "value4": 24,
+          "value5": 100,
+          "value6": 116,
+          "value7": 5,
+          "value8": 5,
+          "value9": 1000,
+          "value10": 50,
+          "value11": 50
+        }
+      },
+      {
+        "level": 5,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 0.5,
+        "optionValue": {
+          "value1": "-",
+          "value2": 42,
+          "value3": 25,
+          "value4": 25,
+          "value5": 100,
+          "value6": 120,
+          "value7": 5,
+          "value8": 5,
+          "value9": 1000,
+          "value10": 50,
+          "value11": 50
+        }
+      },
+      {
+        "level": 6,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 0.5,
+        "optionValue": {
+          "value1": "-",
+          "value2": 44,
+          "value3": 26,
+          "value4": 26,
+          "value5": 100,
+          "value6": 124,
+          "value7": 5,
+          "value8": 5,
+          "value9": 1000,
+          "value10": 50,
+          "value11": 50
+        }
+      },
+      {
+        "level": 7,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 0.5,
+        "optionValue": {
+          "value1": "-",
+          "value2": 46,
+          "value3": 27,
+          "value4": 27,
+          "value5": 100,
+          "value6": 128,
+          "value7": 5,
+          "value8": 5,
+          "value9": 1000,
+          "value10": 50,
+          "value11": 50
+        }
+      },
+      {
+        "level": 8,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 0.5,
+        "optionValue": {
+          "value1": "-",
+          "value2": 48,
+          "value3": 28,
+          "value4": 28,
+          "value5": 100,
+          "value6": 131,
+          "value7": 5,
+          "value8": 5,
+          "value9": 1000,
+          "value10": 50,
+          "value11": 50
+        }
+      },
+      {
+        "level": 9,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 0.5,
+        "optionValue": {
+          "value1": "-",
+          "value2": 50,
+          "value3": 29,
+          "value4": 29,
+          "value5": 100,
+          "value6": 135,
+          "value7": 5,
+          "value8": 5,
+          "value9": 1000,
+          "value10": 50,
+          "value11": 50
+        }
+      },
+      {
+        "level": 10,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 0.5,
+        "optionValue": {
+          "value1": "-",
+          "value2": 52,
+          "value3": 30,
+          "value4": 30,
+          "value5": 100,
+          "value6": 139,
+          "value7": 5,
+          "value8": 5,
+          "value9": 1000,
+          "value10": 50,
+          "value11": 50
+        }
+      },
+      {
+        "level": 11,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 0.5,
+        "optionValue": {
+          "value1": "-",
+          "value2": 54,
+          "value3": 31,
+          "value4": 31,
+          "value5": 100,
+          "value6": 143,
+          "value7": 5,
+          "value8": 5,
+          "value9": 1000,
+          "value10": 50,
+          "value11": 50
+        }
+      },
+      {
+        "level": 12,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 0.5,
+        "optionValue": {
+          "value1": "-",
+          "value2": 56,
+          "value3": 32,
+          "value4": 32,
+          "value5": 100,
+          "value6": 146,
+          "value7": 5,
+          "value8": 5,
+          "value9": 1000,
+          "value10": 50,
+          "value11": 50
+        }
+      },
+      {
+        "level": 13,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 0.5,
+        "optionValue": {
+          "value1": "-",
+          "value2": 58,
+          "value3": 33,
+          "value4": 33,
+          "value5": 100,
+          "value6": 150,
+          "value7": 5,
+          "value8": 5,
+          "value9": 1000,
+          "value10": 50,
+          "value11": 50
+        }
+      },
+      {
+        "level": 14,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 0.5,
+        "optionValue": {
+          "value1": "-",
+          "value2": 60,
+          "value3": 34,
+          "value4": 34,
+          "value5": 100,
+          "value6": 154,
+          "value7": 5,
+          "value8": 5,
+          "value9": 1000,
+          "value10": 50,
+          "value11": 50
+        }
+      },
+      {
+        "level": 15,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 0.5,
+        "optionValue": {
+          "value1": "-",
+          "value2": 62,
+          "value3": 35,
+          "value4": 35,
+          "value5": 100,
+          "value6": 158,
+          "value7": 5,
+          "value8": 5,
+          "value9": 1000,
+          "value10": 50,
+          "value11": 50
+        }
+      },
+      {
+        "level": 16,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 0.5,
+        "optionValue": {
+          "value1": "-",
+          "value2": 64,
+          "value3": 36,
+          "value4": 36,
+          "value5": 100,
+          "value6": 161,
+          "value7": 5,
+          "value8": 5,
+          "value9": 1000,
+          "value10": 50,
+          "value11": 50
+        }
+      },
+      {
+        "level": 17,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 0.5,
+        "optionValue": {
+          "value1": "-",
+          "value2": 66,
+          "value3": 37,
+          "value4": 37,
+          "value5": 100,
+          "value6": 165,
+          "value7": 5,
+          "value8": 5,
+          "value9": 1000,
+          "value10": 50,
+          "value11": 50
+        }
+      },
+      {
+        "level": 18,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 0.5,
+        "optionValue": {
+          "value1": "-",
+          "value2": 68,
+          "value3": 38,
+          "value4": 38,
+          "value5": 100,
+          "value6": 169,
+          "value7": 5,
+          "value8": 5,
+          "value9": 1000,
+          "value10": 50,
+          "value11": 50
+        }
+      },
+      {
+        "level": 19,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 0.5,
+        "optionValue": {
+          "value1": "-",
+          "value2": 70,
+          "value3": 39,
+          "value4": 39,
+          "value5": 100,
+          "value6": 173,
+          "value7": 5,
+          "value8": 5,
+          "value9": 1000,
+          "value10": 50,
+          "value11": 50
+        }
+      },
+      {
+        "level": 20,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 0.5,
+        "optionValue": {
+          "value1": "-",
+          "value2": 72,
+          "value3": 40,
+          "value4": 40,
+          "value5": 100,
+          "value6": 176,
+          "value7": 5,
+          "value8": 5,
+          "value9": 1000,
+          "value10": 50,
+          "value11": 50
+        }
+      }
+    ]
+  }
+}

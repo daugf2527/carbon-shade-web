@@ -26,6 +26,10 @@ export function toEnemyAIState(profile: EnemyRuntimeProfile): EnemyAIState {
     targetSwitchTime: profile.targetSwitchTime,
     longRangeReactionChance: profile.longRangeReactionChance,
     behaviorWeights: profile.behaviorWeights,
+    flinchDurationTicks: profile.flinchDurationTicks,
+    launchDurationTicks: profile.launchDurationTicks,
+    knockdownDurationTicks: profile.knockdownDurationTicks,
+    getupDurationTicks: profile.getupDurationTicks,
   };
 }
 

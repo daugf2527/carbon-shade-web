@@ -1,0 +1,330 @@
+{
+  "capturedAt": "2026-05-09",
+  "apiEndpoint": "/df/skills/41f1cdc2ff58bb5fdc287be0db2a8df3/547ab2b2bd860d3e37355a9cfbc1077c",
+  "name": "갈증",
+  "type": "active",
+  "desc": "스킬키를 꾹 누르고 있으면, 1회 충전마다 HP를 소모하여 갈증 상태로 돌입한다.\n갈증 상태 진입 시 충격파가 발생하며, 충격파에 맞은 적에게 출혈을 유발한다.\n갈증 상태에서는 기본 공격과 붕산격, 고어 크로스를 포함한 버서커 전직 계열 스킬의 공격력이 증가한다.",
+  "descDetail": "스킬키를 꾹 누르고 있으면, 1회 충전마다 HP를 소모하여 갈증 상태로 돌입한다.\n갈증 상태 진입 시 충격파가 발생하며, 충격파에 맞은 적에게 출혈을 유발한다.\n갈증 상태에서는 기본 공격과 붕산격, 고어 크로스를 포함한 버서커 전직 계열 스킬의 공격력이 증가한다.",
+  "consumeItem": null,
+  "descSpecial": [
+    "스킬키 입력 지속 시, 1회 충전마다 HP를 지속 소모"
+  ],
+  "maxLevel": 20,
+  "requiredLevel": 35,
+  "requiredLevelRange": 3,
+  "preRequiredSkill": [
+    {
+      "skillId": "506e7ed77d517419a6e1c437a2cedb17",
+      "name": "레이징 퓨리",
+      "level": "1"
+    }
+  ],
+  "jobId": "41f1cdc2ff58bb5fdc287be0db2a8df3",
+  "jobName": "귀검사(남)",
+  "jobGrowLevel": [],
+  "levelInfo": {
+    "optionDesc": "기본 HP 감소 : {value1}%\n충전 1틱당 HP량 감소 : {value2}%\n지속 시간 : {value3}초\n기본/스킬 공격력 증가율 : {value4}%\n \n[갈증 시전 시 충격파]\n출혈 공격력 : {value5}\n출혈 지속 시간 : {value6}초\n출혈 발생 범위 : {value7}px",
+    "rows": [
+      {
+        "level": 1,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 2.4,
+        "optionValue": {
+          "value1": "-",
+          "value2": 10,
+          "value3": "-",
+          "value4": 11,
+          "value5": 14,
+          "value6": 7,
+          "value7": 500
+        }
+      },
+      {
+        "level": 2,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 2.4,
+        "optionValue": {
+          "value1": "-",
+          "value2": 10,
+          "value3": "-",
+          "value4": 12,
+          "value5": 16,
+          "value6": 7,
+          "value7": 500
+        }
+      },
+      {
+        "level": 3,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 2.4,
+        "optionValue": {
+          "value1": "-",
+          "value2": 10,
+          "value3": "-",
+          "value4": 13,
+          "value5": 18,
+          "value6": 7,
+          "value7": 500
+        }
+      },
+      {
+        "level": 4,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 2.4,
+        "optionValue": {
+          "value1": "-",
+          "value2": 10,
+          "value3": "-",
+          "value4": 14,
+          "value5": 21,
+          "value6": 7,
+          "value7": 500
+        }
+      },
+      {
+        "level": 5,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 2.4,
+        "optionValue": {
+          "value1": "-",
+          "value2": 10,
+          "value3": "-",
+          "value4": 15,
+          "value5": 23,
+          "value6": 7,
+          "value7": 500
+        }
+      },
+      {
+        "level": 6,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 2.4,
+        "optionValue": {
+          "value1": "-",
+          "value2": 10,
+          "value3": "-",
+          "value4": 16,
+          "value5": 25,
+          "value6": 7,
+          "value7": 500
+        }
+      },
+      {
+        "level": 7,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 2.4,
+        "optionValue": {
+          "value1": "-",
+          "value2": 10,
+          "value3": "-",
+          "value4": 17,
+          "value5": 27,
+          "value6": 7,
+          "value7": 500
+        }
+      },
+      {
+        "level": 8,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 2.4,
+        "optionValue": {
+          "value1": "-",
+          "value2": 10,
+          "value3": "-",
+          "value4": 18,
+          "value5": 30,
+          "value6": 7,
+          "value7": 500
+        }
+      },
+      {
+        "level": 9,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 2.4,
+        "optionValue": {
+          "value1": "-",
+          "value2": 10,
+          "value3": "-",
+          "value4": 19,
+          "value5": 32,
+          "value6": 7,
+          "value7": 500
+        }
+      },
+      {
+        "level": 10,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 2.4,
+        "optionValue": {
+          "value1": "-",
+          "value2": 10,
+          "value3": "-",
+          "value4": 20,
+          "value5": 34,
+          "value6": 7,
+          "value7": 500
+        }
+      },
+      {
+        "level": 11,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 2.4,
+        "optionValue": {
+          "value1": "-",
+          "value2": 10,
+          "value3": "-",
+          "value4": 21,
+          "value5": 36,
+          "value6": 7,
+          "value7": 500
+        }
+      },
+      {
+        "level": 12,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 2.4,
+        "optionValue": {
+          "value1": "-",
+          "value2": 10,
+          "value3": "-",
+          "value4": 22,
+          "value5": 39,
+          "value6": 7,
+          "value7": 500
+        }
+      },
+      {
+        "level": 13,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 2.4,
+        "optionValue": {
+          "value1": "-",
+          "value2": 10,
+          "value3": "-",
+          "value4": 23,
+          "value5": 41,
+          "value6": 7,
+          "value7": 500
+        }
+      },
+      {
+        "level": 14,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 2.4,
+        "optionValue": {
+          "value1": "-",
+          "value2": 10,
+          "value3": "-",
+          "value4": 24,
+          "value5": 43,
+          "value6": 7,
+          "value7": 500
+        }
+      },
+      {
+        "level": 15,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 2.4,
+        "optionValue": {
+          "value1": "-",
+          "value2": 10,
+          "value3": "-",
+          "value4": 25,
+          "value5": 45,
+          "value6": 7,
+          "value7": 500
+        }
+      },
+      {
+        "level": 16,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 2.4,
+        "optionValue": {
+          "value1": "-",
+          "value2": 10,
+          "value3": "-",
+          "value4": 26,
+          "value5": 47,
+          "value6": 7,
+          "value7": 500
+        }
+      },
+      {
+        "level": 17,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 2.4,
+        "optionValue": {
+          "value1": "-",
+          "value2": 10,
+          "value3": "-",
+          "value4": 27,
+          "value5": 50,
+          "value6": 7,
+          "value7": 500
+        }
+      },
+      {
+        "level": 18,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 2.4,
+        "optionValue": {
+          "value1": "-",
+          "value2": 10,
+          "value3": "-",
+          "value4": 28,
+          "value5": 52,
+          "value6": 7,
+          "value7": 500
+        }
+      },
+      {
+        "level": 19,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 2.4,
+        "optionValue": {
+          "value1": "-",
+          "value2": 10,
+          "value3": "-",
+          "value4": 29,
+          "value5": 54,
+          "value6": 7,
+          "value7": 500
+        }
+      },
+      {
+        "level": 20,
+        "consumeMp": null,
+        "coolTime": 5,
+        "castingTime": 2.4,
+        "optionValue": {
+          "value1": "-",
+          "value2": 10,
+          "value3": "-",
+          "value4": 30,
+          "value5": 56,
+          "value6": 7,
+          "value7": 500
+        }
+      }
+    ]
+  }
+}

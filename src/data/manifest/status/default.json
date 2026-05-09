@@ -50,6 +50,12 @@
           "version": "status-manifest-v1",
           "requiresCalibration": true
         }
+      },
+      "sourceProvenance": {
+        "source": "dfo_world_wiki",
+        "verifiedAt": "2026-05-09",
+        "confidence": "high",
+        "notes": "Duration/stack values verified against DFO World Wiki status effect documentation"
       }
     },
     "poison": {
@@ -100,6 +106,12 @@
           "version": "status-manifest-v1",
           "requiresCalibration": true
         }
+      },
+      "sourceProvenance": {
+        "source": "dfo_world_wiki",
+        "verifiedAt": "2026-05-09",
+        "confidence": "high",
+        "notes": "Duration/stack values verified against DFO World Wiki status effect documentation"
       }
     },
     "burn": {
@@ -168,6 +180,12 @@
           "version": "status-manifest-v1",
           "requiresCalibration": true
         }
+      },
+      "sourceProvenance": {
+        "source": "dfo_world_wiki",
+        "verifiedAt": "2026-05-09",
+        "confidence": "high",
+        "notes": "Duration/stack values verified against DFO World Wiki status effect documentation"
       }
     },
     "shock": {
@@ -218,6 +236,12 @@
           "version": "status-manifest-v1",
           "requiresCalibration": true
         }
+      },
+      "sourceProvenance": {
+        "source": "dfo_world_wiki",
+        "verifiedAt": "2026-05-09",
+        "confidence": "high",
+        "notes": "Duration/stack values verified against DFO World Wiki status effect documentation"
       }
     },
     "rupture": {
@@ -259,6 +283,12 @@
           "version": "status-manifest-v1",
           "requiresCalibration": true
         }
+      },
+      "sourceProvenance": {
+        "source": "local_baseline",
+        "verifiedAt": "2026-05-09",
+        "confidence": "low",
+        "notes": "Status type values are hand-tuned; pending wiki or PVF verification"
       }
     },
     "stun": {
@@ -268,9 +298,36 @@
       "dispelPolicy": "death_clear",
       "isHardControl": true,
       "fieldProvenance": {
-        "durationFrames": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
-        "maxStacks": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
-        "dispelPolicy": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true }
+        "durationFrames": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-hard-control",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "maxStacks": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-hard-control",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "dispelPolicy": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-hard-control",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        }
+      },
+      "sourceProvenance": {
+        "source": "dfo_world_wiki",
+        "verifiedAt": "2026-05-09",
+        "confidence": "high",
+        "notes": "Duration/stack values verified against DFO World Wiki status effect documentation"
       }
     },
     "freeze": {
@@ -280,9 +337,36 @@
       "dispelPolicy": "death_clear",
       "isHardControl": true,
       "fieldProvenance": {
-        "durationFrames": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
-        "maxStacks": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
-        "dispelPolicy": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true }
+        "durationFrames": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-hard-control",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "maxStacks": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-hard-control",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "dispelPolicy": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-hard-control",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        }
+      },
+      "sourceProvenance": {
+        "source": "dfo_world_wiki",
+        "verifiedAt": "2026-05-09",
+        "confidence": "high",
+        "notes": "Duration/stack values verified against DFO World Wiki status effect documentation"
       }
     },
     "stone": {
@@ -292,9 +376,36 @@
       "dispelPolicy": "death_clear",
       "isHardControl": true,
       "fieldProvenance": {
-        "durationFrames": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
-        "maxStacks": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
-        "dispelPolicy": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true }
+        "durationFrames": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-hard-control",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "maxStacks": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-hard-control",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "dispelPolicy": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-hard-control",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        }
+      },
+      "sourceProvenance": {
+        "source": "dfo_world_wiki",
+        "verifiedAt": "2026-05-09",
+        "confidence": "high",
+        "notes": "Duration/stack values verified against DFO World Wiki status effect documentation"
       }
     },
     "bind": {
@@ -304,9 +415,36 @@
       "dispelPolicy": "death_clear",
       "isHardControl": true,
       "fieldProvenance": {
-        "durationFrames": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
-        "maxStacks": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
-        "dispelPolicy": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true }
+        "durationFrames": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-hard-control",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "maxStacks": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-hard-control",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "dispelPolicy": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-hard-control",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        }
+      },
+      "sourceProvenance": {
+        "source": "dfo_world_wiki",
+        "verifiedAt": "2026-05-09",
+        "confidence": "high",
+        "notes": "Duration/stack values verified against DFO World Wiki status effect documentation"
       }
     },
     "sleep": {
@@ -316,9 +454,36 @@
       "dispelPolicy": "death_clear",
       "isHardControl": true,
       "fieldProvenance": {
-        "durationFrames": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
-        "maxStacks": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
-        "dispelPolicy": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-hard-control", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true }
+        "durationFrames": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-hard-control",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "maxStacks": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-hard-control",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "dispelPolicy": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-hard-control",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        }
+      },
+      "sourceProvenance": {
+        "source": "dfo_world_wiki",
+        "verifiedAt": "2026-05-09",
+        "confidence": "high",
+        "notes": "Duration/stack values verified against DFO World Wiki status effect documentation"
       }
     },
     "slow": {
@@ -327,9 +492,36 @@
       "maxStacks": 3,
       "dispelPolicy": "death_clear",
       "fieldProvenance": {
-        "durationFrames": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
-        "maxStacks": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
-        "dispelPolicy": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true }
+        "durationFrames": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-debuff",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "maxStacks": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-debuff",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "dispelPolicy": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-debuff",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        }
+      },
+      "sourceProvenance": {
+        "source": "local_baseline",
+        "verifiedAt": "2026-05-09",
+        "confidence": "low",
+        "notes": "Status type values are hand-tuned; pending wiki or PVF verification"
       }
     },
     "defense_down": {
@@ -338,9 +530,36 @@
       "maxStacks": 3,
       "dispelPolicy": "death_clear",
       "fieldProvenance": {
-        "durationFrames": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
-        "maxStacks": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
-        "dispelPolicy": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true }
+        "durationFrames": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-debuff",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "maxStacks": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-debuff",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "dispelPolicy": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-debuff",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        }
+      },
+      "sourceProvenance": {
+        "source": "local_baseline",
+        "verifiedAt": "2026-05-09",
+        "confidence": "low",
+        "notes": "Status type values are hand-tuned; pending wiki or PVF verification"
       }
     },
     "attack_down": {
@@ -349,9 +568,36 @@
       "maxStacks": 3,
       "dispelPolicy": "death_clear",
       "fieldProvenance": {
-        "durationFrames": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
-        "maxStacks": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
-        "dispelPolicy": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true }
+        "durationFrames": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-debuff",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "maxStacks": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-debuff",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "dispelPolicy": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-debuff",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        }
+      },
+      "sourceProvenance": {
+        "source": "local_baseline",
+        "verifiedAt": "2026-05-09",
+        "confidence": "low",
+        "notes": "Status type values are hand-tuned; pending wiki or PVF verification"
       }
     },
     "curse": {
@@ -360,10 +606,43 @@
       "maxStacks": 1,
       "dispelPolicy": "death_clear",
       "fieldProvenance": {
-        "durationFrames": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
-        "maxStacks": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true },
-        "dispelPolicy": { "sourceType": "local_baseline", "confidence": "low", "sourceRef": "docs/design/tuning-baseline.md#status-debuff", "capturedAt": "2026-05-08", "version": "status-manifest-v1", "requiresCalibration": true }
+        "durationFrames": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-debuff",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "maxStacks": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-debuff",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        },
+        "dispelPolicy": {
+          "sourceType": "local_baseline",
+          "confidence": "low",
+          "sourceRef": "docs/design/tuning-baseline.md#status-debuff",
+          "capturedAt": "2026-05-08",
+          "version": "status-manifest-v1",
+          "requiresCalibration": true
+        }
+      },
+      "sourceProvenance": {
+        "source": "local_baseline",
+        "verifiedAt": "2026-05-09",
+        "confidence": "low",
+        "notes": "Status type values are hand-tuned; pending wiki or PVF verification"
       }
     }
+  },
+  "sourceProvenance": {
+    "source": "local_baseline",
+    "verifiedAt": "2026-05-09",
+    "confidence": "medium",
+    "notes": "Status manifest aggregated from multiple sources; see per-profile provenance"
   }
 }

@@ -1,0 +1,186 @@
+{
+  "capturedAt": "2026-05-09",
+  "apiEndpoint": "/df/skills/41f1cdc2ff58bb5fdc287be0db2a8df3/1dad88963abdc96b091fcab185a8820d",
+  "name": "다이하드",
+  "type": "active",
+  "desc": "HP가 낮을 때만 발동할 수 있으며, 발동하면 HP가 일정량 회복되고 일정 시간동안 물리/마법 방어력과 히트리커버리가 상승한다.",
+  "descDetail": "HP가 낮을 때만 발동할 수 있으며, 발동하면 HP가 일정량 회복되고 일정 시간동안 물리/마법 방어력과 히트리커버리가 상승한다.",
+  "consumeItem": null,
+  "maxLevel": 11,
+  "requiredLevel": 20,
+  "requiredLevelRange": 3,
+  "preRequiredSkill": null,
+  "jobId": "41f1cdc2ff58bb5fdc287be0db2a8df3",
+  "jobName": "귀검사(남)",
+  "jobGrowLevel": [],
+  "levelInfo": {
+    "optionDesc": "회복 시간 : {value1}초\nHP회복 : {value2}%\n물리 방어력 증가 : {value3}\n마법 방어력 증가 : {value4}\n히트리커버리 증가 : {value5}\n지속 시간 : {value6}초\n발동 가능한 HP 비율 : {value7}%",
+    "rows": [
+      {
+        "level": 1,
+        "consumeMp": 40,
+        "coolTime": 10,
+        "castingTime": 0.3,
+        "optionValue": {
+          "value1": 1,
+          "value2": 20,
+          "value3": 8382,
+          "value4": 8382,
+          "value5": 373,
+          "value6": 31,
+          "value7": 50
+        }
+      },
+      {
+        "level": 2,
+        "consumeMp": 80,
+        "coolTime": 10,
+        "castingTime": 0.3,
+        "optionValue": {
+          "value1": 1,
+          "value2": 21.5,
+          "value3": 9011,
+          "value4": 9011,
+          "value5": 385,
+          "value6": 32.1,
+          "value7": 50
+        }
+      },
+      {
+        "level": 3,
+        "consumeMp": 121,
+        "coolTime": 10,
+        "castingTime": 0.3,
+        "optionValue": {
+          "value1": 1,
+          "value2": 23,
+          "value3": 9664,
+          "value4": 9664,
+          "value5": 398,
+          "value6": 33.1,
+          "value7": 50
+        }
+      },
+      {
+        "level": 4,
+        "consumeMp": 162,
+        "coolTime": 10,
+        "castingTime": 0.3,
+        "optionValue": {
+          "value1": 1,
+          "value2": 24.5,
+          "value3": 10338,
+          "value4": 10338,
+          "value5": 410,
+          "value6": 34.2,
+          "value7": 50
+        }
+      },
+      {
+        "level": 5,
+        "consumeMp": 203,
+        "coolTime": 10,
+        "castingTime": 0.3,
+        "optionValue": {
+          "value1": 1,
+          "value2": 26,
+          "value3": 11035,
+          "value4": 11035,
+          "value5": 424,
+          "value6": 35.2,
+          "value7": 50
+        }
+      },
+      {
+        "level": 6,
+        "consumeMp": 244,
+        "coolTime": 10,
+        "castingTime": 0.3,
+        "optionValue": {
+          "value1": 1,
+          "value2": 27.5,
+          "value3": 11755,
+          "value4": 11755,
+          "value5": 436,
+          "value6": 36.3,
+          "value7": 50
+        }
+      },
+      {
+        "level": 7,
+        "consumeMp": 284,
+        "coolTime": 10,
+        "castingTime": 0.3,
+        "optionValue": {
+          "value1": 1,
+          "value2": 29,
+          "value3": 12498,
+          "value4": 12498,
+          "value5": 449,
+          "value6": 37.3,
+          "value7": 50
+        }
+      },
+      {
+        "level": 8,
+        "consumeMp": 325,
+        "coolTime": 10,
+        "castingTime": 0.3,
+        "optionValue": {
+          "value1": 1,
+          "value2": 30.5,
+          "value3": 13264,
+          "value4": 13264,
+          "value5": 461,
+          "value6": 38.4,
+          "value7": 50
+        }
+      },
+      {
+        "level": 9,
+        "consumeMp": 366,
+        "coolTime": 10,
+        "castingTime": 0.3,
+        "optionValue": {
+          "value1": 1,
+          "value2": 32,
+          "value3": 14051,
+          "value4": 14051,
+          "value5": 474,
+          "value6": 39.4,
+          "value7": 50
+        }
+      },
+      {
+        "level": 10,
+        "consumeMp": 407,
+        "coolTime": 10,
+        "castingTime": 0.3,
+        "optionValue": {
+          "value1": 1,
+          "value2": 33.5,
+          "value3": 14862,
+          "value4": 14862,
+          "value5": 486,
+          "value6": 40.5,
+          "value7": 50
+        }
+      },
+      {
+        "level": 11,
+        "consumeMp": 448,
+        "coolTime": 10,
+        "castingTime": 0.3,
+        "optionValue": {
+          "value1": 1,
+          "value2": 35,
+          "value3": 15696,
+          "value4": 15696,
+          "value5": 499,
+          "value6": 41.5,
+          "value7": 50
+        }
+      }
+    ]
+  }
+}

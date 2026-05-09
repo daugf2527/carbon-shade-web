@@ -1,0 +1,228 @@
+{
+  "capturedAt": "2026-05-09",
+  "jobId": "41f1cdc2ff58bb5fdc287be0db2a8df3",
+  "jobGrowId": "6d459bc74ba73ee4fe5cdc4655400193",
+  "skillCount": 55,
+  "skills": [
+    {
+      "skillId": "eb71e1d82d92c7e1d40500a0dcd77aa6",
+      "name": "귀참"
+    },
+    {
+      "skillId": "fc7a3f4c2852c832a2f20af63d5d212f",
+      "name": "어퍼 슬래쉬"
+    },
+    {
+      "skillId": "d296043df164385a14cb973c8c7c4d07",
+      "name": "혈기왕성"
+    },
+    {
+      "skillId": "7822d6d52e10964a6755f142c666b494",
+      "name": "백스텝"
+    },
+    {
+      "skillId": "5a56514f35cf0270ae8d6c65f8fefd78",
+      "name": "기본기 숙련"
+    },
+    {
+      "skillId": "ce26c6b69d02a440a81b552bec94f03b",
+      "name": "퀵 스탠딩"
+    },
+    {
+      "skillId": "10b31c7e8cd2d60b9bcf3b1d3ada4b0a",
+      "name": "스킬 체인"
+    },
+    {
+      "skillId": "892ef624d8bf3d7fc045f84825fd6104",
+      "name": "방어구 마스터리"
+    },
+    {
+      "skillId": "3c5604bdbb0240b8f130f59ab40509c3",
+      "name": "가드"
+    },
+    {
+      "skillId": "45442bbbe33540b4deeec29437dae70c",
+      "name": "쓰러스트"
+    },
+    {
+      "skillId": "4224f9b0b8c7c903e9a1e0f9d9f6d04d",
+      "name": "에쉔 포크"
+    },
+    {
+      "skillId": "78bd107acd474518b606be1e4fd38239",
+      "name": "공중 연속 베기"
+    },
+    {
+      "skillId": "a5fa08f5d509e6ff2ebc68856a470b5a",
+      "name": "카잔"
+    },
+    {
+      "skillId": "202edb928046f4fa6dedf6337377efd5",
+      "name": "열파참"
+    },
+    {
+      "skillId": "6e33d47e6622ce03b6defdd912140270",
+      "name": "붕산격"
+    },
+    {
+      "skillId": "2b340542e776818b78f3212af184bd6b",
+      "name": "백스텝 강화"
+    },
+    {
+      "skillId": "1fea5a626f15230237946a11a9d11582",
+      "name": "도약"
+    },
+    {
+      "skillId": "f2fb27162beb0b87a7cb9af7900e95f2",
+      "name": "단공참"
+    },
+    {
+      "skillId": "2f5d03c7848effbc0a23f4df45d9ca46",
+      "name": "광기"
+    },
+    {
+      "skillId": "01c3a2fb793d293a25ed8dc7a0d70c1a",
+      "name": "소검 마스터리"
+    },
+    {
+      "skillId": "8f73f243041c2d27739fe7696f02bf9b",
+      "name": "도 마스터리"
+    },
+    {
+      "skillId": "8c2379737c5acc935c1731f67f607655",
+      "name": "대검 마스터리"
+    },
+    {
+      "skillId": "9cb6f9ed646fa87f9b7680a42ce83d1a",
+      "name": "둔기 마스터리"
+    },
+    {
+      "skillId": "42c82812f86ff6704ae9952a2e6093a4",
+      "name": "혈십자"
+    },
+    {
+      "skillId": "3d8f3d438405d79f8d3ed68072674d1e",
+      "name": "파동검 지열"
+    },
+    {
+      "skillId": "ca75c965f20a150f99f54155a37400df",
+      "name": "고어 크로스"
+    },
+    {
+      "skillId": "6a1d1f08a6572be420bb3a256c44c015",
+      "name": "프렌지"
+    },
+    {
+      "skillId": "a2d943797daca862a6f321aca6ac9bfa",
+      "name": "달빛 베기"
+    },
+    {
+      "skillId": "1dad88963abdc96b091fcab185a8820d",
+      "name": "다이하드"
+    },
+    {
+      "skillId": "fc1262c19f3d0477ee8eda47b8db8696",
+      "name": "크리티컬 히트"
+    },
+    {
+      "skillId": "bbc15561bec24f9c1e79e23d715b1dd2",
+      "name": "블러드 스크래치"
+    },
+    {
+      "skillId": "3829c15bf5f520c13998a3479ba0ce7b",
+      "name": "블러드러스트"
+    },
+    {
+      "skillId": "0ed3148658fe37b3336ccb718dc0fdb0",
+      "name": "폭주"
+    },
+    {
+      "skillId": "506e7ed77d517419a6e1c437a2cedb17",
+      "name": "레이징 퓨리"
+    },
+    {
+      "skillId": "de20372767d014d62dc7361ac686834e",
+      "name": "크루얼 인게이지"
+    },
+    {
+      "skillId": "547ab2b2bd860d3e37355a9cfbc1077c",
+      "name": "갈증"
+    },
+    {
+      "skillId": "1b1cfab062e0768bcc889e33e1f30dbf",
+      "name": "블러디 레이브"
+    },
+    {
+      "skillId": "e36ae35f8964d92e30e33529a65544d7",
+      "name": "격노"
+    },
+    {
+      "skillId": "e0daa922b19cdc35de879e938361464e",
+      "name": "블러드 소드"
+    },
+    {
+      "skillId": "ecc23c980ea71450c0ad0c3fd232f329",
+      "name": "아웃레이지 브레이크"
+    },
+    {
+      "skillId": "dbf8b30c7057032af0d68fcfa289fdae",
+      "name": "선혈의 추억"
+    },
+    {
+      "skillId": "8572675ec6a1f50b6eff6a867376c2de",
+      "name": "익스트림 오버킬"
+    },
+    {
+      "skillId": "f1fdc6c2482ecc510a2a9f04201ba125",
+      "name": "블러드 스내치"
+    },
+    {
+      "skillId": "75747c67e14eec6088ce67f63ea41628",
+      "name": "사무치는 광기"
+    },
+    {
+      "skillId": "3a691a432c58abebc08211df45c4f4bd",
+      "name": "브루탈 크러셔"
+    },
+    {
+      "skillId": "374f53e8989ef04a8506c8ec99d9ecdc",
+      "name": "블러드 인카넷"
+    },
+    {
+      "skillId": "8ec9da6f808889b63adf2680fbf1f331",
+      "name": "블러드 붐"
+    },
+    {
+      "skillId": "00e4f916cc182df49e5efd29c3e2069c",
+      "name": "페이탈 블러드"
+    },
+    {
+      "skillId": "c524c4f378d1cd0ff99e4580750a4567",
+      "name": "블러드 리븐"
+    },
+    {
+      "skillId": "7e60ce8aaca12593f889e8551fd1b03a",
+      "name": "찰나의 깨달음"
+    },
+    {
+      "skillId": "67e7dd8996b5735e788c9420730c077d",
+      "name": "내딛는 한걸음"
+    },
+    {
+      "skillId": "a99040fc36c75e998aa3ed012b7759c5",
+      "name": "램펀트 매드니스"
+    },
+    {
+      "skillId": "b39ccc3dadab9d94569430e39cdf7d60",
+      "name": "무자비"
+    },
+    {
+      "skillId": "b224e3c19599a2496f7470936485e0ad",
+      "name": "각성의 실마리"
+    },
+    {
+      "skillId": "d59c9840f65381bde8487757f1753c71",
+      "name": "혈귀극도 : 파멸"
+    }
+  ]
+}

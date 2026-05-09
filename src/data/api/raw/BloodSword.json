@@ -1,0 +1,774 @@
+{
+  "capturedAt": "2026-05-09",
+  "apiEndpoint": "/df/skills/41f1cdc2ff58bb5fdc287be0db2a8df3/e0daa922b19cdc35de879e938361464e",
+  "name": "블러드 소드",
+  "type": "active",
+  "desc": "프렌지 상태에서만 사용할 수 있다.\n혈기를 내뿜어 검을 생성한 후, 검을 잡아 적을 강하게 찔러 폭발시킨다.\n스킬을 적중시키면, 가드를 포함한 다른 공격 스킬로 캔슬할 수 있다.\n방향키를 후방으로 입력하고 스킬을 시전하면 앞으로 나아가지 않고 제자리에서 찌른다.\n혈기왕성 습득 시 맞은 적에게 출혈을 거는 기능이 추가된다.",
+  "descDetail": "프렌지 상태에서만 사용할 수 있다.\n혈기를 내뿜어 검을 생성한 후, 검을 잡아 적을 강하게 찔러 폭발시킨다.\n스킬을 적중시키면, 가드를 포함한 다른 공격 스킬로 캔슬할 수 있다.\n방향키를 후방으로 입력하고 스킬을 시전하면 앞으로 나아가지 않고 제자리에서 찌른다.\n혈기왕성 습득 시 맞은 적에게 출혈을 거는 기능이 추가된다.",
+  "consumeItem": {
+    "itemId": "785e56a0ed4e3efd573da1f56a45217d",
+    "itemName": "무색 큐브 조각",
+    "value": 1
+  },
+  "descSpecial": [
+    "후방 방향키 입력 시 제자리에서 시전",
+    "스킬 적중 시 캔슬하여 가드를 포함한 다른 공격 스킬 시전 가능"
+  ],
+  "maxLevel": 70,
+  "requiredLevel": 40,
+  "requiredLevelRange": 2,
+  "preRequiredSkill": [
+    {
+      "skillId": "547ab2b2bd860d3e37355a9cfbc1077c",
+      "name": "갈증",
+      "level": "1"
+    }
+  ],
+  "jobId": "41f1cdc2ff58bb5fdc287be0db2a8df3",
+  "jobName": "귀검사(남)",
+  "jobGrowLevel": [],
+  "levelInfo": {
+    "optionDesc": "폭발 공격력 : {value1}\n\n[범위 정보]\n폭발 범위 비율 : {value2}%",
+    "rows": [
+      {
+        "level": 1,
+        "consumeMp": 297,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 23378,
+          "value2": 100
+        }
+      },
+      {
+        "level": 2,
+        "consumeMp": 311,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 25750,
+          "value2": 100
+        }
+      },
+      {
+        "level": 3,
+        "consumeMp": 325,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 28121,
+          "value2": 100
+        }
+      },
+      {
+        "level": 4,
+        "consumeMp": 339,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 30493,
+          "value2": 100
+        }
+      },
+      {
+        "level": 5,
+        "consumeMp": 353,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 32865,
+          "value2": 100
+        }
+      },
+      {
+        "level": 6,
+        "consumeMp": 367,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 35236,
+          "value2": 100
+        }
+      },
+      {
+        "level": 7,
+        "consumeMp": 381,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 37608,
+          "value2": 100
+        }
+      },
+      {
+        "level": 8,
+        "consumeMp": 395,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 39980,
+          "value2": 100
+        }
+      },
+      {
+        "level": 9,
+        "consumeMp": 409,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 42351,
+          "value2": 100
+        }
+      },
+      {
+        "level": 10,
+        "consumeMp": 423,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 44723,
+          "value2": 100
+        }
+      },
+      {
+        "level": 11,
+        "consumeMp": 437,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 47095,
+          "value2": 100
+        }
+      },
+      {
+        "level": 12,
+        "consumeMp": 451,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 49466,
+          "value2": 100
+        }
+      },
+      {
+        "level": 13,
+        "consumeMp": 465,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 51838,
+          "value2": 100
+        }
+      },
+      {
+        "level": 14,
+        "consumeMp": 479,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 54210,
+          "value2": 100
+        }
+      },
+      {
+        "level": 15,
+        "consumeMp": 493,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 56582,
+          "value2": 100
+        }
+      },
+      {
+        "level": 16,
+        "consumeMp": 507,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 58953,
+          "value2": 100
+        }
+      },
+      {
+        "level": 17,
+        "consumeMp": 521,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 61325,
+          "value2": 100
+        }
+      },
+      {
+        "level": 18,
+        "consumeMp": 535,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 63697,
+          "value2": 100
+        }
+      },
+      {
+        "level": 19,
+        "consumeMp": 550,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 66068,
+          "value2": 100
+        }
+      },
+      {
+        "level": 20,
+        "consumeMp": 564,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 68440,
+          "value2": 100
+        }
+      },
+      {
+        "level": 21,
+        "consumeMp": 578,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 70812,
+          "value2": 100
+        }
+      },
+      {
+        "level": 22,
+        "consumeMp": 592,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 73183,
+          "value2": 100
+        }
+      },
+      {
+        "level": 23,
+        "consumeMp": 606,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 75555,
+          "value2": 100
+        }
+      },
+      {
+        "level": 24,
+        "consumeMp": 620,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 77927,
+          "value2": 100
+        }
+      },
+      {
+        "level": 25,
+        "consumeMp": 634,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 80298,
+          "value2": 100
+        }
+      },
+      {
+        "level": 26,
+        "consumeMp": 648,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 82670,
+          "value2": 100
+        }
+      },
+      {
+        "level": 27,
+        "consumeMp": 662,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 85042,
+          "value2": 100
+        }
+      },
+      {
+        "level": 28,
+        "consumeMp": 676,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 87413,
+          "value2": 100
+        }
+      },
+      {
+        "level": 29,
+        "consumeMp": 690,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 89785,
+          "value2": 100
+        }
+      },
+      {
+        "level": 30,
+        "consumeMp": 704,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 92157,
+          "value2": 100
+        }
+      },
+      {
+        "level": 31,
+        "consumeMp": 718,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 94528,
+          "value2": 100
+        }
+      },
+      {
+        "level": 32,
+        "consumeMp": 732,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 96900,
+          "value2": 100
+        }
+      },
+      {
+        "level": 33,
+        "consumeMp": 746,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 99272,
+          "value2": 100
+        }
+      },
+      {
+        "level": 34,
+        "consumeMp": 760,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 101643,
+          "value2": 100
+        }
+      },
+      {
+        "level": 35,
+        "consumeMp": 774,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 104015,
+          "value2": 100
+        }
+      },
+      {
+        "level": 36,
+        "consumeMp": 789,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 106387,
+          "value2": 100
+        }
+      },
+      {
+        "level": 37,
+        "consumeMp": 803,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 108759,
+          "value2": 100
+        }
+      },
+      {
+        "level": 38,
+        "consumeMp": 817,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 111130,
+          "value2": 100
+        }
+      },
+      {
+        "level": 39,
+        "consumeMp": 831,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 113502,
+          "value2": 100
+        }
+      },
+      {
+        "level": 40,
+        "consumeMp": 845,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 115874,
+          "value2": 100
+        }
+      },
+      {
+        "level": 41,
+        "consumeMp": 859,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 118245,
+          "value2": 100
+        }
+      },
+      {
+        "level": 42,
+        "consumeMp": 873,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 120617,
+          "value2": 100
+        }
+      },
+      {
+        "level": 43,
+        "consumeMp": 887,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 122989,
+          "value2": 100
+        }
+      },
+      {
+        "level": 44,
+        "consumeMp": 901,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 125360,
+          "value2": 100
+        }
+      },
+      {
+        "level": 45,
+        "consumeMp": 915,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 127732,
+          "value2": 100
+        }
+      },
+      {
+        "level": 46,
+        "consumeMp": 929,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 130104,
+          "value2": 100
+        }
+      },
+      {
+        "level": 47,
+        "consumeMp": 943,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 132475,
+          "value2": 100
+        }
+      },
+      {
+        "level": 48,
+        "consumeMp": 957,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 134847,
+          "value2": 100
+        }
+      },
+      {
+        "level": 49,
+        "consumeMp": 971,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 137219,
+          "value2": 100
+        }
+      },
+      {
+        "level": 50,
+        "consumeMp": 985,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 139590,
+          "value2": 100
+        }
+      },
+      {
+        "level": 51,
+        "consumeMp": 999,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 141962,
+          "value2": 100
+        }
+      },
+      {
+        "level": 52,
+        "consumeMp": 1013,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 144334,
+          "value2": 100
+        }
+      },
+      {
+        "level": 53,
+        "consumeMp": 1028,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 146705,
+          "value2": 100
+        }
+      },
+      {
+        "level": 54,
+        "consumeMp": 1042,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 149077,
+          "value2": 100
+        }
+      },
+      {
+        "level": 55,
+        "consumeMp": 1056,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 151449,
+          "value2": 100
+        }
+      },
+      {
+        "level": 56,
+        "consumeMp": 1070,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 153820,
+          "value2": 100
+        }
+      },
+      {
+        "level": 57,
+        "consumeMp": 1084,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 156192,
+          "value2": 100
+        }
+      },
+      {
+        "level": 58,
+        "consumeMp": 1098,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 158564,
+          "value2": 100
+        }
+      },
+      {
+        "level": 59,
+        "consumeMp": 1112,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 160936,
+          "value2": 100
+        }
+      },
+      {
+        "level": 60,
+        "consumeMp": 1126,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 163307,
+          "value2": 100
+        }
+      },
+      {
+        "level": 61,
+        "consumeMp": 1140,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 165679,
+          "value2": 100
+        }
+      },
+      {
+        "level": 62,
+        "consumeMp": 1154,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 168051,
+          "value2": 100
+        }
+      },
+      {
+        "level": 63,
+        "consumeMp": 1168,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 170422,
+          "value2": 100
+        }
+      },
+      {
+        "level": 64,
+        "consumeMp": 1182,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 172794,
+          "value2": 100
+        }
+      },
+      {
+        "level": 65,
+        "consumeMp": 1196,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 175166,
+          "value2": 100
+        }
+      },
+      {
+        "level": 66,
+        "consumeMp": 1210,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 177537,
+          "value2": 100
+        }
+      },
+      {
+        "level": 67,
+        "consumeMp": 1224,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 179909,
+          "value2": 100
+        }
+      },
+      {
+        "level": 68,
+        "consumeMp": 1238,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 182281,
+          "value2": 100
+        }
+      },
+      {
+        "level": 69,
+        "consumeMp": 1252,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 184652,
+          "value2": 100
+        }
+      },
+      {
+        "level": 70,
+        "consumeMp": 1267,
+        "coolTime": 20,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 187024,
+          "value2": 100
+        }
+      }
+    ]
+  },
+  "evolution": [
+    {
+      "type": 1,
+      "name": "멈추지 않는 갈증",
+      "desc": "범위 증가\n공격 실패 보정\n찌르는 즉시 폭발 발생",
+      "descDetail": "[블러드 소드]\n혈검을 찌르는 순간 적이 타격되지 않더라도 폭발 발생\n\n폭발 범위 50% 증가\n\n폭발에 피격된 적이 없으면 남은 쿨타임 3초로 감소"
+    },
+    {
+      "type": 2,
+      "name": "블러드 쉐이크",
+      "desc": "적 모으기 추가\nHP 회복 추가\n범위 증가",
+      "descDetail": "[블러드 소드]\n시전 시 현재 HP 3%를 소모하여 강화된 형태로 발동\n - 폭발 범위 20% 증가\n - 적 타격 성공 시 HP 10% 회복\n\n폭발하기 직전 일정 범위 내의 적들을 폭발의 중심으로 끌어옴",
+      "specialFeature": "적 모으기"
+    }
+  ],
+  "enhancement": [
+    {
+      "type": 1,
+      "status": [
+        {
+          "name": "스킬 공격력 증가",
+          "value": "55%"
+        }
+      ]
+    },
+    {
+      "type": 2,
+      "status": [
+        {
+          "name": "스킬 공격력 증가",
+          "value": "38%"
+        },
+        {
+          "name": "스킬 쿨타임 감소",
+          "value": "15%"
+        }
+      ]
+    }
+  ]
+}

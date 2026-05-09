@@ -1,0 +1,33 @@
+{
+  "capturedAt": "2026-05-09",
+  "apiEndpoint": "/df/skills/41f1cdc2ff58bb5fdc287be0db2a8df3/d296043df164385a14cb973c8c7c4d07",
+  "name": "혈기왕성",
+  "type": "passive",
+  "desc": "고어 크로스 시전 시 MP소모를 HP소모로 변환시키고, 십자가의 크기가 증가한다.\n고어 크로스와 붕산격을 포함한 전직 이후 스킬에 출혈 기능이 추가된다.",
+  "descDetail": "고어 크로스 시전 시 MP소모를 HP소모로 변환시키고, 십자가의 크기가 증가한다.\n고어 크로스와 붕산격을 포함한 전직 이후 스킬에 출혈 기능이 추가된다.",
+  "consumeItem": null,
+  "maxLevel": 1,
+  "requiredLevel": 1,
+  "requiredLevelRange": 1,
+  "preRequiredSkill": null,
+  "jobId": "41f1cdc2ff58bb5fdc287be0db2a8df3",
+  "jobName": "귀검사(남)",
+  "jobGrowLevel": [],
+  "levelInfo": {
+    "optionDesc": "고어 크로스 기본 크기 증가 : {value1}%\n출혈 확률 : {value2}%\n출혈 지속 시간 : {value3}초\n출혈 공격력 : {value4}",
+    "rows": [
+      {
+        "level": 1,
+        "consumeMp": null,
+        "coolTime": null,
+        "castingTime": null,
+        "optionValue": {
+          "value1": 10,
+          "value2": 100,
+          "value3": 7,
+          "value4": 14
+        }
+      }
+    ]
+  }
+}

@@ -33,7 +33,7 @@ function fnv1a(str: string): string {
  * Used as combatSchemaHash in ReplayRecorder — changes only when manifest content changes.
  */
 export function computeActionsHash(actions: Record<ActionName, FrameDataAction>): string {
-  const jsonCompatible = JSON.parse(JSON.stringify(actions)) as Record<ActionName, FrameDataAction>;
+  const jsonCompatible = JSON.parse(JSON.stringify(actions, (key, val) => key === "sourceProvenance" ? undefined : val)) as Record<ActionName, FrameDataAction>;
   return fnv1a(stableStringify(jsonCompatible));
 }
 

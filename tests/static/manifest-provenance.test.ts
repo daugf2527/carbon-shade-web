@@ -23,7 +23,10 @@ function cloneActions(): Record<ActionName, FrameDataAction> {
 {
   const loaded = await loadActionsManifest();
   assert.deepEqual(validateManifest(loaded), [], "JSON actions manifest should satisfy runtime provenance gates");
-  assert.deepEqual(loaded, cloneActions(), "JSON actions manifest should remain in JSON-structural parity with ACTIONS");
+  // Strip sourceProvenance metadata before structural comparison (metadata, not combat data)
+  const loadedStripped = JSON.parse(JSON.stringify(loaded, (key, val) => key === "sourceProvenance" ? undefined : val));
+  const actionsStripped = JSON.parse(JSON.stringify(cloneActions(), (key, val) => key === "sourceProvenance" ? undefined : val));
+  assert.deepEqual(loadedStripped, actionsStripped, "JSON actions manifest should remain in JSON-structural parity with ACTIONS");
   assert.equal(computeActionsHash(loaded), computeActionsHash(ACTIONS), "JSON actions manifest hash should match ACTIONS hash");
   assert.equal(loaded.RagingFury.fieldProvenance?.cooldownProfile?.sourceType, "official_api");
 }
@@ -162,6 +165,11 @@ function profileToTuning(profile: EnemyManifest["profiles"]["grunt"]) {
     targetSwitchTime: profile.targetSwitchTime,
     longRangeReactionChance: profile.longRangeReactionChance,
     behaviorWeights: profile.behaviorWeights,
+    // CRT-004: Hit-reaction substate durations (synced with ai.ts toEnemyAIState)
+    flinchDurationTicks: profile.flinchDurationTicks,
+    launchDurationTicks: profile.launchDurationTicks,
+    knockdownDurationTicks: profile.knockdownDurationTicks,
+    getupDurationTicks: profile.getupDurationTicks,
   };
 }
 

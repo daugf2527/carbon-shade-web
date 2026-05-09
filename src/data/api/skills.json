@@ -1,0 +1,147 @@
+{
+  "capturedAt": "2026-05-09",
+  "version": "batch-a-v1",
+  "jobId": "41f1cdc2ff58bb5fdc287be0db2a8df3",
+  "jobGrowId": "6d459bc74ba73ee4fe5cdc4655400193",
+  "source": "Neople Open API /df/skills/{jobId}/{skillId}",
+  "note": "Level data from official API. Frame windows, hitbox geometry, and AI parameters are not covered by this endpoint.",
+  "skills": {
+    "UpwardSlash": {
+      "skillId": "fc7a3f4c2852c832a2f20af63d5d212f",
+      "skillName": "어퍼 슬래쉬",
+      "maxLevel": 20,
+      "requiredLevel": 1,
+      "levels": {}
+    },
+    "MountainousWheel": {
+      "skillId": "6e33d47e6622ce03b6defdd912140270",
+      "skillName": "붕산격",
+      "maxLevel": 70,
+      "requiredLevel": 10,
+      "levels": {}
+    },
+    "RagingFury": {
+      "skillId": "506e7ed77d517419a6e1c437a2cedb17",
+      "skillName": "레이징 퓨리",
+      "maxLevel": 70,
+      "requiredLevel": 30,
+      "levels": {}
+    },
+    "Bloodlust": {
+      "skillId": "3829c15bf5f520c13998a3479ba0ce7b",
+      "skillName": "블러드러스트",
+      "maxLevel": 70,
+      "requiredLevel": 25,
+      "levels": {}
+    },
+    "Derange": {
+      "skillId": "0ed3148658fe37b3336ccb718dc0fdb0",
+      "skillName": "폭주",
+      "maxLevel": 20,
+      "requiredLevel": 25,
+      "levels": {}
+    },
+    "Diehard": {
+      "skillId": "1dad88963abdc96b091fcab185a8820d",
+      "skillName": "다이하드",
+      "maxLevel": 11,
+      "requiredLevel": 20,
+      "levels": {}
+    },
+    "Frenzy": {
+      "skillId": "6a1d1f08a6572be420bb3a256c44c015",
+      "skillName": "프렌지",
+      "maxLevel": 30,
+      "requiredLevel": 15,
+      "levels": {}
+    },
+    "BloodyCross": {
+      "skillId": "42c82812f86ff6704ae9952a2e6093a4",
+      "skillName": "혈십자",
+      "maxLevel": 20,
+      "requiredLevel": 15,
+      "levels": {}
+    },
+    "VimAndVigor": {
+      "skillId": "d296043df164385a14cb973c8c7c4d07",
+      "skillName": "혈기왕성",
+      "maxLevel": 1,
+      "requiredLevel": 1,
+      "levels": {}
+    },
+    "QuickRebound": {
+      "skillId": "ce26c6b69d02a440a81b552bec94f03b",
+      "skillName": "퀵 스탠딩",
+      "maxLevel": 20,
+      "requiredLevel": 1,
+      "levels": {}
+    },
+    "Backstep": {
+      "skillId": "7822d6d52e10964a6755f142c666b494",
+      "skillName": "백스텝",
+      "maxLevel": 1,
+      "requiredLevel": 1,
+      "levels": {}
+    },
+    "GoreCross": {
+      "skillId": "ca75c965f20a150f99f54155a37400df",
+      "skillName": "고어 크로스",
+      "maxLevel": 70,
+      "requiredLevel": 15,
+      "levels": {}
+    },
+    "OutrageBreak": {
+      "skillId": "ecc23c980ea71450c0ad0c3fd232f329",
+      "skillName": "아웃레이지 브레이크",
+      "maxLevel": 70,
+      "requiredLevel": 45,
+      "levels": {}
+    },
+    "ExtremeOverkill": {
+      "skillId": "8572675ec6a1f50b6eff6a867376c2de",
+      "skillName": "익스트림 오버킬",
+      "maxLevel": 50,
+      "requiredLevel": 50,
+      "levels": {}
+    },
+    "BloodSword": {
+      "skillId": "e0daa922b19cdc35de879e938361464e",
+      "skillName": "블러드 소드",
+      "maxLevel": 70,
+      "requiredLevel": 40,
+      "levels": {}
+    },
+    "Thirst": {
+      "skillId": "547ab2b2bd860d3e37355a9cfbc1077c",
+      "skillName": "갈증",
+      "maxLevel": 20,
+      "requiredLevel": 35,
+      "levels": {}
+    },
+    "RagingFury2": {
+      "skillId": null,
+      "error": "HTTP 0",
+      "levels": {}
+    },
+    "BloodRuin": {
+      "skillId": null,
+      "error": "HTTP 0",
+      "levels": {}
+    },
+    "BurstFury": {
+      "skillId": null,
+      "error": "HTTP 0",
+      "levels": {}
+    },
+    "EarthShatter": {
+      "skillId": null,
+      "error": "HTTP 0",
+      "levels": {}
+    },
+    "BloodMemory": {
+      "skillId": null,
+      "error": "HTTP 0",
+      "levels": {}
+    }
+  }
+}

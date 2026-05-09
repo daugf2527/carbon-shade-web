@@ -1,6 +1,6 @@
 import type { Actor, Facing, ReactionKind } from "../types.js";
 import { cloneVec3 } from "../util/geometry.js";
-import type { EnemyAIState } from "./EnemyAIState.js";
+import { isHitReactionPhase, type EnemyAIState } from "./EnemyAIState.js";
 
 export interface EnemyAITickKernel {
   tickCount: number;
@@ -9,17 +9,52 @@ export interface EnemyAITickKernel {
   requestAction(actor: Actor, actionName: "EnemyBasic", source: "ai", facing?: Facing): boolean;
 }
 
-const stunnedReactions = new Set<ReactionKind>([
+// CRT-004: Map DNF reaction kinds to hit-reaction AI substates.
+const FLINCH_REACTIONS = new Set<ReactionKind>([
   "light_stagger",
   "heavy_stagger",
   "knockback",
-  "launch",
-  "air_hitstun",
-  "falling",
-  "downed",
-  "getting_up",
+  "micro_stagger",
   "grabbed",
 ]);
+
+const LAUNCH_REACTIONS = new Set<ReactionKind>([
+  "launch",
+  "air_hitstun",
+]);
+
+const KNOCKDOWN_REACTIONS = new Set<ReactionKind>([
+  "falling",
+  "downed",
+]);
+
+const GETUP_REACTIONS = new Set<ReactionKind>([
+  "getting_up",
+]);
+
+/** CRT-004: Map actor.reactionState to the appropriate AI hit-reaction substate. */
+function reactionToAIPhase(reaction: ReactionKind): "flinched" | "launched" | "knocked_down" | "getting_up" | null {
+  if (FLINCH_REACTIONS.has(reaction)) return "flinched";
+  if (LAUNCH_REACTIONS.has(reaction)) return "launched";
+  if (KNOCKDOWN_REACTIONS.has(reaction)) return "knocked_down";
+  if (GETUP_REACTIONS.has(reaction)) return "getting_up";
+  return null;
+}
+
+/** CRT-004: Get duration in ticks for a hit-reaction substate from config.
+ *  DNF classic feel defaults at 60fps (logicFps):
+ *  - flinch: ~15-24 ticks (250-400ms)
+ *  - launched: ~30-45 ticks (500-750ms)
+ *  - knocked_down: ~60-90 ticks (1.0-1.5s)
+ *  - getting_up: ~18 ticks (300ms) */
+function getHitReactionDuration(state: EnemyAIState, phase: "flinched" | "launched" | "knocked_down" | "getting_up"): number {
+  switch (phase) {
+    case "flinched": return state.flinchDurationTicks ?? 20;
+    case "launched": return state.launchDurationTicks ?? 36;
+    case "knocked_down": return state.knockdownDurationTicks ?? 72;
+    case "getting_up": return state.getupDurationTicks ?? 18;
+  }
+}
 
 export interface BossPattern {
   name: string;
@@ -45,54 +80,28 @@ export interface BossConfig {
 // ============================================================
 // DNF 70-85 classic monster AI: FSM + behavior tree hybrid
 // ============================================================
-// Evidence: docs/research/combat/dnf-dfo-combat-frame-ai-implementation-report.md
-// DNF stores monster AI parameters in PVF .ai / .monster files.
-// The runtime uses a layered decision model:
-//   Layer 1: FSM states (Idle/Chase/Attack/Hurt/Death) — deterministic transitions
-//   Layer 2: Behavior tree nodes (sight/aggro/range/cooldown/random-branch) — weighted decisions
-//   Layer 3: Boss scripts (phase triggers, forced transitions, pattern sequences) — scripted
-//
-// Parameters loaded from manifest (ai/enemy-default.json):
-//   - sightRange: max visual detection distance (distinct from detectRange for aggro)
-//   - aggressiveness: 0-100, affects approach speed and retreat threshold
-//   - targetSwitchTime: frames before re-evaluating target
-//   - longRangeReactionChance: % chance to react when beyond attackRange
-//   - behaviorWeights: { chase, hold, retreat } — weighted random branch selection
-//
-// Determinism note: instead of Math.random(), we use a deterministic hash of
-// (tick + actorId) to drive weighted branch selection. This keeps combat replay
-// and fuzz-test determinism while producing varied-looking AI behavior.
 
-/** Deterministic pseudo-random value from tick + actorId.
- *  Uses a simple hash to produce 0–1 range from deterministic inputs. */
+/** Deterministic pseudo-random value from tick + actorId. */
 function deterministicRoll(tick: number, actorId: string): number {
-  // FNV-1a style hash: mix tick and actorId bytes
   let hash = 2166136261;
   const str = `${tick}:${actorId}`;
   for (let i = 0; i < str.length; i++) {
     hash ^= str.charCodeAt(i);
     hash = Math.imul(hash, 16777619);
   }
-  // Normalize to 0–1 range
   return ((hash >>> 0) % 10000) / 10000;
 }
 
-/** Execute a DNF-style behavior tree decision node.
- *  Uses weighted selection from manifest behaviorWeights,
- *  driven by a deterministic pseudo-random roll. */
 function behaviorTreeBranch(state: EnemyAIState, tick: number, actorId: string): "chase" | "hold" | "retreat" {
   const weights = state.behaviorWeights ?? { chase: 60, hold: 25, retreat: 15 };
   const total = weights.chase + weights.hold + weights.retreat;
   if (total <= 0) return "chase";
-
   const roll = deterministicRoll(tick, actorId) * total;
   if (roll <= weights.chase) return "chase";
   if (roll <= weights.chase + weights.hold) return "hold";
   return "retreat";
 }
 
-/** DNF sight check: enemy can only "see" the player if within sightRange.
- *  sightRange is separate from detectRange — sight is visual, detect is aggro trigger. */
 function canSeePlayer(actor: Actor, state: EnemyAIState, kernel: EnemyAITickKernel): boolean {
   const dx = kernel.player.position.x - actor.position.x;
   const dz = kernel.player.position.z - actor.position.z;
@@ -103,14 +112,12 @@ function canSeePlayer(actor: Actor, state: EnemyAIState, kernel: EnemyAITickKern
 
 export class EnemyAIController {
   private bossConfigs: Record<string, BossConfig>;
-  // DNF target-switch timer: prevents thrashing between targets
   private targetSwitchTimers: Map<string, number> = new Map();
 
   constructor(bossConfigs?: Record<string, BossConfig>) {
     this.bossConfigs = bossConfigs ?? {};
   }
 
-  /** Load boss patterns from manifest data (Phase 5) */
   loadBossConfigs(configs: Record<string, BossConfig>): void {
     this.bossConfigs = configs;
   }
@@ -125,14 +132,26 @@ export class EnemyAIController {
     }
     if (kernel.hitStop.isFrozen(actor.id)) return;
 
-    // Phase 5: Boss phase transition check
     this.checkBossPhase(actor, state, kernel.tickCount);
 
-    if (stunnedReactions.has(actor.reactionState)) {
-      if (state.phase !== "stunned") this.transition(state, "stunned", kernel.tickCount);
+    // CRT-004: Hit-reaction substate FSM — enter/exit transitions
+    const reactionPhase = reactionToAIPhase(actor.reactionState);
+    if (reactionPhase !== null) {
+      if (state.phase !== reactionPhase) {
+        this.transition(state, reactionPhase, kernel.tickCount);
+        state.hitReactionTicksRemaining = getHitReactionDuration(state, reactionPhase);
+        if (reactionPhase === "launched") {
+          state.launchVelocityY = actor.velocity.y;
+          state.launchGrounded = false;
+        }
+      }
       return;
     }
-    if (state.phase === "stunned") this.transition(state, "idle", kernel.tickCount);
+    // Actor is no longer in any hit reaction — if we were in one, recover
+    if (isHitReactionPhase(state.phase)) {
+      this.transition(state, "idle", kernel.tickCount);
+      return;
+    }
     if (kernel.hitStop.isFrozen(kernel.player.id)) return;
     if (actor.currentAction?.actionName === "EnemyBasic" && state.phase !== "attacking") this.transition(state, "attacking", kernel.tickCount);
 
@@ -144,25 +163,22 @@ export class EnemyAIController {
     const attackLineTolerance = 18;
     const detectDistance = Math.hypot(dx, dz * 1.8);
 
-    // DNF aggressiveness modifier: higher aggressiveness = larger effective detect range
     const aggressiveness = state.aggressiveness ?? 50;
-    const aggroMultiplier = 0.8 + (aggressiveness / 100) * 0.4; // 0.8x ~ 1.2x
+    const aggroMultiplier = 0.8 + (aggressiveness / 100) * 0.4;
     const effectiveDetectRange = state.detectRange * aggroMultiplier;
 
-    if (state.phase !== "idle" && detectDistance > state.loseAggroRange) {
+    if (state.phase !== "idle" && !isHitReactionPhase(state.phase) && detectDistance > state.loseAggroRange) {
       this.transition(state, "idle", kernel.tickCount);
       return;
     }
 
     switch (state.phase) {
       case "idle": {
-        // DNF: idle → approach only if within detect range (modified by aggressiveness)
         if (detectDistance <= effectiveDetectRange) {
-          // DNF long-range reaction: chance to react even beyond standard attack range
           const longRangeChance = state.longRangeReactionChance ?? 0;
           const isLongRange = distance > state.attackRange;
           if (isLongRange && longRangeChance > 0 && deterministicRoll(kernel.tickCount, actor.id) * 100 > longRangeChance) {
-            return; // failed long-range reaction check, stay idle
+            return;
           }
           this.transition(state, "approach", kernel.tickCount);
         }
@@ -172,34 +188,28 @@ export class EnemyAIController {
         actor.facing = dx >= 0 ? "right" : "left";
         actor.previousPosition = cloneVec3(actor.position);
 
-        // DNF: line up on Z axis first before closing on X
         if (zDistance > zLaneTolerance) {
           const zSpeed = Math.max(1, state.moveSpeedPerTick * 0.72);
           actor.position.z += Math.sign(dz) * Math.min(Math.abs(dz), zSpeed);
           return;
         }
 
-        // DNF behavior tree: evaluate branch before committing to attack
         if (distance <= state.attackRange && zDistance <= attackLineTolerance) {
           const branch = behaviorTreeBranch(state, kernel.tickCount, actor.id);
           switch (branch) {
             case "chase":
-              // Close in further and attack
               this.transition(state, "windup", kernel.tickCount);
               return;
             case "hold":
-              // Stay at current distance, re-evaluate next tick
               return;
             case "retreat":
-              // Back away slightly, stay in approach
               actor.position.x -= (actor.facing === "right" ? 1 : -1) * state.moveSpeedPerTick * 0.5;
               return;
           }
         }
 
-        // Move toward player (DNF: use sight check to decide movement speed)
         const canSee = canSeePlayer(actor, state, kernel);
-        const speedMod = canSee ? 1.0 : 0.6; // slower when player not in sight
+        const speedMod = canSee ? 1.0 : 0.6;
         actor.position.x += (actor.facing === "right" ? 1 : -1) * state.moveSpeedPerTick * speedMod;
         if (zDistance > 2) actor.position.z += Math.sign(dz) * Math.min(Math.abs(dz), state.moveSpeedPerTick * 0.28);
         return;
@@ -218,7 +228,6 @@ export class EnemyAIController {
       }
       case "attacking": {
         if (actor.currentAction?.actionName === "EnemyBasic") return;
-        // DNF: after attack completes, apply target switch cooldown before re-engaging
         this.targetSwitchTimers.set(actor.id, kernel.tickCount + (state.targetSwitchTime ?? 60));
         this.transition(state, "recover", kernel.tickCount);
         return;
@@ -226,19 +235,54 @@ export class EnemyAIController {
       case "recover": {
         state.recoverRemaining -= 1;
         if (state.recoverRemaining <= 0) {
-          // DNF: target switch time must elapse before re-entering approach
           const switchReady = (this.targetSwitchTimers.get(actor.id) ?? 0) <= kernel.tickCount;
           this.transition(state, switchReady ? "idle" : "recover", kernel.tickCount);
         }
         return;
       }
-      case "stunned":
+      // CRT-004: Hit-reaction substates
+      case "flinched": {
+        if (state.hitReactionTicksRemaining !== undefined) {
+          state.hitReactionTicksRemaining -= 1;
+          if (state.hitReactionTicksRemaining > 0) return;
+        }
+        return;
+      }
+      case "launched": {
+        if (state.hitReactionTicksRemaining !== undefined) {
+          state.hitReactionTicksRemaining -= 1;
+          if (state.hitReactionTicksRemaining <= 0) {
+            actor.position.y = 0;
+            actor.velocity.y = 0;
+            this.transition(state, "knocked_down", kernel.tickCount);
+            state.hitReactionTicksRemaining = getHitReactionDuration(state, "knocked_down");
+          }
+        }
+        return;
+      }
+      case "knocked_down": {
+        if (state.hitReactionTicksRemaining !== undefined) {
+          state.hitReactionTicksRemaining -= 1;
+          if (state.hitReactionTicksRemaining > 0) return;
+        }
+        this.transition(state, "getting_up", kernel.tickCount);
+        state.hitReactionTicksRemaining = getHitReactionDuration(state, "getting_up");
+        return;
+      }
+      case "getting_up": {
+        if (state.hitReactionTicksRemaining !== undefined) {
+          state.hitReactionTicksRemaining -= 1;
+          if (state.hitReactionTicksRemaining > 0) return;
+        }
+        state.launchVelocityY = undefined;
+        state.launchGrounded = undefined;
+        return;
+      }
       default:
         return;
     }
   }
 
-  /** Phase 5: Check and handle boss phase transitions based on HP thresholds */
   private checkBossPhase(actor: Actor, state: EnemyAIState, tick: number): void {
     const bossId = state.bossPhase !== undefined ? (actor.type === "boss" ? "bull" : undefined) : undefined;
     if (!bossId) return;
@@ -249,10 +293,8 @@ export class EnemyAIController {
     const hpPercent = (actor.resources.hp / config.maxHp) * 100;
     const currentPhase = state.bossPhase ?? 1;
 
-    // Find next phase that should trigger
     for (const phase of config.phases) {
       if (phase.phase > currentPhase && hpPercent <= phase.triggerHpPercent) {
-        // Transition to new phase
         state.bossPhase = phase.phase;
         state.bossPhaseEnteredTick = tick;
         state.currentPattern = phase.enterPattern;
@@ -264,8 +306,6 @@ export class EnemyAIController {
     }
   }
 
-  /** Phase 5: Select a boss pattern using weighted random selection.
-   *  @param tick - deterministic tick for replay-consistent weighted roll */
   selectBossPattern(state: EnemyAIState, tick: number = 0): BossPattern | undefined {
     const bossId = state.bossPhase !== undefined ? "bull" : undefined;
     if (!bossId) return undefined;

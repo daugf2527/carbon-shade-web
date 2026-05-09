@@ -169,6 +169,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "Walk": {
@@ -327,6 +333,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "Run": {
@@ -485,6 +497,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "NormalBasic1": {
@@ -773,6 +791,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "NormalBasic2": {
@@ -1061,6 +1085,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "NormalBasic3": {
@@ -1358,6 +1388,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "DashAttack": {
@@ -1664,6 +1700,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "Jump": {
@@ -1859,6 +1901,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "JumpAttack": {
@@ -2163,6 +2211,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "FrenzyToggle": {
@@ -2346,6 +2400,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "neople_api",
+      "verifiedAt": "2026-05-09",
+      "confidence": "high",
+      "notes": "Skill level-1 facts (CD/MP/damage%) verified against Neople Open API; levels 2-10 use DNF baseline scaling"
     }
   },
   "FrenzyBasic1": {
@@ -2724,6 +2784,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "FrenzyBasic2": {
@@ -3102,6 +3168,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "FrenzyBasic3": {
@@ -3597,6 +3669,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "UpwardSlash": {
@@ -3901,6 +3979,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "neople_api",
+      "verifiedAt": "2026-05-09",
+      "confidence": "high",
+      "notes": "Skill level-1 facts (CD/MP/damage%) verified against Neople Open API; levels 2-10 use DNF baseline scaling"
     }
   },
   "MountainousWheel": {
@@ -4519,6 +4603,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "neople_api",
+      "verifiedAt": "2026-05-09",
+      "confidence": "high",
+      "notes": "Skill level-1 facts (CD/MP/damage%) verified against Neople Open API; levels 2-10 use DNF baseline scaling"
     }
   },
   "RagingFury": {
@@ -5797,6 +5887,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "neople_api",
+      "verifiedAt": "2026-05-09",
+      "confidence": "high",
+      "notes": "Skill level-1 facts (CD/MP/damage%) verified against Neople Open API; levels 2-10 use DNF baseline scaling"
     }
   },
   "Bloodlust": {
@@ -6097,6 +6193,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "neople_api",
+      "verifiedAt": "2026-05-09",
+      "confidence": "high",
+      "notes": "Skill level-1 facts (CD/MP/damage%) verified against Neople Open API; levels 2-10 use DNF baseline scaling"
     }
   },
   "Backstep": {
@@ -6331,6 +6433,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "neople_api",
+      "verifiedAt": "2026-05-09",
+      "confidence": "high",
+      "notes": "Skill level-1 facts (CD/MP/damage%) verified against Neople Open API; levels 2-10 use DNF baseline scaling"
     }
   },
   "QuickRebound": {
@@ -6521,6 +6629,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "neople_api",
+      "verifiedAt": "2026-05-09",
+      "confidence": "high",
+      "notes": "Skill level-1 facts (CD/MP/damage%) verified against Neople Open API; levels 2-10 use DNF baseline scaling"
     }
   },
   "Derange": {
@@ -6700,6 +6814,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "neople_api",
+      "verifiedAt": "2026-05-09",
+      "confidence": "high",
+      "notes": "Skill level-1 facts (CD/MP/damage%) verified against Neople Open API; levels 2-10 use DNF baseline scaling"
     }
   },
   "Diehard": {
@@ -6883,6 +7003,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "neople_api",
+      "verifiedAt": "2026-05-09",
+      "confidence": "high",
+      "notes": "Skill level-1 facts (CD/MP/damage%) verified against Neople Open API; levels 2-10 use DNF baseline scaling"
     }
   },
   "DebugReset": {
@@ -7055,6 +7181,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "ForceDownPlayer": {
@@ -7227,6 +7359,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "ForceBleed": {
@@ -7399,6 +7537,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "SpawnTargets": {
@@ -7571,6 +7715,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "RunScreenshotScenario": {
@@ -7743,6 +7893,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "GoreCross": {
@@ -8283,6 +8439,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "neople_api",
+      "verifiedAt": "2026-05-09",
+      "confidence": "high",
+      "notes": "Skill level-1 facts (CD/MP/damage%) verified against Neople Open API; levels 2-10 use DNF baseline scaling"
     }
   },
   "OutrageBreak": {
@@ -8617,6 +8779,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "ExtremeOverkill": {
@@ -9079,6 +9247,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "RagingFury2": {
@@ -10555,6 +10729,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "BloodRuin": {
@@ -10833,6 +11013,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "BloodSword": {
@@ -11179,6 +11365,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "BurstFury": {
@@ -11593,6 +11785,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "EarthShatter": {
@@ -12027,6 +12225,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "Thirst": {
@@ -12211,6 +12415,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "BloodMemory": {
@@ -12394,6 +12604,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   },
   "VimAndVigor": {
@@ -12566,6 +12782,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "neople_api",
+      "verifiedAt": "2026-05-09",
+      "confidence": "high",
+      "notes": "Skill level-1 facts (CD/MP/damage%) verified against Neople Open API; levels 2-10 use DNF baseline scaling"
     }
   },
   "EnemyBasic": {
@@ -12750,6 +12972,12 @@
         "version": "combat-data-v1",
         "requiresCalibration": true
       }
+    },
+    "sourceProvenance": {
+      "source": "local_baseline",
+      "verifiedAt": "2026-05-09",
+      "confidence": "medium",
+      "notes": "Frame data is hand-tuned Combat Lab baseline; pending Batch C PVF/ANI extraction"
     }
   }
 }
