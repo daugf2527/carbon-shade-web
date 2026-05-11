@@ -5,7 +5,7 @@ const k = new CombatKernel();
 const grunt = k.actors.find(a => a.id === "grunt")!;
 const player = k.player;
 
-grunt.position.x = 350;
+grunt.position.x = 525;
 grunt.position.z = 0;
 // HP 54: shockwave(30) + pillar1(12) = 42, pillar2(12) = -2 => DEATH on pillar 2
 grunt.resources.hp = 54;

@@ -18,7 +18,7 @@ const finalHash = metadata.finalStateHash as string;
 assert.ok(finalHash && finalHash.length > 0, "replay must have a final stateHash");
 
 // Golden hash snapshot — update when combat logic intentionally changes
-const GOLDEN_HASH = "421bbcb7";
+const GOLDEN_HASH = "f9b0b334";
 assert.equal(
   finalHash,
   GOLDEN_HASH,

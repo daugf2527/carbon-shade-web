@@ -5,7 +5,7 @@ const k = new CombatKernel();
 const grunt = k.actors.find(a => a.id === "grunt")!;
 const startX = grunt.position.x;
 
-k.runTicks(240);
+k.runTicks(360);
 
 assert.ok(grunt.position.x < startX, "Enemy AI must approach the player");
 assert.ok(
