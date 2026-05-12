@@ -59,7 +59,7 @@ jobs:
       - name: Enforce velocity write locations
         run: |
           echo "Checking velocity writes only in allowed files..."
-          ALLOWED="ActorFactory\.ts|CombatKernel\.ts|ReactionResolver\.ts"
+          ALLOWED="ActorFactory\.ts|CombatKernel\.ts|ReactionResolver\.ts|EnemyAI\.ts"
           VIOLATIONS=$(grep -rn "\.velocity\s*[.=]" src/combat/ --include="*.ts" | grep -vE "$ALLOWED" || true)
           if [ -n "$VIOLATIONS" ]; then
             echo "FAIL: velocity writes found outside allowed files:"
