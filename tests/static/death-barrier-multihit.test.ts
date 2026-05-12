@@ -5,10 +5,11 @@ const k = new CombatKernel();
 const grunt = k.actors.find(a => a.id === "grunt")!;
 const player = k.player;
 
-grunt.position.x = 525;
+// Place grunt right in RagingFury's fire zone (player at x≈390, fire extends rightward)
+grunt.position.x = 395;
 grunt.position.z = 0;
-// HP 54: shockwave(30) + pillar1(12) = 42, pillar2(12) = -2 => DEATH on pillar 2
-grunt.resources.hp = 54;
+// HP 12: dies instantly on shockwave (38 dmg), all 10 pillars rejected as target_dead
+grunt.resources.hp = 12;
 
 k.requestAction(player, "RagingFury");
 k.runTicks(40);

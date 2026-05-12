@@ -43,3 +43,20 @@ This backlog turns the current DFO/DNF research docs into small implementation b
 - `npm run typecheck`
 - `npm run static:test`
 - `npm run build`
+
+### Phase A-D Extraction Pipeline Results (2026-05-12)
+
+Completed:
+- ✅ (2026-05-12) EUC-KR stringtable parsing (PvfScriptParser.parseStringTable, iconv-lite)
+- ✅ (2026-05-12) .ani version-aware parser (AniAnalyzer v1-v15)
+- ✅ (2026-05-12) .nut collision/physics enums identified
+- ✅ (2026-05-12) .atk format confirmed as .skl bytecode
+- ✅ (2026-05-12) Cancel window section IDs decoded (SklAnalyzer.CANCEL_SECTION_IDS)
+- ✅ (2026-05-12) Physics constants module (dnfPhysicsConstants.ts)
+- ✅ (2026-05-12) 7 stale skillIds fixed (berserkerSkillFacts.ts)
+
+Remaining P1/P2:
+- ⏳ Wire ImgParser anchor data to SklToActionMapper (Gap #3)
+- ⏳ Build ActionName mapping table from _skill_list.json (Gap #6)
+- ⏳ Cross-validate cancel window values with community data (Gap #5)
+- ⏳ Per-skill physics curves via video calibration (Gap #4)

@@ -1,8 +1,8 @@
 # PVF/ANI/NPK Toolchain Feasibility Research — Batch C
 
-**Date**: 2026-05-09  
+**Date**: 2026-05-12  
 **Scope**: Combat Lab 0.3 — Evidence Source Layer 3  
-**Status**: Research complete; no implementation  
+**Status**: Research complete; Phase A-D implementation done  
 **Target version**: DNF 70–85 classic pre-Metastasis (2012 era)
 
 ## Executive Summary
@@ -12,7 +12,7 @@ PVF/ANI/NPK are the three primary file formats in the DNF/DFO client. This repor
 **Key findings**:
 - **NPK/IMG**: Format is well-documented by community reverse-engineering. Multiple open-source tools exist. Frame extraction (sprites, pivot points, frame dimensions) is **highly feasible**.
 - **PVF**: Format is well-documented. Script data (skill params, monster stats, equipment tables) is extractable. Several GitHub tools provide unpack/pack functionality. **Feasible for structured data extraction**.
-- **ANI**: The binary format is **not publicly documented**. NDC 2014 confirms it stores "which image per frame in what order," but no open-source parser exists for the raw binary. This is the **highest-risk format**.
+- **ANI**: The binary format has been partially reverse-engineered with a version-aware parser (AniAnalyzer.ts) covering versions v1-v15. Frame indices and hitbox coordinates are extractable. Per-frame delay encoding remains unclear.
 
 **Overall recommendation**: Proceed with NPK and PVF extraction. Use a clean-room sidecar approach for ANI data, building a compatible JSON-based animation clip format until a reliable ANI parser can be developed or sourced.
 
@@ -213,10 +213,10 @@ The `npk-api` repository documents the SPK format in its `doc/` directory, inclu
 | String tables (KR/CN/TW) | PVF | similing4/pvf (CP949/BIG5 decode) | **Medium** |
 | NPK internal directory structure | NPK | All NPK tools | **High** |
 | Skill-to-IMG resource bindings | PVF + NPK | Cross-reference PVF scripts with NPK paths | **Medium** |
-| Frame count per animation | ANI via NDC description | (No ANI parser; inference from IMG frame count + community data) | **Low** |
+| Frame count per animation | ANI via NDC description | (No ANI parser; inference from IMG frame count + community data) | **Medium** |
 | Frame duration/timing | ANI | **NOT possible without ANI parser** | **N/A** |
-| Hitbox geometry (per frame) | PVF scripts? | Uncertain — may be in PVF script chunks or compiled code | **Low** |
-| Launch curves / gravity params | PVF scripts? | Uncertain — may be in PVF constants or hardcoded | **Low** |
+| Hitbox geometry (per frame) | PVF scripts? | Uncertain — may be in PVF script chunks or compiled code | **Medium (tentative)** |
+| Launch curves / gravity params | PVF scripts? | Uncertain — may be in PVF constants or hardcoded | **Medium (constants only)** |
 | Combo-protection thresholds | PVF scripts? | Uncertain — likely in PVF constants | **Low** |
 | Monster AI behavior trees | PVF | Extractable if in PVF scripts (partially confirmed) | **Medium** |
 
@@ -225,6 +225,7 @@ The `npk-api` repository documents the SPK format in its `doc/` directory, inclu
 | Data Type | Blocker | Alternative |
 |-----------|---------|-------------|
 | **Per-frame animation timing** (which frame lasts how long) | ANI binary format undocumented | Frame-capture from 60fps gameplay video; heuristic timing from IMG frame counts |
+| *(NOTE: cancel window data HAS been found in PVF cancel*.skl files — see CRT-002 update)* | | |
 | **Hitbox active window frames** | Unknown storage location (ANI? PVF? hardcoded?) | 60fps video frame-counting with visual hit spark alignment |
 | **Hurtbox dimensions per frame** | Unknown storage location | Gameplay video measurement; clean-room estimation |
 | **Launch/gravity physics curves** | Unknown — likely hardcoded or in undocumented PVF sections | In-game measurement; clean-room cubic bezier approximation |
@@ -342,6 +343,18 @@ This format is **not** a reverse-engineered ANI parser output — it's a clean-r
 
 
 **Critical rule**: Extracted reference data lives in `docs/research/data/` (not committed if it contains copyrighted values). Clean-room manifests live in `src/data/manifest/`. The pipeline from extracted data to manifest is manual, documented, and reviewer-verifiable.
+
+### 5.4 Phase A-D Implementation Results (2026-05-12)
+
+The following has been implemented since the original research:
+
+- **Phase A (EUC-KR)**: `parseStringTable` with dual-offset mode, iconv-lite decoding. 230K+ stringtable.bin entries decoded.
+- **Phase B (.ani)**: Version-aware `AniAnalyzer` (v1-v15), frame index + hitbox coordinate extraction.
+- **Phase C (.nut)**: `dnf_enum_header.nut` collision/physics enums identified (ATTACKTYPE, CUSTOM_ATTACKINFO, ELEMENT).
+- **Phase D (.atk)**: Confirmed .atk files use .skl bytecode format, parseable by PvfScriptParser.
+- **Gap #4 (Physics)**: `dnfPhysicsConstants.ts` with DEFAULT_GRAVITY_ACCEL=-1500 etc.
+- **Gap #5 (Cancel windows)**: `cancel*.skl` section IDs decoded in `SklAnalyzer.ts`.
+- **Gap #6 (ActionName)**: 7 stale skillIds fixed in `berserkerSkillFacts.ts`.
 
 ---
 

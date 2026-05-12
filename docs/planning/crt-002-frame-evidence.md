@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-All 38 combat actions in `src/data/manifest/actions/default.json` have frame timing data (totalFrames, startupFrames, activeFrames, recoveryFrames, cancelFrom, whiffCancelFrom). **None of these frame values are verified from official DNF sources.** The Neople Open API, DFO World Wiki, NamuWiki, and Chinese DNF community resources do not expose per-skill frame data at the granularity required for a combat kernel.
+All 38 combat actions in `src/data/manifest/actions/default.json` have frame timing data (totalFrames, startupFrames, activeFrames, recoveryFrames, cancelFrom, whiffCancelFrom). **None of these frame values are verified from official DNF sources.** The Neople Open API, DFO World Wiki, NamuWiki, and Chinese DNF community resources do not expose per-skill frame data at the granularity required for a combat kernel. **Update (2026-05-12):** Cancel window data has been located in PVF `cancel*.skl` files (binary .skl bytecode format). Section IDs 371543 (cancelWindowStart), 241483 (cancelWindowDuration), 371546 (cancelGroup), 371547 (cancelWeaponMask), 371549 (cancelTargetSlots) have been decoded and mapped in `SklAnalyzer.ts`. Frame window data remains unverified for startup/active/recovery phases.
 
 **What CAN be verified from the Neople Open API** (for 11 Berserker skills):
 - Cooldown (seconds)
@@ -22,7 +22,7 @@ All 38 combat actions in `src/data/manifest/actions/default.json` have frame tim
 **What CANNOT be verified from any official or community source**:
 - Startup/active/recovery frame counts (render-frame granularity)
 - Hitbox geometry (offset, width, depth, height)
-- Cancel window timing (hitCancelFrom, whiffCancelFrom)
+- Cancel window timing — ⚠️ **DATA EXISTS** in PVF cancel*.skl files (section IDs decoded), but semantic mapping is preliminary and needs cross-validation with community data.
 - Hitstop frames
 - Recoil frames
 - Launch velocity curves
@@ -41,6 +41,17 @@ All 38 combat actions in `src/data/manifest/actions/default.json` have frame tim
 | **E** | Estimated | Frame value from tuning baseline with no external evidence. Mark as "gameplay-tuned, no external evidence." |
 
 **Note**: The Neople Open API provides `coolTimeSeconds` and `castingTimeSeconds` as scalar float values (not frame counts at render tick rate). These are regarded as **secondary verification** — they can cross-check CD durations and cast timing but do not verify frame-level data.
+
+---
+
+### CRT-002 Progress Update (2026-05-12)
+
+| Field | Previous Status | Current Status |
+|-------|----------------|----------------|
+| Cancel windows | 🔴 No source | 🟠 Data exists in PVF cancel*.skl, section IDs decoded |
+| Frame timing | 🔴 No source | 🟡 .ani frame indices extracted (Phase B), per-frame delays still estimated |
+| Physics constants | 🔴 No source | 🟡 Global constants extracted from dnf_enum_header.nut, per-skill curves hardcoded |
+| Hitbox geometry | 🔴 No source | 🔴 Still unverified from official sources |
 
 ---
 

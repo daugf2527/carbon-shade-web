@@ -121,6 +121,8 @@ export class ByteReader {
   /**
    * Read `length` bytes as a CP949 (EUC-KR) encoded string.
    * Used for PVF file paths and Korean text in DNF client files.
+   * Uses iconv-lite for proper CP949/EUC-KR decoding (Node.js built-in
+   * Buffer.toString does not support 'euc-kr' on most platforms).
    */
   readEUCKR(length: number): string {
     this._require(length);
@@ -128,8 +130,12 @@ export class ByteReader {
     this._pos += length;
     this._advanceView(length);
     try {
-      // CP949 is a superset of EUC-KR; 'euc-kr' handles most CP949 codepoints
-      return slice.toString("euc-kr" as BufferEncoding);
+      // Use iconv-lite for proper CP949/EUC-KR support
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const iconv = require("iconv-lite");
+      const decoded = iconv.decode(Buffer.from(slice), "cp949");
+      // Strip null bytes (common in PVF strings)
+      return decoded.replace(/\x00/g, "");
     } catch {
       // Fallback to latin1 for non-decodable bytes
       let result = "";

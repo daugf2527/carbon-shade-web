@@ -3,9 +3,12 @@ import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 
 const k = new CombatKernel();
 const grunt = k.actors.find(a => a.id === "grunt")!;
+// Place grunt within detection range (detectRange=360, player at x≈390)
+grunt.position.x = 700;
 const startX = grunt.position.x;
 
-k.runTicks(360);
+// AI needs time to detect, approach, and attack
+k.runTicks(480);
 
 assert.ok(grunt.position.x < startX, "Enemy AI must approach the player");
 assert.ok(

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Carbon Shade / 碳影** — a Phaser 3 + TypeScript 2.5D combat prototype served by Vite. The current engineering name is **Combat Lab**. The canonical repository path is `carbon-shade-web`. This prototype validates DNF-style 2.5D combat feel: skill execution, monster feedback, boss behavior, normalized sprite assets, and deterministic behavior tests.
 
-## Current state (2026-05-09)
+## Current state (2026-05-12)
 
 **Phase**: Combat Lab 0.3 — handfeel tuning + evidence freeze. The `dnf-pve-1to1-replication-plan.md` Phase 1–5 implementation is substantially complete.
 
@@ -54,7 +54,15 @@ npm run static:test → 34/34 passed
 npm run build       → passed
 ```
 
-**Remaining gaps**: Batch A (level 1–10 API expansion), Batch B (Wiki semantic calibration), Batch C (PVF/ANI toolchain research), CRT-002–006 evidence tickets.
+**Phase A-D completed (2026-05-12)**: See `docs/planning/pvf-extraction-a-e-summary.md` for full status. Key outcomes:
+
+- **EUC-KR / stringtable** (Phase A): `PvfScriptParser.parseStringTable` rewritten with dual-offset mode, iconv-lite decoding. 230K+ entries decoded from stringtable.bin, 26K+ with Korean text.
+- **.ani format** (Phase B): `AniAnalyzer` now version-aware (v1-v15), frame indices and hitbox coordinates extracted. 209K .ani files indexed.
+- **Cancel window data** (Gap #5 resolved): `cancel*.skl` section IDs (371543=cancelWindowStart, 241483=cancelWindowDuration, 371546=cancelGroup, 371547=cancelWeaponMask, 371549=cancelTargetSlots) decoded in `SklAnalyzer.ts`.
+- **Physics constants** (Gap #4 partially): `src/data/official/dnfPhysicsConstants.ts` created with DEFAULT_GRAVITY_ACCEL=-1500, FORCE_TO_VELOCITY_CONST=4000, etc. from `dnf_enum_header.nut`.
+- **Enums extracted** (Phase C): `dnf_enum_header.nut` collision/physics enums (ATTACKTYPE, CUSTOM_ATTACKINFO, ELEMENT) identified.
+- **ActionName mapping** (Gap #6): 7 stale skillIds fixed in `berserkerSkillFacts.ts`. Full mapping table ready from Neople API _skill_list.json (55 Neo Berserker skills, 21+ matched).
+- **Verification**: typecheck, static:test, build all passing. All extraction tests green.
 
 ## Commands
 
@@ -62,7 +70,7 @@ npm run build       → passed
 - `npm run dev` — start Vite dev server on `0.0.0.0:5173`.
 - `npm run typecheck` — run `tsc --noEmit` on `src/` via `scripts/typecheck.mjs`.
 - `npm run build` — compile TypeScript and emit `dist/index.html` + browser ESM via `scripts/build.mjs`.
-- `npm run static:test` — compile and run `tests/static/*.test.ts` via `scripts/static-test.mjs`, outputting `.tmp/static-test-results.json`.
+- `npm run static:test` — compile and run `tests/static/*.test.ts` via `scripts/static-test.mjs`, outputting `.tmp/static-test-results.json`. Now includes extraction tests (ani-analyzer, pvf-parser, extraction-pipeline, skl-to-action-mapper, img-parser).
 - `docker compose up --build` — run the app container on port 5173.
 
 Browser screenshot verification scripts are intentionally excluded from npm commands — they can hang on Windows. Use the three stable checks above (`typecheck`, `static:test`, `build`) for code validation.

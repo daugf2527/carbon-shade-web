@@ -6,6 +6,9 @@ export { NpkParser } from "./NpkParser.js";
 export { ImgParser } from "./ImgParser.js";
 export { PvfParser } from "./PvfParser.js";
 export { PvfScriptParser } from "./PvfScriptParser.js";
+export { SklAnalyzer } from "./SklAnalyzer.js";
+export { AniAnalyzer } from "./AniAnalyzer.js";
+export { SklToActionMapper } from "./SklToActionMapper.js";
 export {
   ExtractionError,
   NpkParseError,
@@ -28,4 +31,8 @@ export type {
   PvfScriptType,
   EquipmentDefinition,
   ExtractionProvenance,
+  SklSkillDef,
+  AniHitBox,
+  AniDef,
+  MappedFrameDataAction,
 } from "./types.js";

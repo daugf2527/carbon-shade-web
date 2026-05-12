@@ -72,7 +72,9 @@ function decryptName(raw) {
 
   // Decode as EUC-KR (CP949), fallback to latin1
   try {
-    return nameBytes.toString("euc-kr");
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const iconv = require("iconv-lite");
+    return iconv.decode(nameBytes, "cp949");
   } catch {
     let result = "";
     for (let i = 0; i < nameBytes.length; i++) {
@@ -138,7 +140,9 @@ function parsePVF(buf) {
     const pathBytes = decryptedTree.subarray(treePos, treePos + filePathLength); treePos += filePathLength;
     let path;
     try {
-      path = pathBytes.toString("euc-kr");
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const iconv = require("iconv-lite");
+      path = iconv.decode(pathBytes, "cp949");
     } catch {
       path = pathBytes.toString("latin1");
     }

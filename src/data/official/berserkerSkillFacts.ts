@@ -41,7 +41,7 @@ export const officialBerserkerSkillFacts = {
   // === Added in Batch A ===
   Derange: {
     source: "neople_api",
-    skillId: "e8c1f4b2...",
+    skillId: "0ed3148658fe37b3336ccb718dc0fdb0",
     level: 1,
     coolTimeSeconds: 5,
     castingTimeSeconds: 0.5,
@@ -59,7 +59,7 @@ export const officialBerserkerSkillFacts = {
   },
   Diehard: {
     source: "neople_api",
-    skillId: "d9e2a5c3...",
+    skillId: "1dad88963abdc96b091fcab185a8820d",
     level: 1,
     consumeMp: 40,
     coolTimeSeconds: 10,
@@ -73,7 +73,7 @@ export const officialBerserkerSkillFacts = {
   },
   Frenzy: {
     source: "neople_api",
-    skillId: "f7a3b1c4...",
+    skillId: "6a1d1f08a6572be420bb3a256c44c015",
     level: 1,
     consumeMp: 10,
     coolTimeSeconds: 10,
@@ -82,14 +82,14 @@ export const officialBerserkerSkillFacts = {
   },
   Backstep: {
     source: "neople_api",
-    skillId: "7822d6d5...",
+    skillId: "7822d6d52e10964a6755f142c666b494",
     level: 1,
     consumeMp: 1,
     coolTimeSeconds: null as unknown as number, // no cooldown
   },
   QuickRebound: {
     source: "neople_api",
-    skillId: "ce26c6b6...",
+    skillId: "ce26c6b69d02a440a81b552bec94f03b",
     level: 1,
     consumeMp: 1,
     coolTimeSeconds: 5,
@@ -99,7 +99,7 @@ export const officialBerserkerSkillFacts = {
   },
   BloodyCross: {
     source: "neople_api",
-    skillId: "c3d1e5f7...",
+    skillId: "42c82812f86ff6704ae9952a2e6093a4",
     level: 1,
     skillAttackPercent: 28.7,
     baseAttackSpeedPercent: 5.5,
@@ -116,7 +116,7 @@ export const officialBerserkerSkillFacts = {
   },
   VimAndVigor: {
     source: "neople_api",
-    skillId: "b4a2d6e8...",
+    skillId: "d296043df164385a14cb973c8c7c4d07",
     level: 1,
     goreCrossSizePercent: 10,
     bleedChancePercent: 100,

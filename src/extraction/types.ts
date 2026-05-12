@@ -194,3 +194,135 @@ export interface ExtractionProvenance {
     matches: boolean;
   };
 }
+
+// ── SKL semantic types ──
+
+/** Parsed skill definition from .skl bytecode analysis. */
+export interface SklSkillDef {
+  /** Skill ID extracted from section markers or explicit fields */
+  skillId: number;
+  /** Human-readable skill name resolved from stringtable or n_string.lst */
+  name?: string;
+  /** Job/class ID (e.g. swordman=1, demonicswordman=2 for Berserker) */
+  jobId?: number;
+  /** Cooldown in milliseconds */
+  coolTimeMs?: number;
+  /** Cast time in milliseconds */
+  castTimeMs?: number;
+  /** MP consumption */
+  consumeMp?: number;
+  /** Cube fragment cost (无色小晶块) */
+  cubeCost?: number;
+  /** Maximum skill level */
+  maxLevel?: number;
+  /** Paths to referenced .ani animation files */
+  aniFileRefs: string[];
+  /** Source file path (for provenance tracking) */
+  sourcePath?: string;
+  /** Raw command count for diagnostics */
+  commandCount: number;
+  /** Magic bytes valid flag */
+  magicValid: boolean;
+  /** Fields requiring manual verification */
+  unverifiedFields?: string[];
+}
+
+// ── ANI semantic types ──
+
+/** Raw hitbox data extracted from .ani binary format.
+ *  Corresponds to [ATTACK BOX] sections in DNF .ani files.
+ *  Coordinates use the DNF 2.5D coordinate system (X=horizontal, Y=vertical, Z=depth). */
+export interface AniHitBox {
+  /** Hitbox shape: rect for box-shaped, circle for radial */
+  shape: "rect" | "circle";
+  /** First animation frame this hitbox is active (0-indexed) */
+  frameStart: number;
+  /** Last animation frame this hitbox is active (inclusive) */
+  frameEnd: number;
+  /** Left/front corner X in DNF coordinate space */
+  x1: number;
+  /** Top corner Y in DNF coordinate space */
+  y1: number;
+  /** Near corner Z in DNF coordinate space */
+  z1: number;
+  /** Right/back corner X in DNF coordinate space */
+  x2: number;
+  /** Bottom corner Y in DNF coordinate space */
+  y2: number;
+  /** Far corner Z in DNF coordinate space */
+  z2: number;
+  /** Damage rate multiplier for this hitbox (1.0 = 100%) */
+  damageRate?: number;
+  /** Hit type classification (slash, blunt, pierce, etc.) */
+  hitType?: string;
+  /** Elemental attribute index */
+  elementType?: number;
+  /** Attack category for combo/link logic */
+  attackCategory?: string;
+}
+
+/** Parsed .ani animation definition from binary format.
+ *  Maps 1:1 with a DNF .ani file inside Script.pvf. */
+export interface AniDef {
+  /** Associated .img sprite file path (e.g. "Character/Swordman/.../ChargeDodge1.img") */
+  imgPath: string;
+  /** Total number of animation frames */
+  totalFrames: number;
+  /** Frames per second (if encoded in .ani, otherwise estimated from frame data) */
+  frameRate?: number;
+  /** Per-frame hitbox definitions extracted from [ATTACK BOX] sections */
+  hitBoxes: AniHitBox[];
+  /** Raw unparsed data sections for forward compatibility */
+  rawSections: Array<{ type: string; offset: number; size: number }>;
+  /** Source .ani file path (for provenance tracking) */
+  sourcePath?: string;
+  /** Parse diagnostics and warnings */
+  parseWarnings: string[];
+}
+
+// ── Phase 4: mapper output types ──
+
+/** Intermediate mapped action produced by SklToActionMapper.
+ *  Uses string for actionName (not ActionName union) since DNF skill names
+ *  may not match the existing enum. Phase 5/6 can validate and convert. */
+export interface MappedFrameDataAction {
+  /** Derived action name from skill name or ID */
+  actionName: string;
+  /** Total duration in game ticks (from .ani or estimated) */
+  totalFrames: number;
+  /** Startup phase frame windows */
+  startup: Array<{ start: number; end: number }>;
+  /** Active hitbox windows */
+  active: Array<{
+    start: number;
+    end: number;
+    id: string;
+    hitGroupId: string;
+    shape: string;
+    offsetX: number;
+    offsetZ: number;
+    offsetY: number;
+    w: number;
+    d: number;
+    h: number;
+    baseDamage: number;
+  }>;
+  /** Cooldown from .skl properties */
+  cooldownMs?: number;
+  /** Cast time from .skl properties */
+  castTimeMs?: number;
+  /** MP cost from .skl properties */
+  mpCost?: number;
+  /** Cube fragment cost from .skl properties */
+  cubeCost?: number;
+  /** Original DNF skill ID */
+  skillId: number;
+  /** Resolved skill name (if stringtable available) */
+  name?: string;
+  /** Provenance: .skl source file */
+  sourceSklPath?: string;
+  /** Provenance: .ani source file */
+  sourceAniPaths?: string[];
+  /** Mapping issues and format gaps */
+  warnings: string[];
+}

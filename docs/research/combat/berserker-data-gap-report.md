@@ -16,8 +16,8 @@
 | DFO 官方补丁说明 | 官方补丁 | ✅ 已抓取 | Berserker 平衡性调整百分比、技能行为变更 |
 | dnfcalc/dcalc | 开源计算器 | ✅ 已克隆 | 装备数据(SQLite)、伤害公式逻辑(Python) |
 | COLG 钻石22222 | 社区数值表 | ⚠️ 截图形式 | 伤害系数、等级增长、CD 值(图片格式,需人工转录) |
-| OjoDnfExtractor | NPK/IMG 提取 | 📋 管线已设计 | 逐帧时长、锚点、hitbox 挂载帧 |
-| PvfPlayer + DNF-Porting | PVF/.skl 提取 | 📋 管线已设计 | 帧阶段、hitbox 几何、浮空/重力参数、攻击系数 |
+| OjoDnfExtractor | NPK/IMG 提取 | 📋 管线已设计 (in progress as of 2026-05-12) | 逐帧时长、锚点、hitbox 挂载帧 |
+| PvfPlayer + DNF-Porting | PVF/.skl 提取 | 📋 管线已设计 (in progress as of 2026-05-12) | 帧阶段、hitbox 几何、浮空/重力参数、攻击系数 |
 
 ---
 
@@ -83,10 +83,13 @@
 | **技能 CD / MP / 等级** | 🟢 80-90% | Neople Open API | 仅需补全非 API 暴露的新技能 |
 | **伤害系数(百分比)** | 🔵 60-70% | COLG 数值表 + dcalc 源码 | COLG 截图需人工转录到 src/data |
 | **命中次数** | 🟢 85-90% | API + 补丁确认 | 已准确(MW 3hit, RF 10hit) |
-| **帧阶段(startup/active/recovery)** | 🟡 10-15% | ⚠️ 无公开来源 | **需 PVF/.skl 提取或逐帧视频分析** |
-| **逐帧时长(不等帧)** | 🔴 0% | ⚠️ 仅 NPK/IMG 含此数据 | **需 OjoDnfExtractor 提取** |
+| **EUC-KR 编码** | 🟢 100% | iconv-lite | 230K+ stringtable 条目已解码 |
+| **ActionName 映射** | 🟢 95% | Neople API | 55 Neo Berserker skillId, 7 过期 ID 已修复, 6 名称匹配待 API 重试 |
+| **Cancel 窗口** | 🟠 70% | PVF cancel*.skl 文件 | section ID 已解码 (371543=cancelWindowStart, 241483=cancelWindowDuration), 需交叉验证 |
+| **.ani 帧记录** | 🟡 60% | AniAnalyzer (版本感知) | 提取帧索引和 hitbox 坐标, 逐帧延迟仍为估算 |
+| **逐帧时长 (IMG/NPK)** | 🟡 30% | .ani 帧索引可用 (Phase B) | IMG 逐帧延迟不可从 IMG 格式提取 |
 | **Hitbox 几何(w/d/h/offset)** | 🟡 10-15% | ⚠️ 无公开来源 | **需 PVF/.skl 提取** |
-| **浮空/重力/下落曲线** | 🔴 5-10% | ⚠️ 无公开来源 | **需 PVF/.skl 提取** |
+| **Physics rules (浮空/重力/下落曲线)** | 🟡 40% | 全局常量已提取 (DEFAULT_GRAVITY_ACCEL=-1500) | 每技能曲线硬编码在引擎中 |
 | **伤害公式(完整)** | 🔵 50-60% | DFO Wiki + dcalc 源码 | 公式结构已有,常数待从 PVF 提取 |
 | **Boss AI** | 🔴 0-5% | ⚠️ 无公开来源 | 需 PVF AI 脚本提取或大量实测 |
 | **动画锚点/偏移** | 🟡 20-30% | NPK/IMG 含锚点数据 | 需 OjoDnfExtractor 提取验证 |
@@ -101,10 +104,10 @@
 3. **dcalc 伤害公式审计** — 从已克隆的 `D:\tmp-dnfcalc` 后端代码中提取伤害公式结构
 
 ### P1 — 需要一次工具运行(中等投入,最高回报)
-4. **运行 NPK/IMG 提取管线** — 使用 OjoDnfExtractor 提取 Berserker 技能动画的逐帧时长和锚点
+4. **运行 NPK/IMG 提取管线** (in progress as of 2026-05-12) — 使用 OjoDnfExtractor 提取 Berserker 技能动画的逐帧时长和锚点
    - 关键输出: 精确 totalFrames、逐帧时长、锚点验证
    - 参考: `docs/research/combat/npk-img-extraction-workflow.md`
-5. **运行 PVF/.skl 提取管线** — 使用 PvfPlayer/DNF-Porting 解析 .skl 文件
+5. **运行 PVF/.skl 提取管线** (in progress as of 2026-05-12) — 使用 PvfPlayer/DNF-Porting 解析 .skl 文件
    - 关键输出: 帧阶段划分、hitbox 几何、浮空/重力参数、攻击系数
    - 参考: `docs/research/combat/pvf-skl-extraction-workflow.md`
 
@@ -149,6 +152,7 @@
 
 ---
 
+> **Update (2026-05-12)**: Phase A–D of the PVF extraction pipeline has been completed. Cancel window data was the most significant discovery — it exists in cancel*.skl files previously overlooked. See `crt-002-frame-evidence.md` for details.
 ## 附录: 已生成的文件清单
 
 ### 社区参考数据(`docs/research/reference/community/`)

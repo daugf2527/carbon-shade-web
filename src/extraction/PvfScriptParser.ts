@@ -78,7 +78,9 @@ export class PvfScriptParser {
    * Equipment.lst uses a line-based format: "id\tname\ttype\tgrade\tstat1=val1\tstat2=val2..."
    */
   static parseEquipmentLst(buf: Buffer): EquipmentDefinition[] {
-    const text = buf.toString("euc-kr" as BufferEncoding);
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const iconv = require("iconv-lite");
+    const text = iconv.decode(buf, "cp949");
     const lines = text.split(/\r?\n/);
     const equipment: EquipmentDefinition[] = [];
 
@@ -117,67 +119,147 @@ export class PvfScriptParser {
   }
 
   /**
-   * Parse stringtable.bin header into index ranges.
-   * Returns an array of { start, end } offsets for each string.
+   * Parse stringtable.bin into index ranges with decoded string data.
+   *
+   * stringtable.bin structure (reverse-engineered from DNF Script.pvf):
+   *   [4B] count (uint32 LE)
+   *   [8B × count] index entries: start (uint32) + end (uint32)
+   *   [variable] string data block
+   *
+   * The index offsets are relative to the string data block start
+   * (= 4 + count*8). Each pair [start, end) delimits one EUC-KR
+   * encoded string in the data block.
+   *
+   * Returns an array of { index, string } for every valid entry.
    */
-  static parseStringTableIndices(buf: Buffer): Array<{ start: number; end: number }> {
-    const reader = new ByteReader(buf);
-    if (reader.remaining < 4) return [];
+  static parseStringTable(buf: Buffer): Array<{ index: number; string: string }> {
+    if (buf.length < 4) return [];
 
-    const count = reader.readUint32();
-    const indices: Array<{ start: number; end: number }> = [];
+    const count = buf.readUInt32LE(0);
+    const indexAreaSize = count * 8;
+    const stringBlockStart = 4 + indexAreaSize;
+
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const iconv = require("iconv-lite");
+
+    const results: Array<{ index: number; string: string }> = [];
 
     for (let i = 0; i < count; i++) {
-      if (reader.remaining < 8) break;
-      const start = reader.readUint32();
-      const end = reader.readUint32();
-      indices.push({ start, end });
+      const indexOff = 4 + i * 8;
+      if (indexOff + 8 > buf.length) break;
+
+      const start = buf.readUInt32LE(indexOff);
+      const end = buf.readUInt32LE(indexOff + 8);
+      const len = end - start;
+
+      if (len <= 0 || len > 10000) continue;
+
+      // Try relative offset first (stringBlockStart + start)
+      let absStart = stringBlockStart + start;
+      let absEnd = absStart + len;
+
+      // If relative goes past buffer, try absolute offset
+      if (absEnd > buf.length) {
+        absStart = start;
+        absEnd = start + len;
+      }
+
+      // Still out of bounds — skip
+      if (absStart < 0 || absEnd > buf.length || absStart >= buf.length) continue;
+
+      try {
+        const slice = buf.subarray(absStart, absEnd);
+        const decoded = iconv.decode(Buffer.from(slice), "cp949").replace(/\x00/g, "");
+        if (decoded.length > 0) {
+          results.push({ index: i, string: decoded });
+        }
+      } catch {
+        // Skip undecodable entries
+      }
     }
 
-    return indices;
+    return results;
   }
 
   /**
-   * Parse n_string.lst (index-to-text mapping).
-   * Returns a Map of string table ID → key-value pair list.
+   * Parse n_string.lst — note this file is binary .skl bytecode format
+   * (magic 0xB0 0xD0), NOT a plain-text .lst file. We parse it as a
+   * PvfScriptFile and extract key-value pair mappings.
+   *
+   * Returns a Map of string table index → Map<key, value> pairs.
    */
-  static parseNStringLst(buf: Buffer): Array<{ index: number; pairs: Array<[string, string]> }> {
-    const text = buf.toString("euc-kr" as BufferEncoding);
-    const lines = text.split(/\r?\n/);
-    const result: Array<{ index: number; pairs: Array<[string, string]> }> = [];
+  static parseNStringLst(buf: Buffer): Map<number, Map<string, string>> {
+    const result = new Map<number, Map<string, string>>();
+
+    // Parse as bytecode script (n_string.lst starts with 0xB0 0xD0 magic)
+    const scriptFile = PvfScriptParser.parse(buf);
 
     let currentIndex = -1;
-    let currentPairs: Array<[string, string]> = [];
+    let currentPairs = new Map<string, string>();
+    let lastKey: string | null = null;
 
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("//") || trimmed.startsWith("#")) continue;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const iconv = require("iconv-lite");
 
-      // Lines with ">" are key-value pairs
-      const gtIdx = trimmed.indexOf(">");
-      if (gtIdx > 0) {
-        const key = trimmed.substring(0, gtIdx).trim();
-        const value = trimmed.substring(gtIdx + 1).trim();
-        currentPairs.push([key, value]);
+    for (const cmd of scriptFile.commands) {
+      // Section markers (type 5) may indicate a new index group
+      if (cmd.type === "section" && typeof cmd.value === "number") {
+        // Save previous section if it had content
+        if (currentIndex >= 0 && currentPairs.size > 0) {
+          result.set(currentIndex, currentPairs);
+        }
+        currentIndex = cmd.value;
+        currentPairs = new Map<string, string>();
+        lastKey = null;
         continue;
       }
 
-      // Non-comment, non-key-value line might start a new section
-      // Try to parse as an index number
-      const num = parseInt(trimmed, 10);
-      if (!isNaN(num)) {
-        // Save previous section if it had content
-        if (currentIndex >= 0 && currentPairs.length > 0) {
-          result.push({ index: currentIndex, pairs: currentPairs });
+      // String values (type 7) — could be a key or a value
+      if (cmd.type === "string" && typeof cmd.value === "string") {
+        const strVal = cmd.value;
+        if (lastKey === null) {
+          // First string in a pair is the key
+          lastKey = strVal;
+        } else {
+          // Second string is the value
+          currentPairs.set(lastKey, strVal);
+          lastKey = null;
         }
-        currentIndex = num;
-        currentPairs = [];
+        continue;
+      }
+
+      // Int values (type 2/3) might be standalone indices
+      if ((cmd.type === "int" || cmd.type === "intEx") && typeof cmd.value === "number") {
+        // If we have no current index and this looks like an index, start new section
+        if (currentIndex < 0) {
+          currentIndex = cmd.value;
+          currentPairs = new Map<string, string>();
+          lastKey = null;
+        }
+        continue;
+      }
+
+      // stringLinkIndex (type 9) and stringLink (type 10) — resolve via iconv
+      if (cmd.type === "stringLinkIndex" || cmd.type === "stringLink") {
+        // These reference the stringtable; handled by the caller
+        continue;
+      }
+
+      // commandSeparator (type 8) — delimiter between groups
+      if (cmd.type === "commandSeparator") {
+        if (currentIndex >= 0 && currentPairs.size > 0) {
+          result.set(currentIndex, currentPairs);
+        }
+        currentIndex = -1;
+        currentPairs = new Map<string, string>();
+        lastKey = null;
+        continue;
       }
     }
 
-    // Save last section
-    if (currentIndex >= 0 && currentPairs.length > 0) {
-      result.push({ index: currentIndex, pairs: currentPairs });
+    // Save final section
+    if (currentIndex >= 0 && currentPairs.size > 0) {
+      result.set(currentIndex, currentPairs);
     }
 
     return result;

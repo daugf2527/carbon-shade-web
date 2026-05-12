@@ -143,7 +143,9 @@ export class NpkParser {
 
     // Try CP949 (EUC-KR) decoding — NPK names use Korean encoding
     try {
-      return nameBytes.toString("euc-kr" as BufferEncoding);
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const iconv = require("iconv-lite");
+      return iconv.decode(nameBytes, "cp949");
     } catch {
       // Fallback to latin1
       let result = "";
