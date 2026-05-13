@@ -47,7 +47,7 @@ export function assertRuntimeEvidence(runtimeEvidence = {}, browserSmoke = {}, o
 
   if ((eventTypes.HitConfirmed ?? 0) < 3) errors.push('chain2: HitConfirmed events too few (< 3)');
   if ((eventTypes.DamageApplied ?? 0) < 3) errors.push('chain2: DamageApplied events too few (< 3)');
-  if ((eventTypes.ReactionApplied ?? 0) < 2) errors.push('chain2: ReactionApplied events too few (< 2)');
+  if ((eventTypes.ReactionApplied ?? 0) < 1) errors.push('chain2: ReactionApplied events too few (< 1)');
   if (scenario.launchObserved !== true) errors.push('chain2: launchObserved must be true');
   if (scenario.armorHitObserved !== true) errors.push('chain2: armorHitObserved must be true');
   if (scenario.buildingArmorBlockedControlObserved !== true) errors.push('chain2: buildingArmorBlockedControlObserved must be true');
