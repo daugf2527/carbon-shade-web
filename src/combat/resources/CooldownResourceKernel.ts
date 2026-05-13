@@ -9,7 +9,7 @@ export class CooldownResourceKernel {
     if (remaining > 0) { bus.emit("CooldownRejected", CombatEventPriority.ResourceCooldown, tick, { actorId:actor.id, actionName:action.actionName, remaining }, { targetActorId:actor.id }); return false; }
     if (cost) {
       bus.emit("ResourceCostRequested", CombatEventPriority.ResourceCooldown, tick, { actorId:actor.id, actionName:action.actionName, cost }, { targetActorId:actor.id });
-      const hpAfter = actor.resources.hp - (cost.hpCost ?? 0) - (cost.hpPercentCost ? actor.resources.maxHp * cost.hpPercentCost : 0);
+      const hpAfter = actor.resources.hp - (cost.hpCost ?? 0) - (cost.hpPercentCost ? Math.floor(actor.resources.maxHp * cost.hpPercentCost / 100) : 0);
       if ((cost.mpCost ?? 0) > actor.resources.mp || (cost.cubeCost ?? 0) > actor.resources.cube || hpAfter < (cost.cannotReduceHpBelow ?? 0)) { bus.emit("ResourceCostRejected", CombatEventPriority.ResourceCooldown, tick, { actorId:actor.id, actionName:action.actionName, reason:"insufficient_resource" }, { targetActorId:actor.id }); return false; }
       if (cost.costTiming === "on_request") this.pay(actor, action, tick, bus);
     }
@@ -17,7 +17,7 @@ export class CooldownResourceKernel {
     if (cp?.cooldownStartsAt === "on_request") this.start(actor, action, tick, bus);
     return true;
   }
-  pay(actor:Actor, action:FrameDataAction, tick:number, bus:CombatEventBus): void { const cost=action.costProfile; if(!cost) return; actor.resources.mp -= cost.mpCost ?? 0; actor.resources.cube -= cost.cubeCost ?? 0; actor.resources.hp = Math.max(cost.cannotReduceHpBelow ?? 0, actor.resources.hp - (cost.hpCost ?? 0)); bus.emit("ResourceCostPaid", CombatEventPriority.ResourceCooldown, tick, {actorId:actor.id, actionName:action.actionName}, {targetActorId:actor.id}); }
+  pay(actor:Actor, action:FrameDataAction, tick:number, bus:CombatEventBus): void { const cost=action.costProfile; if(!cost) return; actor.resources.mp -= cost.mpCost ?? 0; actor.resources.cube -= cost.cubeCost ?? 0; const hpPercentDeduction = cost.hpPercentCost ? Math.floor(actor.resources.maxHp * cost.hpPercentCost / 100) : 0; actor.resources.hp = Math.max(cost.cannotReduceHpBelow ?? 0, actor.resources.hp - (cost.hpCost ?? 0) - hpPercentDeduction); bus.emit("ResourceCostPaid", CombatEventPriority.ResourceCooldown, tick, {actorId:actor.id, actionName:action.actionName}, {targetActorId:actor.id}); }
   start(actor:Actor, action:FrameDataAction, tick:number, bus:CombatEventBus): void {
     const cp=action.cooldownProfile;
     if(!cp) return;

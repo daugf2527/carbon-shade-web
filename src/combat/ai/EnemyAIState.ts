@@ -24,6 +24,7 @@ export interface EnemyAIState {
   loseAggroRange: number;
   hp: number;
   damage: number;
+  baseDamage: number;
   armor: BaseArmorType;
   // Phase 5: Boss state fields
   bossPhase?: number;
@@ -49,5 +50,5 @@ export interface EnemyAIState {
 }
 
 export function cloneEnemyAIState(state: EnemyAIState): EnemyAIState {
-  return { ...state };
+  return { ...state, baseDamage: state.baseDamage };
 }

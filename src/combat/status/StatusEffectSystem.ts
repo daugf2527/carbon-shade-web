@@ -2,6 +2,7 @@ import type { Actor, StatusEffect, StatusEffectType, ActionName, StatusProfile }
 import { CombatEventBus, CombatEventPriority } from "../events/CombatEventBus.js";
 import { nextId } from "../util/ids.js";
 import { DamageResolver } from "../damage/DamageResolver.js";
+import { deterministicRoll } from "../util/random.js";
 import { STATUS_PROFILES, PVE_STATUS_CONFIG, getDefaultResistance } from "../../data/manifest/status.js";
 
 interface StatusApplyOptions {
@@ -72,7 +73,7 @@ export class StatusEffectSystem {
     }
 
     // Legacy chance-based check (fallback for backward compat)
-    if (chance < 1 && Math.random() > chance) {
+    if (chance < 1 && deterministicRoll(tick, actor.id) > chance) {
       bus.emit("StatusResisted", CombatEventPriority.Status, tick, {actorId:actor.id, type, reason:"chance_failed"}, {targetActorId:actor.id});
       return null;
     }

@@ -145,9 +145,12 @@ function cloneActions(): Record<ActionName, FrameDataAction> {
 }
 
 function profileToTuning(profile: EnemyManifest["profiles"]["grunt"]) {
+  const isBoss = profile.id === "boss";
   return {
     phase: "idle",
     phaseEnteredTick: 0,
+    bossPhase: isBoss ? 1 : undefined,
+    bossPhaseEnteredTick: isBoss ? 0 : undefined,
     windupRemaining: 0,
     recoverRemaining: 0,
     detectRange: profile.detectRange,
@@ -158,6 +161,7 @@ function profileToTuning(profile: EnemyManifest["profiles"]["grunt"]) {
     loseAggroRange: profile.loseAggroRange,
     hp: profile.hp,
     damage: profile.damage,
+    baseDamage: profile.damage,
     armor: profile.armor,
     // Phase 5: DNF AI parameters (synced with ai.ts toEnemyAIState)
     sightRange: profile.sightRange,

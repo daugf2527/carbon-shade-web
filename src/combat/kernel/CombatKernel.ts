@@ -24,6 +24,7 @@ import { LastHitTrace } from "../debug/LastHitTrace.js";
 import { DebugOverlay, type DebugSnapshot } from "../debug/DebugOverlay.js";
 import { ReplayRecorder } from "../replay/ReplayRecorder.js";
 import { EnemyAIController } from "../ai/EnemyAI.js";
+import { BOSS_CONFIGS } from "../../data/manifest/ai.js";
 import { DEFAULT_COMBO_CORRECTION_CONFIG, applyComboCorrectionFromHit, hasComboCorrectionPressure, resetComboCorrectionState } from "../combo/ComboCorrection.js";
 
 export interface CombatKernelOptions { enableReplay?: boolean; }
@@ -64,7 +65,7 @@ export class CombatKernel {
   readonly lastHit = new LastHitTrace();
   readonly debug = new DebugOverlay();
   readonly runDetector = new RunCommandDetector();
-  readonly enemyAI = new EnemyAIController();
+  readonly enemyAI = new EnemyAIController(BOSS_CONFIGS);
   readonly replay = new ReplayRecorder();
   readonly bloodlustGrabHolds = new Map<string, BloodlustGrabHold>();
   readonly bloodlustWhiffEruptions = new Set<string>();
@@ -187,7 +188,7 @@ export class CombatKernel {
   private consumeInput(): void {
     const player=this.player;
     if(player.flags.dead) return;
-    const allowed = new Set<ActionName>(["Walk","Run","NormalBasic1","DashAttack","Jump","JumpAttack","UpwardSlash","MountainousWheel","RagingFury","Bloodlust","Backstep","QuickRebound","FrenzyToggle","Derange","Diehard","ForceDownPlayer","ForceBleed","RunScreenshotScenario"]);
+    const allowed = new Set<ActionName>(["Walk","Run","NormalBasic1","DashAttack","Jump","JumpAttack","UpwardSlash","MountainousWheel","RagingFury","Bloodlust","Backstep","QuickRebound","FrenzyToggle","Derange","Diehard","Thirst","BloodMemory","VimAndVigor","ForceDownPlayer","ForceBleed","RunScreenshotScenario"]);
     const item=this.inputBuffer.consumeAllowed(this.tickCount, allowed, this.hitStop.isFrozen(player.id) || this.recoil.isRecoiling(player.id));
     if(!item) return;
 
@@ -315,6 +316,12 @@ export class CombatKernel {
       this.buffs.applyDerange(actor,this.tickCount,this.bus);
     } else if(actionName==="Diehard") {
       this.buffs.applyDiehard(actor,this.tickCount,this.bus);
+    } else if(actionName==="Thirst") {
+      this.buffs.apply(actor,"thirst",this.tickCount,this.bus);
+    } else if(actionName==="BloodMemory") {
+      this.buffs.apply(actor,"blood_memory",this.tickCount,this.bus);
+    } else if(actionName==="VimAndVigor") {
+      this.buffs.apply(actor,"vim_and_vigor",this.tickCount,this.bus);
     }
   }
 
@@ -453,7 +460,7 @@ export class CombatKernel {
     if (forceStandKnockdown && decision.armorDecision) decision.armorDecision.finalReaction = "downed";
     this.updateComboCorrection(target, decision, corr);
     const targetWasBleeding = target.statusEffects.some(s => s.type === "bleed");
-    const req=this.damageResolver.requestFromHit(decision,corr,attacker.currentAction?.actionName, attacker.ai?.damage);
+    const req=this.damageResolver.requestFromHit(decision,corr,attacker.currentAction?.actionName, attacker.ai?.damage, {strength:attacker.strength, intelligence:attacker.intelligence, physAtk:attacker.physAtk, magAtk:attacker.magAtk, independentAtk:attacker.independentAtk, elementalDamage:attacker.elemStrength}, {defense:target.defense, elemResist:target.elemResist}, "physical_percent", attacker.level);
     this.bus.emit("DamageRequested", CombatEventPriority.Damage, this.tickCount, req, {sourceActorId:attacker.id,targetActorId:target.id, correlationId:corr});
     const damage=this.damageResolver.apply(target, req, {isCounter:decision.isCounter,isBackAttack:decision.isBackAttack,isCritical:decision.isCritical}, decision.armorDecision?.damageAllowed ?? true, this.damageMultipliersFor(attacker, target, req.actionName));
     this.lastHit.updateFromDamage(this.tickCount,damage);
@@ -650,7 +657,7 @@ export class CombatKernel {
 
   private applyBloodlustEruptionDamage(attacker: Actor, target: Actor, decision: HitDecision, correlationId: string): void {
     const targetWasBleeding = target.statusEffects.some(s => s.type === "bleed");
-    const req=this.damageResolver.requestFromHit(decision,correlationId,"Bloodlust");
+    const req=this.damageResolver.requestFromHit(decision,correlationId,"Bloodlust", undefined, {strength:attacker.strength, intelligence:attacker.intelligence, physAtk:attacker.physAtk, magAtk:attacker.magAtk, independentAtk:attacker.independentAtk, elementalDamage:attacker.elemStrength}, {defense:target.defense, elemResist:target.elemResist}, "physical_percent", attacker.level);
     this.bus.emit("HitConfirmed", CombatEventPriority.HitDecision, this.tickCount, decision, {sourceActorId:attacker.id,targetActorId:target.id, correlationId});
     this.updateComboCorrection(target, decision, correlationId);
     this.bus.emit("DamageRequested", CombatEventPriority.Damage, this.tickCount, req, {sourceActorId:attacker.id,targetActorId:target.id, correlationId});
@@ -722,7 +729,7 @@ export class CombatKernel {
     if (bmStrength && bmStrength !== 0) multipliers.push({name:"ratio_7_atk_reinforce", value: 1 + bmStrength / 100});
     // ratio_9: blood_memory incoming damage reduction (applies defensively, wired as target-side multiplier)
     const bmDef = attacker.buffs.find(b=>b.type==="blood_memory")?.modifiers.find(modifier => modifier.key === "blood_memory_incoming_damage_reduction_percent")?.value;
-    if (bmDef && bmDef !== 0) multipliers.push({name:"ratio_9_misc", value: 1 + bmDef / 100});
+    if (bmDef && bmDef !== 0) multipliers.push({name:"ratio_9_misc", value: 1 - bmDef / 100});
     const ruptureStacks = target.statusEffects.filter(status => status.type === "rupture").reduce((sum, status) => sum + status.stacks, 0);
     const ruptureMultiplierPerStack = this.status.profile("rupture")?.incomingDirectDamageMultiplierPerStack ?? 0.1;
     if (ruptureStacks > 0) multipliers.push({name:"rupture_incoming_damage", value:1 + ruptureStacks * ruptureMultiplierPerStack});

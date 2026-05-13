@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Carbon Shade / 碳影** — a Phaser 3 + TypeScript 2.5D combat prototype served by Vite. The current engineering name is **Combat Lab**. The canonical repository path is `carbon-shade-web`. This prototype validates DNF-style 2.5D combat feel: skill execution, monster feedback, boss behavior, normalized sprite assets, and deterministic behavior tests.
 
-## Current state (2026-05-12)
+## Current state (2026-05-13)
 
 **Phase**: Combat Lab 0.3 — handfeel tuning + evidence freeze. The `dnf-pve-1to1-replication-plan.md` Phase 1–5 implementation is substantially complete.
 
@@ -50,7 +50,7 @@ src/data/manifest/
 
 ```
 npm run typecheck   → passed
-npm run static:test → 34/34 passed
+npm run static:test → 40/40 passed
 npm run build       → passed
 ```
 
@@ -71,6 +71,9 @@ npm run build       → passed
 - `npm run typecheck` — run `tsc --noEmit` on `src/` via `scripts/typecheck.mjs`.
 - `npm run build` — compile TypeScript and emit `dist/index.html` + browser ESM via `scripts/build.mjs`.
 - `npm run static:test` — compile and run `tests/static/*.test.ts` via `scripts/static-test.mjs`, outputting `.tmp/static-test-results.json`. Now includes extraction tests (ani-analyzer, pvf-parser, extraction-pipeline, skl-to-action-mapper, img-parser).
+- `npm run validate:sprites` — validate sprite assets consistency.
+- `npm run validate:assets` — validate all game assets.
+- `npm run browser:smoke` — run Playwright browser smoke test (`tests/browser/combat-smoke.spec.ts`).
 - `docker compose up --build` — run the app container on port 5173.
 
 Browser screenshot verification scripts are intentionally excluded from npm commands — they can hang on Windows. Use the three stable checks above (`typecheck`, `static:test`, `build`) for code validation.
@@ -127,8 +130,17 @@ Research material organized into four subdirectories:
 
 ## Architecture
 
+The codebase is organized into four top-level modules under `src/`:
 
-The combat kernel (`src/combat/`) is pure TypeScript with **no Phaser imports** — it can run deterministically in Node for tests. Rendering lives in `src/game/` and translates kernel state into Phaser display objects. Data modules (`src/data/`) are pure data — no logic.
+- **`src/combat/`** — Pure TypeScript combat kernel with **no Phaser imports**. Determines all combat state and can run in Node for deterministic tests. Submodules include: `actions/`, `actors/`, `ai/`, `armor/`, `buffs/`, `combo/`, `damage/`, `death/`, `events/`, `hit/`, `input/`, `kernel/`, `motion/`, `reaction/`, `replay/`, `resources/`, `status/`, `util/`.
+- **`src/game/`** — Phaser rendering layer. Translates kernel state into display objects (`CombatScene.ts`, `RenderAdapter.ts`, `BootScene.ts`, `CameraController.ts`) plus `audio/`, `layers/`, `TouchControls.ts`, `SpriteFrameLibrary.ts`, `bootActionManifest.ts`.
+- **`src/data/`** — Pure data, no logic. `manifest/` holds versioned JSON manifests (actions, damage, status, AI), `schema.ts`/`hash.ts`/`loader.ts` for validation, FNV-1a hashing, and async loading. `official/` holds Neople API-derived skill facts (`berserkerSkillFacts.ts`), physics constants (`dnfPhysicsConstants.ts`), and local frame tuning (`localFrameTuning.ts`).
+- **`src/extraction/`** — DNF client data extraction toolchain (PVF/NPK/IMG parsers, `AniAnalyzer`, `SklAnalyzer`, `SklToActionMapper`). No Phaser dependency; runs in Node for data pipeline workflows.
+
+Plus two scaffolding modules:
+- **`src/runtime/`** — Deterministic combat runtime (`combatRuntime.mjs` `RuntimeKernel`) for scenario verification, plus `RuntimeEvidence`/`RuntimeEvidenceCollector` for runtime observability and `DynamicDataLoader` for progressive manifest loading.
+- **`src/vendor/`** — Type shims (`browser-types.d.ts`, `phaser-shim.d.ts`) for browser-only APIs not available in Node test environment.
+- **`src/main.ts`** — Phaser game bootstrap: creates the `Phaser.Game` at 1920×1080 with `Scale.FIT`, registers `BootScene` + `CombatScene`, mounts debug controls. Exposes `window.combatLab` for runtime inspection.
 
 ## Coding conventions
 
@@ -163,7 +175,9 @@ Known constraints:
 
 ## Automation test infrastructure
 
-The test suite runs via `scripts/static-test.mjs`: TypeScript is compiled with `tsconfig.test.json` into `.tmp/test-js/`, then each `.test.js` file under `tests/static/` is executed as a standalone Node child process. Tests pass by exiting 0 and fail by exiting non-zero or throwing. There is no test framework (no Vitest, Jest, Mocha). Assertions use `node:assert/strict` via `tests/static/test-utils.ts`, which re-exports `ok`, `equal`, and `deepEqual` only. All 29 test files live in `tests/static/*.test.ts`.
+The test suite runs via `scripts/static-test.mjs`: TypeScript is compiled with `tsconfig.test.json` into `.tmp/test-js/`, then each `.test.js` file under `tests/static/` is executed as a standalone Node child process. Tests pass by exiting 0 and fail by exiting non-zero or throwing. There is no test framework (no Vitest, Jest, Mocha). Assertions use `node:assert/strict` via `tests/static/test-utils.ts`, which re-exports `ok`, `equal`, and `deepEqual` only. All 40 test files live in `tests/static/*.test.ts`.
+
+Browser smoke tests use Playwright (`tests/browser/combat-smoke.spec.ts`, run via `npm run browser:smoke`). These require a dev server running and a display — they are not part of the CI-static verification gates.
 
 Key test files added by the automation plan:
 - `tests/static/fuzz-combat.test.ts` — 50-sequence no-crash fuzz, 40-sequence determinism check, 30-sequence replay JSON validity

@@ -202,7 +202,15 @@ export class ImgParser {
       for (const frame of frames) {
         if (frame.type === "link" && frame.linkFrame !== undefined) {
           const target = frames[frame.linkFrame];
-          // Only resolve one level; don't chain
+          if (target && target.type === "image") {
+            frame.width = target.width;
+            frame.height = target.height;
+            frame.frameWidth = target.frameWidth;
+            frame.frameHeight = target.frameHeight;
+            frame.pivotX = target.pivotX;
+            frame.pivotY = target.pivotY;
+            frame.data = target.data;
+          }
         }
       }
     }

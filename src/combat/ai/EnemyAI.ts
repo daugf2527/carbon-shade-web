@@ -1,5 +1,6 @@
 import type { Actor, Facing, ReactionKind } from "../types.js";
 import { cloneVec3 } from "../util/geometry.js";
+import { deterministicRoll } from "../util/random.js";
 import { isHitReactionPhase, type EnemyAIState } from "./EnemyAIState.js";
 
 export interface EnemyAITickKernel {
@@ -81,16 +82,6 @@ export interface BossConfig {
 // DNF 70-85 classic monster AI: FSM + behavior tree hybrid
 // ============================================================
 
-/** Deterministic pseudo-random value from tick + actorId. */
-function deterministicRoll(tick: number, actorId: string): number {
-  let hash = 2166136261;
-  const str = `${tick}:${actorId}`;
-  for (let i = 0; i < str.length; i++) {
-    hash ^= str.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-  return ((hash >>> 0) % 10000) / 10000;
-}
 
 function behaviorTreeBranch(state: EnemyAIState, tick: number, actorId: string): "chase" | "hold" | "retreat" {
   const weights = state.behaviorWeights ?? { chase: 60, hold: 25, retreat: 15 };
@@ -222,6 +213,10 @@ export class EnemyAIController {
         }
         state.windupRemaining -= 1;
         if (state.windupRemaining > 0) return;
+        const pattern = this.selectBossPattern(state, kernel.tickCount);
+        if (pattern) {
+          state.damage = Math.round(state.baseDamage * pattern.damageMultiplier);
+        }
         const requested = kernel.requestAction(actor, "EnemyBasic", "ai", actor.facing);
         this.transition(state, requested ? "attacking" : "recover", kernel.tickCount);
         return;
