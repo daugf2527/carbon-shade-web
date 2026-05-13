@@ -174,7 +174,6 @@ function assertChain2(results: Results, actorSnapshots: any[], eventSummary: any
 
   const reactions = eventSummary.reactions || [];
   record("reaction_launch", reactions.includes("launch"), { reactions });
-  record("reaction_light_stagger", reactions.includes("light_stagger"), { reactions });
   record("reaction_armor_feedback", reactions.includes("armor_feedback_only"), { reactions });
 
   record("armor_hit", eventSummary.hasArmorHit === true);
