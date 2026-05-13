@@ -101,7 +101,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ci-evidence-${{ github.run_number }}-${{ github.run_attempt }}
+          name: ci-evidence-node-${{ matrix.node-version }}-${{ github.run_number }}-${{ github.run_attempt }}
           path: |
             .tmp/*.json
             verification/*.json
