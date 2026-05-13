@@ -327,6 +327,7 @@ function assertMacroHealth(results: Results, actorSnapshots: any[], eventSummary
 // ── Main test ──
 
 test("combat scene boots, runs deterministic scenario, and validates all combat chains", async ({ page }, testInfo) => {
+  test.setTimeout(90_000); // 90s — Phaser boot can be slow in CI
   const diagnostics = attachDiagnostics(page);
   const results: { check: string; passed: boolean; [key: string]: unknown }[] = [];
   let globalPassed = true;
@@ -334,57 +335,84 @@ test("combat scene boots, runs deterministic scenario, and validates all combat 
   mkdirSync(verificationDir, { recursive: true });
 
   // Setup
-  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.goto("/", { waitUntil: "domcontentloaded", timeout: 20000 });
   results.push({ check: "page_loaded", passed: true });
 
-  await expect(page.locator("canvas")).toBeVisible();
+  await expect(page.locator("canvas")).toBeVisible({ timeout: 15000 });
   results.push({ check: "canvas_present", passed: true });
+
+  // Collect page errors before interacting
+  const bootErrors: string[] = [];
+  page.on("pageerror", err => bootErrors.push(err.message));
 
   // Phaser BootScene: press Enter or click "Start Training Ground" button
   await page.keyboard.press("Enter");
   try {
-    await page.waitForFunction(() => Boolean((window as any).combatLab?.scene && (window as any).combatLab?.kernel), undefined, { timeout: 15000 });
+    await page.waitForFunction(() => Boolean((window as any).combatLab?.scene && (window as any).combatLab?.kernel), undefined, { polling: 200, timeout: 25000 });
   } catch {
     // Retry: click the start button directly
-    await page.locator("text=Start Training Ground").first().click({ timeout: 5000 }).catch(() => undefined);
-    await page.waitForFunction(() => Boolean((window as any).combatLab?.scene && (window as any).combatLab?.kernel), undefined, { timeout: 15000 });
+    const btn = page.locator("text=Start Training Ground").first();
+    if (await btn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await btn.click().catch(() => undefined);
+    }
+    await page.waitForFunction(() => Boolean((window as any).combatLab?.scene && (window as any).combatLab?.kernel), undefined, { polling: 200, timeout: 25000 });
   }
-  results.push({ check: "combat_scene_ready", passed: true });
+  const booted = await page.evaluate(() => Boolean((window as any).combatLab?.scene && (window as any).combatLab?.kernel));
+  results.push({ check: "combat_scene_ready", passed: booted, bootErrors });
+  if (!booted) {
+    // Dump page state for debugging
+    const bodyText = await page.evaluate(() => (document.body as any)?.innerText?.substring(0, 500) ?? "(no body text)");
+    console.log(`[SMOKE] Boot failed. Page text: ${bodyText}`);
+    console.log(`[SMOKE] Boot page errors: ${bootErrors.join(' | ')}`);
+    // Don't throw here — let the test continue and fail gracefully at the end
+  }
 
-  // Screenshot pre-scenario
-  await page.screenshot({ path: path.join(verificationDir, "browser-smoke.png") });
-  results.push({ check: "screenshot_captured", passed: true });
+  const sceneBooted = booted; // from the boot check above
+  let runtimeEvidence: unknown = {};
+  let actorSnapshots: any[] = [];
+  let eventSummary: any = {};
+  let scenario: any = {};
 
-  // Run deterministic scenario
-  await page.evaluate(() => {
-    const runtime = (window as any).combatLab;
-    runtime?.scene?.runScenario?.();
-  });
-  await page.waitForTimeout(500);
+  if (sceneBooted) {
+    // Screenshot pre-scenario
+    await page.screenshot({ path: path.join(verificationDir, "browser-smoke.png") });
+    results.push({ check: "screenshot_captured", passed: true });
 
-  // Screenshot post-scenario
-  const scenarioPath = path.join(verificationDir, "scenario-screenshot.png");
-  await page.screenshot({ path: scenarioPath });
-  const pixelHash = createHash("sha256").update(readFileSync(scenarioPath)).digest("hex").slice(0, 16);
-  results.push({ check: "scenario_screenshot", passed: true, pixelHash });
+    // Run deterministic scenario
+    await page.evaluate(() => {
+      const runtime = (window as any).combatLab;
+      runtime?.scene?.runScenario?.();
+    });
+    await page.waitForTimeout(500);
 
-  // Collect all evidence
-  const runtimeEvidence = await collectRuntimeEvidence(page);
-  writeFileSync(path.join(verificationDir, "runtime-evidence.json"), JSON.stringify(runtimeEvidence, null, 2));
+    // Screenshot post-scenario
+    const scenarioPath = path.join(verificationDir, "scenario-screenshot.png");
+    await page.screenshot({ path: scenarioPath });
+    const pixelHash = createHash("sha256").update(readFileSync(scenarioPath)).digest("hex").slice(0, 16);
+    results.push({ check: "scenario_screenshot", passed: true, pixelHash });
 
-  const actorSnapshots = await collectActorSnapshots(page) as any[];
-  const eventSummary = await collectEventSummary(page) as any;
-  const scenario = (runtimeEvidence as any)?.combat?.scenario ?? {};
+    // Collect all evidence
+    runtimeEvidence = await collectRuntimeEvidence(page);
+    writeFileSync(path.join(verificationDir, "runtime-evidence.json"), JSON.stringify(runtimeEvidence, null, 2));
 
-  // ── Run all chain assertions ──
-  assertChain1(results, actorSnapshots, eventSummary, scenario);
-  assertChain2(results, actorSnapshots, eventSummary, scenario);
-  assertChain3(results, actorSnapshots);
-  assertChain4(results, actorSnapshots);
-  assertChain5(results, actorSnapshots, eventSummary, scenario);
-  assertChain6(results, actorSnapshots);
-  assertChain7(results, runtimeEvidence);
-  assertMacroHealth(results, actorSnapshots, eventSummary, diagnostics, runtimeEvidence);
+    actorSnapshots = await collectActorSnapshots(page) as any[];
+    eventSummary = await collectEventSummary(page) as any;
+    scenario = (runtimeEvidence as any)?.combat?.scenario ?? {};
+
+    // ── Run all chain assertions ──
+    assertChain1(results, actorSnapshots, eventSummary, scenario);
+    assertChain2(results, actorSnapshots, eventSummary, scenario);
+    assertChain3(results, actorSnapshots);
+    assertChain4(results, actorSnapshots);
+    assertChain5(results, actorSnapshots, eventSummary, scenario);
+    assertChain6(results, actorSnapshots);
+    assertChain7(results, runtimeEvidence);
+    assertMacroHealth(results, actorSnapshots, eventSummary, diagnostics, runtimeEvidence);
+  } else {
+    // Scene failed to boot — fill in failure markers
+    results.push({ check: "screenshot_captured", passed: false, reason: "scene not booted" });
+    results.push({ check: "scenario_screenshot", passed: false, reason: "scene not booted" });
+  }
 
   // Compute global pass/fail
   globalPassed = results.every(r => r.passed !== false);
