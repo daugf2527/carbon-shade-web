@@ -58,6 +58,23 @@ for (const type of ["bleed", "poison", "burn", "shock"] as const) {
 {
   const k = new CombatKernel();
   const target = k.actors.find(a => a.id === "grunt")!;
+  const profile = k.status.profile("stun")!;
+  profile.breakThreshold = 50;
+  target.statusResistance = { stun: 49 };
+  const accepted = k.status.applyStatus(target, "stun", k.player.id, "ForceBleed", k.tickCount, k.bus, 1);
+  assert.ok(accepted, "status should apply while resistance is below breakThreshold");
+  target.statusEffects.length = 0;
+  target.statusResistance = { stun: 50 };
+  const resisted = k.status.applyStatus(target, "stun", k.player.id, "ForceBleed", k.tickCount, k.bus, 1);
+  k.bus.drainAll();
+  assert.equal(resisted, null, "status should resist once resistance reaches breakThreshold");
+  assert.ok(k.bus.archive.some(e => e.type === "StatusResisted" && (e.payload as any).reason === "break_threshold_reached"));
+  delete profile.breakThreshold;
+}
+
+{
+  const k = new CombatKernel();
+  const target = k.actors.find(a => a.id === "grunt")!;
   target.position.x = k.player.position.x + 70;
   k.status.applyStatus(target, "rupture", k.player.id, "ForceBleed", k.tickCount, k.bus, 1);
   k.status.applyStatus(target, "rupture", k.player.id, "ForceBleed", k.tickCount, k.bus, 1);

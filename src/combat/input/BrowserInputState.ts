@@ -1,15 +1,15 @@
 import type { ActionName, Facing } from "../types.js";
 export type InputButton = "KeyX" | "KeyJ" | "KeyZ" | "KeyK" | "KeyC" | "KeyL" | "Space" | "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown" | "KeyA" | "KeyD" | "KeyW" | "KeyS" | "F1" | "F2" | "F3" | "F4" | "F5" | "F6" | "F7" | "F8" | "F9";
-export interface RawInputFrame { tick: number; held: Set<string>; pressed: Set<string>; released: Set<string>; }
+export interface RawInputFrame { tick: number; held: Set<string>; pressed: Set<string>; released: Set<string>; pressedOrder?: string[]; }
 export class BrowserInputState {
-  private held = new Set<string>(); private pressed = new Set<string>(); private released = new Set<string>();
-  keyDown(code: string, repeat=false): void { if (repeat) return; if (!this.held.has(code)) this.pressed.add(code); this.held.add(code); }
+  private held = new Set<string>(); private pressed = new Set<string>(); private released = new Set<string>(); private pressedOrder: string[] = [];
+  keyDown(code: string, repeat=false): void { if (repeat) return; if (!this.held.has(code)) { this.pressed.add(code); this.pressedOrder.push(code); } this.held.add(code); }
   keyUp(code: string): void { if (this.held.has(code)) this.released.add(code); this.held.delete(code); }
   isHeld(code: string): boolean { return this.held.has(code); }
   isPressed(code: string): boolean { return this.pressed.has(code); }
-  snapshot(tick: number): RawInputFrame { return { tick, held:new Set(this.held), pressed:new Set(this.pressed), released:new Set(this.released) }; }
-  endTick(): void { this.pressed.clear(); this.released.clear(); }
-  clearAll(): void { this.held.clear(); this.pressed.clear(); this.released.clear(); }
+  snapshot(tick: number): RawInputFrame { return { tick, held:new Set(this.held), pressed:new Set(this.pressed), released:new Set(this.released), pressedOrder:[...this.pressedOrder] }; }
+  endTick(): void { this.pressed.clear(); this.released.clear(); this.pressedOrder.length = 0; }
+  clearAll(): void { this.held.clear(); this.pressed.clear(); this.released.clear(); this.pressedOrder.length = 0; }
 }
 export interface BufferedInput { actionName: ActionName; source: "command" | "hotkey" | "debug"; createdFrame: number; expiresAtFrame: number; priority: number; consumed: boolean; facing?: Facing; }
 export class InputBuffer {

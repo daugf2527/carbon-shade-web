@@ -280,6 +280,7 @@ function assertChain7(results: Results, runtimeEvidence: any): void {
   record("replay_manifest_hash", typeof meta?.manifestHash === "string" && meta.manifestHash.length > 0, { manifestHash: meta?.manifestHash });
   record("replay_status_manifest_hash", typeof meta?.statusManifestHash === "string" && meta.statusManifestHash.length > 0, { statusManifestHash: meta?.statusManifestHash });
   record("replay_enemy_manifest_hash", typeof meta?.enemyManifestHash === "string" && meta.enemyManifestHash.length > 0, { enemyManifestHash: meta?.enemyManifestHash });
+  record("replay_damage_manifest_hash", typeof meta?.damageManifestHash === "string" && meta.damageManifestHash.length > 0, { damageManifestHash: meta?.damageManifestHash });
   record("replay_frame_count", (replay?.frameCount ?? 0) > 0, { frameCount: replay?.frameCount });
   record("replay_logic_fps", meta?.logicFps === 60, { logicFps: meta?.logicFps });
 }

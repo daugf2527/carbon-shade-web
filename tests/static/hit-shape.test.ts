@@ -85,3 +85,19 @@ const grabNear = createActor("grab-near", "enemy", "enemy", player.position.x + 
 const grabEdge = createActor("grab-edge", "enemy", "enemy", player.position.x + 40, 0);
 assert.equal(resolver.geometry(grabQuery, grabNear).overlap, true, "grab_attach should use the local narrowed grab window");
 assert.equal(resolver.geometry(grabQuery, grabEdge).overlap, false, "grab_attach should not claim official geometry beyond the local narrowed window");
+
+const sweepBox: HitBoxFrameWindow = {
+  ...base,
+  id: "test_sweep",
+  hitGroupId: "test_sweep",
+  shape: "sweep",
+  offsetX: 40,
+  w: 80,
+  d: 40,
+  h: 60,
+};
+const sweepQuery = resolver.buildQuery(1, player, sweepBox);
+const rectEquivalentQuery = resolver.buildQuery(1, player, { ...sweepBox, shape: "rect" });
+const sweepEdge = createActor("sweep-edge", "enemy", "enemy", player.position.x + 117, 0);
+assert.equal(resolver.geometry(rectEquivalentQuery, sweepEdge).overlap, false, "baseline rect should miss the edge target");
+assert.equal(resolver.geometry(sweepQuery, sweepEdge).overlap, true, "sweep should extend the active path along X and catch the edge target");

@@ -84,4 +84,19 @@ import { SOCDCleaner } from "../../src/combat/input/SOCDCleaner.js";
   assert.ok(cleaned.has("ArrowRight"), "Right should remain");
 }
 
-console.log("PASS: SOCD cleaner tests (8/8)");
+// Test 9: Frame pressedOrder drives last-input priority without external trackPress
+{
+  const socd = new SOCDCleaner();
+  const frame = {
+    held: new Set(["ArrowLeft", "ArrowRight"]),
+    pressed: new Set(["ArrowLeft", "ArrowRight"]),
+    pressedOrder: ["ArrowLeft", "ArrowRight"],
+  };
+  const cleaned = socd.cleanFrame(frame);
+  assert.ok(!cleaned.held.has("ArrowLeft"), "Left should be removed from held when right was last in frame order");
+  assert.ok(cleaned.held.has("ArrowRight"), "Right should remain in held when right was last in frame order");
+  assert.ok(!cleaned.pressed.has("ArrowLeft"), "Left should be removed from pressed when right was last in frame order");
+  assert.ok(cleaned.pressed.has("ArrowRight"), "Right should remain in pressed when right was last in frame order");
+}
+
+console.log("PASS: SOCD cleaner tests (9/9)");

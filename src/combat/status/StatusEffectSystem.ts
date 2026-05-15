@@ -59,10 +59,10 @@ export class StatusEffectSystem {
       }
     }
 
-    // Break threshold check: if actor's tolerance is below break threshold, auto-resist
+    // Break threshold check: accumulated resistance/tolerance at or above threshold resists.
     const effectiveResistance = baseResistance + currentTolerance;
-    if (breakThreshold > 0 && effectiveResistance < breakThreshold) {
-      bus.emit("StatusResisted", CombatEventPriority.Status, tick, {actorId:actor.id, type, reason:"below_break_threshold"}, {targetActorId:actor.id});
+    if (breakThreshold > 0 && effectiveResistance >= breakThreshold) {
+      bus.emit("StatusResisted", CombatEventPriority.Status, tick, {actorId:actor.id, type, reason:"break_threshold_reached"}, {targetActorId:actor.id});
       return null;
     }
 

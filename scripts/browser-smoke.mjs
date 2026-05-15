@@ -1,4 +1,3 @@
-import { chromium } from "playwright";
 import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -79,6 +78,7 @@ async function runSmokeTest(url) {
   let passed = true;
   let runtimeEvidence = {};
 
+  const { chromium } = await import("playwright");
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
   const page = await context.newPage();

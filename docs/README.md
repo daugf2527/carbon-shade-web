@@ -1,6 +1,6 @@
 # Documentation Index
 
-> Last updated: 2026-05-05
+> Last updated: 2026-05-15
 
 This index categorizes all project documentation by status. Navigate by category to find relevant documents.
 
@@ -30,6 +30,8 @@ Documents that accurately describe the present codebase and actively maintained 
 | `design/tuning-baseline.md` | Living combat parameter values (currently in use) |
 | `engineering/combat-lab-0.2-r3-final-integrated-development-spec.md` | Master engineering specification — the authoritative spec for the current codebase |
 | `engineering/combat-attack-hit-reaction-chain.md` | Attack → hit → reaction chain (matches current implementation) |
+| `engineering/architecture-overview.md` | Current layer map for Combat Lab and evidence tiers |
+| `engineering/architecture-improvement-plan.md` | Current architecture refactor plan for Combat Lab 0.4+ |
 | `engineering/art-asset-pipeline-spec.md` | Art asset pipeline specification for protagonist sprite generation |
 | `changelog/fix6-normalized-sprite-pipeline.md` | Current rendering pipeline: normalized fixed-cell spritesheets |
 | `planning/04-gap-and-roadmap-v0.1.md` | Living roadmap with updated completion percentages |
@@ -67,6 +69,10 @@ Documents describing desired future states, planned work, or proposed architectu
 | `planning/dnf-combat-systems-master-spec.md` | 79-system taxonomy across P0-P4 for full DNF replication |
 | `planning/dfo-action-handfeel-replication-plan.md` | Living alignment document — tracks pending DFO handfeel items |
 | `planning/runtime-observability-three-phase-plan.md` | Runtime observability: three-phase telemetry, profiling, and replay validation plan |
+| `planning/crt-002-frame-evidence.md` | Frame evidence target and provenance plan |
+| `planning/crt-003-hitbox-evidence.md` | Hitbox evidence target and provenance plan |
+| `planning/crt-004-ai-evidence.md` | AI evidence target and provenance plan |
+| `planning/crt-005-formula-evidence.md` | Damage formula evidence target and provenance plan |
 | `planning/dfo-handfeel-next-backlog.md` | DFO handfeel next backlog: prioritized post-R3 sensation items |
 | `planning/pvf-skl-extraction-plan.md` | PVF/SKL extraction plan: DNF client data extraction tooling and workflow |
 

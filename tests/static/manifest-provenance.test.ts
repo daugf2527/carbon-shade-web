@@ -3,7 +3,8 @@ import type { ActionName, FrameDataAction } from "../../src/combat/types.js";
 import { ACTIONS, getAction, loadFromManifest } from "../../src/combat/actions/FrameDataAction.js";
 import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";
 import { cloneEnemyTuning, enemyTuning } from "../../src/data/ai/enemyTuning.js";
-import { computeActionsHash, computeEnemyManifestHash, computeStatusManifestHash } from "../../src/data/manifest/hash.js";
+import { computeActionsHash, computeDamageManifestHash, computeEnemyManifestHash, computeStatusManifestHash, type DamageManifest } from "../../src/data/manifest/hash.js";
+import classicDamageProfile from "../../src/data/manifest/damage/classic-profile.json" with { type: "json" };
 import { loadActionsManifest, loadEnemyManifest, loadStatusManifest } from "../../src/data/manifest/loader.js";
 import { DEFAULT_ENEMY_MANIFEST } from "../../src/data/manifest/ai.js";
 import { DEFAULT_STATUS_MANIFEST } from "../../src/data/manifest/status.js";
@@ -109,15 +110,17 @@ function cloneActions(): Record<ActionName, FrameDataAction> {
   const recorder = new ReplayRecorder();
   const statusManifestHash = computeStatusManifestHash(DEFAULT_STATUS_MANIFEST);
   const enemyManifestHash = computeEnemyManifestHash(DEFAULT_ENEMY_MANIFEST);
+  const damageManifestHash = computeDamageManifestHash(classicDamageProfile as DamageManifest);
   assert.equal(recorder.metadata.combatSchemaHash, manifestHash);
   assert.equal(recorder.metadata.manifestHash, manifestHash);
   assert.equal(recorder.metadata.statusManifestHash, statusManifestHash);
   assert.equal(recorder.metadata.enemyManifestHash, enemyManifestHash);
+  assert.equal(recorder.metadata.damageManifestHash, damageManifestHash);
   assert.equal(recorder.metadata.sourcePolicyVersion, SOURCE_POLICY_VERSION);
   assert.equal(recorder.metadata.dataSources.actions, "src/data/manifest/actions/default.json#actions");
   assert.equal(recorder.metadata.dataSources.status, "src/data/manifest/status/default.json#profiles");
   assert.equal(recorder.metadata.dataSources.ai, "src/data/manifest/ai/enemy-default.json#profiles");
-  assert.equal(recorder.metadata.dataSources.damage, "local_baseline");
+  assert.equal(recorder.metadata.dataSources.damage, "src/data/manifest/damage/classic-profile.json#constants");
 }
 
 {

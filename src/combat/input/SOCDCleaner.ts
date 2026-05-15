@@ -52,6 +52,13 @@ export class SOCDCleaner {
     return cleaned;
   }
 
+  cleanFrame<T extends { held: Set<string>; pressed: Set<string>; pressedOrder?: string[] }>(frame: T): T {
+    for (const code of frame.pressedOrder ?? frame.pressed) this.trackPress(code);
+    frame.held = this.clean(frame.held);
+    frame.pressed = this.clean(frame.pressed);
+    return frame;
+  }
+
   // Track press events to determine last-input ordering
   trackPress(code: string): void {
     if (LEFT_KEYS.has(code)) this.lastHorizontal = "left";

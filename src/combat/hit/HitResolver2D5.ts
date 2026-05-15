@@ -1,5 +1,5 @@
 import type { Actor, HitBoxFrameWindow, HitQuery, HitGeometrySnapshot } from "../types.js";
-import { actorHurtRect, circleRectOverlap2D5, rectsOverlap2D5, signedFacingScale } from "../util/geometry.js";
+import { actorHurtRect, circleRectOverlap2D5, rectsOverlap2D5, signedFacingScale, sweepRectOverlap2D5 } from "../util/geometry.js";
 import { nextId } from "../util/ids.js";
 
 export class HitResolver2D5 {
@@ -101,9 +101,7 @@ export class HitResolver2D5 {
         zMismatch = result.zMismatch;
         yMismatch = result.yMismatch;
       } else if (query.shape === "sweep") {
-        // Sweep: ray-cast along X axis using box center as origin;
-        // if the sweep path intersects the hurt rect, it's a hit.
-        const result = rectsOverlap2D5(query.box, hurtRect);
+        const result = sweepRectOverlap2D5(query.box, hurtRect);
         overlap = result.overlap;
         zMismatch = result.zMismatch;
         yMismatch = result.yMismatch;

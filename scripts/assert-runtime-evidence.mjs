@@ -81,6 +81,7 @@ export function assertRuntimeEvidence(runtimeEvidence = {}, browserSmoke = {}, o
     if (!meta.manifestHash || typeof meta.manifestHash !== 'string') errors.push('chain7: replay missing manifestHash');
     if (!meta.statusManifestHash || typeof meta.statusManifestHash !== 'string') errors.push('chain7: replay missing statusManifestHash');
     if (!meta.enemyManifestHash || typeof meta.enemyManifestHash !== 'string') errors.push('chain7: replay missing enemyManifestHash');
+    if (!meta.damageManifestHash || typeof meta.damageManifestHash !== 'string') errors.push('chain7: replay missing damageManifestHash');
     if (meta.logicFps !== 60) errors.push(`chain7: replay logicFps must be 60, got ${meta.logicFps}`);
     if ((replay.frameCount ?? 0) < 1) errors.push('chain7: replay frameCount too low');
   }

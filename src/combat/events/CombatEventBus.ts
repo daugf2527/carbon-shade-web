@@ -28,23 +28,26 @@ export class CombatEventBus {
     else this.currentQueue.push(event);
     return event;
   }
-  flush(): void {
+  flush(): CombatEvent[] {
     this.flushing = true;
+    const flushed: CombatEvent[] = [];
     while (this.currentQueue.length > 0) {
       this.currentQueue.sort((a,b)=> b.priority-a.priority || a.order-b.order);
       const event = this.currentQueue.shift();
       if (!event) break;
       const reason = this.blockPolicy?.(event) ?? null;
-      if (reason) { event.status="blocked"; event.tags.push(`blocked:${reason}`); this.archive.push(event); continue; }
+      if (reason) { event.status="blocked"; event.tags.push(`blocked:${reason}`); this.archive.push(event); flushed.push(event); continue; }
       event.status = "dispatching";
       for (const h of this.handlers.get(event.type) ?? []) h(event, this);
       event.status = "consumed";
       this.archive.push(event);
+      flushed.push(event);
     }
     this.flushing = false;
     this.currentQueue = this.nextQueue;
     this.nextQueue = [];
+    return flushed;
   }
-  drainAll(): void { while (this.currentQueue.length > 0 || this.nextQueue.length > 0) this.flush(); }
+  drainAll(): CombatEvent[] { const drained: CombatEvent[] = []; while (this.currentQueue.length > 0 || this.nextQueue.length > 0) drained.push(...this.flush()); return drained; }
   clear(): void { this.currentQueue=[]; this.nextQueue=[]; this.archive.length=0; this.handlers.clear(); }
 }

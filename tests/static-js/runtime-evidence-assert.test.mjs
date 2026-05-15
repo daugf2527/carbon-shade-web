@@ -37,6 +37,7 @@ const baseRuntimeEvidence = {
         manifestHash: 'manifest-abc',
         statusManifestHash: 'status-abc',
         enemyManifestHash: 'enemy-abc',
+        damageManifestHash: 'damage-abc',
         logicFps: 60,
       },
       frameCount: 114,

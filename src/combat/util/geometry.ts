@@ -6,6 +6,10 @@ export function rectsOverlap2D5(a: Rect2D5, b: Rect2D5): {overlap: boolean; zMis
   const yOverlap = Math.abs(a.y - b.y) * 2 < (a.h + b.h);
   return { overlap: xOverlap && zOverlap && yOverlap, zMismatch: xOverlap && !zOverlap, yMismatch: xOverlap && zOverlap && !yOverlap };
 }
+export function sweepRectOverlap2D5(a: Rect2D5, b: Rect2D5): {overlap: boolean; zMismatch: boolean; yMismatch: boolean} {
+  const swept = { ...a, w: Math.max(a.w, Math.abs(a.w) * 1.5) };
+  return rectsOverlap2D5(swept, b);
+}
 export function circleRectOverlap2D5(circle: Rect2D5, radius: number, rect: Rect2D5): {overlap: boolean; zMismatch: boolean; yMismatch: boolean} {
   const yOverlap = Math.abs(circle.y - rect.y) * 2 < (circle.h + rect.h);
   const rectHalfW = rect.w / 2;

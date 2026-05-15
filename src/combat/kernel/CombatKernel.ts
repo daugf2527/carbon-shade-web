@@ -182,30 +182,32 @@ export class CombatKernel {
     this.pipeline.push({ name: "TickEndEmit", phase: "RECORD", tick: () => {
       self.bus.emit("TickEnded", CombatEventPriority.Debug, self.tickCount, {tick:self.tickCount});
     }});
-    this.pipeline.push({ name: "EventFlush", phase: "FLUSH", tick: () => self.bus.flush() });
+    this.pipeline.push({ name: "EventFlush", phase: "FLUSH", tick: () => { self.lastFlushedEvents = self.bus.flush(); } });
     this.pipeline.push({ name: "ReplayRecord", phase: "RECORD", tick: () => {
       if (self.options.enableReplay !== false) {
-        const flushedEvents = self.bus.archive.slice(self._replayArchiveStart);
-        self.replay.record(self.tickCount, self.actors, flushedEvents, self.inputState.snapshot(self.tickCount));
+        self.replay.record(self.tickCount, self.actors, self.lastFlushedEvents, self.inputState.snapshot(self.tickCount));
       }
     }});
     this.pipeline.push({ name: "InputEndTick", phase: "FLUSH", tick: () => self.inputState.endTick() });
   }
 
   private _replayArchiveStart = 0;
+  private lastFlushedEvents: readonly import("../events/CombatEventBus.js").CombatEvent[] = [];
+
+  get commandParser(): CommandInputParser { return this.parser; }
+  get socdCleaner(): SOCDCleaner { return this.socd; }
+  get replayArchiveStart(): number { return this._replayArchiveStart; }
+  get enableReplay(): boolean { return this.options.enableReplay !== false; }
 
   tick(): void {
     this._replayArchiveStart = this.bus.archive.length;
     this.tickCount += 1;
     this.bus.emit("TickStarted", CombatEventPriority.Debug, this.tickCount, {tick:this.tickCount});
-    for (const system of this.pipeline) system.tick(this as unknown as SystemContext, this.bus);
+    for (const system of this.pipeline) system.tick(this, this.bus);
   }
 
   private collectInput(): void {
-    const frame=this.inputState.snapshot(this.tickCount);
-    // SOCD clean — resolve conflicting opposite cardinal directions (last-input-priority)
-    frame.held = this.socd.clean(frame.held);
-    frame.pressed = this.socd.clean(frame.pressed);
+    const frame=this.socd.cleanFrame(this.inputState.snapshot(this.tickCount));
     const player=this.player;
     const movementFacing=this.resolveMovementFacing(frame, player.facing);
     const canFaceFromLocomotion = !player.currentAction && ["none", "getting_up"].includes(player.reactionState);

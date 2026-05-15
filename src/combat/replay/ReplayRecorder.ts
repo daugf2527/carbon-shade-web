@@ -3,7 +3,8 @@ import { cloneActorSnapshot } from "../actors/ActorFactory.js";
 import type { RawInputFrame } from "../input/BrowserInputState.js";
 import type { CombatEvent } from "../events/CombatEventBus.js";
 import { ACTIONS } from "../actions/FrameDataAction.js";
-import { computeActionsHash, computeEnemyManifestHash, computeStatusManifestHash } from "../../data/manifest/hash.js";
+import { computeActionsHash, computeDamageManifestHash, computeEnemyManifestHash, computeStatusManifestHash, type DamageManifest } from "../../data/manifest/hash.js";
+import classicDamageProfile from "../../data/manifest/damage/classic-profile.json" with { type: "json" };
 import { getManifestHash } from "../../data/manifest/loader.js";
 import { DEFAULT_ENEMY_MANIFEST } from "../../data/manifest/ai.js";
 import { DEFAULT_STATUS_MANIFEST } from "../../data/manifest/status.js";
@@ -14,8 +15,8 @@ export interface ReplayInputSnapshot { tick:number; held:string[]; pressed:strin
 export interface ReplayEventSnapshot { id:string; type:string; status:string; tick:number; sourceActorId?:string; targetActorId?:string; correlationId:string; tags:string[]; payload:unknown; }
 export interface ReplayFrame { tick:number; actors: object[]; inputs: ReplayInputSnapshot[]; events: ReplayEventSnapshot[]; eventCount:number; stateHash:string; note?: string; }
 export interface ReplayDataSources { actions:string; status:string; ai:string; damage:string; }
-export interface ReplayMetadata { buildHash:string; combatSchemaHash:string; manifestHash:string; statusManifestHash:string; enemyManifestHash:string; sourcePolicyVersion:string; dataSources: ReplayDataSources; logicFps:number; finalStateHash?:string; }
-export interface ReplayRecorderOptions { buildHash?:string; combatSchemaHash?:string; manifestHash?:string; statusManifestHash?:string; enemyManifestHash?:string; sourcePolicyVersion?:string; dataSources?:Partial<ReplayDataSources>; logicFps?:number; }
+export interface ReplayMetadata { buildHash:string; combatSchemaHash:string; manifestHash:string; statusManifestHash:string; enemyManifestHash:string; damageManifestHash:string; sourcePolicyVersion:string; dataSources: ReplayDataSources; logicFps:number; finalStateHash?:string; }
+export interface ReplayRecorderOptions { buildHash?:string; combatSchemaHash?:string; manifestHash?:string; statusManifestHash?:string; enemyManifestHash?:string; damageManifestHash?:string; sourcePolicyVersion?:string; dataSources?:Partial<ReplayDataSources>; logicFps?:number; }
 
 function cloneJson<T>(value:T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -64,6 +65,7 @@ export class ReplayRecorder {
     const manifestHash = options.manifestHash ?? options.combatSchemaHash ?? loadedManifestHash ?? computeActionsHash(ACTIONS);
     const statusManifestHash = options.statusManifestHash ?? computeStatusManifestHash(DEFAULT_STATUS_MANIFEST);
     const enemyManifestHash = options.enemyManifestHash ?? computeEnemyManifestHash(DEFAULT_ENEMY_MANIFEST);
+    const damageManifestHash = options.damageManifestHash ?? computeDamageManifestHash(classicDamageProfile as DamageManifest);
     const defaultActionDataSource = loadedManifestHash
       ? ACTION_MANIFEST_DATA_SOURCE
       : "src/combat/actions/FrameDataAction.ts#ACTIONS:fallback_manifest_not_loaded";
@@ -73,12 +75,13 @@ export class ReplayRecorder {
       manifestHash,
       statusManifestHash,
       enemyManifestHash,
+      damageManifestHash,
       sourcePolicyVersion: options.sourcePolicyVersion ?? SOURCE_POLICY_VERSION,
       dataSources: {
         actions: options.dataSources?.actions ?? defaultActionDataSource,
         status: options.dataSources?.status ?? "src/data/manifest/status/default.json#profiles",
         ai: options.dataSources?.ai ?? "src/data/manifest/ai/enemy-default.json#profiles",
-        damage: options.dataSources?.damage ?? "local_baseline",
+        damage: options.dataSources?.damage ?? "src/data/manifest/damage/classic-profile.json#constants",
       },
       logicFps: options.logicFps ?? 60,
     };

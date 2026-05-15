@@ -39,6 +39,10 @@ export function summarizeRuntimeEvidence(runtimeEvidence = {}, diagnostics = {})
       replayFrameCount: replay.frameCount ?? 0,
       finalStateHash: metadata.finalStateHash ?? null,
       combatSchemaHash: metadata.combatSchemaHash ?? null,
+      manifestHash: metadata.manifestHash ?? null,
+      statusManifestHash: metadata.statusManifestHash ?? null,
+      enemyManifestHash: metadata.enemyManifestHash ?? null,
+      damageManifestHash: metadata.damageManifestHash ?? null,
       eventTypes: combat.eventTypes ?? {},
     },
     diagnostics: {

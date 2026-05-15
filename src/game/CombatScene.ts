@@ -5,6 +5,7 @@ import type { DebugSnapshot } from "../combat/debug/DebugOverlay.js";
 import { CombatKernel } from "../combat/kernel/CombatKernel.js";
 import { FixedStepSimulation } from "../combat/kernel/FixedStepSimulation.js";
 import { CameraController } from "./CameraController.js";
+import { bindCameraFeedbackHandlers } from "./CameraFeedbackHandlers.js";
 import { AudioUnlockGate } from "./audio/AudioUnlockGate.js";
 import { DebugLayer } from "./layers/DebugLayer.js";
 import { getCombatSpriteSpec, type SpriteSpec } from "./SpriteFrameLibrary.js";
@@ -263,7 +264,7 @@ export class CombatScene extends Phaser.Scene {
     this.kernel.bus.on("ReactionApplied", event => {
       if (event.targetActorId !== "player") return;
       this.playerHitFlashUntil = this.time.now + 200;
-      this.cameras.main.shake(100, 0.003);
+      this.cameraController.shake(0.6, 100);
     });
 
     this.kernel.bus.on("HitConfirmed", event => {
@@ -287,15 +288,7 @@ export class CombatScene extends Phaser.Scene {
       }
     });
 
-    this.kernel.bus.on("CameraShakeRequested", event => {
-      const payload = event.payload as { intensity?: number; durationMs?: number };
-      this.cameraController.shake(payload.intensity ?? 5, payload.durationMs ?? 80);
-    });
-
-    this.kernel.bus.on("CameraFlashRequested", event => {
-      const payload = event.payload as { color?: number; alpha?: number; durationMs?: number };
-      this.cameraController.flash(payload.color ?? 0xffffff, payload.alpha ?? 0.3, payload.durationMs ?? 60);
-    });
+    bindCameraFeedbackHandlers(this.kernel.bus, this.cameraController);
 
     this.kernel.bus.on("DamageNumberRequested", event => {
       if (!event.targetActorId) return;
@@ -523,22 +516,22 @@ export class CombatScene extends Phaser.Scene {
       view.container.angle = usingSprite ? 0 : actor.dead || actor.reaction === "downed" ? 90 : hurtTilt ? (facing === "right" ? -8 : 8) : launched ? -4 : 0;
       view.container.scaleY = usingSprite ? 1 : actor.reaction === "getting_up" ? 0.92 : launched ? 1.05 : 1;
 
-      view.body.setFillStyle(visibleBodyColor, 1);
+      this.setRectFillIfChanged(view.body, visibleBodyColor, 1);
       view.body.setStrokeStyle(1, 0x0f172a, 1);
-      view.head.setFillStyle(visibleHeadColor, 1);
+      this.setRectFillIfChanged(view.head, visibleHeadColor, 1);
       view.head.setPosition(facingSign === 1 ? -12 : -18, -108);
       view.face.setPosition(facingSign === 1 ? 10 : -19, -99);
-      view.face.setFillStyle(hitFlash ? 0x111827 : 0x0f172a, 1);
+      this.setRectFillIfChanged(view.face, hitFlash ? 0x111827 : 0x0f172a, 1);
       view.head.setStrokeStyle(1, 0x0f172a, 1);
-      view.legsL.setFillStyle(legColor, 1);
-      view.legsR.setFillStyle(legColor, 1);
-      view.shadow.setFillStyle(0x000000, actor.dead ? 0.18 : 0.34);
-      view.shadow.setSize(isBoss ? 180 : isBuilding ? 132 : isImp ? 72 : 78, isBoss ? 30 : isImp ? 13 : 18);
+      this.setRectFillIfChanged(view.legsL, legColor, 1);
+      this.setRectFillIfChanged(view.legsR, legColor, 1);
+      this.setEllipseFillIfChanged(view.shadow, 0x000000, actor.dead ? 0.18 : 0.34);
+      this.setSizeIfChanged(view.shadow, isBoss ? 180 : isBuilding ? 132 : isImp ? 72 : 78, isBoss ? 30 : isImp ? 13 : 18);
 
       if (spriteSpec) {
         // Normalized spritesheets use fixed-size cells and Phaser frame indices.
         // Runtime no longer uses full-sheet crop x/y as display-origin data.
-        (view.sprite as any).setTexture(spriteSpec.key, spriteSpec.frame);
+        this.setSpriteTextureIfChanged(view.sprite, spriteSpec.key, spriteSpec.frame);
         (view.sprite as any).resetCrop?.();
         view.sprite.setOrigin(0.5, 1);
         view.sprite.setScale(spriteSpec.scale);
@@ -546,8 +539,7 @@ export class CombatScene extends Phaser.Scene {
         view.sprite.setFlipX(facing === "left");
         view.sprite.setVisible(true);
         view.sprite.setAlpha(actor.dead ? 0.72 : hitFlash ? 0.94 : 1);
-        if (hitFlash) (view.sprite as any).setTint?.(0xffdddd);
-        else view.sprite.clearTint();
+        this.setTintStateIfChanged(view.sprite, hitFlash);
         view.body.setVisible(false);
         view.head.setVisible(false);
         view.face.setVisible(false);
@@ -563,20 +555,20 @@ export class CombatScene extends Phaser.Scene {
       }
 
       view.hpBack.setPosition(hpBarX, hpY);
-      view.hpBack.setSize(hpBarWidth, 7);
+      this.setSizeIfChanged(view.hpBack, hpBarWidth, 7);
       view.hpFill.setPosition(hpBarX, hpY);
-      view.hpFill.setSize(hpBarWidth * hpRatio, 7);
-      view.hpBack.setFillStyle(0x7f1d1d, 1);
-      view.hpFill.setFillStyle(actor.dead ? 0x334155 : isBoss ? 0xf59e0b : isBuilding ? 0x22c55e : 0x22c55e, 1);
+      this.setSizeIfChanged(view.hpFill, hpBarWidth * hpRatio, 7);
+      this.setRectFillIfChanged(view.hpBack, 0x7f1d1d, 1);
+      this.setRectFillIfChanged(view.hpFill, actor.dead ? 0x334155 : isBoss ? 0xf59e0b : isBuilding ? 0x22c55e : 0x22c55e, 1);
 
-      view.label.setText(actor.id);
+      this.setTextIfChanged(view.label, actor.id);
       view.label.setPosition(0, labelY);
-      view.state.setText(`${actor.reaction}${actor.action ? `/${actor.action}` : ""}`);
+      this.setTextIfChanged(view.state, `${actor.reaction}${actor.action ? `/${actor.action}` : ""}`);
       view.state.setPosition(0, stateY);
       view.state.setVisible(this.debugOverlayVisible);
-      if (actor.reaction === "armor_feedback_only") view.state.setColor("#fbbf24");
-      else if (hurtTilt || launched || actor.reaction === "downed") view.state.setColor("#fecaca");
-      else view.state.setColor("#cbd5e1");
+      if (actor.reaction === "armor_feedback_only") this.setColorIfChanged(view.state, "#fbbf24");
+      else if (hurtTilt || launched || actor.reaction === "downed") this.setColorIfChanged(view.state, "#fecaca");
+      else this.setColorIfChanged(view.state, "#cbd5e1");
 
       view.weapon.clear();
       if (isPlayer && actor.action && !spriteSpec) {
@@ -613,6 +605,51 @@ export class CombatScene extends Phaser.Scene {
         }
       }
     }
+  }
+
+  private setTextIfChanged(text: Phaser.GameObjects.Text, value: string | string[]): void {
+    const next = Array.isArray(value) ? value.join("\n") : value;
+    if (text.text !== next) text.setText(value);
+  }
+
+  private setColorIfChanged(text: Phaser.GameObjects.Text, value: string): void {
+    if ((text.style as any).color !== value) text.setColor(value);
+  }
+
+  private setRectFillIfChanged(rect: Phaser.GameObjects.Rectangle, color: number, alpha = 1): void {
+    const data = rect.data ?? rect.setDataEnabled().data;
+    if (data.get("fillColor") !== color || data.get("fillAlpha") !== alpha) {
+      rect.setFillStyle(color, alpha);
+      data.set("fillColor", color);
+      data.set("fillAlpha", alpha);
+    }
+  }
+
+  private setEllipseFillIfChanged(ellipse: Phaser.GameObjects.Ellipse, color: number, alpha = 1): void {
+    const data = ellipse.data ?? ellipse.setDataEnabled().data;
+    if (data.get("fillColor") !== color || data.get("fillAlpha") !== alpha) {
+      ellipse.setFillStyle(color, alpha);
+      data.set("fillColor", color);
+      data.set("fillAlpha", alpha);
+    }
+  }
+
+  private setSizeIfChanged(gameObject: Phaser.GameObjects.Components.Size, width: number, height: number): void {
+    if (gameObject.width !== width || gameObject.height !== height) gameObject.setSize(width, height);
+  }
+
+  private setSpriteTextureIfChanged(sprite: Phaser.GameObjects.Image, key: string, frame: number): void {
+    const currentKey = sprite.texture?.key;
+    const currentFrame = (sprite.frame as any)?.name;
+    if (currentKey !== key || currentFrame !== frame) (sprite as any).setTexture(key, frame);
+  }
+
+  private setTintStateIfChanged(sprite: Phaser.GameObjects.Image, tinted: boolean): void {
+    const data = sprite.data ?? sprite.setDataEnabled().data;
+    if (data.get("tinted") === tinted) return;
+    if (tinted) (sprite as any).setTint?.(0xffdddd);
+    else sprite.clearTint();
+    data.set("tinted", tinted);
   }
 
   private createActorView(id: string): ActorView {
@@ -707,7 +744,7 @@ export class CombatScene extends Phaser.Scene {
     this.hudGraphics.fillStyle(0xef4444, 1);
     this.hudGraphics.fillRect(36, 78, 270 * frenzyRatio, 12);
 
-    this.hudText.setText([
+    this.setTextIfChanged(this.hudText, [
       `HP ${player.resources.hp}/${maxHp}`,
       `Frenzy ${frenzy ? Math.max(0, frenzy.expiresAtTick - snapshot.tick) : 0}`,
       `FPS ${(this.game.loop.actualFps ?? 0).toFixed(1)}  LastHit ${snapshot.lastHit.actionName ?? "-"} ${snapshot.lastHit.finalReaction ?? ""}`,
@@ -721,7 +758,7 @@ export class CombatScene extends Phaser.Scene {
       ? Object.entries(snapshot.scenario).map(([key, value]) => `${value ? "PASS" : "FAIL"} ${key}`).join(" | ")
       : "n/a";
 
-    this.debugText.setText([
+    this.setTextIfChanged(this.debugText, [
       `Tick: ${snapshot.tick} | Events: ${snapshot.eventCount} | Actors: ${snapshot.performance.actorCount}`,
       `Player: ${player ? `${player.action ?? "Idle"} @ x=${player.pos.x.toFixed(1)} facing=${this.kernel.player.facing}` : "missing"}`,
       `LastHit: ${snapshot.lastHit.actionName ?? "-"} ${snapshot.lastHit.finalReaction ?? ""} dmg=${snapshot.lastHit.finalDamage ?? 0}`,
