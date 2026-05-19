@@ -73,7 +73,7 @@ static void printAnimationJson(const std::string& path, PvfAnimation& ani) {
     for (size_t i = 0; i < frames.size(); i++) {
         auto& f = frames[i];
         if (i > 0) printf(",");
-        printf("{\"i\":%zu,\"x\":%d,\"y\":%d,\"imgId\":%d", i, f.x, f.y, f.imgId);
+        printf("{\"i\":%zu,\"x\":%d,\"y\":%d,\"imgId\":%d,\"imgParam\":%d", i, f.x, f.y, f.imgId, f.imgParam);
         if (!f.path.empty()) printf(",\"sprite\":\"%s\"", escapeJson(f.path).c_str());
         if (f.delay != 0) printf(",\"delay\":%d", f.delay);
         if (!f.attackBox.empty()) {
