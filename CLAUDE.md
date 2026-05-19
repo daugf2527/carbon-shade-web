@@ -1,213 +1,128 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Project identity
 
-**Carbon Shade / 碳影** — a Phaser 3 + TypeScript 2.5D combat prototype served by Vite. The current engineering name is **Combat Lab**. The canonical repository path is `carbon-shade-web`. This prototype validates DNF-style 2.5D combat feel: skill execution, monster feedback, boss behavior, normalized sprite assets, and deterministic behavior tests.
+**Carbon Shade / 碳影** — Phaser 3 + TypeScript 2.5D combat prototype (Vite). Engineering name: **Combat Lab**. Validates DNF-style combat feel: skill execution, monster feedback, boss behavior, normalized sprites, deterministic tests.
 
-## Current state (2026-05-13)
+## Current state (2026-05-15)
 
-**Phase**: Combat Lab 0.3 — handfeel tuning + evidence freeze. The `dnf-pve-1to1-replication-plan.md` Phase 1–5 implementation is substantially complete.
+**Phase**: Combat Lab 0.3 — handfeel tuning + evidence freeze.
+**Target version**: `70-85-classic-pre-metastasis` (Level 70 cap, 2012 pre-Metastasis). Modern DNF systems excluded.
 
-**Target version**: `70-85-classic-pre-metastasis` — Level 70 cap (2012, pre-Metastasis/大转移) is preferred; 80-85 data used as fallback. Modern DNF systems (Neutralize/Ignite/restructured AI) are explicitly excluded.
-
-**Combat kernel — Input → Hit → Reaction → Replay chain**
-
-| Module | File | Status |
-|--------|------|--------|
-| Frame data | `FrameDataAction.ts` + `actions/default.json` | 38 actions, manifest priority loading, hash parity gate |
-| Hit detection | `HitResolver2D5.ts` | 4 shapes (rect/circle/sweep/grab_attach), multi-hurtbox, 6-int snapshot → replay |
-| Damage formula | `DamageFormula.ts` + `classic-profile.json` | 10-multiplier chain: 4 damage paths, elem ÷220, def reduction, crit 1.5×, counter 1.25× |
-| Status system | `StatusEffectSystem.ts` + `status/default.json` | 14 status types, hard control mutex, tolerance accumulation/decay, splash |
-| Monster AI | `EnemyAI.ts` + `ai/enemy-default.json` | FSM 9-state (idle/approach/windup/attacking/recover + flinched/launched/knocked_down/getting_up) + behavior tree + boss phase transitions, deterministic hash for replay |
-| Replay | `ReplayRecorder.ts` | action/status/AI manifest hash in metadata |
-| Actor stats | `types.ts` | STR/INT/physAtk/magAtk/independentAtk/elem/elemResist/defense/level |
-
-**Data layer — versioned manifests**
-
-```
-src/data/manifest/
-├── actions/default.json      ← 38 actions (sourceProvenance metadata attached)
-├── damage/classic-profile.json ← formula constants (8/8 community-audit verified)
-├── status/default.json       ← 14 status profiles (Rupture fixed: 3-stack 5/7/8% per Batch B)
-├── ai/enemy-default.json     ← 5 enemy types + DNF AI params + CRT-004 hit-reaction timers
-├── ai/boss-patterns.json     ← boss phase/pattern config
-├── schema.ts / hash.ts / loader.ts ← validation + sourceProvenance, FNV-1a hashing (strips metadata), async loading
-```
-
-**Evidence source layers**
-
-| Layer | Coverage | Status |
-|-------|----------|--------|
-| Neople Open API | 11 skills level-1 facts (CD/MP/hit count) | `berserkerSkillFacts.ts`, `official-api-alignment.test.ts` |
-| Wiki (DFO World Wiki + NamuWiki) | Damage formula multipliers, status effect durations, boss move lists | Documented in research but not wired to runtime |
-| PVF/ANI/NPK | Frame windows, hitbox geometry, monster AI data, monster stats | Not yet researched (Batch C pending) |
-
-**CRT tickets**: CRT-001 (version freeze) resolved; CRT-002–006 remain open for frame/hitbox/AI/armor/replay evidence.
-
-**Verification gates (all passing)**
-
-```
-npm run typecheck   → passed
-npm run static:test → 40/40 passed
-npm run build       → passed
-```
-
-**Phase A-D completed (2026-05-12)**: See `docs/planning/pvf-extraction-a-e-summary.md` for full status. Key outcomes:
-
-- **EUC-KR / stringtable** (Phase A): `PvfScriptParser.parseStringTable` rewritten with dual-offset mode, iconv-lite decoding. 230K+ entries decoded from stringtable.bin, 26K+ with Korean text.
-- **.ani format** (Phase B): `AniAnalyzer` now version-aware (v1-v15), frame indices and hitbox coordinates extracted. 209K .ani files indexed.
-- **Cancel window data** (Gap #5 resolved): `cancel*.skl` section IDs (371543=cancelWindowStart, 241483=cancelWindowDuration, 371546=cancelGroup, 371547=cancelWeaponMask, 371549=cancelTargetSlots) decoded in `SklAnalyzer.ts`.
-- **Physics constants** (Gap #4 partially): `src/data/official/dnfPhysicsConstants.ts` created with DEFAULT_GRAVITY_ACCEL=-1500, FORCE_TO_VELOCITY_CONST=4000, etc. from `dnf_enum_header.nut`.
-- **Enums extracted** (Phase C): `dnf_enum_header.nut` collision/physics enums (ATTACKTYPE, CUSTOM_ATTACKINFO, ELEMENT) identified.
-- **ActionName mapping** (Gap #6): 7 stale skillIds fixed in `berserkerSkillFacts.ts`. Full mapping table ready from Neople API _skill_list.json (55 Neo Berserker skills, 21+ matched).
-- **Verification**: typecheck, static:test, build all passing. All extraction tests green.
+**Verification gates**: `npm run typecheck` / `npm run static:test` (40/40) / `npm run build` — all passing.
 
 ## Commands
 
-- `npm install` — install dependencies (Node >= 20).
-- `npm run dev` — start Vite dev server on `0.0.0.0:5173`.
-- `npm run typecheck` — run `tsc --noEmit` on `src/` via `scripts/typecheck.mjs`.
-- `npm run build` — compile TypeScript and emit `dist/index.html` + browser ESM via `scripts/build.mjs`.
-- `npm run static:test` — compile and run `tests/static/*.test.ts` via `scripts/static-test.mjs`, outputting `.tmp/static-test-results.json`. Now includes extraction tests (ani-analyzer, pvf-parser, extraction-pipeline, skl-to-action-mapper, img-parser).
-- `npm run validate:sprites` — validate sprite assets consistency.
-- `npm run validate:assets` — validate all game assets.
-- `npm run browser:smoke` — run Playwright browser smoke test (`tests/browser/combat-smoke.spec.ts`).
-- `docker compose up --build` — run the app container on port 5173.
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Vite dev server on `0.0.0.0:5173` |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run static:test` | Compile + run `tests/static/*.test.ts` (Node, no framework) |
+| `npm run build` | Production build → `dist/` |
+| `npm run browser:smoke` | Playwright smoke test (needs dev server + display) |
+| `docker compose up --build` | Container on port 5173 |
 
-Browser screenshot verification scripts are intentionally excluded from npm commands — they can hang on Windows. Use the three stable checks above (`typecheck`, `static:test`, `build`) for code validation.
+## Tools
 
-## Documentation module
+### dnf-extract (C++ CLI)
 
-All design, planning, and research decisions are stored in `docs/`. This is the project's long-term knowledge base — consult it before making architectural changes. Documents are organized into five functional directories. See `docs/README.md` for a navigable index categorized by status (current, historical, aspirational, research).
+Source: `tools/dnf-porting-src/` — builds via CMake + MinGW/GCC.
+Binary: `tools/dnf-extract.exe` (Windows pre-built).
+CI: `.github/workflows/build-dnf-extract.yml` builds Windows/Linux-x64/Linux-arm64.
 
-## DNF/DFO reference truth rule
+**PVF modes** (Script.pvf extraction):
+```bash
+dnf-extract --pvf Script.pvf --file <internal-path>       # single file → JSON
+dnf-extract --pvf Script.pvf --pipe                       # stdin paths, stdout JSON (fast)
+dnf-extract --pvf Script.pvf --batch <p1> <p2> ...        # batch extraction
+dnf-extract --pvf Script.pvf --workflow                   # stdin JSON commands
+dnf-extract --pvf Script.pvf --list [--filter <pattern>]  # list PVF contents
+```
 
-Neople official API verification is the first golden standard for any DNF/DFO field it exposes. DFO-specific wiki references such as DFO World are the second golden standard for fields that official API/pages do not expose, after checking freshness and conflicts. Before changing DNF-aligned skill numbers, cooldowns, level tables, hit counts, job/skill IDs, MP costs, option values, or official skill text, verify against the official API or an archived official-API snapshot with provenance first; then use DFO-specific wiki data only where official sources are silent. Local tuning in `docs/design/tuning-baseline.md` is fallback baseline, not official truth.
+**NPK modes** (sprite archive):
+```bash
+dnf-extract --npk <file.NPK> --list                      # list IMG files
+dnf-extract --npk <file.NPK> --img <name> --frame <idx>  # extract single frame
+dnf-extract --npk <file.NPK> --img <name> --frames       # all frames metadata (no pixels)
+```
 
-Do not overclaim API or wiki coverage: startup/active/recovery frames, hitbox/hurtbox geometry, launch/gravity curves, combo-protection thresholds, server authority, and network sync are not provided by the Open API or ordinary wiki pages unless another official source explicitly backs them. Wikipedia/general encyclopedias are background-only; do not use them for combat numbers, frame data, hitboxes, damage formulas, skill scaling, AI behavior, or live balance values. Never commit `NEOPLE_API_KEY`; use environment variables or a backend proxy only.
+**Sprite resolve** (PVF → NPK cross-reference):
+```bash
+dnf-extract --pvf Script.pvf --npk-dir ImagePacks2/ --resolve <sprite-path> --frame <idx>
+```
+Resolve auto-tries known PVF↔NPK directory renames (e.g. `equipment/` → `atequipment/`).
+On lookup failure: prints `{"type":"error","sprite":"…","error":"sprite not found in any NPK: …"}` and exits 1.
 
-### design/ — Project design & identity
+Options: `--with-data` (include base64 pixel data; default off — frame modes return metadata only), `--help`.
 
-- `docs/design/00-project-mainline-v0.1.md` — mainline world/theme draft with dual-layer narrative (bright surface + AI-era dark line).
-- `docs/design/01-core-concept-document-v0.1.md` — CCD: target audience, core gameplay loops, unique selling points, competitive landscape, and concept-level risks.
-- `docs/design/02-project-identity-v0.2.md` — naming baseline: 碳影 / Carbon Shade, canonical repo `carbon-shade-web`, core terminology (外智, 代役, 回响/灵债, 自明, 明庭).
-- `docs/design/source-policy.md` — original code and placeholder rendering only; no DNF/DFO client assets, leaked code, or official assets.
-- `docs/design/tuning-baseline.md` — tuning baseline values.
+I/O contract:
+- stdout — one JSON line per result. Top-level `type` field is one of: `animation` (.ani), `document` (.skl / .mob / .atk / .act), `text` (.str), `pvf_list` (--list), `npk` (--npk --list), `img` (--img --frames), `frame` (--frame), `resolved_frame` (--resolve), `error`.
+- stderr — `[LOG]` / `[READY]` / `[DONE]` / `[ERROR]` progress lines. Never mixed into stdout.
+- `--pipe` / `--workflow` / `--batch` emit `---` between results.
 
-### engineering/ — Technical architecture
+### generate-actions (Node CLI)
 
-- `docs/engineering/combat-lab-0.2-r3-final-integrated-development-spec.md` — master engineering specification for Combat Lab 0.2-R3.
-- `docs/engineering/02-technical-design-document-v0.1.md` — TDD: architecture vision, module breakdown, tech stack, performance targets, security, and deployment roadmap.
-- `docs/engineering/03-development-workflow-v0.1.md` — GitHub-based development loop: roles (user, ChatGPT, sandbox, GitHub, GitHub Actions), branching strategy, CI targets, and acceptance criteria.
-- `docs/engineering/combat-attack-hit-reaction-chain.md` — attack → hit → reaction chain documentation.
+`node scripts/generate-actions.mjs --pvf <path> [--skl-filter <pattern>] [--list]`
+Parses .skl + .ani from PVF → FrameDataAction JSON. Requires `npm run static:test` first (uses `.tmp/test-js/` compiled modules).
 
-### changelog/ — Handfeel iteration history
+### extract-assets (Node CLI)
 
-Sequential record of handfeel improvement passes:
-- `docs/changelog/handfeel-pass-notes.md` — initial handfeel pass.
-- `docs/changelog/handfeel-fix1-notes.md` through `docs/changelog/handfeel-fix3-notes.md` — early fixes.
-- `docs/changelog/handfeel-fix4-asset-update-notes.md` — integrated updated player/enemy/boss sprite sheets.
-- `docs/changelog/handfeel-fix5-anchor-notes.md` — fixed `setCrop()` display origin anchoring for bottom-center foot positions.
-- `docs/changelog/fix6-normalized-sprite-pipeline.md` — current pass: normalized fixed-cell spritesheets, frame-index rendering, clamp instead of modulo, disabled container rotation for sprite actors, light tint hit flash.
-
-### planning/ — Roadmaps & implementation plans
-
-- `docs/planning/04-gap-and-roadmap-v0.1.md` — gap analysis and phased roadmap (Phase 0 through Phase 5) tracking what's done and what's next.
-- `docs/planning/training-ground-r1-r2-plan.md`, `docs/planning/training-ground-r3-r4-restoration-plan.md` — training ground phase planning.
-- `docs/planning/dfo-action-handfeel-replication-plan.md` — action and handfeel replication plan.
-- `docs/planning/dfo-combat-implementation-backlog.md` — P0/P1/P2 implementation batches for the combat kernel.
-
-### research/ — DNF/DFO research & reference
-
-Research material organized into four subdirectories:
-- `docs/research/combat/` — DNF combat kernel research (21 files: reconstruction, replication, data models, extraction, AI, frame data, mechanics gap analysis)
-- `docs/research/art/` — Art pipeline & asset research (7 files: NPK/IMG specs, paper doll compositor, UI/atlas/font, performance budgets)
-- `docs/research/systems/` — Game systems research (7 files: core subsystems, hell/economy/guild, account/login, character, town/hub)
-- `docs/research/reference/` — API & wiki reference docs (16 files: Neople Open API, DFO World Wiki system references)
-- `docs/research/source-links-appendix.md` — cross-cutting source links appendix
+`node tools/extract-assets.mjs --pvf <path> [--npk-dir <dir>] [--output <dir>]`
+High-level asset extraction pipeline using TypeScript extraction module.
 
 ## Architecture
 
-The codebase is organized into four top-level modules under `src/`:
-
-- **`src/combat/`** — Pure TypeScript combat kernel with **no Phaser imports**. Determines all combat state and can run in Node for deterministic tests. Submodules include: `actions/`, `actors/`, `ai/`, `armor/`, `buffs/`, `combo/`, `damage/`, `death/`, `events/`, `hit/`, `input/`, `kernel/`, `motion/`, `reaction/`, `replay/`, `resources/`, `status/`, `util/`.
-- **`src/game/`** — Phaser rendering layer. Translates kernel state into display objects (`CombatScene.ts`, `RenderAdapter.ts`, `BootScene.ts`, `CameraController.ts`) plus `audio/`, `layers/`, `TouchControls.ts`, `SpriteFrameLibrary.ts`, `bootActionManifest.ts`.
-- **`src/data/`** — Pure data, no logic. `manifest/` holds versioned JSON manifests (actions, damage, status, AI), `schema.ts`/`hash.ts`/`loader.ts` for validation, FNV-1a hashing, and async loading. `official/` holds Neople API-derived skill facts (`berserkerSkillFacts.ts`), physics constants (`dnfPhysicsConstants.ts`), and local frame tuning (`localFrameTuning.ts`).
-- **`src/extraction/`** — DNF client data extraction toolchain (PVF/NPK/IMG parsers, `AniAnalyzer`, `SklAnalyzer`, `SklToActionMapper`). No Phaser dependency; runs in Node for data pipeline workflows.
-
-Plus two scaffolding modules:
-- **`src/runtime/`** — Deterministic combat runtime (`combatRuntime.mjs` `RuntimeKernel`) for scenario verification, plus `RuntimeEvidence`/`RuntimeEvidenceCollector` for runtime observability and `DynamicDataLoader` for progressive manifest loading.
-- **`src/vendor/`** — Type shims (`browser-types.d.ts`, `phaser-shim.d.ts`) for browser-only APIs not available in Node test environment.
-- **`src/main.ts`** — Phaser game bootstrap: creates the `Phaser.Game` at 1920×1080 with `Scale.FIT`, registers `BootScene` + `CombatScene`, mounts debug controls. Exposes `window.combatLab` for runtime inspection.
+```
+src/combat/    — Pure TS combat kernel (no Phaser). Runs in Node for deterministic tests.
+src/game/      — Phaser rendering layer (scenes, render adapter, camera, audio, touch).
+src/data/      — Versioned JSON manifests (actions, damage, status, AI) + official data.
+src/extraction/— DNF client data extraction (PVF/NPK/IMG/ANI/SKL parsers). Node-only.
+src/runtime/   — Deterministic combat runtime for scenario verification.
+src/vendor/    — Type shims for browser APIs in Node test env.
+src/main.ts    — Phaser bootstrap (1920×1080, Scale.FIT).
+```
 
 ## Coding conventions
 
-- ES modules with `.js` extension in import specifiers (for NodeNext module resolution).
-- PascalCase for classes and scenes (`CombatKernel`, `BootScene`); lowercase domain-qualified names for data files (`berserker.normal.ts`).
-- Compact TypeScript style — follow existing code when editing nearby.
-- Two-space indentation in JSON.
-- Runtime asset paths in `public/assets/` are stable — tests and loaders reference them by string path.
+- ES modules, `.js` extension in import specifiers (NodeNext resolution).
+- PascalCase classes; lowercase domain-qualified data files.
+- Two-space indent in JSON. Compact TypeScript style.
+- Runtime assets in `public/assets/` referenced by string path.
 
-## Performance boundaries
+## DNF/DFO reference truth rule
 
-This is a demo-grade project. Prioritize fixes for:
-- Runtime FPS drops during active combat.
-- Heap or replay/event memory growth over time.
-- Input latency degradation over long sessions.
-- Per-frame cloning, allocation, texture creation, or unbounded archive growth.
+Priority: Neople Official API > DFO-specific wikis > local tuning baseline.
+Never commit `NEOPLE_API_KEY`. Frames/hitboxes/gravity/AI are NOT covered by API — use PVF extraction data.
 
-Acceptable as backlog:
-- First-load texture decode/upload spikes (image decode, texImage2D, shader init).
-- Initial scene-construction spikes from Phaser Text/Graphics creation.
-- Large normalized spritesheet decode cost (unless it blocks basic usability).
+## Test infrastructure
 
-Known constraints:
-- Commit `c4d3b22` fixed replay history blowup — replay frames must only store that frame's newly flushed events, never clone the full archive.
-- For future optimization, consider dirty-checking values that are set every frame: `setTexture`, `setText`, `setSize`, `setColor` in `CombatScene.ts` are currently called unconditionally — adding guards when values haven't changed would reduce repeated GPU calls; similarly, debug HUD text and FPS display could be throttled or guarded behind visibility checks.
+Tests run via `scripts/static-test.mjs`: TS compiled with `tsconfig.test.json` → `.tmp/test-js/`, each `.test.js` executed as standalone Node child process. Assertions: `node:assert/strict` via `tests/static/test-utils.ts` (exports `ok`, `equal`, `deepEqual` only). No test framework.
+
+## Documentation
+
+`docs/` organized into: `design/`, `engineering/`, `changelog/`, `planning/`, `research/`. See `docs/README.md` for index.
 
 ## Git workflow
 
-- Concise imperative commit subjects: `Fix normalized sprite frame clamp`.
-- PRs should include: change scope, commands run, verification artifacts touched, and screenshots or replay JSON when visual behavior changes.
-- Before claiming completion: run the relevant verification command and summarize the result. Do not edit generated outputs in `dist/`, `.tmp/`, or `verification/` unless the task explicitly concerns those artifacts.
+- Concise imperative commit subjects.
+- Run verification before claiming completion.
+- Don't edit generated outputs in `dist/`, `.tmp/`, `verification/`.
 
-## Automation test infrastructure
+## Status reporting (statusline)
 
-The test suite runs via `scripts/static-test.mjs`: TypeScript is compiled with `tsconfig.test.json` into `.tmp/test-js/`, then each `.test.js` file under `tests/static/` is executed as a standalone Node child process. Tests pass by exiting 0 and fail by exiting non-zero or throwing. There is no test framework (no Vitest, Jest, Mocha). Assertions use `node:assert/strict` via `tests/static/test-utils.ts`, which re-exports `ok`, `equal`, and `deepEqual` only. All 40 test files live in `tests/static/*.test.ts`.
+`.claude/status.json` 驱动 statusline 的 `task` / `conf` 字段。每个新 prompt 由 hook 重置为 `{"progress":"0/?","confidence":"评估中"}`。我应在任务过程中主动写入以反映真实状态：
 
-Browser smoke tests use Playwright (`tests/browser/combat-smoke.spec.ts`, run via `npm run browser:smoke`). These require a dev server running and a display — they are not part of the CI-static verification gates.
+- **开工后立即** — 拆解步骤数, 写入 `{"progress":"0/N","confidence":"XX%"}` (N=总步数, 信心值是当前对完成方式的把握)
+- **每完成一步** — 更新 `progress` 为 `M/N`, 根据进展调整 `confidence`
+- **遇到障碍 / 改变方案** — 立刻下调 `confidence` 并在 progress 中体现 (例如 `2/N?`)
+- **任务完成** — 写入 `{"progress":"N/N","confidence":"完成"}` 或类似终态
 
-Key test files added by the automation plan:
-- `tests/static/fuzz-combat.test.ts` — 50-sequence no-crash fuzz, 40-sequence determinism check, 30-sequence replay JSON validity
-- `tests/static/schema-hash-freshness.test.ts` — computes content hash of 6 data modules, compares against `combatSchemaHash`
-- `tests/static/config-validate.test.ts` — 27 action frame data validation, 14 status type completeness, tuning baseline consistency, cross-file action reference
+只在多步、有不确定性的任务里维护; 一次性琐碎操作 (单文件编辑、回答问题) 不必更新。
 
-## Tool call mistakes to avoid
+## Known pitfalls
 
-These mistakes were made during the automation plan implementation and wasted significant time. Do not repeat them.
-
-### TaskList takes no parameters
-`TaskList` accepts zero arguments. Calling `TaskList(content="{}")` or `TaskList(content="")` triggers `InputValidationError`. Just call `TaskList()` with no parameters.
-
-### Edit uses snake_case parameter names
-The Edit tool uses `file_path`, `old_string`, `new_string`, `replace_all` — NOT camelCase (`filePath`, `newString`, `oldString`, `replaceAll`). Using camelCase causes `InputValidationError`.
-
-### test-utils.ts only exports ok / equal / deepEqual
-`tests/static/test-utils.ts` re-exports from `node:assert/strict` and only provides `ok`, `equal`, `deepEqual`. There is no `assert.fail()`. Use `throw new Error("message")` instead, or `assert.ok(false, "message")`.
-
-### TypeScript double-cast needed for FrameDataAction
-The `FrameDataAction` type lacks an index signature, so `action as Record<string, unknown>` fails type checking. Use `action as unknown as Record<string, unknown>` (double-cast through `unknown`).
-
-### Node.js built-in modules not available in test tsconfig
-`node:fs`, `node:path`, `node:crypto`, `node:url` are not available in test files because `tsconfig.json` does not include `"types": ["node"]`. Tests that need file-system access should import data modules directly (e.g., `import { ACTIONS } from "../../src/combat/actions/FrameDataAction.js"`) rather than reading files from disk.
-
-### Do not re-read files that haven't changed
-When the system returns "File unchanged since last read — refer to that instead", stop re-reading. Use the content you already have. Repeated re-reads waste conversation turns.
-
-### Negative whiffCancelFrom is intentional
-Actions with `totalFrames=1` (like `Idle`) have `whiffCancelFrom = totalFrames - 4 = -3`. Negative values mean "can never whiff cancel" and are valid. Do not assert `whiffCancelFrom >= 0`. Instead check `whiffCancelFrom <= totalFrames`.
-
-### RagingFury has 10 pillars, not 8
-The tuning baseline file (`dnf-berserker-baseline.ts`) documents 8 pillars, but the actual `FrameDataAction.ts` code has 10 (`[15,17,19,21,23,25,27,29,31,33]`). The baseline is stale — trust the code.
+- `test-utils.ts` only exports `ok`/`equal`/`deepEqual`. No `assert.fail()` — use `throw new Error()`.
+- FrameDataAction needs double-cast: `action as unknown as Record<string, unknown>`.
+- Node built-ins (`node:fs` etc.) unavailable in test tsconfig — import data modules directly.
+- Negative `whiffCancelFrom` is intentional (means "can never whiff cancel").
+- RagingFury has 10 pillars in code (baseline doc says 8 — trust code).
