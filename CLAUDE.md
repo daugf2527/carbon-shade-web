@@ -151,6 +151,64 @@ Plus two scaffolding modules:
 - Two-space indentation in JSON.
 - Runtime asset paths in `public/assets/` are stable — tests and loaders reference them by string path.
 
+## LSP tools — prefer over Grep/Read for code understanding
+
+Two LSP plugins are active: `typescript-lsp` (TypeScript/TSX) and `pyright-lsp` (Python). Use LSP as the **first choice** for code exploration — it is faster and more precise than Grep/Read for these tasks:
+
+| Scenario | Use | Instead of |
+|----------|-----|------------|
+| "Where is X defined?" | `goToDefinition` | Grep + Read |
+| "What calls this function?" | `findReferences` | Grep |
+| "What's this type/interface?" | `hover` | Read whole file |
+| "What's in this file?" | `documentSymbol` | Read full file |
+| "Who implements this interface?" | `findImplementations` | Grep |
+| "Call chain of this method?" | `incomingCalls` / `outgoingCalls` | Manual trace |
+
+**Key rule**: before editing a function, run `findReferences` to see all call sites. Before reading a new file, run `documentSymbol` for the symbol map — then only Read the parts you need.
+
+## Analysis tools — automated codebase diagnostics
+
+The project has a full static + dynamic analysis toolchain. Reports auto-generate in CI (every push/PR) and can be run locally via `npm run analyze`.
+
+### Tool inventory
+
+| Tool | Type | What it does | Run |
+|------|------|-------------|-----|
+| **dependency-cruiser** | Open-source | Module dependency graph, circular dep detection, change impact ("who depends on X?") | `depcruise --no-config --output-type json src` |
+| **knip** | Open-source | Finds unused exports, types, files | `knip` |
+| **event-trace.mjs** | Project | Pairs event emitters ↔ listeners by scanning `bus.emit/on` strings | `node tools/event-trace.mjs` |
+| **pipeline-dump.mjs** | Project | Extracts pipeline stages, phases, and execution order from buildPipeline() | `node tools/pipeline-dump.mjs` |
+| **manifest-consumers.mjs** | Project | Traces which TS files import/consume which JSON manifests | `node tools/manifest-consumers.mjs` |
+| **tick-benchmark** | Built-in test | 600-tick throughput test (target: < 500µs/tick) | `npm run static:test` includes it |
+| **fuzz-combat** | Built-in test | 50 random-sequence no-crash, 40 determinism check, 30 replay validity | `npm run static:test` includes it |
+| **typecheck** | Built-in | `tsc --noEmit` | `npm run typecheck` |
+| **static:test** | Built-in | 45 test files, compiled + run as Node processes | `npm run static:test` |
+| **build** | Built-in | Vite production build | `npm run build` |
+| **browser:smoke** | Built-in | Playwright browser test (CI only, not on Termux/Android) | `npm run browser:smoke` |
+
+### When tools run
+
+```
+Local pre-push  →  npm run analyze  →  全工具报告 → verification/pre-push-{ts}.json
+CI (push/PR)    →  GitHub Actions  →  全工具报告 → uploaded as artifact
+Claude session  →  读已有报告，不重复跑。若 stale (>1 day) 或不存在 → npm run analyze
+Debugging       →  LSP (goToDef/findRefs/documentSymbol) 优先, 再按需跑单项工具
+```
+
+### Quick reference: which tool answers which question
+
+| Question | Tool |
+|----------|------|
+| "改 X.ts 会影响谁？" | `depcruise` → look for dependents of X |
+| "有没有循环依赖？" | `depcruise` — violations section |
+| "哪些导出没被用过？" | `knip` |
+| "事件 X 谁 emit 谁监听？" | `node tools/event-trace.mjs --output json` |
+| "管线各阶段执行顺序？" | `node tools/pipeline-dump.mjs --output json` |
+| "JSON 配置谁在用？" | `node tools/manifest-consumers.mjs --output json` |
+| "Ticking 够不够快？" | tick-benchmark (465µs/tick = 2151 ticks/s) |
+| "改了代码会破坏确定性吗？" | fuzz-combat determinism check (40/40) |
+| "内存/CPU 有问题？" | `node --prof` + `node --prof-process` |
+
 ## Performance boundaries
 
 This is a demo-grade project. Prioritize fixes for:

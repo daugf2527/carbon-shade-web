@@ -11,7 +11,8 @@
     "static:test": "node scripts/static-test.mjs",
     "validate:sprites": "node scripts/validate-sprites.mjs",
     "validate:assets": "node scripts/validate-assets.mjs",
-    "browser:smoke": "playwright test tests/browser/combat-smoke.spec.ts"
+    "browser:smoke": "playwright test tests/browser/combat-smoke.spec.ts",
+    "analyze": "node scripts/analyze.mjs"
   },
   "dependencies": {
     "iconv-lite": "^0.7.2",

@@ -1,0 +1,17 @@
+#!/bin/sh
+# Pre-push analysis: run full toolchain, save report, block on gate failure.
+# To skip (not recommended): git push --no-verify
+
+set -e
+
+REPORT="verification/pre-push-$(date +%Y%m%d-%H%M%S).json"
+mkdir -p verification
+
+echo "[pre-push] Running full analysis..."
+npm run analyze -- --out-file "$REPORT"
+
+# Link latest report for easy access
+ln -sf "$(basename "$REPORT")" verification/latest-report.json
+
+echo "[pre-push] Report: $REPORT"
+echo "[pre-push] OK"
