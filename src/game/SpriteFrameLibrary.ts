@@ -101,6 +101,24 @@ function pickDnfSpriteSpec(action: DnfActionMeta, tick: number): SpriteSpec {
 }
 
 function pickDnfActionSpec(action: DnfActionMeta, localFrame: number): SpriteSpec {
+  const f = pickDnfFrame(action, localFrame);
+  return {
+    key: f.key,
+    frame: 0,
+    scale: action.scale,
+    offsetY: Math.max(0, f.height - f.anchorY) * action.scale,
+  };
+}
+
+function pickDnfFrame(action: DnfActionMeta, localFrame: number): DnfFrameMeta {
+  if (action.name === "swordman_jump") {
+    if (localFrame <= 6) return action.frames[Math.min(1, Math.max(0, Math.floor((Math.max(1, localFrame) - 1) / 3)))]!;
+    if (localFrame <= 24) return action.frames[Math.min(7, Math.max(2, Math.floor((localFrame - 7) / 3) + 2))]!;
+    if (localFrame <= 29) return action.frames[7]!;
+    if (localFrame <= 51) return action.frames[Math.min(14, Math.max(8, Math.floor((localFrame - 30) / 3) + 8))]!;
+    return action.frames[15]!;
+  }
+
   const ms = Math.max(0, localFrame - 1) * MS_PER_TICK;
   let idx = action.frames.length - 1;
   let acc = 0;
@@ -108,13 +126,7 @@ function pickDnfActionSpec(action: DnfActionMeta, localFrame: number): SpriteSpe
     acc += action.frames[i]!.delay;
     if (ms < acc) { idx = i; break; }
   }
-  const f = action.frames[idx]!;
-  return {
-    key: f.key,
-    frame: 0,
-    scale: action.scale,
-    offsetY: Math.max(0, f.height - f.anchorY) * action.scale,
-  };
+  return action.frames[idx]!;
 }
 
 export const NORMALIZED_SPRITE_SHEETS: Record<string, { key: string; url: string; cellW: number; cellH: number }> = {
@@ -520,8 +532,18 @@ export function getCombatSpriteSpec(req: ActorSpriteRequest): SpriteSpec | null 
       return dbg("fallback:knockdown", spec(s, "knockdown", req, "loop", 12));
     }
 
+    if (reaction === "quick_rebound" || reaction === "getting_up" || action === "QuickRebound") {
+      const dnf = DNF_ACTIONS["swordman_overturn"];
+      if (dnf) return dbg("swordman_overturn", pickDnfActionSpec(dnf, lf));
+    }
+
     // Hit reactions
-    if (["light_stagger", "heavy_stagger", "knockback", "armor_feedback_only"].includes(reaction)) {
+    if (reaction === "micro_stagger" || reaction === "light_stagger" || reaction === "armor_feedback_only") {
+      const dnf = DNF_ACTIONS["swordman_damage1"];
+      if (dnf) return dbg("swordman_damage1", pickDnfActionSpec(dnf, lf));
+      return dbg("fallback:hurt", spec(s, "hurt", req, "action", 2));
+    }
+    if (["heavy_stagger", "knockback"].includes(reaction)) {
       const dnf = DNF_ACTIONS["swordman_hitback"];
       if (dnf) return dbg("swordman_hitback", pickDnfActionSpec(dnf, lf));
       return dbg("fallback:hurt", spec(s, "hurt", req, "action", 2));

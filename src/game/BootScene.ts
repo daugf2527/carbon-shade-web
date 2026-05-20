@@ -80,30 +80,44 @@ export class BootScene extends Phaser.Scene {
     getRuntimeEvidenceCollector().recordCombatSnapshot({ bootSceneReady: true });
 
     const { width, height } = this.cameras.main;
-    this.cameras.main.setBackgroundColor("#0b1220");
+    this.cameras.main.setBackgroundColor("#0d0e12");
 
-    this.add.text(width / 2, height / 2 - 72, "Combat Lab 0.2-R3 Asset Pass", {
-      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-      fontSize: "34px",
-      color: "#e2e8f0",
+    this.add.text(width / 2, height / 2 - 96, "碳影", {
+      fontFamily: '"Source Han Serif SC", "Noto Serif SC", "Songti SC", "SimSun", serif',
+      fontSize: "72px",
+      color: "#d8c9a8",
       align: "center",
     }).setOrigin(0.5);
 
-    this.add.text(width / 2, height / 2 - 28, "Sprite-integrated Training Ground", {
-      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-      fontSize: "16px",
-      color: "#94a3b8",
+    this.add.text(width / 2, height / 2 - 36, "Carbon Shade", {
+      fontFamily: '"Source Han Serif SC", "Noto Serif SC", "Songti SC", "SimSun", serif',
+      fontSize: "22px",
+      color: "#c97b3e",
       align: "center",
     }).setOrigin(0.5);
 
-    const button = this.add.rectangle(width / 2, height / 2 + 56, 220, 52, 0x2563eb)
-      .setStrokeStyle(2, 0x93c5fd)
+    this.add.text(width / 2, height / 2 + 4, "硅光照世，碳影问心", {
+      fontFamily: '"Source Han Serif SC", "Noto Serif SC", "Songti SC", "SimSun", serif',
+      fontSize: "14px",
+      color: "#4a5868",
+      align: "center",
+    }).setOrigin(0.5);
+
+    const button = this.add.rectangle(width / 2, height / 2 + 80, 240, 56, 0x15171d)
+      .setStrokeStyle(2, 0xc97b3e)
       .setInteractive({ useHandCursor: true });
 
-    const label = this.add.text(width / 2, height / 2 + 56, "Start Training Ground", {
+    const label = this.add.text(width / 2, height / 2 + 80, "进入明庭", {
+      fontFamily: '"Source Han Serif SC", "Noto Serif SC", "Songti SC", "SimSun", serif',
+      fontSize: "18px",
+      color: "#d8c9a8",
+      align: "center",
+    }).setOrigin(0.5);
+
+    this.add.text(width / 2, height / 2 + 140, "Combat Lab v0.3 · Scene Selector", {
       fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-      fontSize: "15px",
-      color: "#ffffff",
+      fontSize: "11px",
+      color: "#4a5868",
       align: "center",
     }).setOrigin(0.5);
 
@@ -111,10 +125,10 @@ export class BootScene extends Phaser.Scene {
     const showBootError = (error: unknown): void => {
       const message = error instanceof Error ? error.message : String(error);
       if (!errorText) {
-        errorText = this.add.text(width / 2, height / 2 + 116, "", {
+        errorText = this.add.text(width / 2, height / 2 + 200, "", {
           fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
           fontSize: "13px",
-          color: "#fecaca",
+          color: "#b34254",
           align: "center",
           wordWrap: { width: Math.min(780, width - 80) },
         }).setOrigin(0.5);
@@ -130,14 +144,13 @@ export class BootScene extends Phaser.Scene {
         showBootError(error);
         throw error;
       }
-      // Register all DNF swordman actions from loaded meta.json
       const dnfActions = ["stay", "dash", "jump", "damage1", "damage2", "hitback", "down", "overturn", "attack1", "attack2", "attack3"];
       for (const name of dnfActions) {
         const meta = this.cache.json.get(`dnf_swordman_${name}_meta`);
         if (meta) registerDnfAction(`swordman_${name}`, meta, `dnf_swordman_${name}`);
       }
       this.game.registry.set("audioGate", this.audioGate);
-      this.scene.start("equipment-test");
+      this.scene.start("scene-select");
     };
 
     button.on("pointerup", () => void startCombat());

@@ -21,6 +21,21 @@ import { resolve, join, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PNG } from "pngjs";
 
+// ── Pixel format decoders ────────────────────────────────────────────
+
+function decodeToPng(raw, png, width, height, formatName, frameIndex) {
+  const pixels = width * height;
+  // dnf-extract always outputs decoded BGRA 32-bit regardless of original format
+  if (raw.length !== pixels * 4) throw new Error(`frame ${frameIndex}: pixel buffer ${raw.length}B ≠ expected ${pixels * 4}B (${formatName})`);
+  for (let p = 0; p < pixels; p++) {
+    const o = p * 4;
+    png.data[o + 0] = raw[o + 2]; // R ← B
+    png.data[o + 1] = raw[o + 1]; // G
+    png.data[o + 2] = raw[o + 0]; // B ← R
+    png.data[o + 3] = raw[o + 3]; // A
+  }
+}
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 
@@ -107,26 +122,11 @@ for (const f of ani.frames) {
   if (resolved.isLink) {
     throw new Error(`frame ${f.i}: link chain too deep (last linkId=${resolved.linkId})`);
   }
-  if (resolved.formatName !== "ARGB_8888") {
-    throw new Error(`frame ${f.i}: unsupported pixel format ${resolved.formatName} (PoC only handles ARGB_8888)`);
-  }
 
   const raw = Buffer.from(resolved.dataBase64, "base64");
   const { width, height } = resolved;
-  const expected = width * height * 4;
-  if (raw.length !== expected) {
-    throw new Error(`frame ${f.i}: pixel buffer ${raw.length}B ≠ expected ${expected}B`);
-  }
-
-  // DNF ARGB_8888 on disk = BGRA byte order. pngjs expects RGBA. Swap B↔R.
   const png = new PNG({ width, height });
-  for (let p = 0; p < width * height; p++) {
-    const o = p * 4;
-    png.data[o + 0] = raw[o + 2]; // R ← B-slot
-    png.data[o + 1] = raw[o + 1]; // G
-    png.data[o + 2] = raw[o + 0]; // B ← R-slot
-    png.data[o + 3] = raw[o + 3]; // A
-  }
+  decodeToPng(raw, png, width, height, resolved.formatName, f.i);
   const pngBuf = PNG.sync.write(png);
 
   const filename = `frame_${String(f.i).padStart(2, "0")}.png`;

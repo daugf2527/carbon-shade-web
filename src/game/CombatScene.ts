@@ -7,6 +7,7 @@ import { FixedStepSimulation } from "../combat/kernel/FixedStepSimulation.js";
 import { CameraController } from "./CameraController.js";
 import { bindCameraFeedbackHandlers } from "./CameraFeedbackHandlers.js";
 import { AudioUnlockGate } from "./audio/AudioUnlockGate.js";
+import { DnfLayeredSprite } from "./DnfLayeredSprite.js";
 import { DebugLayer } from "./layers/DebugLayer.js";
 import { getCombatSpriteSpec, _debugLastPlayerSprite, type SpriteSpec } from "./SpriteFrameLibrary.js";
 import { getRuntimeEvidenceCollector, recordKernelCombatEvidence } from "../runtime/evidence/RuntimeEvidenceCollector.js";
@@ -32,6 +33,7 @@ interface ActorView {
   container: Phaser.GameObjects.Container;
   shadow: Phaser.GameObjects.Ellipse;
   sprite: Phaser.GameObjects.Image;
+  layeredSprite?: DnfLayeredSprite;
   legsL: Phaser.GameObjects.Rectangle;
   legsR: Phaser.GameObjects.Rectangle;
   body: Phaser.GameObjects.Rectangle;
@@ -534,24 +536,32 @@ export class CombatScene extends Phaser.Scene {
       this.setEllipseFillIfChanged(view.shadow, 0x000000, actor.dead ? 0.18 : 0.34);
       this.setSizeIfChanged(view.shadow, isBoss ? 180 : isBuilding ? 132 : isImp ? 72 : 78, isBoss ? 30 : isImp ? 13 : 18);
 
+      const useIdleCostumeLayers = this.shouldUseIdleCostumeLayers(actor, spriteSpec, view);
       if (spriteSpec) {
-        // Normalized spritesheets use fixed-size cells and Phaser frame indices.
-        // Runtime no longer uses full-sheet crop x/y as display-origin data.
-        this.setSpriteTextureIfChanged(view.sprite, spriteSpec.key, spriteSpec.frame);
-        (view.sprite as any).resetCrop?.();
-        view.sprite.setOrigin(0.5, 1);
-        view.sprite.setScale(spriteSpec.scale);
-        view.sprite.setPosition(0, spriteSpec.offsetY ?? 2);
-        view.sprite.setFlipX(facing === "left");
-        view.sprite.setVisible(true);
-        view.sprite.setAlpha(actor.dead ? 0.72 : hitFlash ? 0.94 : 1);
-        this.setTintStateIfChanged(view.sprite, hitFlash);
+        if (useIdleCostumeLayers) {
+          this.syncIdleCostumeLayers(view, spriteSpec, facing);
+          view.sprite.setVisible(false);
+        } else {
+          // Normalized spritesheets use fixed-size cells and Phaser frame indices.
+          // Runtime no longer uses full-sheet crop x/y as display-origin data.
+          this.setSpriteTextureIfChanged(view.sprite, spriteSpec.key, spriteSpec.frame);
+          (view.sprite as any).resetCrop?.();
+          view.sprite.setOrigin(0.5, 1);
+          view.sprite.setScale(spriteSpec.scale);
+          view.sprite.setPosition(0, spriteSpec.offsetY ?? 2);
+          view.sprite.setFlipX(facing === "left");
+          view.sprite.setVisible(true);
+          view.sprite.setAlpha(actor.dead ? 0.72 : hitFlash ? 0.94 : 1);
+          this.setTintStateIfChanged(view.sprite, hitFlash);
+          view.layeredSprite?.setVisible(false);
+        }
         view.body.setVisible(false);
         view.head.setVisible(false);
         view.face.setVisible(false);
         view.legsL.setVisible(false);
         view.legsR.setVisible(false);
       } else {
+        view.layeredSprite?.setVisible(false);
         view.sprite.setVisible(false);
         view.body.setVisible(true);
         view.head.setVisible(true);
@@ -671,6 +681,9 @@ export class CombatScene extends Phaser.Scene {
     sprite.setOrigin(0.5, 1);
     sprite.setVisible(false);
 
+    const layeredSprite = id === "player" ? this.createPlayerIdleLayeredSprite() : undefined;
+    layeredSprite?.setVisible(false);
+
     const legsL = this.add.rectangle(-18, -18, 13, 27, 0x111827);
     legsL.setOrigin(0.5, 0.5);
     const legsR = this.add.rectangle(4, -18, 13, 27, 0x111827);
@@ -712,9 +725,46 @@ export class CombatScene extends Phaser.Scene {
     });
     state.setOrigin(0.5, 0.5);
 
-    container.add([shadow, sprite, legsL, legsR, body, head, face, weapon, hpBack, hpFill, label, state]);
+    const children: Phaser.GameObjects.GameObject[] = [shadow, sprite];
+    if (layeredSprite) children.push(layeredSprite);
+    children.push(legsL, legsR, body, head, face, weapon, hpBack, hpFill, label, state);
+    container.add(children);
 
-    return { container, shadow, sprite, legsL, legsR, body, head, face, weapon, hpBack, hpFill, label, state };
+    return { container, shadow, sprite, layeredSprite, legsL, legsR, body, head, face, weapon, hpBack, hpFill, label, state };
+  }
+
+  private createPlayerIdleLayeredSprite(): DnfLayeredSprite | undefined {
+    const bodyMeta = this.cache.json.get("dnf_swordman_stay_meta");
+    if (!bodyMeta?.frames?.length) return undefined;
+
+    const layerMetas = new Map<string, { frames: unknown[] }>();
+    for (const layer of ["coat_a", "hair_a", "pants_a", "shoes_a"]) {
+      const meta = this.cache.json.get(`dnf_swordman_stay_${layer}_meta`);
+      if (meta?.frames?.length) layerMetas.set(layer, meta);
+    }
+    if (layerMetas.size === 0) return undefined;
+
+    return new DnfLayeredSprite(this, 0, 0, "dnf_swordman_stay", bodyMeta, layerMetas as Map<string, any>);
+  }
+
+  private shouldUseIdleCostumeLayers(actor: ActorSnapshot, spriteSpec: SpriteSpec | null, view: ActorView): boolean {
+    return actor.id === "player"
+      && Boolean(view.layeredSprite)
+      && spriteSpec?.key.startsWith("dnf_swordman_stay_") === true;
+  }
+
+  private syncIdleCostumeLayers(view: ActorView, spriteSpec: SpriteSpec, facing: "left" | "right"): void {
+    if (!view.layeredSprite) return;
+    const frame = this.frameIndexFromDnfTextureKey(spriteSpec.key);
+    view.layeredSprite.setFrame(frame);
+    view.layeredSprite.setPosition(0, 0);
+    view.layeredSprite.setScale(facing === "left" ? -spriteSpec.scale : spriteSpec.scale, spriteSpec.scale);
+    view.layeredSprite.setVisible(true);
+  }
+
+  private frameIndexFromDnfTextureKey(key: string): number {
+    const match = key.match(/_(\d{2})$/);
+    return match ? Number.parseInt(match[1], 10) : 0;
   }
 
 

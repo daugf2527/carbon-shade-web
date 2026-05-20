@@ -1,11 +1,15 @@
 /**
- * EquipmentTestScene - Test scene for DNF layered sprite alignment
+ * EquipmentAlignScene - DNF layered sprite alignment verification.
+ *
+ * Migrated from src/game/EquipmentTestScene.ts (2026-05-20) into the new
+ * scene-selector architecture.
  */
 
 import Phaser from "phaser";
-import { DnfLayeredSprite, AlignmentMode } from "./DnfLayeredSprite.js";
+import { DnfLayeredSprite, AlignmentMode } from "../DnfLayeredSprite.js";
+import { attachReturnControls, CARBON_PALETTE_HEX, MONO_FONT_STACK } from "../sceneHelpers.js";
 
-export class EquipmentTestScene extends Phaser.Scene {
+export class EquipmentAlignScene extends Phaser.Scene {
   private layeredSprite?: DnfLayeredSprite;
   private currentMode: AlignmentMode = "mode2_500x500_canvas";
   private modeText?: Phaser.GameObjects.Text;
@@ -20,93 +24,81 @@ export class EquipmentTestScene extends Phaser.Scene {
   ];
 
   constructor() {
-    super("equipment-test");
+    super("equipment-align");
   }
 
   create(): void {
     const { width, height } = this.cameras.main;
-    this.cameras.main.setBackgroundColor("#1a1a2e");
+    this.cameras.main.setBackgroundColor(CARBON_PALETTE_HEX.ink);
 
-    // Title
-    this.add.text(width / 2, 30, "DNF Equipment Layer Alignment Test", {
-      fontFamily: "monospace",
+    this.add.text(width / 2, 30, "Equipment Layer Alignment", {
+      fontFamily: MONO_FONT_STACK,
       fontSize: "24px",
-      color: "#ffffff",
+      color: CARBON_PALETTE_HEX.bone,
     }).setOrigin(0.5);
 
-    // Instructions
-    this.instructionText = this.add.text(width / 2, 70, "Press SPACE to cycle alignment modes | Arrow keys to change frame", {
-      fontFamily: "monospace",
+    this.instructionText = this.add.text(width / 2, 70, "SPACE 切换对齐模式 · ←/→ 切换帧 · Esc 返回明庭", {
+      fontFamily: MONO_FONT_STACK,
       fontSize: "14px",
-      color: "#aaaaaa",
+      color: CARBON_PALETTE_HEX.mist,
     }).setOrigin(0.5);
 
-    // Mode indicator
     this.modeText = this.add.text(width / 2, height - 40, "", {
-      fontFamily: "monospace",
+      fontFamily: MONO_FONT_STACK,
       fontSize: "16px",
-      color: "#00ff00",
+      color: CARBON_PALETTE_HEX.ember,
     }).setOrigin(0.5);
 
-    // Load metadata
     const bodyMeta = this.cache.json.get("dnf_swordman_stay_meta");
     if (!bodyMeta) {
       this.add.text(width / 2, height / 2, "ERROR: Body meta not loaded", {
-        fontFamily: "monospace",
+        fontFamily: MONO_FONT_STACK,
         fontSize: "18px",
-        color: "#ff0000",
+        color: CARBON_PALETTE_HEX.debt,
       }).setOrigin(0.5);
+      attachReturnControls(this);
       return;
     }
 
-    // Load equipment layer metadata
-    const layerMetas = new Map<string, any>();
+    const layerMetas = new Map<string, unknown>();
     const layers = ["coat_a", "hair_a", "pants_a", "shoes_a"];
     for (const layer of layers) {
       const meta = this.cache.json.get(`dnf_swordman_stay_${layer}_meta`);
-      if (meta) {
-        layerMetas.set(layer, meta);
-        console.log(`Loaded ${layer} meta:`, meta.frames[0]);
-      } else {
-        console.log(`${layer} meta not found`);
-      }
+      if (meta) layerMetas.set(layer, meta);
     }
 
     if (layerMetas.size === 0) {
       this.add.text(width / 2, height / 2, "ERROR: No equipment layers loaded", {
-        fontFamily: "monospace",
+        fontFamily: MONO_FONT_STACK,
         fontSize: "18px",
-        color: "#ff0000",
+        color: CARBON_PALETTE_HEX.debt,
       }).setOrigin(0.5);
+      attachReturnControls(this);
       return;
     }
 
-    // Create layered sprite at center
     this.layeredSprite = new DnfLayeredSprite(
       this,
       width / 2,
       height / 2 + 50,
       "dnf_swordman_stay",
       bodyMeta,
-      layerMetas
+      layerMetas as Map<string, any>
     );
-
-    // Scale up for visibility
     this.layeredSprite.setScale(3);
 
-    // Draw reference crosshair at container origin
     const graphics = this.add.graphics();
     graphics.lineStyle(1, 0xff0000, 0.5);
     graphics.lineBetween(width / 2 - 20, height / 2 + 50, width / 2 + 20, height / 2 + 50);
     graphics.lineBetween(width / 2, height / 2 + 30, width / 2, height / 2 + 70);
 
-    // Update mode text
     this.updateModeText();
 
-    // Keyboard controls
     this.input.keyboard?.on("keydown-SPACE", () => this.cycleMode());
     this.input.keyboard?.on("keydown-LEFT", () => this.changeFrame(-1));
     this.input.keyboard?.on("keydown-RIGHT", () => this.changeFrame(1));
+
+    attachReturnControls(this);
   }
 
   private cycleMode(): void {
@@ -121,19 +113,19 @@ export class EquipmentTestScene extends Phaser.Scene {
     if (!this.layeredSprite) return;
     const bodyMeta = this.cache.json.get("dnf_swordman_stay_meta");
     const maxFrames = bodyMeta.frames.length;
-    const currentFrame = (this.layeredSprite as any).currentFrame ?? 0;
+    const currentFrame = (this.layeredSprite as unknown as { currentFrame?: number }).currentFrame ?? 0;
     const newFrame = (currentFrame + delta + maxFrames) % maxFrames;
     this.layeredSprite.setFrame(newFrame);
     this.updateModeText();
   }
 
   private updateModeText(): void {
-    const currentFrame = (this.layeredSprite as any)?.currentFrame ?? 0;
+    const currentFrame = (this.layeredSprite as unknown as { currentFrame?: number } | undefined)?.currentFrame ?? 0;
     const modeNames: Record<AlignmentMode, string> = {
       mode1_imganchor_as_offset: "Mode 1: imgAnchor as direct offset",
       mode2_500x500_canvas: "Mode 2: 500×500 virtual canvas",
       mode3_relative_to_body: "Mode 3: Relative to body imgAnchor",
-      mode4_ignore_imganchor: "Mode 4: Ignore imgAnchor (all same pos)",
+      mode4_ignore_imganchor: "Mode 4: Ignore imgAnchor",
       mode5_negated_imganchor: "Mode 5: Negated imgAnchor",
     };
     this.modeText?.setText(`${modeNames[this.currentMode]} | Frame: ${currentFrame}`);
