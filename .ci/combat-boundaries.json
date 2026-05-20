@@ -1,0 +1,10 @@
+{
+  "description": "Files allowed to write to actor.velocity. When adding a new file with velocity writes, add it here — CI validates against this list.",
+  "velocityWriteAllowlist": [
+    { "file": "src/combat/kernel/CombatKernel.ts", "reason": "updateReactionMotion() physics integration" },
+    { "file": "src/combat/reaction/ReactionResolver.ts", "reason": "launch/stagger/knockback velocity application" },
+    { "file": "src/combat/reaction/ReactionMotionSystem.ts", "reason": "per-tick velocity→position, friction, gravity, knockback decay" },
+    { "file": "src/combat/hit/HitResolutionSystem.ts", "reason": "velocity reset on hit landing" },
+    { "file": "src/combat/ai/EnemyAI.ts", "reason": "AI-driven velocity overrides (launch detection, ground clamp)" }
+  ]
+}

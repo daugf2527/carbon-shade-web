@@ -18,16 +18,16 @@ import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { resolve, join, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
+import { platform } from "node:os";
 import { PNG } from "pngjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 
-const EXTRACT = join(ROOT, "tools", "dnf-extract.exe");
-const PVF = process.env.DNF_PVF
-  ?? "D:/BaiduNetdiskDownload/DNF客户端（2018年2月更新）/地下城与勇士/Script.pvf";
-const NPK_DIR = process.env.DNF_NPK_DIR
-  ?? "D:/BaiduNetdiskDownload/DNF客户端（2018年2月更新）/地下城与勇士/ImagePacks2";
+const EXTRACT_BASENAME = platform() === "win32" ? "dnf-extract.exe" : "dnf-extract";
+const EXTRACT = join(ROOT, "tools", EXTRACT_BASENAME);
+const PVF = process.env.DNF_PVF;
+const NPK_DIR = process.env.DNF_NPK_DIR;
 
 // ── CLI ──────────────────────────────────────────────────────────────
 
@@ -59,6 +59,24 @@ if (!/^\d{4}$/.test(style)) {
   console.error(`--style must be 4 digits (got "${style}")`);
   process.exit(1);
 }
+
+if (!PVF) {
+  console.error("DNF_PVF environment variable is required. Set it to the path of Script.pvf.");
+  process.exit(1);
+}
+if (!NPK_DIR) {
+  console.error("DNF_NPK_DIR environment variable is required. Set it to the path of ImagePacks2.");
+  process.exit(1);
+}
+if (!existsSync(PVF)) {
+  console.error(`PVF not found: ${PVF}`);
+  process.exit(1);
+}
+if (!existsSync(NPK_DIR)) {
+  console.error(`NPK_DIR not found: ${NPK_DIR}`);
+  process.exit(1);
+}
+
 const styleHi = style.slice(0, 2);
 const styleLo = style.slice(2, 4);
 

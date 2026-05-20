@@ -50,33 +50,8 @@ jobs:
       - name: Set build hash from git commit
         run: echo "BUILD_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
-      - name: Phaser import boundary check
-        run: |
-          echo "Checking src/combat/ for Phaser imports..."
-          if grep -rq "from ['\"]phaser" src/combat/ || grep -rq "import.*phaser" src/combat/; then
-            echo "FAIL: Phaser import found in src/combat/ — kernel must remain Phaser-free"
-            grep -rn "phaser" src/combat/
-            exit 1
-          fi
-          echo "OK: No Phaser imports in combat kernel"
-
-      - name: Enforce velocity write locations
-        run: |
-          echo "Checking velocity writes only in allowed files..."
-          ALLOWED="ActorFactory\.ts|CombatKernel\.ts|ReactionResolver\.ts|EnemyAI\.ts"
-          VIOLATIONS=$(grep -rn "\.velocity\s*[.=]" src/combat/ --include="*.ts" | grep -vE "$ALLOWED" || true)
-          if [ -n "$VIOLATIONS" ]; then
-            echo "FAIL: velocity writes found outside allowed files:"
-            echo "$VIOLATIONS"
-            echo ""
-            echo "Allowed files (pre-E-segment):"
-            echo "  - ActorFactory.ts (initialization)"
-            echo "  - CombatKernel.ts updateReactionMotion() (physics)"
-            echo "  - ReactionResolver.ts apply() (launch/stagger/knockback)"
-            exit 1
-          fi
-          echo "OK: All velocity writes in allowed files"
-          grep -rn "\.velocity\s*[.=]" src/combat/ --include="*.ts" || echo "  (none found)"
+      - name: Validate combat kernel boundaries
+        run: npm run validate:combat
 
       - name: Validate sprite sheets
         run: npm run validate:sprites

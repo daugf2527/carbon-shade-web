@@ -39,11 +39,9 @@ function decodeToPng(raw, png, width, height, formatName, frameIndex) {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 
-const EXTRACT = join(ROOT, "tools", "dnf-extract.exe");
-const PVF = process.env.DNF_PVF
-  ?? "D:/BaiduNetdiskDownload/DNF客户端（2018年2月更新）/地下城与勇士/Script.pvf";
-const NPK_DIR = process.env.DNF_NPK_DIR
-  ?? "D:/BaiduNetdiskDownload/DNF客户端（2018年2月更新）/地下城与勇士/ImagePacks2";
+const EXTRACT = join(ROOT, "tools", process.platform === "win32" ? "dnf-extract.exe" : "dnf-extract");
+const PVF = process.env.DNF_PVF;
+const NPK_DIR = process.env.DNF_NPK_DIR;
 
 // ── CLI ──────────────────────────────────────────────────────────────
 
@@ -61,7 +59,16 @@ for (let i = 1; i < args.length; i++) {
 }
 
 if (!existsSync(EXTRACT)) {
-  console.error(`dnf-extract.exe missing at ${EXTRACT}`);
+  console.error(`dnf-extract missing at ${EXTRACT}`);
+  process.exit(1);
+}
+
+if (!PVF) {
+  console.error("DNF_PVF environment variable is required. Set it to the path of Script.pvf.");
+  process.exit(1);
+}
+if (!NPK_DIR) {
+  console.error("DNF_NPK_DIR environment variable is required. Set it to the path of ImagePacks2.");
   process.exit(1);
 }
 

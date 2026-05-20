@@ -11,6 +11,7 @@
     "static:test": "node scripts/static-test.mjs",
     "validate:sprites": "node scripts/validate-sprites.mjs",
     "validate:assets": "node scripts/validate-assets.mjs",
+    "validate:combat": "node scripts/validate-combat-boundaries.mjs",
     "browser:smoke": "playwright test tests/browser/combat-smoke.spec.ts",
     "analyze": "node scripts/analyze.mjs"
   },
