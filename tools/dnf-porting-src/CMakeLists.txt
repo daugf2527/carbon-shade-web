@@ -23,9 +23,12 @@ if(WIN32)
     # corrupts stdio (stdout/stderr handles silently fail under redirection).
     target_link_options(dnf-extract PRIVATE -static-libgcc -static-libstdc++ -static)
 else()
-    # Linux: zlib via find_package, iconv may be separate (Termux/Android/bionic)
+    # Linux: zlib via find_package. Android/Termux may need a separate iconv library.
     find_package(ZLIB REQUIRED)
-    target_link_libraries(dnf-extract ZLIB::ZLIB iconv)
+    target_link_libraries(dnf-extract ZLIB::ZLIB)
+    if(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
+        target_link_libraries(dnf-extract iconv)
+    endif()
 endif()
 
 target_include_directories(dnf-extract PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

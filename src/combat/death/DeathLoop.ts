@@ -9,9 +9,6 @@ export class DeathLoop {
     actor.handfeel.reactionRemaining = 0;
     actor.handfeel.getUpRemaining = 0;
     actor.handfeel.downRemaining = Math.max(actor.handfeel.downRemaining, 999999);
-    actor.velocity.x = 0;
-    actor.velocity.z = 0;
-    actor.velocity.y = 0;
     actor.position.y = 0;
     this.cleanupBarrier.add(actor.id);
     const releaseBarrier = (event: { payload: unknown }) => {
