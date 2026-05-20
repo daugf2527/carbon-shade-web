@@ -63,8 +63,8 @@ PvfReader::PvfReader(const std::string& path)
 {
 	file = fopen(path.c_str(), "rb");
 	if (file == nullptr) {
-		printf("fail to open this file : %s", path.c_str());
-		exit(0);
+		fprintf(stderr, "[ERROR] fail to open this file : %s\n", path.c_str());
+		exit(1);
 	}
 	fseek(file, 0, SEEK_END);
 	length = ftell(file);
@@ -281,6 +281,10 @@ auto PvfReader::write(const std::string& file, const std::string& str) -> void
 	}
 
 	FILE* f = fopen(file.c_str(), "wb");
+	if (!f) {
+		fprintf(stderr, "[ERROR] fail to write file : %s\n", file.c_str());
+		return;
+	}
 	fwrite(str.c_str(), str.length(), 1, f);
 	fclose(f);
 }

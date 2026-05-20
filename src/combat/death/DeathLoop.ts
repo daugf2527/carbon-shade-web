@@ -4,7 +4,16 @@ export class DeathLoop {
   readonly cleanupBarrier = new Set<string>();
   kill(actor: Actor, tick: number, bus: CombatEventBus, causationId?: string, correlationId?: string): void {
     if(actor.flags.dead) return;
-    actor.flags.dead = true; actor.reactionState = "dead"; this.cleanupBarrier.add(actor.id);
+    actor.flags.dead = true;
+    actor.reactionState = "downed";
+    actor.handfeel.reactionRemaining = 0;
+    actor.handfeel.getUpRemaining = 0;
+    actor.handfeel.downRemaining = Math.max(actor.handfeel.downRemaining, 999999);
+    actor.velocity.x = 0;
+    actor.velocity.z = 0;
+    actor.velocity.y = 0;
+    actor.position.y = 0;
+    this.cleanupBarrier.add(actor.id);
     const releaseBarrier = (event: { payload: unknown }) => {
       const payload = event.payload as { actorId?: string };
       if (payload.actorId !== actor.id) return;

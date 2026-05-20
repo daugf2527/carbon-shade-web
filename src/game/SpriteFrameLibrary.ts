@@ -520,17 +520,12 @@ export function getCombatSpriteSpec(req: ActorSpriteRequest): SpriteSpec | null 
       return result;
     };
 
-    // Death/downed — DNF "down" is knockdown+lying; no separate death anim yet
-    if (req.dead || reaction === "dead") {
+    if (req.dead || reaction === "dead" || reaction === "downed") {
       const dnf = DNF_ACTIONS["swordman_down"];
       if (dnf) return dbg("swordman_down", pickDnfActionSpec(dnf, lf));
       return dbg("fallback:death", spec(s, "death", req, "action", 8));
     }
-    if (reaction === "downed") {
-      const dnf = DNF_ACTIONS["swordman_down"];
-      if (dnf) return dbg("swordman_down", pickDnfSpriteSpec(dnf, req.tick));
-      return dbg("fallback:knockdown", spec(s, "knockdown", req, "loop", 12));
-    }
+
 
     if (reaction === "quick_rebound" || reaction === "getting_up" || action === "QuickRebound") {
       const dnf = DNF_ACTIONS["swordman_overturn"];
@@ -596,7 +591,6 @@ export function getCombatSpriteSpec(req: ActorSpriteRequest): SpriteSpec | null 
     const dnfStay = DNF_ACTIONS["swordman_stay"];
     if (dnfStay) return dbg("swordman_stay", pickDnfSpriteSpec(dnfStay, req.tick));
     return dbg("fallback:idle", spec(s, "idle", req, "loop", 10));
-    return spec(s, "idle", req, "loop", 10);
   }
 
   if (req.id === "boss") {

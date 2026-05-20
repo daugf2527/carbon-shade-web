@@ -20,16 +20,17 @@ NpkFile::NpkFile(const std::string& initFile)
 {
 
 }
-auto NpkFile::openFile() -> void
+auto NpkFile::openFile() -> bool
 {
 	file = fopen(fileName.c_str(), "rb");
 	if (file == nullptr) {
-		printf("fail to open this file : %s", fileName.c_str());
-		return;
+		fprintf(stderr, "[ERROR] fail to open this file : %s\n", fileName.c_str());
+		return false;
 	}
 	fseek(file, 0, SEEK_END);
 	length = ftell(file);
 	fseek(file, 0, SEEK_SET);
+	return true;
 }
 
 auto NpkFile::loadAll(const std::string& path) -> void
@@ -54,7 +55,7 @@ auto NpkFile::loadAll(const std::string& path) -> void
 
 auto NpkFile::unpack() -> void
 {
-	openFile();
+	if (!openFile()) return;
 	NpkHeader header;
 	readBytes(reinterpret_cast<uint8_t*>(&header), sizeof(NpkHeader));
 

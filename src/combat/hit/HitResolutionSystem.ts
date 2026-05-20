@@ -107,16 +107,12 @@ export class HitResolutionSystem implements CombatSystem {
     if (attacker.id === "player") {
       if (decision.isCritical) {
         bus.emit("CameraShakeRequested", CombatEventPriority.Feedback, ctx.tickCount, { intensity: 18, durationMs: 250 }, { sourceActorId: attacker.id, targetActorId: target.id, correlationId: corr });
-        bus.emit("CameraFlashRequested", CombatEventPriority.Feedback, ctx.tickCount, { color: 0xff4444, alpha: 0.5, durationMs: 100 }, { sourceActorId: attacker.id, targetActorId: target.id, correlationId: corr });
       } else if (finalReaction === "launch") {
         bus.emit("CameraShakeRequested", CombatEventPriority.Feedback, ctx.tickCount, { intensity: 12, durationMs: 150 }, { sourceActorId: attacker.id, targetActorId: target.id, correlationId: corr });
-        bus.emit("CameraFlashRequested", CombatEventPriority.Feedback, ctx.tickCount, { color: 0xffffff, alpha: 0.4, durationMs: 80 }, { sourceActorId: attacker.id, targetActorId: target.id, correlationId: corr });
       } else if (decision.hitbox.baseDamage >= 34 || decision.armorDecision?.controlBlocked) {
         bus.emit("CameraShakeRequested", CombatEventPriority.Feedback, ctx.tickCount, { intensity: 12, durationMs: 150 }, { sourceActorId: attacker.id, targetActorId: target.id, correlationId: corr });
-        bus.emit("CameraFlashRequested", CombatEventPriority.Feedback, ctx.tickCount, { color: 0xffffff, alpha: 0.4, durationMs: 80 }, { sourceActorId: attacker.id, targetActorId: target.id, correlationId: corr });
       } else {
         bus.emit("CameraShakeRequested", CombatEventPriority.Feedback, ctx.tickCount, { intensity: 5, durationMs: 80 }, { sourceActorId: attacker.id, targetActorId: target.id, correlationId: corr });
-        bus.emit("CameraFlashRequested", CombatEventPriority.Feedback, ctx.tickCount, { color: 0xffffff, alpha: 0.3, durationMs: 60 }, { sourceActorId: attacker.id, targetActorId: target.id, correlationId: corr });
       }
     }
     if (damage.hpAfter <= 0) {

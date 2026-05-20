@@ -520,9 +520,10 @@ export class CombatScene extends Phaser.Scene {
       const usingSprite = spriteSpec !== null;
       const hurtTilt = actor.reaction === "light_stagger" || actor.reaction === "heavy_stagger" || actor.reaction === "knockback";
       const launched = actor.reaction === "launch" || actor.reaction === "air_hitstun" || actor.reaction === "falling";
+      const downedLike = actor.reaction === "downed" || actor.reaction === "dead" || actor.dead;
       // Sprite sheets already include hurt/down/launch poses. Do not rotate the entire
       // container for sprite actors, otherwise skeleton/Boss frames turn sideways.
-      view.container.angle = usingSprite ? 0 : actor.dead || actor.reaction === "downed" ? 90 : hurtTilt ? (facing === "right" ? -8 : 8) : launched ? -4 : 0;
+      view.container.angle = usingSprite ? 0 : downedLike ? 90 : hurtTilt ? (facing === "right" ? -8 : 8) : launched ? -4 : 0;
       view.container.scaleY = usingSprite ? 1 : actor.reaction === "getting_up" ? 0.92 : launched ? 1.05 : 1;
 
       this.setRectFillIfChanged(view.body, visibleBodyColor, 1);

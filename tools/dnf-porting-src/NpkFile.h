@@ -48,7 +48,7 @@ public:
 
 
 private:
-	auto openFile() -> void;
+	auto openFile() -> bool;
 	auto expand(const std::string & name) -> void;
 	std::string fileName;
 	FILE* file = nullptr;

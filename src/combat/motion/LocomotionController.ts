@@ -28,7 +28,16 @@ export class LocomotionController {
     actor.locomotion.zDirection = movement.zDirection;
     actor.locomotion.speedScale = movement.speedScale;
 
-    if (actor.flags.dead || frozen || actor.currentAction || !freeMovementReactions.has(actor.reactionState)) {
+    if (actor.flags.dead || frozen || actor.currentAction) {
+      actor.locomotion.mode = "idle";
+      return;
+    }
+
+    if (actor.reactionState === "downed" && actor.handfeel.downRemaining <= 0) {
+      actor.reactionState = "none";
+    }
+
+    if (!freeMovementReactions.has(actor.reactionState)) {
       actor.locomotion.mode = "idle";
       return;
     }

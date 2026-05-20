@@ -302,6 +302,10 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "[LOG] Loading NPK: %s\n", npkPath.c_str());
         NpkFile npk(npkPath);
         npk.unpack();
+        if (!npk.isUnpacked()) {
+            printErrorJson(npkPath, "failed to open or empty NPK");
+            return 1;
+        }
         fprintf(stderr, "[READY] NPK loaded.\n");
 
         if (listMode && imgName.empty()) {
