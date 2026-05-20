@@ -64,11 +64,11 @@ results.push(run("typecheck", "npm run typecheck"));
 results.push(run("static:test", "npm run static:test"));
 results.push(run("build", "npm run build"));
 
-// Gate 4: Circular dependency check (stderr warning is noise, redirect)
-results.push(run("depcruise-circular", "npx depcruise --no-config --output-type json src 2>/dev/null"));
+// Gate 4: Circular dependency check
+results.push(run("depcruise-circular", "npx depcruise --no-config --output-type json src"));
 
-// Gate 5: Unused exports (exits non-zero when findings exist — capture both streams)
-results.push(run("knip", "npx knip 2>&1 || true"));
+// Gate 5: Unused exports (exits non-zero when findings exist — handled below)
+results.push(run("knip", "npx knip"));
 
 // Gate 6: Event trace
 results.push(runScript("event-trace", "tools/event-trace.mjs"));
