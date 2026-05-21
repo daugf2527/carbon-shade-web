@@ -8,10 +8,11 @@ enum PvfScriptType
 {
 	Animation,
 	Text,
-	Document
+	Document,
+	Binary
 };
 
-class PvfScript 
+class PvfScript
 {
 public:
 	virtual auto unpack() -> void = 0;
@@ -33,4 +34,21 @@ private:
 	PvfReader* reader = nullptr;
 	int32_t len = 0;
 	std::string str;
+};
+
+// Raw binary blob — used for .exe (MZ), .img (Neople Image File), .dat, .bin,
+// and any other format that isn't a PvfDocument/Animation/Text. Caller can
+// inspect detected magic + size, and optionally request base64-encoded bytes.
+class PvfRawScript : public PvfScript
+{
+public:
+	PvfRawScript(const uint8_t* buffer, int32_t len);
+	auto unpack() -> void override;
+	inline auto getBuffer() const { return buffer; }
+	inline auto getLength() const { return len; }
+	inline auto& getFormatHint() const { return formatHint; }
+private:
+	const uint8_t* buffer = nullptr;
+	int32_t len = 0;
+	std::string formatHint;
 };

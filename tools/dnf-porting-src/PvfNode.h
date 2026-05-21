@@ -43,4 +43,8 @@ private:
 	std::string fileName;
 	std::string content;
 	std::shared_ptr<PvfScript> pvfScript;
+	// Some scripts (PvfRawScript) hold a non-owning view into bytes that
+	// would otherwise die when expand()'s unique_ptr goes out of scope.
+	// Cache ownership here so the view stays valid for the script's lifetime.
+	std::unique_ptr<uint8_t[]> ownedBuffer;
 };

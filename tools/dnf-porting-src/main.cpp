@@ -125,6 +125,30 @@ static void printTextJson(const std::string& path, PvfTextScript& text) {
         escapeJson(path).c_str(), escapeJson(text.getContent()).c_str());
 }
 
+static void printBinaryJson(const std::string& path, PvfRawScript& raw, bool withData) {
+    const uint8_t* buf = raw.getBuffer();
+    int32_t len = raw.getLength();
+    // Always emit first 32 bytes as hex for quick inspection regardless of withData.
+    std::string headHex;
+    int headLen = len < 32 ? len : 32;
+    static const char hexd[] = "0123456789abcdef";
+    headHex.reserve(headLen * 2);
+    for (int i = 0; i < headLen; ++i) {
+        headHex.push_back(hexd[(buf[i] >> 4) & 0x0F]);
+        headHex.push_back(hexd[buf[i] & 0x0F]);
+    }
+    printf("{\"path\":\"%s\",\"type\":\"binary\",\"format\":\"%s\",\"sizeBytes\":%d,\"headHex\":\"%s\"",
+        escapeJson(path).c_str(),
+        escapeJson(raw.getFormatHint()).c_str(),
+        len,
+        headHex.c_str());
+    if (withData && buf && len > 0) {
+        std::string b64 = base64Encode(buf, (size_t)len);
+        printf(",\"contentBase64\":\"%s\"", b64.c_str());
+    }
+    printf("}\n");
+}
+
 static void printErrorJson(const std::string& path, const std::string& error) {
     printf("{\"path\":\"%s\",\"type\":\"error\",\"error\":\"%s\"}\n",
         escapeJson(path).c_str(), escapeJson(error).c_str());
@@ -174,7 +198,7 @@ static void printImgFrameFields(ImgNode& node, int index, bool includeData) {
 // PVF extraction core
 // ══════════════════════════════════════════════════════════════
 
-static void extractFile(PvfReader& reader, const std::string& rawPath) {
+static void extractFile(PvfReader& reader, const std::string& rawPath, bool withData = false) {
     std::string path = rawPath;
     PvfString::toLower(path);
     while (!path.empty() && (path.back() == '\r' || path.back() == '\n' || path.back() == ' '))
@@ -201,6 +225,8 @@ static void extractFile(PvfReader& reader, const std::string& rawPath) {
         printDocumentJson(rawPath, *static_cast<PvfDocument*>(script.get()));
     } else if (script->getType() == PvfScriptType::Text) {
         printTextJson(rawPath, *static_cast<PvfTextScript*>(script.get()));
+    } else if (script->getType() == PvfScriptType::Binary) {
+        printBinaryJson(rawPath, *static_cast<PvfRawScript*>(script.get()), withData);
     }
 }
 
@@ -453,7 +479,7 @@ int main(int argc, char* argv[]) {
 
     // ── Single file mode ──
     if (!filePath.empty()) {
-        extractFile(*reader, filePath);
+        extractFile(*reader, filePath, withData);
         delete reader;
         fprintf(stderr, "[DONE] Memory released.\n");
         return 0;
@@ -464,7 +490,7 @@ int main(int argc, char* argv[]) {
         auto tb0 = std::chrono::steady_clock::now();
         int count = 0;
         for (auto& f : batchFiles) {
-            extractFile(*reader, f);
+            extractFile(*reader, f, withData);
             printf("---\n");
             count++;
         }
@@ -484,7 +510,7 @@ int main(int argc, char* argv[]) {
             while (!line.empty() && (line.back() == '\r' || line.back() == '\n' || line.back() == ' '))
                 line.pop_back();
             if (line.empty() || line == "quit" || line == "exit") break;
-            extractFile(*reader, line);
+            extractFile(*reader, line, withData);
             printf("---\n");
             fflush(stdout);
             count++;

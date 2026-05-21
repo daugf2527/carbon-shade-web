@@ -25,12 +25,12 @@ auto PvfDocument::unpack() -> void
 
 		std::unordered_set<std::string> tags;
 
-		while (reader.getOffset() < len - 4)
+		while (reader.hasRemaining(5))
 		{
-			auto type = reader.read<int8_t>(); 
+			auto type = reader.read<int8_t>();
 			if (type >= 2 && type <= 10) {
 				auto index = reader.read<int32_t>();
-				if (type == ValueType::Section) 
+				if (type == ValueType::Section)
 				{
 					tags.emplace(pvfReader->stringBinMap[index]);
 				}
@@ -42,10 +42,10 @@ auto PvfDocument::unpack() -> void
 		std::stack<Node*> stack;
 		stack.push(node);
 
-		
-		while (reader.getOffset() < len) 
+
+		while (reader.hasRemaining(5))
 		{
-			auto type = reader.read<int8_t>(); //������˾Ͳ������˷�ֹ�ڴ�Խ��
+			auto type = reader.read<int8_t>(); //bounds-guarded: hasRemaining(5) ensures type + int32 index fit
 
 			if (type >= 2 && type <= 10)
 			{
@@ -128,7 +128,10 @@ auto PvfDocument::unpack() -> void
 			}
 			else
 			{
-				std::cerr << "Unknown type in pvf node ��" << (int32_t)type << std::endl;
+				// Unknown type byte: log once-per-file would be ideal but for now
+				// just skip the next 4 bytes (index) to keep stream synchronized.
+				std::cerr << "Unknown type in pvf node " << (int32_t)type << std::endl;
+				reader.read<int32_t>();
 			}
 		}
 	}

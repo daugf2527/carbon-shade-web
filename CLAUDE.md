@@ -208,10 +208,19 @@ Acceptable as backlog: first-load texture decode/upload spikes (image decode, te
 
 ## DNF/DFO reference truth rule
 
-Priority: Neople Official API > DFO-specific wikis > local tuning baseline.
+**置信度铁律**（凡是涉及战斗数值、帧数据、判定、物理参数的结论，必须按此优先级取证）：
+
+1. **本地 dnf-extract 提取** — `tools/dnf-extract.exe` 从 `Script.pvf` / `ImagePacks2/*.NPK` 提取的 `.ani` / `.skl` / `.atk` / `.mob` / `.act` / `.str` / IMG 帧。第一证据。
+2. **Neople 官方 API + DFO-specific wiki**（DFO World Wiki / NamuWiki / Arad.GG 等） — 当 dnf-extract 拿不到时退到这一档。API 不覆盖帧/碰撞/重力曲线/AI，但能拿到技能 CD/MP/命中次数等。
+3. **本地 md 文档 + 当前代码实现** — 最低优先级。`docs/` / `src/` 里的数值在没被 (1)(2) 验证前都视为 "local_baseline"，不能反过来当真值。
+
+**禁止反转**：用代码现状 / md 推断 / 截图观感 / 动作名 / 口述经验，去覆盖或污染高优先级证据。Wikipedia/百科类背景资料绝对不进证据链。
+
+**已知缺口**：真实战斗 launch/gravity 曲线、hitstun 表硬编码在 DNF.exe C++ 二进制里，PVF 拿不到，dnf-extract 也提不到（`.nut` segfault 2026-05-21 验证）。这部分用 (2) 的间接证据或 (3) 的 baseline，**必须标注 `sourceType: "local_baseline"` + `requiresManualVerification: true`**，不能伪装 1:1 还原。
+
 Never commit `NEOPLE_API_KEY`. Frames/hitboxes/gravity/AI are NOT covered by API — use PVF extraction data.
 
-Open API and ordinary wiki pages do NOT cover: startup/active/recovery frames, hitbox/hurtbox geometry, launch/gravity curves, combo-protection thresholds, server authority, network sync. Wikipedia/general encyclopedias are background-only — never use them for combat numbers, frame data, hitboxes, damage formulas, skill scaling, AI behavior, or live balance values.
+Open API and ordinary wiki pages do NOT cover: startup/active/recovery frames, hitbox/hurtbox geometry, launch/gravity curves, combo-protection thresholds, server authority, network sync.
 
 ## DNF 原始数据推导规则
 
