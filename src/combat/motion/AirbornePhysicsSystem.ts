@@ -28,11 +28,6 @@ export class AirbornePhysicsSystem implements CombatSystem {
       if (ctx.hitStop.isFrozen(a.id)) continue;
       // Reaction states own their own gravity via ReactionMotionSystem.
       if (a.reactionState !== "none") continue;
-      // Actions own their own y trajectory via RootMotion (e.g. Jump's dy table).
-      // AirbornePhysics only acts when the actor has no active action AND is airborne.
-      // This catches the cancel-out-mid-jump leak: actor cancels out of an airborne
-      // action, currentAction becomes null/undefined, y is left non-zero — we pull it down.
-      if (a.currentAction) continue;
       // Airborne when y > 0 (mid-air) OR velocity.y > 0 (about to leave ground).
       if (a.position.y <= 0 && a.velocity.y <= 0) continue;
 

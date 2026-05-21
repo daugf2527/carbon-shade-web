@@ -19,6 +19,7 @@ import { StatusEffectSystem } from "../status/StatusEffectSystem.js";
 import { PushBoxResolver } from "../motion/PushBoxResolver.js";
 import { RootMotionController } from "../motion/RootMotionController.js";
 import { AirbornePhysicsSystem } from "../motion/AirbornePhysicsSystem.js";
+import { DNF_JUMP_DERIVED_H1 } from "../../data/official/dnf/characters.js";
 import { MovementInputProvider } from "../motion/MovementInputProvider.js";
 import { LocomotionController } from "../motion/LocomotionController.js";
 import { DeathLoop } from "../death/DeathLoop.js";
@@ -349,6 +350,14 @@ export class CombatKernel {
     if(action.cooldownProfile?.cooldownStartsAt === "on_action_enter") this.cooldowns.start(actor, action, this.tickCount, this.bus);
     if(action.costProfile?.costTiming === "on_startup") this.cooldowns.pay(actor, action, this.tickCount, this.bus);
     this.applyInstantActionEffect(actor, resolvedActionName);
+    // Phase 4B: Jump becomes velocity-integrated. AirbornePhysicsSystem owns
+    // the trajectory; Jump only sets the initial vertical velocity.
+    // Source: src/data/official/dnf/characters.ts DNF_JUMP_DERIVED_H1.swordman.initialZVelocity
+    // H1 hypothesis (experimental, requires .exe verification): swordman jump_power=430 px/s.
+    // At 60 Hz: 430/60 = 7.17 px/tick.
+    if (resolvedActionName === "Jump") {
+      actor.velocity.y = DNF_JUMP_DERIVED_H1.swordman.initialZVelocity.value / 60;
+    }
     return true;
   }
 
