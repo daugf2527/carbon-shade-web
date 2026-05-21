@@ -18,6 +18,7 @@ import { BuffLifecycleSystem } from "../buffs/BuffLifecycleSystem.js";
 import { StatusEffectSystem } from "../status/StatusEffectSystem.js";
 import { PushBoxResolver } from "../motion/PushBoxResolver.js";
 import { RootMotionController } from "../motion/RootMotionController.js";
+import { AirbornePhysicsSystem } from "../motion/AirbornePhysicsSystem.js";
 import { MovementInputProvider } from "../motion/MovementInputProvider.js";
 import { LocomotionController } from "../motion/LocomotionController.js";
 import { DeathLoop } from "../death/DeathLoop.js";
@@ -165,6 +166,7 @@ export class CombatKernel {
     this.pipeline.push({ name: "PushBoxResolve", phase: "DETECTION", tick: () => self.push.resolve(self.actors) });
     this.pipeline.push({ name: "ClampBounds", phase: "DETECTION", tick: () => { for (const a of self.actors) self.clampToBounds(a); }});
     this.pipeline.push(this.hitResolution);
+    this.pipeline.push(new AirbornePhysicsSystem());
     this.pipeline.push(new ReactionMotionSystem());
 
     // ── RESOLVE phase (per-actor) ──

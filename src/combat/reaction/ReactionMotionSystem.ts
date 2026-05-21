@@ -2,6 +2,11 @@ import type { CombatSystem } from "../kernel/CombatSystem.js";
 import type { SystemContext } from "../kernel/SystemContext.js";
 import type { CombatEventBus } from "../events/CombatEventBus.js";
 import { cloneVec3 } from "../util/geometry.js";
+import { DNF_GRAVITY_PER_TICK_60HZ } from "../../data/official/dnf/physics.js";
+
+// DNF verified gravity (-1500 px/s^2 ÷ 60^2 ≈ -0.4167 px/tick^2).
+// Source: pvf:sqr/dnf_enum_header.nut. See src/data/official/dnf/physics.ts.
+const G_PER_TICK = DNF_GRAVITY_PER_TICK_60HZ.value;
 
 export class ReactionMotionSystem implements CombatSystem {
   readonly name = "ReactionMotion";
@@ -19,7 +24,7 @@ export class ReactionMotionSystem implements CombatSystem {
         a.position.y += a.velocity.y;
         a.velocity.x *= friction;
         a.velocity.z *= friction;
-        a.velocity.y -= 0.56 * a.comboCorrection.gravityScale;
+        a.velocity.y += G_PER_TICK * a.comboCorrection.gravityScale;
         if ((a.reactionState === "launch" || a.reactionState === "air_hitstun") && a.velocity.y < 0) a.reactionState = "falling";
         if (a.position.y <= 0) {
           a.position.y = 0;
