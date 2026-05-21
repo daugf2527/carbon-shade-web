@@ -915,16 +915,18 @@ export class CombatScene extends Phaser.Scene {
   private updateDnfDebugOverlay(): void {
     const d = _debugLastPlayerSprite;
     if (!this.dnfDebugText) {
-      this.dnfDebugText = this.add.text(10, 10, "", {
+      this.dnfDebugText = this.add.text(600, 10, "", {
         fontFamily: "monospace", fontSize: "13px", color: "#a5f3fc",
         backgroundColor: "#0f172a80", padding: { x: 6, y: 4 },
       }).setScrollFactor(0).setDepth(999);
       this.createDnfTestButtons();
     }
+    const player = this.kernel.player;
     const lines = [
       `action: ${d.action || "-"}  reaction: ${d.reaction || "none"}`,
       `locomotion: ${d.locomotion || "idle"}  tick: ${d.tick}`,
       `dnf: ${d.dnfAction}  frame: ${d.frameKey}`,
+      `pos: x=${player.position.x.toFixed(0)} y=${player.position.y.toFixed(0)} z=${player.position.z.toFixed(1)}`,
     ];
     this.dnfDebugText.setText(lines);
   }
@@ -944,7 +946,7 @@ export class CombatScene extends Phaser.Scene {
       { label: "Down", fn: () => { const p = this.kernel.actors[0]!; p.reactionState = "downed" as any; p.handfeel.downRemaining = 60; } },
     ];
     const startX = 10;
-    const y = 70;
+    const y = 95;
     let x = startX;
     for (const { label, fn } of actions) {
       const w = label.length * 9 + 16;
