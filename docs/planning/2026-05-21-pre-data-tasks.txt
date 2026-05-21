@@ -1,0 +1,46 @@
+无需等待 PVF 数据即可执行的任务（2026-05-21）
+======================================================
+
+优先级从高到低排列：
+
+1. 修复 dnf-extract 缺陷 1：Document 属性类型标注
+   - 文件：tools/dnf-porting-src/PvfDocument.h + main.cpp
+   - 改动量：约 30 行 C++
+   - 详情见 docs/planning/2026-05-21-dnf-extract-assessment.md 第 3 节缺陷 1
+
+2. 编译 dnf-extract（Linux aarch64）
+   - 命令：cmake -S tools/dnf-porting-src -B tools/dnf-porting-src/build && cmake --build tools/dnf-porting-src/build
+   - 当前环境：Termux on Android aarch64
+
+3. 写 src/extraction/types.ts（共享类型定义骨架）
+   - ParsedEntry<T>、MonsterDef、SkillDef、AttackDef 等
+   - 已知字段写具体类型，未知字段先用 unknown
+   - 等拿到样本后补充
+
+4. 写 src/extraction/NutExtractor.ts（纯文本透传）
+   - 输入：Stage 1 的 text 类型 JSON
+   - 输出：{ pvfPath, encoding, content }
+   - 最简单，不需要任何 DNF 领域知识
+
+5. 写 scripts/pipeline.mjs CLI 骨架
+   - 参数解析（--pvf --full --incremental --stop-at --start-at --domain --export-only）
+   - Stage 2-5 调度框架
+   - 错误处理 + 进度输出
+
+6. 写 scripts/import-to-sqlite.mjs 骨架
+   - 使用 node:sqlite (DatabaseSync)
+   - 建表语句（pvf_files + extraction_runs）
+   - UPSERT 逻辑
+   - 表结构先用 raw_json 一列撑住，后续加 parsed_json
+
+7. 整理已知 DNF 字段映射清单
+   - Phase 1 已验证的 .chr 字段名和含义
+   - Phase 1 已验证的 .atk 字段名和含义
+   - .skl cancel 窗口 section ID（项目已解码）
+   - 来源：docs/research/2026-05-21-dnf-air-physics-phase1.md
+
+需要等 PVF 数据才能做的：
+  - .mob .dgn .map .etc .ai 的结构抽样
+  - MobParser / ChrParser / AtkParser / DgnParser / EtcParser 实际解析逻辑
+  - 跨文件引用关系发现
+  - Runtime JSON 导出格式设计
