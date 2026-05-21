@@ -132,56 +132,41 @@
 
 ---
 
-## 4C — Vec3 y↔z swap（依赖 4A+4B）
+## 4C — 取消 Vec3 swap，落档坐标系映射注释（2026-05-21 决策）
 
-### 改动规模
+### 取消理由（实施时发现）
 
-- **143 处** `position.y` / `position.z` / `velocity.y` / `velocity.z` 代码替换
-- **575 处** action JSON 字段（`dy` / `dz` / `offsetY` / `offsetZ` / `launchVelocityY`）
-- **78 行** test 断言重算
-- 总计 ~650 处改动 + 78 行 test
+原计划用 sed 全项目 swap `Vec3 {x,z,y}` → `{x,y,z}` 对齐 DNF 原生坐标系。动手时发现致命问题：
 
-### Vec3 接口
+**TypeScript interface 字段顺序不影响类型** — 改 `Vec3 {x,y,z}` 跟 `{x,z,y}` 在类型层面完全等价，typecheck 不会报错。**4C swap 没有编译器兜底**。
+
+后果：
+1. 必须用 sed 三步替换（中介符号）做全项目语义重命名，650+ 处机械改动
+2. 任何遗漏 → 坐标系反向 bug（typecheck 静默通过，行为悄悄改变）
+3. 注释 / 字符串 / test message 里的 `position.y` 也可能被误改
+4. 唯一兜底是 hash 比对（golden-scenario / auto-combat / replay-hash），但只能验证"和取消前一致"，不能证明"swap 后语义对"
+5. 实际收益（DNF 数据接入时省一次 mental translation）远小于上面的风险
+
+### 替代方案：坐标系映射注释
+
+在 `src/combat/types.ts` 的 `Vec3` 接口上落档明确的坐标系翻译表：
 
 ```typescript
-// 旧
-export interface Vec3 { x: number; z: number; y: number; }  // x=水平, z=深度, y=高度
-// 新（对齐 DNF 原生）
-export interface Vec3 { x: number; y: number; z: number; }  // x=水平, y=深度, z=高度
+// **Project**:  x=horizontal, y=height (jump),    z=ground depth
+// **DNF**:      x=horizontal, y=ground depth,     z=height (jump)
+// Translation:  DNF.y ↔ our.z;  DNF.z ↔ our.y;  x is same.
+// .atk [lift up] (DNF z-velocity) → assign to our velocity.y
 ```
 
-### 不受影响（已验证）
+Phase 5 受击对齐时引用即可。
 
-- **装备穿戴 / 精灵对齐**：`DnfLayeredSprite.ts` 的 `imgAnchor.y` / `aniOffset.y` 是 sprite 2D 坐标（500×500 画布），与 World 3D 解耦 ✓
-- **渲染公式**：`baseY = groundLineY + pos.z - pos.y` → `baseY = groundLineY + pos.y - pos.z`，纯变量名 swap，行为不变 ✓
-- **物理行为**：纯命名重构，逻辑零变化 ✓
+### 后续
 
-### 实施策略
-
-1. **Phase 4C.1** IDE Rename Symbol：`Vec3.y` → 临时占位 → `Vec3.z` 改名 → 占位改回 `Vec3.y`
-2. **Phase 4C.2** sed 批量替换 + grep 核对：
-   - `position.y` ↔ `position.z`
-   - `velocity.y` ↔ `velocity.z`
-   - `\bdy\b` ↔ `\bdz\b`（注意 word boundary）
-   - `offsetY` ↔ `offsetZ`
-3. **Phase 4C.3** 按文件分批次跑 typecheck，定位漏改
-4. **Phase 4C.4** 全套 static test 跑 + 78 行 test 断言重算
-5. **Phase 4C.5** auto-combat / replay-hash 重算
-
-### 预期 fail
-
-- 任何一处漏改 → typecheck 立刻报错（变量类型不对）→ 修复
-- 测试断言 `position.y === 132`（旧 height）→ swap 后变成 `position.z === 132`，要么改 test 要么改逻辑
-
-### 字段名延后
-
-`launchVelocityY` / `knockbackZ` 这些字段名跟新坐标系语义对调（如 `launchVelocityY` 其实是 height 速度，新坐标系应该叫 `launchVelocityZ`）。**4C 不改字段名**，仅 Vec3 swap，字段名留给 Phase 5 受击对齐统一处理。
+后续 Phase 5+ 阶段如果对齐工作量大到 mental translation 真的成为瓶颈，再重新评估全量 swap。
 
 ### Gate
-- typecheck 全过
-- 49 static test 全过（含 78 行新断言）
-- auto-combat / replay-hash 用新 hash 后 pass
-- 视觉行为零变化（玩家无感知）
+- typecheck 仍 pass ✓
+- 没有 runtime 变化
 
 ---
 
