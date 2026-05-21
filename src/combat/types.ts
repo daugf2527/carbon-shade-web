@@ -96,6 +96,33 @@ export interface StatusManifest {
 }
 export type BuffType = "frenzy" | "derange" | "bloody_cross" | "vim_and_vigor" | "diehard" | "thirst" | "blood_memory";
 
+// 3D position / velocity vector.
+//
+// **Project axis convention** (this is what the code uses):
+//   x = horizontal (left-right, screen-axis)
+//   y = vertical / height (jump axis, "up" is positive)
+//   z = ground depth (forward-backward, ArrowUp/Down moves this)
+//
+// **DNF native axis convention** (what PVF data uses):
+//   x = horizontal
+//   y = ground depth
+//   z = height (jump axis)
+//
+// **Translation when consuming DNF data**:
+//   DNF .y  ↔  our .z  (both = ground depth)
+//   DNF .z  ↔  our .y  (both = height / jump)
+//   x is the same in both systems.
+//
+// Examples:
+//   .atk [lift up] (px/s, DNF z-axis velocity) → assign to our velocity.y
+//   sq_SetZVelocity(obj, v0, accel) → our velocity.y / gravity
+//   sq_SetVelocity(obj, axis=1, val) (DNF y = depth) → our velocity.z
+//
+// The Vec3 SWAP refactor (Phase 4C) was evaluated and skipped — see
+// docs/plans/2026-05-21-phase4-stepped-rollout.md. TypeScript interface
+// field order is not enforced by the type system, so swap can only be
+// done via mechanical sed across 650+ sites with no compiler safety net.
+// The translation table above is the agreed alternative.
 export interface Vec3 { x: number; z: number; y: number; }
 export interface Rect2D5 { x: number; z: number; y: number; w: number; d: number; h: number; }
 export interface RawBox6 { x1: number; y1: number; z1: number; x2: number; y2: number; z2: number; }
