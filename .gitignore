@@ -4,7 +4,14 @@ dist/
 verification/
 playwright-report/
 test-results/
-.claude/
+
+# Local Claude harness state (settings + status) is ignored;
+# skills / agents / hooks are shared with the team via the repo.
+.claude/*
+!.claude/skills/
+!.claude/agents/
+!.claude/hooks/
+.claude/settings.local.json
 
 *.log
 *.tsbuildinfo

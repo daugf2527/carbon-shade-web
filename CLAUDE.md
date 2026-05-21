@@ -4,9 +4,9 @@
 
 **Carbon Shade / 碳影** — Phaser 3 + TypeScript 2.5D combat prototype (Vite). Engineering name: **Combat Lab**. Validates DNF-style combat feel: skill execution, monster feedback, boss behavior, normalized sprites, deterministic tests.
 
-## Current state (2026-05-15)
+## Current state (2026-05-21)
 
-**Phase**: Combat Lab 0.3 — handfeel tuning + evidence freeze.
+**Phase**: Combat Lab 1.0 prep — **DNF alignment pivot**. 停止新功能开发，全力把底层物理/数据/行为对齐 DNF 真值。详见 [`docs/planning/2026-05-21-dnf-alignment-pivot.md`](docs/planning/2026-05-21-dnf-alignment-pivot.md)。Phase 1（PVF 真值提取 + skill 沉淀）已完成，进入 Phase 3-5（数据层 + 物理引擎 + 受击对齐）。
 **Target version**: `70-85-classic-pre-metastasis` (Level 70 cap, 2012 pre-Metastasis). Modern DNF systems excluded.
 
 **Target version**: `70-85-classic-pre-metastasis` — Level 70 cap (2012, pre-Metastasis/大转移) is preferred; 80-85 data used as fallback. Modern DNF systems (Neutralize/Ignite/restructured AI) are explicitly excluded.
