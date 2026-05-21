@@ -24,7 +24,7 @@ export type HitType = "slash" | "shockwave" | "blood_pillar" | "grab" | "debug";
 export type HitboxShape = "rect" | "circle" | "sweep" | "grab_attach";
 export type DamageType = "physical" | "status" | "debug";
 export type AttackType = "physical_percent" | "magic_percent" | "physical_fixed" | "magic_fixed";
-export type ProvenanceSourceType = "official_api" | "official_page" | "dfo_wiki" | "local_baseline" | "needs_calibration" | "experimental";
+export type ProvenanceSourceType = "official_api" | "official_page" | "dfo_wiki" | "pvf_extraction" | "local_baseline" | "needs_calibration" | "experimental";
 export type ProvenanceConfidence = "low" | "medium" | "high";
 export interface Provenance {
   sourceType: ProvenanceSourceType;
@@ -33,6 +33,11 @@ export interface Provenance {
   capturedAt: string;
   version: string;
   requiresCalibration: boolean;
+  notes?: string;
+  // For experimental/hypothesis-derived data: name the hypothesis and how to falsify it.
+  hypothesis?: string;
+  falsifiableBy?: string;
+  requiresManualVerification?: boolean;
 }
 export type ProvenanceSource = 'local_baseline' | 'neople_api' | 'dfo_world_wiki' | 'namu_wiki' | 'pvf_extraction' | 'ani_extraction' | 'community_audit';
 export interface SourceProvenance {

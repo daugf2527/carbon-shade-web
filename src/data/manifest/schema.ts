@@ -11,6 +11,7 @@ const allowedSourceTypes = new Set<Provenance["sourceType"]>([
   "official_api",
   "official_page",
   "dfo_wiki",
+  "pvf_extraction",
   "local_baseline",
   "needs_calibration",
   "experimental",
