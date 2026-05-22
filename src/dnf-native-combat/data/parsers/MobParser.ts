@@ -55,7 +55,10 @@ function collectCategoryNames(document: PvfDocument): string[] {
       const value = stringValue(attribute);
       return value ? stripPvfTag(value) : null;
     })
-    .filter((value): value is string => value !== null) ?? [];
+    // Real PVF never emits empty `[]` tags (0/200 mobs verified 2026-05-22), but
+    // strip empty strings defensively so a malformed/synthetic input doesn't leak
+    // a meaningless "" into the category array.
+    .filter((value): value is string => value !== null && value !== "") ?? [];
 }
 
 function stripPvfTag(value: string): string {

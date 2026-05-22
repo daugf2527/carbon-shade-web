@@ -10,12 +10,32 @@ export interface ChrWeaponHitInfoRow {
   launch: number;
 }
 
-export interface ChrWeaponWavRow {
-  attackSwingA: string;
-  attackSwingB: string;
-  hitA: string;
-  hitB: string;
-}
+/**
+ * Per-section weapon wav payload. Real PVF emits 4 distinct shapes
+ * (verified across all 11 player .chr files, 2026-05-22):
+ *   - "stereo": 4 str attrs (swordman / fighter / atfighter / demonicswordman)
+ *   - "mono":   2 str attrs (priest / mage / atmage / creatormage)
+ *   - "matrix": 1 mat attr  (thief — 6 rows × 2 cols compressed form)
+ *   - null:     0 attrs     (gunner / atgunner / placeholder slot 4 on swordman family)
+ * Each entry in ChrDef.weaponWav corresponds to one PVF "weapon wav" section.
+ */
+export type ChrWeaponWavRow =
+  | {
+      format: "stereo";
+      attackSwingA: string;
+      attackSwingB: string;
+      hitA: string;
+      hitB: string;
+    }
+  | {
+      format: "mono";
+      swing: string;
+      hit: string;
+    }
+  | {
+      format: "matrix";
+      entries: Array<{ swing: string; hit: string }>;
+    };
 
 export interface ChrGrowthDef {
   hpMax: PvfVectorFact;

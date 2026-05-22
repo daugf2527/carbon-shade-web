@@ -330,8 +330,8 @@ function logOk(item: string, observed: string) {
     section("jump power", [{ t: "int", v: 690 }]),
     section("jump speed", [{ t: "int", v: 1 }]),
     section("weight", [{ t: "int", v: 55000 }]),
-    section("physical attack", [{ t: "vec", length: 1, items: [10, 20, 30] }]),
-    section("hp max", [{ t: "vec", length: 1, items: [100, 200, 300] }]),
+    section("physical attack", [{ t: "vec", length: 3, items: [10, 20, 30] }]),
+    section("hp max", [{ t: "vec", length: 3, items: [100, 200, 300] }]),
   ]);
 
   const chr = parseChrDocument(doc);

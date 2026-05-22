@@ -1,5 +1,5 @@
 import type { ChrDef, ChrWeaponHitInfoRow, ChrWeaponWavRow } from "../types/ChrDef.js";
-import type { PvfAttribute, PvfDocument, PvfRef } from "../types/PvfDocument.js";
+import type { PvfAttribute, PvfDocument, PvfMatrixAttribute, PvfRef } from "../types/PvfDocument.js";
 import {
   documentProvenance,
   firstNumberFact,
@@ -16,11 +16,16 @@ import {
 const MOTION_SECTION_NAMES = [
   "move motion",
   "simple move motion",
+  "throw motion 1-1",
   "throw motion 1-2",
-  "etc motion",
-  "attack motion",
   "throw motion 2-1",
   "throw motion 2-2",
+  "throw motion 3-1",
+  "throw motion 3-2",
+  "throw motion 4-1",
+  "throw motion 4-2",
+  "etc motion",
+  "attack motion",
   "rest motion",
   "waiting motion",
   "damage motion 1",
@@ -28,7 +33,6 @@ const MOTION_SECTION_NAMES = [
   "ghost motion",
   "damage motion 2",
   "dashattack motion",
-  "throw motion 1-1",
   "down motion",
   "overturn motion",
   "jump motion",
@@ -118,10 +122,15 @@ function parseWeaponHitInfo(document: PvfDocument): ChrWeaponHitInfoRow[] {
   const section = firstSection(document, "weapon hit info");
   if (!section) return [];
 
+  // Real PVF emits exactly 36 attrs (6 rows × 6 cols) across all 11 player .chr
+  // files — verified 2026-05-22. Any non-multiple-of-6 indicates corrupted input
+  // or non-character document misrouted here. Throwing is preferable to silently
+  // dropping the trailing fragment.
   if (section.attributes.length % 6 !== 0) {
-    const trailing = section.attributes.length % 6;
-    console.warn(
-      `[ChrParser] parseWeaponHitInfo: "weapon hit info" has ${section.attributes.length} attributes (not a multiple of 6); ${trailing} trailing attribute(s) dropped in ${document.path}`,
+    throw new Error(
+      `[ChrParser] parseWeaponHitInfo: "weapon hit info" requires attribute count divisible by 6 ` +
+      `(6 cols × N rows). Got ${section.attributes.length} in ${document.path}. ` +
+      `Real PVF data is uniformly 36 attrs across all 11 player .chr files.`,
     );
   }
 
@@ -140,13 +149,44 @@ function parseWeaponHitInfo(document: PvfDocument): ChrWeaponHitInfoRow[] {
 
 function parseWeaponWav(document: PvfDocument): Array<ChrWeaponWavRow | null> {
   return sectionsByName(document, "weapon wav").map(section => {
-    if (section.attributes.length === 0) return null;
-    return {
-      attackSwingA: stringValue(section.attributes[0]) ?? "",
-      attackSwingB: stringValue(section.attributes[1]) ?? "",
-      hitA: stringValue(section.attributes[2]) ?? "",
-      hitB: stringValue(section.attributes[3]) ?? "",
-    };
+    const attrs = section.attributes;
+    if (attrs.length === 0) return null;
+
+    // Matrix form (thief): 1 mat attr containing 6 rows × 2 cols (swing/hit per slot).
+    if (attrs.length === 1 && attrs[0].t === "mat") {
+      const matAttr = attrs[0] as PvfMatrixAttribute;
+      const entries = matAttr.items.map(row => ({
+        swing: typeof row[0] === "string" ? row[0] : "",
+        hit: typeof row[1] === "string" ? row[1] : "",
+      }));
+      return { format: "matrix", entries };
+    }
+
+    // Mono form (priest / mage family): 2 str attrs — single swing + single hit.
+    if (attrs.length === 2) {
+      return {
+        format: "mono",
+        swing: stringValue(attrs[0]) ?? "",
+        hit: stringValue(attrs[1]) ?? "",
+      };
+    }
+
+    // Stereo form (swordman / fighter family): 4 str attrs.
+    if (attrs.length === 4) {
+      return {
+        format: "stereo",
+        attackSwingA: stringValue(attrs[0]) ?? "",
+        attackSwingB: stringValue(attrs[1]) ?? "",
+        hitA: stringValue(attrs[2]) ?? "",
+        hitB: stringValue(attrs[3]) ?? "",
+      };
+    }
+
+    throw new Error(
+      `[ChrParser] parseWeaponWav: unexpected weapon wav section shape in ${document.path}: ` +
+      `attrs=${attrs.length} types=[${attrs.map(a => a.t).join(",")}]. ` +
+      `Real PVF only emits 0 / 2 / 4 attrs, or 1 mat attr (verified across 11 jobs).`,
+    );
   });
 }
 

@@ -58,8 +58,10 @@ function parseAttackKind(document: PvfDocument): AtkAttackKind {
   if (hasSection(document, "physic")) matches.push("physic");
   if (hasSection(document, "magic")) matches.push("magic");
   if (matches.length > 1) {
-    console.warn(
-      `[AtkParser] parseAttackKind: ${matches.length} mutually-exclusive attack kinds coexist in ${document.path}: ${matches.join(", ")}; first match wins.`,
+    throw new Error(
+      `[AtkParser] parseAttackKind: mutually-exclusive attack kinds coexist in ${document.path}: ` +
+      `${matches.join(", ")}. Real PVF emits at most one (0/382 .atk files across 6 jobs have multi); ` +
+      `coexistence indicates corrupted or malformed PVF input.`,
     );
   }
   return matches[0] ?? null;
@@ -72,8 +74,12 @@ function parseElement(document: PvfDocument): AtkElement {
   if (hasSection(document, "ice element")) matches.push("ice");
   if (hasSection(document, "light element")) matches.push("light");
   if (matches.length > 1) {
-    console.warn(
-      `[AtkParser] parseElement: ${matches.length} mutually-exclusive elements coexist in ${document.path}: ${matches.join(", ")}; first match wins.`,
+    throw new Error(
+      `[AtkParser] parseElement: mutually-exclusive elements coexist in ${document.path}: ` +
+      `${matches.join(", ")}. Real PVF emits at most one (0/382 .atk files across 6 jobs have multi); ` +
+      `coexistence indicates corrupted or malformed PVF input. ` +
+      `(Note: "no element" + "light element" coexistence in priest/bladeofpurewhite.atk is a different ` +
+      `pattern and not flagged here because "no element" is not in the dark/fire/ice/light set.)`,
     );
   }
   return matches[0] ?? "none";
@@ -85,8 +91,10 @@ function parseHitReaction(document: PvfDocument): AtkHitReaction {
   if (hasSection(document, "hit lift up")) matches.push("hit_lift_up");
   if (hasSection(document, "hit horizon")) matches.push("hit_horizon");
   if (matches.length > 1) {
-    console.warn(
-      `[AtkParser] parseHitReaction: ${matches.length} mutually-exclusive hit reactions coexist in ${document.path}: ${matches.join(", ")}; first match wins.`,
+    throw new Error(
+      `[AtkParser] parseHitReaction: mutually-exclusive hit reactions coexist in ${document.path}: ` +
+      `${matches.join(", ")}. Real PVF emits at most one (0/382 .atk files across 6 jobs have multi); ` +
+      `coexistence indicates corrupted or malformed PVF input.`,
     );
   }
   return matches[0] ?? "none";
