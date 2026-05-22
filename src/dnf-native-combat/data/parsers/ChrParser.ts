@@ -41,11 +41,11 @@ const MOTION_SECTION_NAMES = [
 ] as const;
 
 export function parseChrDocument(document: PvfDocument): ChrDef {
-  if (!document.path.endsWith(".chr")) {
+  if (!document.path.toLowerCase().endsWith(".chr")) {
     throw new Error(`ChrParser expected .chr document, got ${document.path}`);
   }
 
-  const jobRaw = requireValue(firstStringFact(document, "job"), "job");
+  const jobRaw = requireValue(firstStringFact(document, "job"), "job", document.path);
   const jobValue = stripPvfTag(jobRaw.value);
 
   return {
@@ -59,21 +59,21 @@ export function parseChrDocument(document: PvfDocument): ChrDef {
       rawValue: jobRaw.value,
     },
     bodyImagePath: firstStringFact(document, "body image path"),
-    jumpPower: requireValue(firstNumberFact(document, "jump power", "ambiguous"), "jump power"),
-    jumpSpeed: requireValue(firstNumberFact(document, "jump speed", "int"), "jump speed"),
+    jumpPower: requireValue(firstNumberFact(document, "jump power", "ambiguous"), "jump power", document.path),
+    jumpSpeed: requireValue(firstNumberFact(document, "jump speed", "int"), "jump speed", document.path),
     moveSpeed: firstNumberFact(document, "move speed", "%xSPEED_VALUE_DEFAULT"),
     attackSpeed: firstNumberFact(document, "attack speed", "%xSPEED_VALUE_DEFAULT"),
     castSpeed: firstNumberFact(document, "cast speed", "%xSPEED_VALUE_DEFAULT"),
-    weight: requireValue(firstNumberFact(document, "weight", "audio-only"), "weight"),
+    weight: requireValue(firstNumberFact(document, "weight", "audio-only"), "weight", document.path),
     lightResistance: firstNumberFact(document, "light resistance", "%"),
     darkResistance: firstNumberFact(document, "dark resistance", "%"),
     widthBox: sectionNumbers(document, "width"),
     growth: {
-      hpMax: requireValue(vectorFact(document, "hp max", "hp"), "hp max"),
+      hpMax: requireValue(vectorFact(document, "hp max", "hp"), "hp max", document.path),
       mpMax: vectorFact(document, "mp max", "mp"),
       mpRegenSpeed: vectorFact(document, "mp regen speed", "mp/min"),
       hitRecovery: vectorFact(document, "hit recovery", "ms-or-multiplier"),
-      physicalAttack: requireValue(vectorFact(document, "physical attack", "physAtk"), "physical attack"),
+      physicalAttack: requireValue(vectorFact(document, "physical attack", "physAtk"), "physical attack", document.path),
       magicalAttack: vectorFact(document, "magical attack", "magAtk"),
       physicalDefense: vectorFact(document, "physical defense", "physDef"),
       magicalDefense: vectorFact(document, "magical defense", "magDef"),
@@ -100,15 +100,30 @@ function stripPvfTag(value: string): string {
   return value.startsWith("[") && value.endsWith("]") ? value.slice(1, -1) : value;
 }
 
-function parseNumberMatrix(document: PvfDocument, sectionName: string): number[][] {
+function parseNumberMatrix(document: PvfDocument, sectionName: string): number[][] | null {
   const attr = firstSection(document, sectionName)?.attributes[0];
-  if (attr?.t !== "mat" || !Array.isArray(attr.items)) return [];
-  return attr.items.map(row => row.filter((item): item is number => typeof item === "number"));
+  if (attr?.t !== "mat" || !Array.isArray(attr.items)) return null;
+  if (typeof attr.item_type === "string" && attr.item_type !== "int" && attr.item_type !== "float") {
+    console.warn(
+      `[ChrParser] parseNumberMatrix: section "${sectionName}" has item_type="${attr.item_type}" (expected numeric) in ${document.path}; returning null`,
+    );
+    return null;
+  }
+  return attr.items.map(row =>
+    row.filter((item): item is number => typeof item === "number" && Number.isFinite(item)),
+  );
 }
 
 function parseWeaponHitInfo(document: PvfDocument): ChrWeaponHitInfoRow[] {
   const section = firstSection(document, "weapon hit info");
   if (!section) return [];
+
+  if (section.attributes.length % 6 !== 0) {
+    const trailing = section.attributes.length % 6;
+    console.warn(
+      `[ChrParser] parseWeaponHitInfo: "weapon hit info" has ${section.attributes.length} attributes (not a multiple of 6); ${trailing} trailing attribute(s) dropped in ${document.path}`,
+    );
+  }
 
   const rows: ChrWeaponHitInfoRow[] = [];
   for (let i = 0; i + 5 < section.attributes.length; i += 6) {

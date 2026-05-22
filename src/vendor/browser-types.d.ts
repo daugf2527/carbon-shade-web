@@ -1,6 +1,6 @@
 declare const window: { addEventListener(type:string, handler:(event:any)=>void):void; combatLab?: unknown; location: { search: string; href: string; }; };
 declare const document: { body: HTMLElement; hidden: boolean; getElementById(id:string): HTMLElement | null; createElement(tag:"canvas"): HTMLCanvasElement; createElement(tag:string): HTMLElement; addEventListener(type:string, handler:(event:any)=>void):void; };
-declare const console: { log(...args: unknown[]): void; };
+declare const console: { log(...args: unknown[]): void; warn(...args: unknown[]): void; error(...args: unknown[]): void; };
 declare const performance: { now(): number };
 declare function setTimeout(callback:(...args:any[])=>void, delay?: number): number;
 declare function requestAnimationFrame(callback:(now:number)=>void): number;

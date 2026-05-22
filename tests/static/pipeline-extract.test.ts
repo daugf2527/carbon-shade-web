@@ -26,6 +26,16 @@ const documents = parseDnfExtractPipeOutput(output);
 assert.equal(documents.length, 1);
 assert.equal(documents[0]?.path, "character/swordman/attackinfo/attack3.atk");
 
+const errorOutput = [
+  JSON.stringify({ type: "error", path: "missing/path/not-found.atk", error: "not found" }),
+  "---",
+  "",
+].join("\n");
+assert.throws(
+  () => parseDnfExtractPipeOutput(errorOutput),
+  /missing\/path\/not-found\.atk.*not found/,
+);
+
 const parsed = parsePvfDocument(documents[0]!);
 assert.equal(parsed.kind, "atk");
 assert.equal(parsed.path, "character/swordman/attackinfo/attack3.atk");

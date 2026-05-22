@@ -1,5 +1,5 @@
 import type { MobDef } from "../types/MobDef.js";
-import type { PvfDocument, PvfEnumAttribute } from "../types/PvfDocument.js";
+import type { PvfDocument, PvfEnumAttribute, PvfRef } from "../types/PvfDocument.js";
 import {
   documentProvenance,
   firstNumberFact,
@@ -11,7 +11,7 @@ import {
 } from "./parserUtils.js";
 
 export function parseMobDocument(document: PvfDocument): MobDef {
-  if (!document.path.endsWith(".mob")) {
+  if (!document.path.toLowerCase().endsWith(".mob")) {
     throw new Error(`MobParser expected .mob document, got ${document.path}`);
   }
 
@@ -32,10 +32,18 @@ export function parseMobDocument(document: PvfDocument): MobDef {
   };
 }
 
-function collectAnimationRefs(document: PvfDocument) {
-  return document.sections
-    .flatMap(section => refAttributes(section))
-    .filter(ref => ref.targetKind === "ani");
+function collectAnimationRefs(document: PvfDocument): PvfRef[] {
+  const seen = new Set<string>();
+  const result: PvfRef[] = [];
+  for (const section of document.sections) {
+    for (const ref of refAttributes(section)) {
+      if (ref.targetKind !== "ani") continue;
+      if (seen.has(ref.targetPath)) continue;
+      seen.add(ref.targetPath);
+      result.push(ref);
+    }
+  }
+  return result;
 }
 
 function collectCategoryNames(document: PvfDocument): string[] {

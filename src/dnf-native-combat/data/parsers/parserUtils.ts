@@ -27,7 +27,11 @@ export function sectionsByName(document: PvfDocument, name: string): PvfSection[
 
 export function numberValue(attribute: PvfAttribute | undefined): number | null {
   if (!attribute) return null;
-  if ((attribute.t === "int" || attribute.t === "float") && typeof attribute.v === "number") return attribute.v;
+  if (
+    (attribute.t === "int" || attribute.t === "float") &&
+    typeof attribute.v === "number" &&
+    Number.isFinite(attribute.v)
+  ) return attribute.v;
   return null;
 }
 
@@ -71,8 +75,8 @@ export function refAttributes(section: PvfSection | null): PvfRef[] {
   }));
 }
 
-export function requireValue<T>(value: T | null, label: string): T {
-  if (value === null) throw new Error(`Missing required PVF section: ${label}`);
+export function requireValue<T>(value: T | null, label: string, sourcePath: string): T {
+  if (value === null) throw new Error(`Missing required PVF section "${label}" in ${sourcePath}`);
   return value;
 }
 

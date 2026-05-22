@@ -12,10 +12,16 @@ export interface PipelineRunOptions {
   loadDocuments?: (files: string[]) => Promise<PvfDocument[]>;
 }
 
+export interface PipelineParseError {
+  path: string;
+  message: string;
+}
+
 export interface PipelineRunResult {
   stage: "parse";
   filesExtracted: number;
   filesParsed: number;
+  parseErrors: PipelineParseError[];
   debugOut: string;
   parsed: ParsedPvfDocument[];
 }
@@ -27,17 +33,34 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
       pvfPath: options.pvfPath,
       executablePath: options.executablePath,
     });
-  const parsed = documents.map(document => parsePvfDocument(document));
+
+  const parsed: ParsedPvfDocument[] = [];
+  const parseErrors: PipelineParseError[] = [];
+  for (const document of documents) {
+    try {
+      parsed.push(parsePvfDocument(document));
+    } catch (error) {
+      parseErrors.push({
+        path: document.path ?? "<unknown>",
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
 
   await mkdir(options.debugOut, { recursive: true });
   await writeFile(
     join(options.debugOut, "extract.jsonl"),
-    `${documents.map(document => JSON.stringify(document)).join("\n")}\n`,
+    documents.length > 0 ? `${documents.map(document => JSON.stringify(document)).join("\n")}\n` : "",
     "utf8",
   );
   await writeFile(
     join(options.debugOut, "parse.jsonl"),
-    `${parsed.map(document => JSON.stringify(document)).join("\n")}\n`,
+    parsed.length > 0 ? `${parsed.map(parsedDoc => JSON.stringify(stripRawAndSections(parsedDoc))).join("\n")}\n` : "",
+    "utf8",
+  );
+  await writeFile(
+    join(options.debugOut, "parse-errors.jsonl"),
+    parseErrors.length > 0 ? `${parseErrors.map(error => JSON.stringify(error)).join("\n")}\n` : "",
     "utf8",
   );
 
@@ -45,7 +68,13 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
     stage: "parse",
     filesExtracted: documents.length,
     filesParsed: parsed.length,
+    parseErrors,
     debugOut: options.debugOut,
     parsed,
   };
+}
+
+function stripRawAndSections(parsedDoc: ParsedPvfDocument): Omit<ParsedPvfDocument, "raw" | "sections"> {
+  const { raw: _raw, sections: _sections, ...rest } = parsedDoc;
+  return rest;
 }

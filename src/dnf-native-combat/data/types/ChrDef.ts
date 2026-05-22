@@ -53,7 +53,7 @@ export interface ChrDef {
   darkResistance: PvfFact<number> | null;
   widthBox: number[];
   growth: ChrGrowthDef;
-  moduleDamageRate: number[][];
+  moduleDamageRate: number[][] | null;
   weaponHitInfo: ChrWeaponHitInfoRow[];
   weaponWav: Array<ChrWeaponWavRow | null>;
   weaponSkillInfo: number[];

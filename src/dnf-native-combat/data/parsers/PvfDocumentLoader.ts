@@ -12,11 +12,17 @@ export function buildDnfExtractPipeArgs(options: DnfExtractPipeOptions): string[
 
 export function parseDnfExtractPipeOutput(stdout: string): PvfDocument[] {
   return stdout
-    .split(/\r?\n---\r?\n?/)
+    .split(/(?:^|\r?\n)---\r?\n?/)
     .map(chunk => chunk.trim())
     .filter(Boolean)
-    .map(chunk => JSON.parse(chunk) as PvfDocument)
-    .filter(document => document.type !== "error");
+    .map(chunk => {
+      const document = JSON.parse(chunk) as PvfDocument & { error?: string };
+      if (document.type === "error") {
+        throw new Error(`dnf-extract error for ${document.path ?? "<unknown>"}: ${document.error ?? "unknown error"}`);
+      }
+      return document;
+    })
+    .filter(document => document.type === "document");
 }
 
 export async function loadPvfDocumentsViaPipe(
