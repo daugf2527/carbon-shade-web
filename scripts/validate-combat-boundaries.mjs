@@ -7,10 +7,9 @@
 //
 // Usage: node scripts/validate-combat-boundaries.mjs
 
-import { readFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join, relative, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { execSync } from "node:child_process";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
@@ -19,23 +18,42 @@ const CONFIG_PATH = resolve(ROOT, ".ci", "combat-boundaries.json");
 const config = JSON.parse(readFileSync(CONFIG_PATH, "utf8"));
 let failed = false;
 
+function walkTsFiles(dir) {
+  const files = [];
+  for (const entry of readdirSync(dir)) {
+    const fullPath = join(dir, entry);
+    const stat = statSync(fullPath);
+    if (stat.isDirectory()) {
+      files.push(...walkTsFiles(fullPath));
+    } else if (fullPath.endsWith(".ts")) {
+      files.push(fullPath);
+    }
+  }
+  return files;
+}
+
+function scanCombat(pattern) {
+  const combatRoot = resolve(ROOT, "src", "combat");
+  const matches = [];
+  for (const file of walkTsFiles(combatRoot)) {
+    const rel = relative(ROOT, file).replaceAll("\\", "/");
+    const lines = readFileSync(file, "utf8").split(/\r?\n/);
+    lines.forEach((line, index) => {
+      if (pattern.test(line)) matches.push(`${rel}:${index + 1}:${line}`);
+    });
+  }
+  return matches;
+}
+
 // ── 1. Phaser import boundary ──────────────────────────────────────────
 
 console.log("Checking src/combat/ for Phaser imports...");
-try {
-  const result = execSync(
-    `grep -rn "from ['\\"]phaser" src/combat/ || grep -rn "import.*phaser" src/combat/`,
-    { cwd: ROOT, encoding: "utf8" },
-  );
-  if (result.trim()) {
-    console.error("FAIL: Phaser import found in src/combat/ — kernel must remain Phaser-free");
-    console.error(result.trim());
-    failed = true;
-  } else {
-    console.log("OK: No Phaser imports in combat kernel");
-  }
-} catch {
-  // grep returns exit 1 when no matches — that's success for us
+const phaserImports = scanCombat(/from\s+['"]phaser|import.*phaser/);
+if (phaserImports.length > 0) {
+  console.error("FAIL: Phaser import found in src/combat/ — kernel must remain Phaser-free");
+  console.error(phaserImports.join("\n"));
+  failed = true;
+} else {
   console.log("OK: No Phaser imports in combat kernel");
 }
 
@@ -44,11 +62,7 @@ try {
 console.log("\nChecking velocity writes against allowlist...");
 const allowlist = config.velocityWriteAllowlist;
 
-const violations = execSync(
-  `grep -rn "\\.velocity\\s*[.=]" src/combat/ --include="*.ts"`,
-  { cwd: ROOT, encoding: "utf8" },
-).trim().split("\n").filter(line => {
-  if (!line) return false;
+const violations = scanCombat(/\.velocity\s*[.=]/).filter(line => {
   return !allowlist.some(entry => line.startsWith(entry.file));
 });
 

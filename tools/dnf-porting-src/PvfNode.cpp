@@ -56,7 +56,7 @@ auto PvfNode::unpack() -> std::shared_ptr<PvfScript>
 	}
 	else
 	{
-		pvfScript = std::make_shared<PvfDocument>(buffer.get(), getComputedFileLength(), reader);
+		pvfScript = std::make_shared<PvfDocument>(buffer.get(), getComputedFileLength(), reader, fileName);
 	}
 	pvfScript->unpack();
 	return pvfScript;

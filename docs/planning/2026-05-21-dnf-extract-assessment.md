@@ -105,13 +105,15 @@ if (attr->type == PvfDocument::Number) {
 }
 ```
 
-### 缺陷 2：.ai 扩展名未在 Text 路径（🟡 中优先级）
+### 缺陷 2：.ai 扩展名路由（2026-05-22 已证伪）
 
-**根因**：`PvfNode.cpp:28-39`，Text 路径未包含 `.ai`。
+**原始预设**：假设 `.ai` 是 Squirrel 脚本，应入 Text 路径。
 
-**影响**：`.ai` 文件走 Document 路径（默认分支），如果 `.ai` 是文本格式，Document 解析器会失败或产出乱码。
+**实测结果**（Tier-1，dnf-extract 实测 `monster/goblin/ai/action.ai`）：`.ai` 本身就是 Document tag-value 结构，输出含 `{"name":"think","attributes":[]},{"name":"return","attributes":["6"]}` 等标准 Document section，符合 Document 解析器预期。
 
-**修复**：若抽样确认 `.ai` 是文本 → 在 `PvfNode.cpp:28` 的 endWith 链中加一行 `|| PvfString::endWith(effectiveName, ".ai")`。改动 1 行。
+**结论**：缺陷 2 不存在。当前 `PvfNode.cpp:28-39` Text 路径不含 `.ai` 是**正确分类**，无需修改。
+
+**新发现**：但 `.ai` 文件里的 `ai pattern` section 在多数怪物（goblin/spirit/mj 等）实测为空，决策逻辑可能不在 `.ai` 显式表里 —— 待"决策真位置"专项深挖。
 
 ### 缺陷 3：缺少跨文件引用解析层（🟡 中优先级，不阻塞）
 

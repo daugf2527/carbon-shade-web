@@ -58,7 +58,7 @@ npm run build       → passed
 
 - **EUC-KR / stringtable** (Phase A): `PvfScriptParser.parseStringTable` rewritten with dual-offset mode, iconv-lite decoding. 230K+ entries decoded from stringtable.bin, 26K+ with Korean text.
 - **.ani format** (Phase B): `AniAnalyzer` now version-aware (v1-v15), frame indices and hitbox coordinates extracted. 209K .ani files indexed.
-- **Cancel window data** (Gap #5 resolved): `cancel*.skl` section IDs (371543=cancelWindowStart, 241483=cancelWindowDuration, 371546=cancelGroup, 371547=cancelWeaponMask, 371549=cancelTargetSlots) decoded in `SklAnalyzer.ts`.
+- **Cancel window data** (Gap #5 — partial 2026-05-12, regressed 2026-05-19, verified 2026-05-22): `cancel*.skl` section IDs (371543/241483/371546/371547/371549) are **stringtable indices with dual semantics in cancel files** (e.g. `[purchase cost]` = cancelWindowStart, `[skill class]` = cancelGroup, `[growtype maximum level]` = cancelWeaponMask). C++ `dnf-extract` correctly emits these sections; **Node-side `SklAnalyzer.ts` interpreter was deleted in commit `e1f3e0f`** so dual-semantics decoding is currently missing. ~1h restoration needed in `src/data/official/dnf/swordman/cancels.ts`.
 - **Physics constants** (Gap #4 partially): `src/data/official/dnfPhysicsConstants.ts` created with DEFAULT_GRAVITY_ACCEL=-1500, FORCE_TO_VELOCITY_CONST=4000, etc. from `dnf_enum_header.nut`.
 - **Enums extracted** (Phase C): `dnf_enum_header.nut` collision/physics enums (ATTACKTYPE, CUSTOM_ATTACKINFO, ELEMENT) identified.
 - **ActionName mapping** (Gap #6): 7 stale skillIds fixed in `berserkerSkillFacts.ts`. Full mapping table ready from Neople API _skill_list.json (55 Neo Berserker skills, 21+ matched).

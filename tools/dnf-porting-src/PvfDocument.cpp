@@ -1,6 +1,7 @@
 #include "PvfDocument.h"
 #include "PvfNode.h"
 #include <iostream>
+#include <cstring>
 #include "PvfReader.h"
 #include "ValueType.h"
 #include <stack>
@@ -10,8 +11,9 @@
 
 
 
-PvfDocument::PvfDocument(const uint8_t* buffer, int32_t len,PvfReader * reader)
-	:buffer(buffer),len(len),pvfReader(reader)
+PvfDocument::PvfDocument(const uint8_t* buffer, int32_t len, PvfReader* reader,
+                         const std::string& filename)
+	:buffer(buffer),len(len),pvfReader(reader),filename(filename)
 {
 	type = PvfScriptType::Document;
 }
@@ -112,7 +114,7 @@ auto PvfDocument::unpack() -> void
 
 				case ValueType::StringLink:
 					if (auto str = pvfReader->stringBinMap[index]; str != "") {
-						node->addAttribute(pvfReader->stringStringMap[str]);
+						node->addLinkAttribute(pvfReader->stringStringMap[str]);
 						//std::cout<<str<<"  "<<pvfReader->stringStringMap[str]<<std::endl;
 					}
 					break;
@@ -120,7 +122,7 @@ auto PvfDocument::unpack() -> void
 				{
 					//	out.append(std::to_string(before));//(buffer.get(), i - 4);
 					if (auto str = pvfReader->stringBinMap[index]; str != "") {
-						node->addAttribute(pvfReader->stringStringMap[str]);
+						node->addLinkAttribute(pvfReader->stringStringMap[str]);
 					}
 				}*/
 				break;
@@ -133,6 +135,50 @@ auto PvfDocument::unpack() -> void
 				std::cerr << "Unknown type in pvf node " << (int32_t)type << std::endl;
 				reader.read<int32_t>();
 			}
+		}
+	}
+
+	// L2: cancel*.skl filename-driven dual-semantics. Runs after the byte
+	// stream is fully parsed so we operate on the populated section tree
+	// rather than racing the parser state. Cheap (string compare + at most
+	// 5 hash lookups), safe to call unconditionally.
+	applyCancelDualSemantics();
+}
+
+auto PvfDocument::applyCancelDualSemantics() -> void
+{
+	if (filename.empty()) return;
+
+	// Match `**/cancel*.skl`. We slice the basename off the last `/` and check
+	// `cancel` prefix + `.skl` suffix. Case-insensitive to be defensive,
+	// although the PVF tree stores lowercased paths.
+	auto slashPos = filename.find_last_of('/');
+	std::string base = (slashPos == std::string::npos) ? filename : filename.substr(slashPos + 1);
+	std::string baseLower = base;
+	PvfString::toLower(baseLower);
+	if (baseLower.size() < std::strlen("cancel") + std::strlen(".skl")) return;
+	if (baseLower.compare(0, 6, "cancel") != 0) return;
+	if (baseLower.compare(baseLower.size() - 4, 4, ".skl") != 0) return;
+	// Exclude the literal "cancel.skl" (no dual-semantics; pattern is
+	// `cancel<source>.skl` per swordman-data-model §6.2).
+	if (baseLower.size() == std::strlen("cancel.skl")) return;
+
+	// Dual-semantics map (Tier-1 verified, swordman-data-model.md §6.2).
+	// Section names use the same lowercase / trimmed form that the PVF parse
+	// stage applies (see PvfDocument::unpack PvfString::trim calls).
+	static const std::pair<const char*, const char*> kCancelAliases[] = {
+		{"purchase cost",            "cancelWindowStart"},
+		{"required level",           "cancelWindowDuration"},
+		{"skill class",              "cancelGroup"},
+		{"growtype maximum level",   "cancelWeaponMask"},
+		{"skill fitness growtype",   "cancelTargetSlots"},
+	};
+
+	for (auto& [standard, alias] : kCancelAliases) {
+		auto it = root.children.find(standard);
+		if (it == root.children.end()) continue;
+		for (auto& sectionNode : it->second) {
+			sectionNode.aliases.emplace_back(alias);
 		}
 	}
 }

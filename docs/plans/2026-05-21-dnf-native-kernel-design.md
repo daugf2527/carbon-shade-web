@@ -14,6 +14,8 @@
 
 ## 1. DNF 真值反推的 13 个必有 system
 
+> **2026-05-22 真实调用频次验证**：grep 193 个 .nut 实测，13 system 中 **4 个真热路径**（AnimPlayback / Appendage / Resource / HitDetection，累计 ~1361 calls），**3 个中等**（Input / State / VFX，单 API dominates），**6 个状态机/数据驱动**（AI / FrameEventBus / Physics / Damage / Reaction / Status —— 不在 sq_* 热路径但仍 load-bearing）。478 enum 中 ~136 (28%) 调用 ≤1 次（zombie/edge-case）。**关键修正**：状态机驱动 system 不应作独立 kernel system 一字排开，应作 helper 模块；按 sq_* 调用驱动设计才是经济路径。整体 60% 验证。
+
 按 .nut + dnf_enum_header.nut 提取 478 个 sq_* API + 全枚举推断的 DNF 引擎拓扑：
 
 ```
@@ -166,6 +168,8 @@ interface FrameEvent {
 **项目 SpriteFrameLibrary.ts 当前 `if/else` 硬编码处理 jump phase，无通用帧事件总线**。dnf-native 必须建独立的 `FrameEventBus` system。
 
 ## 6. AI 反推（从 .mob/.ai/.aic）
+
+> **2026-05-22 真实数据修正**：抽样 `goblin/crimebuffalo` 实测，`.ai` 多数 `ai pattern` section 为空；决策可能内嵌在 `.mob` 的 `warlike/sight/attack_delay/category` 阈值组合 + 引擎隐式 dispatch。CAT 假设**结构层确认**（Parameter `.mob` → Decision `??` → Execution `.ani+.atk` 三层成立），**规则层证伪**（规则不在 `.ai` 显式表里）。"Decision Layer (.ai) → Rule Engine" 应改成 "Decision Layer = `.mob` 阈值 + 引擎隐式 dispatch"，可能需要补 `.nut` 脚本反推。下文 §6 的 "if [target in attack area] then return [skill_idx]" 是预设模型，**待"决策真位置"专项深挖确认**。
 
 **DNF AI 不是 FSM，是"条件-动作表 (Condition-Action Table, CAT)" / "规则树"**：
 

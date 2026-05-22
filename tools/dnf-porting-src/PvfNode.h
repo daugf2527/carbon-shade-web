@@ -25,11 +25,17 @@ struct PvfTreeNode
 	PvfTreeNode* parent = nullptr;
 };
 
-class PvfNode 
+class PvfNode
 {
 public:
 	friend class PvfReader;
 	auto unpack() ->std::shared_ptr<PvfScript>;
+	// Accessors for L3 --manifest: surface the per-file CRC32 and length
+	// already loaded during directory tree parse so we can hash the
+	// extraction set without re-reading the file.
+	inline auto getCrc32() const { return fileCrc32; }
+	inline auto getFileLength() const { return fileLength; }
+	inline auto& getFileName() const { return fileName; }
 private:
 	auto expand() -> std::unique_ptr<uint8_t[]>;
 	auto getComputedFileLength() const->int32_t;

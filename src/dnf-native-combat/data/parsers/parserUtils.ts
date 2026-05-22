@@ -1,0 +1,83 @@
+import type { PvfAttribute, PvfDocument, PvfRef, PvfRefAttribute, PvfSection } from "../types/PvfDocument.js";
+import type { ExtractedDocumentProvenance, ParsedFieldProvenance, PvfFact, PvfStringFact, PvfVectorFact } from "../types/Provenance.js";
+
+export function documentProvenance(document: PvfDocument): ExtractedDocumentProvenance {
+  return {
+    extractorVersion: document.extractor_version,
+    extractTimestamp: document.extract_timestamp,
+    sourcePvfHash: document.source_pvf_hash,
+    sourceRef: `pvf:${document.path}`,
+  };
+}
+
+export function fieldProvenance(document: PvfDocument, sectionName: string): ParsedFieldProvenance {
+  return {
+    ...documentProvenance(document),
+    sectionName,
+  };
+}
+
+export function firstSection(document: PvfDocument, name: string): PvfSection | null {
+  return document.sections.find(section => section.name === name) ?? null;
+}
+
+export function sectionsByName(document: PvfDocument, name: string): PvfSection[] {
+  return document.sections.filter(section => section.name === name);
+}
+
+export function numberValue(attribute: PvfAttribute | undefined): number | null {
+  if (!attribute) return null;
+  if ((attribute.t === "int" || attribute.t === "float") && typeof attribute.v === "number") return attribute.v;
+  return null;
+}
+
+export function stringValue(attribute: PvfAttribute | undefined): string | null {
+  if (!attribute) return null;
+  if ((attribute.t === "str" || attribute.t === "link") && typeof attribute.v === "string") return attribute.v;
+  return null;
+}
+
+export function firstNumberFact(document: PvfDocument, sectionName: string, unit: string): PvfFact<number> | null {
+  const section = firstSection(document, sectionName);
+  const value = numberValue(section?.attributes[0]);
+  if (!section || value === null) return null;
+  return { value, unit, provenance: fieldProvenance(document, sectionName) };
+}
+
+export function firstStringFact(document: PvfDocument, sectionName: string, unit = "raw-string"): PvfStringFact | null {
+  const section = firstSection(document, sectionName);
+  const value = stringValue(section?.attributes[0]);
+  if (!section || value === null) return null;
+  return { value, unit, provenance: fieldProvenance(document, sectionName) };
+}
+
+export function vectorFact(document: PvfDocument, sectionName: string, unit: string): PvfVectorFact | null {
+  const section = firstSection(document, sectionName);
+  const attr = section?.attributes[0];
+  if (!section || attr?.t !== "vec" || !Array.isArray(attr.items)) return null;
+  return {
+    values: attr.items,
+    unit,
+    provenance: fieldProvenance(document, sectionName),
+  };
+}
+
+export function refAttributes(section: PvfSection | null): PvfRef[] {
+  const refs = section?.attributes.filter((attr): attr is PvfRefAttribute => attr.t === "ref") ?? [];
+  return refs.map(ref => ({
+    targetKind: ref.target_kind,
+    targetPath: ref.target_path,
+    raw: ref.raw,
+  }));
+}
+
+export function requireValue<T>(value: T | null, label: string): T {
+  if (value === null) throw new Error(`Missing required PVF section: ${label}`);
+  return value;
+}
+
+export function sectionNumbers(document: PvfDocument, sectionName: string): number[] {
+  return firstSection(document, sectionName)?.attributes
+    .map(attr => numberValue(attr))
+    .filter((value): value is number => value !== null) ?? [];
+}
