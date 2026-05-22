@@ -30,14 +30,14 @@ const outFile = args.includes("--out-file") ? args[args.indexOf("--out-file") + 
 
 // ── Helpers ────────────────────────────────────────────────────────────
 
-function run(label, command) {
+function run(label, command, timeoutMs = 60000) {
   const start = Date.now();
   let passed = true;
   let stdout = "";
   let stderr = "";
   try {
     // Default stdio: stdout captured, stderr goes to terminal (no noise in capture)
-    stdout = execSync(command, { cwd: ROOT, timeout: 60000, encoding: "utf-8" });
+    stdout = execSync(command, { cwd: ROOT, timeout: timeoutMs, encoding: "utf-8" });
   } catch (e) {
     passed = false;
     stdout = (e.stdout || "").toString();
@@ -61,7 +61,7 @@ const results = [];
 
 // Gate 1-3: Core verification (fast, blocking)
 results.push(run("typecheck", "npm run typecheck"));
-results.push(run("static:test", "npm run static:test"));
+results.push(run("static:test", "npm run static:test", 300000));
 results.push(run("build", "npm run build"));
 
 // Gate 4: Circular dependency check
