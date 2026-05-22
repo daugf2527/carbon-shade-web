@@ -3,6 +3,14 @@
 // Design vs implementation gaps, Provenance correctness, PVE-only hygiene.
 // READ-ONLY: this file only constructs synthetic PvfDocument inputs and observes
 // the existing parsers / parserUtils. It does NOT modify src/ or fixtures.
+//
+// Exit policy:
+//   - exits 1 if bugCount > BASELINE_BUGS (regression — new BUG-severity audits introduced)
+//   - exits 1 if PROBE_STRICT=1 and any BUG-severity audits surface
+//   - exits 0 otherwise (baseline known-bug count tolerated for CI staging)
+
+export const BASELINE_BUGS = 0;
+let bugCount = 0;
 
 import { assert } from "./test-utils.js";
 
@@ -45,6 +53,7 @@ function section(name: string, attributes: PvfAttribute[]): PvfSection {
 }
 
 function logGap(severity: "GAP-deferred" | "GAP-current" | "BUG", item: string, design: string, actual: string) {
+  if (severity === "BUG") bugCount += 1;
   console.log(`AUDIT ${severity}: [${item}] [design] ${design} [actual] ${actual}`);
 }
 
@@ -148,8 +157,9 @@ function logOk(item: string, observed: string) {
   ]);
   const chr = parseChrDocument(doc);
 
-  // Provenance shape only has: extractorVersion, extractTimestamp, sourcePvfHash, sourceRef
+  // Provenance shape now has extractorVersion, extractTimestamp, sourceRef (sourcePvfHash optional)
   const provKeys = Object.keys(chr.provenance).sort();
+  // sourcePvfHash present when document.source_pvf_hash provided (it is, via makeDoc default)
   assert.deepEqual(provKeys, [
     "extractTimestamp",
     "extractorVersion",
@@ -157,14 +167,15 @@ function logOk(item: string, observed: string) {
     "sourceRef",
   ]);
   const provAny = chr.provenance as unknown as Record<string, unknown>;
+  // sourceType / requiresManualVerification live on PvfFact (field-level), not ExtractedDocumentProvenance (doc-level)
   assert.equal(provAny.sourceType, undefined);
   assert.equal(provAny.requiresManualVerification, undefined);
 
   logGap(
     "GAP-current",
-    "Tier-3 markers absent from Provenance type",
+    "Tier-3 markers wired in PvfFact but not applied by parsers",
     "CLAUDE.md truth rule + design §6: tier-3 fields tagged sourceType:'local_baseline' + requiresManualVerification:true",
-    "Provenance.ts has only {extractorVersion, extractTimestamp, sourcePvfHash, sourceRef}; no sourceType / requiresManualVerification fields exist on the interface",
+    "PvfFact now exposes optional sourceType + requiresManualVerification (Provenance.ts), but ChrParser/AtkParser/MobParser do not yet set them on Tier-3 candidates (e.g. jumpPower unit='ambiguous', weight unit='audio-only'). Type-layer ready; data-layer migration pending.",
   );
 
   // Heuristic Tier-3 candidates — unit strings encoding uncertainty
@@ -266,15 +277,14 @@ function logOk(item: string, observed: string) {
   } as unknown as PvfDocument;
 
   const prov = documentProvenance(docMissingHash);
-  // The TS interface says `sourcePvfHash: string` but at runtime we got undefined.
-  // That is a typed-shape lie when PvfDocument lacks the field.
-  assert.equal(prov.sourcePvfHash, undefined as unknown as string);
+  // After P0-3 fix: sourcePvfHash is optional on ExtractedDocumentProvenance,
+  // and documentProvenance omits the key entirely when the source doc lacks it.
+  assert.equal(prov.sourcePvfHash, undefined);
+  assert.ok(!("sourcePvfHash" in prov));
 
-  logGap(
-    "BUG",
-    "Provenance.sourcePvfHash type lies on missing field",
-    "Provenance.ts declares sourcePvfHash: string (non-optional)",
-    "documentProvenance() passes through document.source_pvf_hash without null check; missing field yields runtime undefined while compile-time string. Either tighten via Zod (Day 11-12) or mark optional",
+  logOk(
+    "Provenance.sourcePvfHash gracefully omitted when source doc lacks the field",
+    "documentProvenance() now skips the key (rather than emitting undefined) and Provenance.ts declares it optional. Day 11-12 VALIDATE will still reject docs that should have one.",
   );
 }
 
@@ -326,9 +336,11 @@ function logOk(item: string, observed: string) {
 
   const chr = parseChrDocument(doc);
 
-  // Test: shared-reference identity confirmed.
+  // Test: chr.raw still references the original doc (Object.freeze returns the same object),
+  // but chr.sections is now a deep-clone — the shared-reference hazard is broken on sections.
   assert.equal(chr.raw, doc);
-  assert.equal(chr.sections, doc.sections);
+  assert.notEqual(chr.sections, doc.sections);
+  assert.ok(Object.isFrozen(chr.raw));
 
   // Test: JSON.stringify includes raw → measure inflation.
   const rawDocSize = JSON.stringify(doc).length;
@@ -343,22 +355,27 @@ function logOk(item: string, observed: string) {
     "GAP-current",
     "ChrDef/MobDef/AtkDef raw field duplicates document",
     "design §4.2 says PVF 1:1 shape — intent unclear whether parsed JSONL should re-emit raw",
-    `parse.jsonl includes both chr.sections and chr.raw (PvfDocument) → JSON inflation ratio = ${inflation.toFixed(2)}x for fixture-sized doc (raw=${rawDocSize}B parsed=${parsedSize}B). Risk: full-PVF parse.jsonl will be 2-3x file size unnecessarily`,
+    `parse.jsonl strips raw+sections via stripRawAndSections (pipelineRunner.ts), so the inflation only hits in-memory consumers. JSON inflation ratio (in-memory) = ${inflation.toFixed(2)}x for fixture-sized doc (raw=${rawDocSize}B parsed=${parsedSize}B). Consider Day 11-12 deciding whether chr.sections is the public shape or chr.raw.sections is.`,
   );
 
-  // Test: mutation safety — if a consumer mutates chr.sections, chr.raw.sections mutates too.
+  // Test: mutation safety — chr.sections is now deep-cloned, mutating it must NOT
+  // leak into chr.raw.sections (which is the original frozen document).
   const probeSections = chr.sections as PvfSection[];
+  const originalLen = chr.raw.sections.length;
   probeSections.push(section("__mutation_probe__", []));
-  assert.equal(chr.raw.sections.length, probeSections.length);
-  assert.equal(chr.raw.sections[chr.raw.sections.length - 1]?.name, "__mutation_probe__");
+  // The clone diverged: chr.sections grew but chr.raw.sections did not.
+  assert.equal(chr.raw.sections.length, originalLen);
+  assert.equal(probeSections.length, originalLen + 1);
+  assert.notEqual(
+    chr.raw.sections[chr.raw.sections.length - 1]?.name,
+    "__mutation_probe__",
+  );
   // Clean up the mutation we introduced so it doesn't leak to other probes.
   probeSections.pop();
 
-  logGap(
-    "BUG",
-    "shared-reference mutation hazard between ChrDef.sections and ChrDef.raw.sections",
-    "PVF 1:1 immutability expected when documents flow through stages",
-    "ChrParser assigns sections: document.sections (alias). Mutating one mutates the other. AtkParser/MobParser exhibit same pattern. Consider deep-copy or freeze",
+  logOk(
+    "ChrDef.sections decoupled from raw via structuredClone; raw is frozen",
+    "ChrParser/AtkParser/MobParser now deep-clone sections and Object.freeze(document) before assigning to .raw. Mutations on chr.sections no longer leak; raw is immutable.",
   );
 }
 
@@ -434,11 +451,22 @@ function logOk(item: string, observed: string) {
 // Summary
 // ===========================================================================
 console.log("dnf-native-h4-schema-audit-probes: 9 probes executed");
-console.log("Summary: 4 GAP-current (current code incomplete vs design)");
+console.log("Summary: 3 GAP-current (Tier-3 markers on parsers, ProvenanceMap type, raw-field duplication)");
 console.log("         4 GAP-deferred (waiting for Day 11-12 VALIDATE)");
-console.log("         2 BUG (current code wrong: sourcePvfHash type lie, sections shared-ref mutation)");
-console.log("         2 OK (sectionName correctness, sourceRef pass-through)");
+console.log("         0 BUG (P0-2/3 + P1-4 fixed: Provenance optional + Tier-3 markers + deep-clone + freeze)");
+console.log("         4 OK (sectionName correctness, sourceRef pass-through, sourcePvfHash optional, sections decoupled)");
 // Probe-side note: ChrDef type with `sections: PvfSection[]` is the public shape consumed
 // downstream — make sure to revisit when wiring ProvenanceMap in §4.2 work.
 const _chrDefSentinel: Pick<ChrDef, "kind" | "path"> = { kind: "chr", path: "" };
 void _chrDefSentinel;
+
+// Baseline + strict-mode exit logic.
+const STRICT = process.env.PROBE_STRICT === "1";
+if (bugCount > BASELINE_BUGS) {
+  console.error(`probe regression: bug count ${bugCount} > baseline ${BASELINE_BUGS}`);
+  process.exit(1);
+}
+if (STRICT && bugCount > 0) {
+  console.error(`PROBE_STRICT: ${bugCount} bugs exposed, expected 0`);
+  process.exit(1);
+}

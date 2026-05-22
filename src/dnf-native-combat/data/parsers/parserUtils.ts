@@ -2,12 +2,19 @@ import type { PvfAttribute, PvfDocument, PvfRef, PvfRefAttribute, PvfSection } f
 import type { ExtractedDocumentProvenance, ParsedFieldProvenance, PvfFact, PvfStringFact, PvfVectorFact } from "../types/Provenance.js";
 
 export function documentProvenance(document: PvfDocument): ExtractedDocumentProvenance {
-  return {
+  const provenance: ExtractedDocumentProvenance = {
     extractorVersion: document.extractor_version,
     extractTimestamp: document.extract_timestamp,
-    sourcePvfHash: document.source_pvf_hash,
     sourceRef: `pvf:${document.path}`,
   };
+  // source_pvf_hash is optional per PvfDocument schema; only attach when the
+  // extractor actually emitted it. This preserves the previous behaviour for
+  // real-PVF docs while keeping the field omitted (rather than the string
+  // "undefined") for fixtures / synthetic inputs.
+  if (typeof document.source_pvf_hash === "string" && document.source_pvf_hash.length > 0) {
+    provenance.sourcePvfHash = document.source_pvf_hash;
+  }
+  return provenance;
 }
 
 export function fieldProvenance(document: PvfDocument, sectionName: string): ParsedFieldProvenance {

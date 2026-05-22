@@ -52,7 +52,7 @@ export function parseChrDocument(document: PvfDocument): ChrDef {
     kind: "chr",
     path: document.path,
     provenance: documentProvenance(document),
-    sections: document.sections,
+    sections: structuredClone(document.sections),
     job: {
       ...jobRaw,
       value: jobValue,
@@ -92,7 +92,7 @@ export function parseChrDocument(document: PvfDocument): ChrDef {
       dashAttack: refAttributes(firstSection(document, "dashattack info"))[0] ?? null,
     },
     motionRefs: parseMotionRefs(document),
-    raw: document,
+    raw: Object.freeze(document),
   };
 }
 

@@ -10,13 +10,18 @@
  *   "OK [label] ..."   when behaviour matches expectation,
  * or
  *   "BUG EXPOSED [label] ..."   when divergence is observed.
- * Suite always exits 0 (probe pattern, not an assertion suite) so CI
- * stays green whether or not the local PVF is available.
+ *
+ * Exit policy:
+ *   - exits 1 if bugCount > BASELINE_BUGS (regression — new bugs introduced)
+ *   - exits 1 if PROBE_STRICT=1 and any bugs are exposed
+ *   - exits 0 otherwise (baseline 0 means we expect this suite to stay clean)
  *
  * CI / off-machine safety: if either tools/dnf-extract(.exe) or the
  * Script.pvf at the canonical local path is missing, the suite logs
  * "SKIP [reason]" and exits 0 without running anything destructive.
  */
+
+export const BASELINE_BUGS = 0;
 
 import { existsSync, statSync } from "node:fs";
 import { mkdir, readFile, rm } from "node:fs/promises";
@@ -568,4 +573,14 @@ if (!existsSync(EXTRACT_BIN)) {
 console.log(
   `\ndnf-native-h5-real-pvf-probes: ${bugCount} bug(s) exposed, ${okCount} OK probe(s), ${skipCount} skip(s).`,
 );
-// Always exit 0: this file is a probe report, not an assertion suite.
+
+// Baseline + strict-mode exit logic. SKIPs are not bugs; only real BUG counts.
+const STRICT = process.env.PROBE_STRICT === "1";
+if (bugCount > BASELINE_BUGS) {
+  console.error(`probe regression: bug count ${bugCount} > baseline ${BASELINE_BUGS}`);
+  process.exit(1);
+}
+if (STRICT && bugCount > 0) {
+  console.error(`PROBE_STRICT: ${bugCount} bugs exposed, expected 0`);
+  process.exit(1);
+}

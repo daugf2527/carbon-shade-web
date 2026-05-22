@@ -16,7 +16,7 @@ export function parseAtkDocument(document: PvfDocument): AtkDef {
     kind: "atk",
     path: document.path,
     provenance: documentProvenance(document),
-    sections: document.sections,
+    sections: structuredClone(document.sections),
     liftUp: firstNumberFact(document, "lift up", "px/s"),
     pushAside: firstNumberFact(document, "push aside", "px/s"),
     damageBonus: firstNumberFact(document, "damage bonus", "%"),
@@ -34,7 +34,7 @@ export function parseAtkDocument(document: PvfDocument): AtkDef {
     ignoreWeight: hasSection(document, "ignore weight"),
     hitWav: firstStringFact(document, "hit wav", "sound-id"),
     knuckBack: firstNumberFact(document, "knuck back", "raw"),
-    raw: document,
+    raw: Object.freeze(document),
   };
 }
 

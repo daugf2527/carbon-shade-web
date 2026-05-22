@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, open } from "node:fs/promises";
 import { join } from "node:path";
 import { loadPvfDocumentsViaPipe } from "../parsers/PvfDocumentLoader.js";
 import { parsePvfDocument, type ParsedPvfDocument } from "./parseStage.js";
@@ -48,20 +48,20 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
   }
 
   await mkdir(options.debugOut, { recursive: true });
-  await writeFile(
+  await writeJsonlStreaming(
     join(options.debugOut, "extract.jsonl"),
-    documents.length > 0 ? `${documents.map(document => JSON.stringify(document)).join("\n")}\n` : "",
-    "utf8",
+    documents,
+    document => JSON.stringify(document),
   );
-  await writeFile(
+  await writeJsonlStreaming(
     join(options.debugOut, "parse.jsonl"),
-    parsed.length > 0 ? `${parsed.map(parsedDoc => JSON.stringify(stripRawAndSections(parsedDoc))).join("\n")}\n` : "",
-    "utf8",
+    parsed,
+    parsedDoc => JSON.stringify(stripRawAndSections(parsedDoc)),
   );
-  await writeFile(
+  await writeJsonlStreaming(
     join(options.debugOut, "parse-errors.jsonl"),
-    parseErrors.length > 0 ? `${parseErrors.map(error => JSON.stringify(error)).join("\n")}\n` : "",
-    "utf8",
+    parseErrors,
+    error => JSON.stringify(error),
   );
 
   return {
@@ -77,4 +77,20 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
 function stripRawAndSections(parsedDoc: ParsedPvfDocument): Omit<ParsedPvfDocument, "raw" | "sections"> {
   const { raw: _raw, sections: _sections, ...rest } = parsedDoc;
   return rest;
+}
+
+
+async function writeJsonlStreaming<T>(
+  filePath: string,
+  items: readonly T[],
+  serialize: (item: T) => string,
+): Promise<void> {
+  const handle = await open(filePath, "w");
+  try {
+    for (const item of items) {
+      await handle.write(`${serialize(item)}\n`);
+    }
+  } finally {
+    await handle.close();
+  }
 }

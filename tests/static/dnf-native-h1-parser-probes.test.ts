@@ -4,8 +4,13 @@
  * Scope: ChrParser, MobParser, AtkParser, parserUtils.
  *
  * Each probe is wrapped in try/catch and emits a "BUG EXPOSED" or "OK" log line.
- * The process intentionally exits 0 to keep CI green; findings are reported via stdout.
+ * Exit policy:
+ *   - exits 1 if bugCount > BASELINE_BUGS (regression — new bugs introduced)
+ *   - exits 1 if PROBE_STRICT=1 and any bugs are exposed (fix-everything mode)
+ *   - exits 0 otherwise (baseline known-bug count tolerated for CI staging)
  */
+
+export const BASELINE_BUGS = 15;
 
 import { readFileSync } from "node:fs";
 import { assert } from "./test-utils.js";
@@ -856,4 +861,15 @@ console.log(`Probes run: ${results.length}, suspected bugs: ${bugs}, OK: ${oks},
 
 // Sanity: at least one assertion to keep test infrastructure happy.
 assert.ok(results.length > 0, "probe suite ran at least one probe");
-// Do NOT throw on bug-count; we want CI green.
+
+// Baseline + strict-mode exit logic.
+const bugCount = bugs;
+const STRICT = process.env.PROBE_STRICT === "1";
+if (bugCount > BASELINE_BUGS) {
+  console.error(`probe regression: bug count ${bugCount} > baseline ${BASELINE_BUGS}`);
+  process.exit(1);
+}
+if (STRICT && bugCount > 0) {
+  console.error(`PROBE_STRICT: ${bugCount} bugs exposed, expected 0`);
+  process.exit(1);
+}

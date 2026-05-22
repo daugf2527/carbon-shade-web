@@ -19,7 +19,7 @@ export function parseMobDocument(document: PvfDocument): MobDef {
     kind: "mob",
     path: document.path,
     provenance: documentProvenance(document),
-    sections: document.sections,
+    sections: structuredClone(document.sections),
     name: firstStringFact(document, "name"),
     warlike: firstNumberFact(document, "warlike", "raw"),
     sight: firstNumberFact(document, "sight", "px"),
@@ -28,7 +28,7 @@ export function parseMobDocument(document: PvfDocument): MobDef {
     attackInfo: refAttributes(firstSection(document, "attack info")),
     animationRefs: collectAnimationRefs(document),
     category: collectCategoryNames(document),
-    raw: document,
+    raw: Object.freeze(document),
   };
 }
 

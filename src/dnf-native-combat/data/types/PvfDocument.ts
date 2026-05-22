@@ -55,7 +55,12 @@ export interface PvfSection {
 export interface PvfDocument {
   extractor_version: string;
   extract_timestamp: string;
-  source_pvf_hash: string;
+  /**
+   * Hash of the source PVF (CRC32 via D3 provenance). Optional because
+   * pre-D3 fixtures, synthetic test inputs, and any document whose extractor
+   * did not emit the field may omit it. Parsers must tolerate undefined.
+   */
+  source_pvf_hash?: string;
   path: string;
   type: "document" | string;
   sections: PvfSection[];

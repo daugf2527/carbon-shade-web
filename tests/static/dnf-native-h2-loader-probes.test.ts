@@ -2,6 +2,13 @@
 // Pure-parser probes test parseDnfExtractPipeOutput + buildDnfExtractPipeArgs in-process.
 // Subprocess probe runs spawn with a non-existent executable and asserts rejection.
 // Style: probes never throw out of try/catch — log "BUG EXPOSED" / "OK" instead.
+//
+// Exit policy:
+//   - exits 1 if bug count > BASELINE_BUGS (regression — new bugs introduced)
+//   - exits 1 if PROBE_STRICT=1 and any bugs are exposed
+//   - exits 0 otherwise (baseline known-bug count tolerated)
+
+export const BASELINE_BUGS = 5;
 
 import { assert } from "./test-utils.js";
 import {
@@ -346,4 +353,15 @@ try {
 // ---------------------------------------------------------------------------
 
 console.log(`dnf-native-h2-loader-probes: ${oks} OK / ${bugs} BUG EXPOSED entries`);
-// Probes never fail the build — they just report. (Per Head 2 spec.)
+
+// Baseline + strict-mode exit logic.
+const bugCount = bugs;
+const STRICT = process.env.PROBE_STRICT === "1";
+if (bugCount > BASELINE_BUGS) {
+  console.error(`probe regression: bug count ${bugCount} > baseline ${BASELINE_BUGS}`);
+  process.exit(1);
+}
+if (STRICT && bugCount > 0) {
+  console.error(`PROBE_STRICT: ${bugCount} bugs exposed, expected 0`);
+  process.exit(1);
+}

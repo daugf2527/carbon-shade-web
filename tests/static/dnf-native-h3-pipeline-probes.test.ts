@@ -5,9 +5,13 @@
  *
  * Strategy: try/catch every behavior we suspect is suspicious, log
  * "BUG EXPOSED: ..." when expectation diverges, "OK: ..." when nominal.
- * Must always exit 0 so CI stays green; the noteworthy text is captured in
- * stdout for the bug-hunt summary.
+ * Exit policy:
+ *   - exits 1 if bugCount > BASELINE_BUGS (regression — new bugs introduced)
+ *   - exits 1 if PROBE_STRICT=1 and any bugs are exposed
+ *   - exits 0 otherwise (baseline known-bug count tolerated for CI staging)
  */
+
+export const BASELINE_BUGS = 6;
 
 import { mkdir, mkdtemp, rm, readFile, stat } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
@@ -623,4 +627,14 @@ function runCli(argv: string[]): { code: number; stdout: string; stderr: string 
 await rm(PROBE_TMP, { recursive: true, force: true }).catch(() => undefined);
 
 console.log(`\ndnf-native-h3-pipeline-probes: ${bugCount} bug(s) exposed, ${okCount} OK probe(s).`);
-// Always exit 0: this file is a probe report, not an assertion suite.
+
+// Baseline + strict-mode exit logic.
+const STRICT = process.env.PROBE_STRICT === "1";
+if (bugCount > BASELINE_BUGS) {
+  console.error(`probe regression: bug count ${bugCount} > baseline ${BASELINE_BUGS}`);
+  process.exit(1);
+}
+if (STRICT && bugCount > 0) {
+  console.error(`PROBE_STRICT: ${bugCount} bugs exposed, expected 0`);
+  process.exit(1);
+}
