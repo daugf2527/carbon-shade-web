@@ -46,7 +46,12 @@ public:
 	inline auto getFileName() const -> std::string { return metaInfo.fileName; }
 	inline auto getNodeCount() const { return nodes.size(); }
 	auto expand() -> void;
-	inline auto& operator[](int32_t index) { assert(index < nodes.size() && index >= 0); return nodes[index]; }
+	inline auto isValidIndex(int32_t index) const { return index >= 0 && static_cast<size_t>(index) < nodes.size(); }
+	// Release builds turn assert() into a no-op, so out-of-range accesses
+	// silently dereference invalid memory (uninitialized values for in-vector
+	// out-of-bounds, segfault past capacity). The caller is responsible for
+	// checking isValidIndex() first; pass it through if you can't.
+	inline auto& operator[](int32_t index) { assert(isValidIndex(index)); return nodes[index]; }
 private:
 	NpkIndex metaInfo;
 	ImgHeader header;

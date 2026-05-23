@@ -11,23 +11,16 @@ PvfTextScript::PvfTextScript(const uint8_t* buffer, int32_t len, PvfReader* read
 
 auto PvfTextScript::unpack() -> void
 {
-	//libIconv ��(BIG5�ַ�����) ת��'��'��ʱ����ж�
-	//ʹ��BIG5HKSCS��������ַ���
-	char* outBuffer = new char[len * 2];
-	memset(outBuffer, 0, len * 2);
+	if (!buffer || len <= 0) return;
 
-	//auto charset = tellenc(buffer, len);
-	/*if (/ *charset == std::string("big5") || * /charset == std::string("binary")) {
-		charset = PvfReader::ENCODING;
-	}
-*/
+	// CP949 → UTF-8 expansion is at most 3x. Use RAII so an exception (e.g.
+	// codeConvert throws, str = {…} bad_alloc) doesn't leak the heap buffer.
+	const size_t outSize = static_cast<size_t>(len) * 3 + 1;
+	auto outBuffer = std::make_unique<char[]>(outSize);
+
 	int32_t retLen = 0;
-	if (buffer && len > 0)
-	{
-		retLen = reader->codeConvert(PvfReader::ENCODING, "UTF-8", (const char*)buffer, len, outBuffer, len * 2);
-		str = {outBuffer};
-	}
-	delete[] outBuffer;
+	retLen = reader->codeConvert(PvfReader::ENCODING, "UTF-8", (const char*)buffer, len, outBuffer.get(), outSize);
+	str = { outBuffer.get() };
 }
 
 PvfRawScript::PvfRawScript(const uint8_t* buffer, int32_t len)

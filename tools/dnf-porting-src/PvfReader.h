@@ -3,6 +3,7 @@
 #include <string>
 #include <stdio.h>
 #include <memory>
+#include <iconv.h>
 
 #include "PvfNode.h"
 #include <functional>
@@ -27,9 +28,9 @@ class PvfReader
 		int32_t sizeGUID; //Always 0x24
 		uint8_t GUID[0x24];
 		int32_t fileVersion;
-		int32_t dirTreeLength;//Í·ÎÄ¼þÕ¼ÓÃ×Ö½Ú´óÐ¡
-		int32_t dirTreeChecksum;//CRC32Âë
-		int32_t numFilesInDirTree;//PVFÎÄ¼þ×ÜÊý
+		int32_t dirTreeLength;//Í·ï¿½Ä¼ï¿½Õ¼ï¿½ï¿½ï¿½Ö½Ú´ï¿½Ð¡
+		int32_t dirTreeChecksum;//CRC32ï¿½ï¿½
+		int32_t numFilesInDirTree;//PVFï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½
 	};
 
 
@@ -77,7 +78,7 @@ public:
 
 
 private:
-	auto dfsCreateNode(PvfNode& tag, PvfTreeNode* tree, const std::vector<std::string>& pathes, int32_t deep) -> void;
+	auto dfsCreateNode(PvfNode& tag, PvfTreeNode* tree, const std::vector<std::string_view>& pathes, int32_t deep) -> void;
 	auto mapping() -> void;
 
 
@@ -92,7 +93,12 @@ private:
 	std::unordered_map<std::string, std::string> stringStringMap;
 	std::vector<std::string> stringBinMap;
 
-	
+	// Hot-path iconv descriptor for CP949 â†’ UTF-8. Held open for the lifetime
+	// of PvfReader so we don't re-open it 600K+ times during dirtree parse +
+	// stringtable decode (saves 30-50% of [READY] latency per Agent 5 baseline).
+	// (iconv_t)-1 means "not opened" (POSIX failure sentinel).
+	iconv_t iconvCdCp949ToUtf8 = (iconv_t)-1;
+
 	PvfTreeNode root;
 	bool loaded = false;
 };

@@ -82,7 +82,7 @@ auto ImgFile::expand() -> void
 	}
 
 	if (!ok) {
-		printf(" Invalid file %s \n", metaInfo.fileName);
+		fprintf(stderr, "[ERROR] Invalid IMG file %s\n", metaInfo.fileName);
 		return;
 	}
 

@@ -890,10 +890,168 @@ OUTPUT TYPES:
   .mob  → {"type":"document",...}  (same as .skl)
   .atk  → {"type":"document",...}
   .act  → {"type":"document",...}
-  npk   → {"type":"npk","imgCount":N,"images":[{"name":"...","offset":N,"size":N}]}
-  frame → {"type":"frame","index":N,"width":W,"height":H,"format":F,"dataBase64":"..."}
-  error → {"type":"error","error":"..."}
+  binary→ {"type":"binary","name":"...","size":N,"formatHint":"..."} (.exe/.dat/.img/.bin/.ogg/.wav/.png/.jpg)
+  pvf_list   → {"type":"pvf_list","files":[...],"count":N}     (--list)
+  npk        → {"type":"npk","imgCount":N,"images":[{"name":"...","offset":N,"size":N}]}
+  img        → {"type":"img","name":"...","frameCount":N,"frames":[...]}
+  frame      → {"type":"frame","index":N,"width":W,"height":H,"format":F,"dataBase64":"..."}
+  resolved_frame → {"type":"resolved_frame","sprite":"...","frame":N,...}
+  error      → {"type":"error","error":"..."}
 )");
+}
+
+// ══════════════════════════════════════════════════════════════
+// Workflow mode handler
+// ══════════════════════════════════════════════════════════════
+// Reads newline-delimited JSON commands from stdin, dispatches to extract /
+// npk-load / npk-frame / npk-list / resolve / status / quit. Returns the
+// number of files extracted via "extract" commands (for the [DONE] log).
+//
+// Extracted from main() so the workflow protocol is independently testable
+// and so main() stays readable (was ~140 lines inline before).
+static int handleWorkflow(PvfReader& reader, long long loadMs, const std::string& sourcePvfHash) {
+    std::string line;
+    int count = 0;
+
+    while (std::getline(std::cin, line)) {
+        while (!line.empty() && (line.back() == '\r' || line.back() == '\n'))
+            line.pop_back();
+        if (line.empty()) continue;
+
+        if (line.find("\"quit\"") != std::string::npos) {
+            printf("{\"type\":\"bye\",\"extracted\":%d}\n---\n", count);
+            fflush(stdout);
+            break;
+        }
+        if (line.find("\"status\"") != std::string::npos) {
+            printf("{\"type\":\"status\",\"ready\":true,\"extracted\":%d,\"loadTimeMs\":%lld}\n---\n",
+                count, loadMs);
+            fflush(stdout);
+            continue;
+        }
+        if (line.find("\"extract\"") != std::string::npos) {
+            auto ps = line.find("\"path\"");
+            if (ps == std::string::npos) { printErrorJson("","missing path"); printf("---\n"); fflush(stdout); continue; }
+            auto vs = line.find('"', ps + 6); if (vs == std::string::npos) { printErrorJson("","bad json"); printf("---\n"); fflush(stdout); continue; }
+            vs++;
+            auto ve = line.find('"', vs); if (ve == std::string::npos) { printErrorJson("","bad json"); printf("---\n"); fflush(stdout); continue; }
+            extractFile(reader, line.substr(vs, ve - vs), false, nullptr, sourcePvfHash);
+            printf("---\n");
+            fflush(stdout);
+            count++;
+            continue;
+        }
+        if (line.find("\"npk-load\"") != std::string::npos) {
+            auto ps = line.find("\"path\"");
+            if (ps == std::string::npos) { printErrorJson("","missing path"); printf("---\n"); fflush(stdout); continue; }
+            auto vs = line.find('"', ps + 6); vs++;
+            auto ve = line.find('"', vs);
+            std::string npk = line.substr(vs, ve - vs);
+            fprintf(stderr, "[LOG] Loading NPK: %s\n", npk.c_str());
+            auto [it, inserted] = NpkFile::GlobalFileTable.emplace(npk, nullptr);
+            if (inserted) it->second = std::make_unique<NpkFile>(npk);
+            it->second->unpack();
+            printf("{\"type\":\"npk-loaded\",\"path\":\"%s\"}\n---\n", escapeJson(npk).c_str());
+            fflush(stdout);
+            continue;
+        }
+        if (line.find("\"npk-frame\"") != std::string::npos) {
+            // Parse: {"cmd":"npk-frame","sprite":"...","frame":0}
+            auto ps = line.find("\"sprite\"");
+            if (ps == std::string::npos) { printErrorJson("","missing sprite"); printf("---\n"); fflush(stdout); continue; }
+            auto vs = line.find('"', ps + 8); vs++;
+            auto ve = line.find('"', vs);
+            std::string sprite = line.substr(vs, ve - vs);
+
+            int fi = 0;
+            auto fp = line.find("\"frame\"");
+            if (fp != std::string::npos) {
+                auto fv = line.find(':', fp + 7);
+                if (fv != std::string::npos) fi = atoi(line.c_str() + fv + 1);
+            }
+
+            try {
+                auto& node = NpkFile::getNpkImgNode(sprite, fi);
+                printf("{\"type\":\"frame\",\"sprite\":\"%s\",\"frame\":%d,",
+                    escapeJson(sprite).c_str(), fi);
+                printImgFrameFields(node, fi, line.find("\"withData\"") != std::string::npos);
+                printf("}\n---\n");
+            } catch (...) {
+                printErrorJson(sprite, "frame_not_found");
+                printf("---\n");
+            }
+            fflush(stdout);
+            continue;
+        }
+
+        if (line.find("\"resolve\"") != std::string::npos) {
+            // {"cmd":"resolve","sprite":"...","frame":N,"npkDir":"..."[,"withData":true]}
+            auto extractStr = [&](const char* key, size_t keyLen) -> std::string {
+                auto kp = line.find(key);
+                if (kp == std::string::npos) return {};
+                auto qs = line.find('"', kp + keyLen);
+                if (qs == std::string::npos) return {};
+                qs++;
+                auto qe = line.find('"', qs);
+                if (qe == std::string::npos) return {};
+                return line.substr(qs, qe - qs);
+            };
+            std::string sprite = extractStr("\"sprite\"", 8);
+            std::string dir    = extractStr("\"npkDir\"", 8);
+            if (sprite.empty()) { printErrorJson("","missing sprite"); printf("---\n"); fflush(stdout); continue; }
+            int fi = 0;
+            auto fp = line.find("\"frame\"");
+            if (fp != std::string::npos) {
+                auto fv = line.find(':', fp + 7);
+                if (fv != std::string::npos) fi = atoi(line.c_str() + fv + 1);
+            }
+            if (!dir.empty()) NpkFile::loadAll(dir);
+            try {
+                auto& node = NpkFile::getNpkImgNode(sprite, fi);
+                printf("{\"type\":\"resolved_frame\",\"sprite\":\"%s\",\"frame\":%d,",
+                    escapeJson(sprite).c_str(), fi);
+                printImgFrameFields(node, fi, line.find("\"withData\"") != std::string::npos);
+                printf("}\n---\n");
+            } catch (const std::exception& e) {
+                printf("{\"type\":\"error\",\"sprite\":\"%s\",\"frame\":%d,\"error\":\"%s\"}\n---\n",
+                    escapeJson(sprite).c_str(), fi, escapeJson(e.what()).c_str());
+            }
+            fflush(stdout);
+            continue;
+        }
+
+        if (line.find("\"npk-list\"") != std::string::npos) {
+            // {"cmd":"npk-list","npk":"..."}
+            auto kp = line.find("\"npk\"");
+            if (kp == std::string::npos) { printErrorJson("","missing npk"); printf("---\n"); fflush(stdout); continue; }
+            auto qs = line.find('"', kp + 5); if (qs == std::string::npos) { printErrorJson("","bad json"); printf("---\n"); fflush(stdout); continue; }
+            qs++;
+            auto qe = line.find('"', qs); if (qe == std::string::npos) { printErrorJson("","bad json"); printf("---\n"); fflush(stdout); continue; }
+            std::string npkPath = line.substr(qs, qe - qs);
+            // Idempotent unpack: don't re-read if already loaded.
+            auto [it, inserted] = NpkFile::GlobalFileTable.emplace(npkPath, nullptr);
+            if (inserted) it->second = std::make_unique<NpkFile>(npkPath);
+            auto& slot = *it->second;
+            size_t beforeCount = NpkFile::GlobalTable.size();
+            if (!slot.isUnpacked()) slot.unpack();
+            size_t afterCount = NpkFile::GlobalTable.size();
+            printf("{\"type\":\"npk\",\"path\":\"%s\",\"newImgCount\":%zu,\"images\":[",
+                escapeJson(npkPath).c_str(), afterCount - beforeCount);
+            bool firstImg = true;
+            for (auto& [name, imgPtr] : NpkFile::GlobalTable) {
+                if (!firstImg) printf(",");
+                firstImg = false;
+                printf("{\"name\":\"%s\"}", escapeJson(name).c_str());
+            }
+            printf("]}\n---\n");
+            fflush(stdout);
+            continue;
+        }
+
+        printf("{\"type\":\"error\",\"error\":\"unknown_command\"}\n---\n");
+        fflush(stdout);
+    }
+    return count;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -971,16 +1129,18 @@ int main(int argc, char* argv[]) {
 
         if (listMode && imgName.empty()) {
             // List all IMG files in NPK
-            printf("{\"type\":\"npk\",\"path\":\"%s\",\"images\":[", escapeJson(npkPath).c_str());
-            // NPK stores ImgFile nodes internally - iterate them
-            // Note: NpkFile doesn't expose imgNodes directly, use GlobalTable
-            bool first = true;
+            // Build the images array first so we can prefix the count.
+            std::string imagesJson;
+            int imgCount = 0;
             for (auto& [name, img] : NpkFile::GlobalTable) {
-                if (!first) printf(",");
-                first = false;
-                printf("{\"name\":\"%s\"}", escapeJson(name).c_str());
+                if (imgCount > 0) imagesJson += ",";
+                imagesJson += "{\"name\":\"";
+                imagesJson += escapeJson(name);
+                imagesJson += "\"}";
+                imgCount++;
             }
-            printf("]}\n");
+            printf("{\"type\":\"npk\",\"path\":\"%s\",\"imgCount\":%d,\"images\":[%s]}\n",
+                escapeJson(npkPath).c_str(), imgCount, imagesJson.c_str());
             return 0;
         }
 
@@ -1016,6 +1176,13 @@ int main(int argc, char* argv[]) {
             }
 
             if (frameIdx >= 0) {
+                if (!img->isValidIndex(frameIdx)) {
+                    printf("{\"type\":\"error\",\"img\":\"%s\",\"frame\":%d,\"frameCount\":%d,\"error\":\"frame_index_out_of_range\"}\n",
+                        escapeJson(imgName).c_str(), frameIdx, (int)img->getNodeCount());
+                    fprintf(stderr, "[ERROR] frame %d out of range (img %s has %d frame(s))\n",
+                        frameIdx, imgName.c_str(), (int)img->getNodeCount());
+                    return 1;
+                }
                 auto& node = (*img)[frameIdx];
                 printf("{\"type\":\"frame\",\"img\":\"%s\",", escapeJson(imgName).c_str());
                 printImgFrameFields(node, frameIdx, withData);
@@ -1038,12 +1205,11 @@ int main(int argc, char* argv[]) {
 
     auto t0 = std::chrono::steady_clock::now();
     fprintf(stderr, "[LOG] Loading PVF: %s\n", pvfPath.c_str());
-    PvfReader* reader = new PvfReader(pvfPath);
+    auto reader = std::make_unique<PvfReader>(pvfPath);
     reader->unpack();
 
     if (!reader->isLoaded()) {
         fprintf(stderr, "[ERROR] Failed to load PVF\n");
-        delete reader;
         return 1;
     }
 
@@ -1071,13 +1237,11 @@ int main(int argc, char* argv[]) {
                 escapeJson(spritePath).c_str(), useFrame);
             printImgFrameFields(node, useFrame, withData);
             printf("}\n");
-            delete reader;
             return 0;
         } catch (const std::exception& e) {
             printf("{\"type\":\"error\",\"sprite\":\"%s\",\"frame\":%d,\"error\":\"%s\"}\n",
                 escapeJson(spritePath).c_str(), useFrame, escapeJson(e.what()).c_str());
             fprintf(stderr, "[ERROR] %s\n", e.what());
-            delete reader;
             return 1;
         }
     }
@@ -1097,7 +1261,7 @@ int main(int argc, char* argv[]) {
             stack.emplace_back(kv.second.get(), kv.first);
         }
         while (!stack.empty()) {
-            auto [node, path] = stack.back();
+            auto [node, path] = std::move(stack.back());
             stack.pop_back();
             if (node->node != nullptr) {
                 // Leaf file. Apply substring filter + extension whitelist.
@@ -1123,7 +1287,6 @@ int main(int argc, char* argv[]) {
         }
         printf("}\n");
         fprintf(stderr, "[DONE] List: %d files. Memory released.\n", count);
-        delete reader;
         return 0;
     }
 
@@ -1156,7 +1319,6 @@ int main(int argc, char* argv[]) {
         if (!effectiveManifestOut.empty()) {
             writeManifest(effectiveManifestOut, pvfPath, "", manifestEntries);
         }
-        delete reader;
         fprintf(stderr, "[DONE] Memory released.\n");
         return 0;
     }
@@ -1195,7 +1357,6 @@ int main(int argc, char* argv[]) {
         } else {
             fprintf(stderr, "[DONE] Batch: %d files in %lldms. Memory released.\n", count, (long long)ms);
         }
-        delete reader;
         return 0;
     }
 
@@ -1242,156 +1403,16 @@ int main(int argc, char* argv[]) {
         } else {
             fprintf(stderr, "[DONE] Pipe: %d files. Memory released.\n", count);
         }
-        delete reader;
         return 0;
     }
 
     // ── Workflow mode ──
     if (workflowMode) {
-        std::string line;
-        int count = 0;
-        NpkFile* activeNpk = nullptr;
-
-        while (std::getline(std::cin, line)) {
-            while (!line.empty() && (line.back() == '\r' || line.back() == '\n'))
-                line.pop_back();
-            if (line.empty()) continue;
-
-            if (line.find("\"quit\"") != std::string::npos) {
-                printf("{\"type\":\"bye\",\"extracted\":%d}\n---\n", count);
-                fflush(stdout);
-                break;
-            }
-            if (line.find("\"status\"") != std::string::npos) {
-                printf("{\"type\":\"status\",\"ready\":true,\"extracted\":%d,\"loadTimeMs\":%lld}\n---\n",
-                    count, (long long)loadMs);
-                fflush(stdout);
-                continue;
-            }
-            if (line.find("\"extract\"") != std::string::npos) {
-                auto ps = line.find("\"path\"");
-                if (ps == std::string::npos) { printErrorJson("","missing path"); printf("---\n"); fflush(stdout); continue; }
-                auto vs = line.find('"', ps + 6); if (vs == std::string::npos) { printErrorJson("","bad json"); printf("---\n"); fflush(stdout); continue; }
-                vs++;
-                auto ve = line.find('"', vs); if (ve == std::string::npos) { printErrorJson("","bad json"); printf("---\n"); fflush(stdout); continue; }
-                extractFile(*reader, line.substr(vs, ve - vs), false, nullptr, sourcePvfHash);
-                printf("---\n");
-                fflush(stdout);
-                count++;
-                continue;
-            }
-            if (line.find("\"npk-load\"") != std::string::npos) {
-                auto ps = line.find("\"path\"");
-                if (ps == std::string::npos) { printErrorJson("","missing path"); printf("---\n"); fflush(stdout); continue; }
-                auto vs = line.find('"', ps + 6); vs++;
-                auto ve = line.find('"', vs);
-                std::string npk = line.substr(vs, ve - vs);
-                fprintf(stderr, "[LOG] Loading NPK: %s\n", npk.c_str());
-                NpkFile::GlobalFileTable.emplace(npk, npk).first->second.unpack();
-                printf("{\"type\":\"npk-loaded\",\"path\":\"%s\"}\n---\n", escapeJson(npk).c_str());
-                fflush(stdout);
-                continue;
-            }
-            if (line.find("\"npk-frame\"") != std::string::npos) {
-                // Parse: {"cmd":"npk-frame","sprite":"...","frame":0}
-                auto ps = line.find("\"sprite\"");
-                if (ps == std::string::npos) { printErrorJson("","missing sprite"); printf("---\n"); fflush(stdout); continue; }
-                auto vs = line.find('"', ps + 8); vs++;
-                auto ve = line.find('"', vs);
-                std::string sprite = line.substr(vs, ve - vs);
-
-                int fi = 0;
-                auto fp = line.find("\"frame\"");
-                if (fp != std::string::npos) {
-                    auto fv = line.find(':', fp + 7);
-                    if (fv != std::string::npos) fi = atoi(line.c_str() + fv + 1);
-                }
-
-                try {
-                    auto& node = NpkFile::getNpkImgNode(sprite, fi);
-                    printf("{\"type\":\"frame\",\"sprite\":\"%s\",\"frame\":%d,",
-                        escapeJson(sprite).c_str(), fi);
-                    printImgFrameFields(node, fi, line.find("\"withData\"") != std::string::npos);
-                    printf("}\n---\n");
-                } catch (...) {
-                    printErrorJson(sprite, "frame_not_found");
-                    printf("---\n");
-                }
-                fflush(stdout);
-                continue;
-            }
-
-            if (line.find("\"resolve\"") != std::string::npos) {
-                // {"cmd":"resolve","sprite":"...","frame":N,"npkDir":"..."[,"withData":true]}
-                auto extractStr = [&](const char* key, size_t keyLen) -> std::string {
-                    auto kp = line.find(key);
-                    if (kp == std::string::npos) return {};
-                    auto qs = line.find('"', kp + keyLen);
-                    if (qs == std::string::npos) return {};
-                    qs++;
-                    auto qe = line.find('"', qs);
-                    if (qe == std::string::npos) return {};
-                    return line.substr(qs, qe - qs);
-                };
-                std::string sprite = extractStr("\"sprite\"", 8);
-                std::string dir    = extractStr("\"npkDir\"", 8);
-                if (sprite.empty()) { printErrorJson("","missing sprite"); printf("---\n"); fflush(stdout); continue; }
-                int fi = 0;
-                auto fp = line.find("\"frame\"");
-                if (fp != std::string::npos) {
-                    auto fv = line.find(':', fp + 7);
-                    if (fv != std::string::npos) fi = atoi(line.c_str() + fv + 1);
-                }
-                if (!dir.empty()) NpkFile::loadAll(dir);
-                try {
-                    auto& node = NpkFile::getNpkImgNode(sprite, fi);
-                    printf("{\"type\":\"resolved_frame\",\"sprite\":\"%s\",\"frame\":%d,",
-                        escapeJson(sprite).c_str(), fi);
-                    printImgFrameFields(node, fi, line.find("\"withData\"") != std::string::npos);
-                    printf("}\n---\n");
-                } catch (const std::exception& e) {
-                    printf("{\"type\":\"error\",\"sprite\":\"%s\",\"frame\":%d,\"error\":\"%s\"}\n---\n",
-                        escapeJson(sprite).c_str(), fi, escapeJson(e.what()).c_str());
-                }
-                fflush(stdout);
-                continue;
-            }
-
-            if (line.find("\"npk-list\"") != std::string::npos) {
-                // {"cmd":"npk-list","npk":"..."}
-                auto kp = line.find("\"npk\"");
-                if (kp == std::string::npos) { printErrorJson("","missing npk"); printf("---\n"); fflush(stdout); continue; }
-                auto qs = line.find('"', kp + 5); if (qs == std::string::npos) { printErrorJson("","bad json"); printf("---\n"); fflush(stdout); continue; }
-                qs++;
-                auto qe = line.find('"', qs); if (qe == std::string::npos) { printErrorJson("","bad json"); printf("---\n"); fflush(stdout); continue; }
-                std::string npkPath = line.substr(qs, qe - qs);
-                // Idempotent unpack: don't re-read if already loaded.
-                auto& slot = NpkFile::GlobalFileTable.emplace(npkPath, npkPath).first->second;
-                size_t beforeCount = NpkFile::GlobalTable.size();
-                if (!slot.isUnpacked()) slot.unpack();
-                size_t afterCount = NpkFile::GlobalTable.size();
-                printf("{\"type\":\"npk\",\"path\":\"%s\",\"newImgCount\":%zu,\"images\":[",
-                    escapeJson(npkPath).c_str(), afterCount - beforeCount);
-                bool firstImg = true;
-                for (auto& [name, imgPtr] : NpkFile::GlobalTable) {
-                    if (!firstImg) printf(",");
-                    firstImg = false;
-                    printf("{\"name\":\"%s\"}", escapeJson(name).c_str());
-                }
-                printf("]}\n---\n");
-                fflush(stdout);
-                continue;
-            }
-
-            printf("{\"type\":\"error\",\"error\":\"unknown_command\"}\n---\n");
-            fflush(stdout);
-        }
+        int count = handleWorkflow(*reader, (long long)loadMs, sourcePvfHash);
         fprintf(stderr, "[DONE] Workflow: %d extracted. Memory released.\n", count);
-        delete reader;
         return 0;
     }
 
-    delete reader;
     printUsage();
     return 1;
 }

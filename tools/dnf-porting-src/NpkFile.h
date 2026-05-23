@@ -15,9 +15,19 @@ class NpkFile
 public:
 	NpkFile(const std::string& file);
 	NpkFile() = default;
+	~NpkFile();
+	NpkFile(const NpkFile&) = delete;
+	NpkFile& operator=(const NpkFile&) = delete;
+	NpkFile(NpkFile&& other) noexcept;
+	NpkFile& operator=(NpkFile&& other) noexcept;
 	static auto loadAll(const std::string& path) -> void;
 	static std::unordered_map<std::string, ImgFile*> GlobalTable;
-	static std::unordered_map<std::string, NpkFile> GlobalFileTable;
+	// unique_ptr value stabilizes NpkFile addresses across rehash. Without it,
+	// GlobalFileTable.emplace() in getNpkImgNode() could move-construct the
+	// NpkFile to a new bucket, leaving every ImgFile.file back-pointer (stored
+	// in imgNodes elements) pointing at the destroyed NpkFile — a UAF that
+	// becomes likely when scanning 4000+ NPKs.
+	static std::unordered_map<std::string, std::unique_ptr<NpkFile>> GlobalFileTable;
 
 	static auto getNpkImgNode(const std::string& path, int32_t index) ->ImgNode&;
 

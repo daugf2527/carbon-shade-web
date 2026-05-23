@@ -22,17 +22,46 @@ auto PvfString::endWith(const std::string& str, const std::string& start) -> boo
 	return str.compare(str.length() - start.length(), start.size(), start) == 0;
 }
 
-auto PvfString::split(std::string input, const std::string& delimiter, std::vector<std::string>& outs) -> void
+auto PvfString::split(std::string_view input, std::string_view delimiter, std::vector<std::string_view>& outs) -> void
 {
-	size_t pos = 0;
-	std::string token;
-	while ((pos = input.find(delimiter)) != std::string::npos)
-	{
-		token = input.substr(0, pos);
-		outs.push_back(token);
-		input.erase(0, pos + delimiter.length());
+	outs.clear();
+	if (delimiter.empty()) {
+		outs.emplace_back(input);
+		return;
 	}
-	outs.push_back(input);
+	// O(n) scan: walk find() forward and slice substrings as string_views.
+	// The original implementation rebuilt `input` after every match via
+	// `input.erase(0, pos + delimiter.length())`, giving O(n²) behavior and
+	// a fresh allocation per token across the ~370K-iteration mapping loop.
+	size_t pos = 0;
+	while (pos <= input.size()) {
+		size_t found = input.find(delimiter, pos);
+		if (found == std::string_view::npos) {
+			outs.emplace_back(input.substr(pos));
+			return;
+		}
+		outs.emplace_back(input.substr(pos, found - pos));
+		pos = found + delimiter.size();
+	}
+}
+
+auto PvfString::split(std::string_view input, std::string_view delimiter, std::vector<std::string>& outs) -> void
+{
+	outs.clear();
+	if (delimiter.empty()) {
+		outs.emplace_back(input);
+		return;
+	}
+	size_t pos = 0;
+	while (pos <= input.size()) {
+		size_t found = input.find(delimiter, pos);
+		if (found == std::string_view::npos) {
+			outs.emplace_back(input.substr(pos));
+			return;
+		}
+		outs.emplace_back(input.substr(pos, found - pos));
+		pos = found + delimiter.size();
+	}
 }
 
 

@@ -35,23 +35,23 @@ static inline auto trim(std::string& s) {
 }
 
 
-static inline auto split(const std::string& line, const std::string& a, const std::string& b) -> std::string
+static inline auto split(std::string_view line, std::string_view a, std::string_view b) -> std::string
 {
-	auto index = 0;
-	if (a != "")
-		index = line.find_first_of(a);//���a��Ϊ������������a
-	if (index == std::string::npos)
+	size_t index = 0;
+	if (!a.empty())
+		index = line.find_first_of(a);
+	if (index == std::string_view::npos)
 		return "";
 	index = index + a.length();
-	auto str = line.substr(index, line.length() - index);//��line��ȡa����Ĳ���
-	if (b == "")
-		return str;
+	auto str = line.substr(index, line.length() - index);
+	if (b.empty())
+		return std::string(str);
 	auto num = str.find_first_of(b);
-	if (num == std::string::npos)
+	if (num == std::string_view::npos)
 	{
 		return "";
 	}
-	return str.substr(0, num);
+	return std::string(str.substr(0, num));
 }
 
 static inline auto toLower(std::string& data) {
@@ -69,24 +69,50 @@ PvfReader::PvfReader(const std::string& path)
 	fseek(file, 0, SEEK_END);
 	length = ftell(file);
 	fseek(file, 0, SEEK_SET);
+
+	// Pre-open the CP949→UTF-8 iconv descriptor once. Both dirtree parse
+	// (370K files) and stringtable decode (230K entries) hit this exclusively;
+	// the previous per-call open/close was the dominant load-time cost.
+	iconvCdCp949ToUtf8 = iconv_open("UTF-8", PvfReader::ENCODING);
+	if (iconvCdCp949ToUtf8 == (iconv_t)-1) {
+		fprintf(stderr, "[ERROR] iconv_open CP949→UTF-8 failed\n");
+		// Fall through; codeConvert() will fall back to per-call open/close.
+	}
 }
 
 PvfReader::~PvfReader()
 {
-	
 	if (file != nullptr)
 		fclose(file);
+	if (iconvCdCp949ToUtf8 != (iconv_t)-1) {
+		iconv_close(iconvCdCp949ToUtf8);
+		iconvCdCp949ToUtf8 = (iconv_t)-1;
+	}
 }
 
 auto PvfReader::codeConvert(const char* fromCharset, const char* toCharset, const char* inbuf, size_t inlen,
 	char* outbuf, size_t outlen) -> int32_t
 {
-	iconv_t cd;
-	const char* temp = inbuf;
 	char** pout = &outbuf;
 	memset(outbuf, 0, outlen);
-	cd = iconv_open(toCharset, fromCharset);
-	if (cd == nullptr)
+
+	// Hot path: CP949 → UTF-8 reuses the cached descriptor. Reset its shift
+	// state before each conversion (stateless-as-if behavior). Any other
+	// direction falls back to per-call open/close.
+	const bool hotPath = (iconvCdCp949ToUtf8 != (iconv_t)-1)
+		&& fromCharset && toCharset
+		&& strcmp(fromCharset, PvfReader::ENCODING) == 0
+		&& strcmp(toCharset, "UTF-8") == 0;
+	if (hotPath) {
+		iconv(iconvCdCp949ToUtf8, nullptr, nullptr, nullptr, nullptr);
+		iconv(iconvCdCp949ToUtf8, const_cast<char**>(&inbuf), &inlen, pout, &outlen);
+		return outlen;
+	}
+
+	iconv_t cd = iconv_open(toCharset, fromCharset);
+	// POSIX returns (iconv_t)-1 on failure, not nullptr — comparing against
+	// nullptr lets failures slip through to iconv() which is undefined behavior.
+	if (cd == (iconv_t)-1)
 		return -1;
 
 	iconv(cd, const_cast<char**>(&inbuf), &inlen, pout, &outlen);
@@ -98,32 +124,38 @@ auto PvfReader::codeConvert(const char* fromCharset, const char* toCharset, cons
 auto PvfReader::unpack() -> void
 {
 	fread(&header, sizeof(PvfHeader), 1, file);
-	auto headLength = header.dirTreeLength;//��ȡ�ļ������б��ֽ��ܴ�С
-	auto dirTreeData = new uint8_t[header.dirTreeLength];
-	fread(dirTreeData, header.dirTreeLength, 1, file);
-	decrypt(dirTreeData, header.dirTreeLength, header.dirTreeChecksum);
+	auto headLength = header.dirTreeLength;
+	auto dirTreeData = std::make_unique<uint8_t[]>(header.dirTreeLength);
+	fread(dirTreeData.get(), header.dirTreeLength, 1, file);
+	decrypt(dirTreeData.get(), header.dirTreeLength, header.dirTreeChecksum);
 
 	int32_t offset = 0;
-	auto outChr = new char[1024];
+	auto outChr = std::make_unique<char[]>(1024);
 
 	for (int32_t i = 0; i < header.numFilesInDirTree; i++)
 	{
 
-		auto fileNumber		= read<uint32_t>(dirTreeData, offset);
-		auto filePathLength = read<int32_t>(dirTreeData, offset + 4);
-		auto filePath		= dirTreeData + offset + 8;
-		auto fileLength		= read<int32_t>(dirTreeData, offset + 8 + filePathLength);
-		auto fileCrc32		= read<uint32_t>(dirTreeData, offset + 12 + filePathLength);
-		auto relativeOffset = read<int32_t>(dirTreeData, offset + 0x10 + filePathLength);
+		auto fileNumber		= read<uint32_t>(dirTreeData.get(), offset);
+		auto filePathLength = read<int32_t>(dirTreeData.get(), offset + 4);
+		auto filePath		= dirTreeData.get() + offset + 8;
+		auto fileLength		= read<int32_t>(dirTreeData.get(), offset + 8 + filePathLength);
+		auto fileCrc32		= read<uint32_t>(dirTreeData.get(), offset + 12 + filePathLength);
+		auto relativeOffset = read<int32_t>(dirTreeData.get(), offset + 0x10 + filePathLength);
 
-		//CP949(����)
-		codeConvert(PvfReader::ENCODING, "UTF-8", (char*)filePath, filePathLength, outChr, filePathLength * 2);
-		std::string filePathName(outChr);
+		//CP949
+		codeConvert(PvfReader::ENCODING, "UTF-8", (char*)filePath, filePathLength, outChr.get(), filePathLength * 2);
+		std::string filePathName(outChr.get());
 		rtrim(filePathName);
 		auto & node			= pvfNodes[filePathName];
 		node.fileNumber		= fileNumber;
 		node.filePathLength = filePathLength;
-		node.offset			= filePath;
+		// NOTE: node.offset intentionally left as nullptr. The previous
+		// assignment `node.offset = filePath` stored a pointer into
+		// dirTreeData, which is freed when unpack() returns — every PvfNode
+		// would then hold a dangling pointer (use-after-free on dereference).
+		// The field is never read currently; if a future use needs an
+		// in-memory pointer, allocate ownership on PvfReader (e.g. keep
+		// dirTreeData alive as a member) instead of restoring this line.
 		node.fileLength		= fileLength;
 		node.fileCrc32		= fileCrc32;
 		node.relativeOffset = sizeof(PvfHeader) + header.dirTreeLength + relativeOffset;
@@ -133,16 +165,13 @@ auto PvfReader::unpack() -> void
 	}
 	unpackStringTable(nullptr,nullptr);
 	mapping();
-
-	delete[] outChr;
-	delete[] dirTreeData;
 }
 
 auto PvfReader::setPosition(uint64_t position) -> void
 {
-	if (position >= length) 
+	if (position >= length)
 	{
-		printf("PvfReader :: OutOfFileSizeException : %lld \n",position);
+		fprintf(stderr, "[ERROR] PvfReader :: OutOfFileSizeException : %lld \n", position);
 		return;
 	}
 	fseek(file, position, SEEK_SET);
@@ -171,64 +200,83 @@ auto PvfReader::decrypt(uint8_t* ptr, uint32_t len, uint32_t crc32) -> void
 	}*/
 }
 
-auto PvfReader::dfsCreateNode(PvfNode& tag, PvfTreeNode * tree, const std::vector<std::string>& pathes, int32_t deep) -> void
+auto PvfReader::dfsCreateNode(PvfNode& tag, PvfTreeNode * tree, const std::vector<std::string_view>& pathes, int32_t deep) -> void
 {
+	// One string allocation per level (for the map key); the rest is reused
+	// across siblings via the hoisted std::string_view vector in mapping().
+	std::string segment(pathes[deep]);
+
 	if (pathes.size() - 1 == deep)
 	{
-		tree->children[pathes[deep]] = std::make_unique<PvfTreeNode>(pathes[deep]);
-		tree->children[pathes[deep]]->parent = tree;
-		tree->children[pathes[deep]]->node = &tag;
+		tree->children[segment] = std::make_unique<PvfTreeNode>(segment);
+		tree->children[segment]->parent = tree;
+		tree->children[segment]->node = &tag;
 		return;
 	}
 
-	if (tree->children.find(pathes[deep]) == tree->children.end())
+	if (tree->children.find(segment) == tree->children.end())
 	{
-		tree->children[pathes[deep]] = std::make_unique<PvfTreeNode>(pathes[deep]);
-		tree->children[pathes[deep]]->parent = tree;
+		tree->children[segment] = std::make_unique<PvfTreeNode>(segment);
+		tree->children[segment]->parent = tree;
 	}
-	auto & item1 = tree->children[pathes[deep]];
+	auto & item1 = tree->children[segment];
 	dfsCreateNode(tag, item1.get(), pathes, deep + 1);
 }
 
 auto PvfReader::mapping() -> void
 {
+	// Hoist the segment vector out of the loop so its allocation amortizes
+	// across ~370K paths instead of repeating per-iteration. PvfString::split
+	// clears it but preserves capacity.
+	std::vector<std::string_view> out;
+	out.reserve(8);
 	for (auto & kv : pvfNodes)
 	{
-		std::vector<std::string> out;
-		PvfString::split(kv.first,"/", out);
+		PvfString::split(kv.first, "/", out);
 		dfsCreateNode(kv.second, &root, out, 0);
 	}
 	std::cerr << "mapping over"<<std::endl;
 	loaded = true;
-} 
+}
 
 auto PvfReader::unpackStringTable(const std::function<void(std::function<void* ()>, std::function<void(void*)>,int32_t)>& addTask, const std::function<void()>& waitAll) -> void
 {
 	auto& strtable = pvfNodes["stringtable.bin"];
 
 	auto ptr = strtable.expand();
-	
+
 	auto buffer = ptr.get();
 
 	int32_t count = read<int32_t>(ptr.get(), 0);
 
 	stringBinMap.resize(count);
-	char* outChars = new char[32767];
+	// CP949 → UTF-8 expansion is at most 3 bytes per source byte. The previous
+	// fixed 32767-byte buffer overflows when a stringtable entry exceeds
+	// 16383 bytes (PvfReader.cpp old line ~225). Grow on demand instead, and
+	// hard-cap pathological lengths so a corrupted PVF can't request gigabytes.
+	std::vector<char> outChars(32768, 0);
+	const int32_t kMaxEntryLen = 1 << 20;  // 1 MB, far above legitimate strings.
 	for (int32_t i = 0; i < count; i++)
 	{
-		auto startPos = read<int32_t>(buffer, i * 4 + 4);//ÿ��ѭ���ĵ�һ��int�Ǽ���ʼ�ĵ�ַ
-		auto endPos = read<int32_t>	 (buffer, i * 4 + 8);//ÿ��ѭ���ĵڶ���int�Ǽ������ĵ�ַ
-		auto len = endPos - startPos;//�������ֵ�ĳ���
-		int32_t index = i;//�������ǳ��ֵĵڼ���
+		auto startPos = read<int32_t>(buffer, i * 4 + 4);
+		auto endPos = read<int32_t>	 (buffer, i * 4 + 8);
+		auto len = endPos - startPos;
+		int32_t index = i;
 
-	
-		codeConvert(PvfReader::ENCODING, "UTF-8", (char*)buffer + startPos + 4, len, outChars, len * 2);
-		this->stringBinMap[index] = { outChars };//�ŵ��������б���
+		if (len <= 0 || len > kMaxEntryLen) {
+			stringBinMap[index].clear();
+			continue;
+		}
+		size_t needed = static_cast<size_t>(len) * 3 + 1;
+		if (outChars.size() < needed) outChars.resize(needed);
+		std::fill_n(outChars.begin(), needed, 0);
+
+		codeConvert(PvfReader::ENCODING, "UTF-8", (char*)buffer + startPos + 4, len, outChars.data(), needed);
+		this->stringBinMap[index] = outChars.data();
 		toLower(this->stringBinMap[index]);
 		trim(this->stringBinMap[index]);
-	
+
 	}
-	delete[] outChars;
 	//##################################
 	auto& nstrtable = pvfNodes["n_string.lst"];
 	ptr = nstrtable.expand();
@@ -249,16 +297,18 @@ auto PvfReader::unpackStringTable(const std::function<void(std::function<void* (
 			if (auto node = pvfNodes.find(k); node != pvfNodes.end())
 			{
 				auto full = std::static_pointer_cast<PvfTextScript>(node->second.unpack());
-				std::vector<std::string> out;
-				PvfString::split(full->getContent(),"\r\n", out);
+				// `full` keeps the underlying string alive for the duration of this
+				// scope, so string_views over its content stay valid.
+				std::vector<std::string_view> out;
+				PvfString::split(full->getContent(), "\r\n", out);
 
-				for (auto& line : out)//���ݻ��зָ���б���
+				for (auto& line : out)
 				{
-					if (auto pos = line.find_first_of('>'); pos != line.npos)//�а�������'>'����name_xxx>�񶷼�
+					if (auto pos = line.find_first_of('>'); pos != std::string_view::npos)
 					{
 						auto key = split(line, "", ">");
 						auto val = split(line, ">", "");
-						stringStringMap[key] = val;//�ŵ��������б���
+						stringStringMap[key] = val;
 					}
 				}
 			}
@@ -269,8 +319,11 @@ auto PvfReader::unpackStringTable(const std::function<void(std::function<void* (
 auto PvfReader::write(const std::string& file, const std::string& str) -> void
 {
 	std::string delimiter = "/";
-	std::vector<std::string> outs;
-	PvfString::split ("/", file, outs);
+	std::vector<std::string_view> outs;
+	// Pre-existing bug: the original call was split("/", file, outs), which
+	// splits the literal "/" by whatever the `file` path contains — clearly
+	// the arguments were reversed. Intent is "split `file` by '/'".
+	PvfString::split(file, "/", outs);
 
 	if (outs.size() > 1) {
 		auto pos = file.find_last_of(delimiter);

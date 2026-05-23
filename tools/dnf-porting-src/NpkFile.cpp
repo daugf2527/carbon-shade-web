@@ -20,6 +20,38 @@ NpkFile::NpkFile(const std::string& initFile)
 {
 
 }
+
+NpkFile::~NpkFile()
+{
+	if (file != nullptr) {
+		fclose(file);
+		file = nullptr;
+	}
+}
+
+NpkFile::NpkFile(NpkFile&& other) noexcept
+	: fileName(std::move(other.fileName)),
+	  file(other.file),
+	  offset(other.offset),
+	  length(other.length),
+	  imgNodes(std::move(other.imgNodes))
+{
+	other.file = nullptr;
+}
+
+NpkFile& NpkFile::operator=(NpkFile&& other) noexcept
+{
+	if (this != &other) {
+		if (file != nullptr) fclose(file);
+		fileName = std::move(other.fileName);
+		file = other.file;
+		offset = other.offset;
+		length = other.length;
+		imgNodes = std::move(other.imgNodes);
+		other.file = nullptr;
+	}
+	return *this;
+}
 auto NpkFile::openFile() -> bool
 {
 	file = fopen(fileName.c_str(), "rb");
@@ -48,7 +80,7 @@ auto NpkFile::loadAll(const std::string& path) -> void
 			std::string basename = entry.path().stem().string();
 			PvfString::toLower(basename);
 			g_npkBasenameToPath[basename] = fullPath;
-			GlobalFileTable.emplace(fullPath, fullPath);
+			GlobalFileTable.emplace(fullPath, std::make_unique<NpkFile>(fullPath));
 		}
 	}
 }
@@ -60,7 +92,7 @@ auto NpkFile::unpack() -> void
 	readBytes(reinterpret_cast<uint8_t*>(&header), sizeof(NpkHeader));
 
 	if (strcmp(header.flag, HeaderFlag) != 0) {
-		printf("is not a valid npk file");
+		fprintf(stderr, "[ERROR] is not a valid npk file\n");
 		return;
 	}
 
@@ -81,7 +113,7 @@ auto NpkFile::setPosition(uint32_t position) -> void
 {
 	if (position > length)
 	{
-		printf("NpkFile :: OutOfFileSizeException : %d \n", position);
+		fprintf(stderr, "[ERROR] NpkFile :: OutOfFileSizeException : %d \n", position);
 		return;
 	}
 	fseek(file, position, SEEK_SET);
@@ -125,7 +157,7 @@ static const std::string delimiter = "/";
 
 std::unordered_map<std::string, ImgFile*> NpkFile::GlobalTable;
 
-std::unordered_map<std::string, NpkFile> NpkFile::GlobalFileTable;
+std::unordered_map<std::string, std::unique_ptr<NpkFile>> NpkFile::GlobalFileTable;
 
 auto NpkFile::getNpkImgNode(const std::string& path, int32_t index) -> ImgNode&
 {
@@ -166,7 +198,11 @@ auto NpkFile::getNpkImgNode(const std::string& path, int32_t index) -> ImgNode&
 
 		// Ensure the NPK is unpacked. unpack() populates GlobalTable with
 		// every IMG it contains, keyed by the full "sprite/.../<name>.img" path.
-		auto& slot = GlobalFileTable.emplace(itPath->second, itPath->second).first->second;
+		auto [it, inserted] = GlobalFileTable.emplace(itPath->second, nullptr);
+		if (inserted) {
+			it->second = std::make_unique<NpkFile>(itPath->second);
+		}
+		auto& slot = *it->second;
 		if (slot.imgNodes.empty()) {
 			slot.unpack();
 		}
@@ -177,6 +213,10 @@ auto NpkFile::getNpkImgNode(const std::string& path, int32_t index) -> ImgNode&
 
 		auto itImg = GlobalTable.find(imgKey);
 		if (itImg != GlobalTable.end() && itImg->second != nullptr) {
+			if (!itImg->second->isValidIndex(index)) {
+				throw std::runtime_error("frame index out of range: " + std::to_string(index)
+					+ " (img " + imgKey + " has " + std::to_string(itImg->second->getNodeCount()) + " frame(s))");
+			}
 			return (*itImg->second)[index];
 		}
 	}
