@@ -463,10 +463,9 @@ if (!existsSync(EXTRACT_BIN)) {
     }
   }
 
-  // 4c. After SklParser wired (2026-05-23): .skl now parses successfully, so
-  //     the previous chr+skl+mob batch no longer exercises partial-failure
-  //     capture. Substitute a .dgn (dungeon definition — still no parser
-  //     registered) to keep the partial-failure path under test.
+  // 4c. After DgnParser + EtcParser wired (2026-05-23 second pass): .dgn now
+  //     parses successfully too. Substitute a .act (worldmap action — still no
+  //     parser registered) to keep the partial-failure path under test.
   {
     const debugOut = path.join(PROBE_TMP, "neg-partial");
     const r = runCli([
@@ -475,7 +474,7 @@ if (!existsSync(EXTRACT_BIN)) {
       "--file",
       "character/swordman/swordman.chr",
       "--file",
-      "dungeon/act3/jungle.dgn",
+      "worldmap/ui/action/background_event.act",
       "--file",
       "monster/goblin/goblin.mob",
       "--debug-out",
@@ -491,16 +490,16 @@ if (!existsSync(EXTRACT_BIN)) {
       } catch {
         bug("real-partial-failure", `CLI stdout not JSON: ${r.stdout.slice(0, 200)}`);
       }
-      const failingExt = summary.parseErrors?.find(e => e.path.endsWith(".dgn"));
+      const failingExt = summary.parseErrors?.find(e => e.path.endsWith(".act"));
       if (summary.filesExtracted === 3 && summary.filesParsed === 2 && failingExt) {
         ok(
           "real-partial-failure",
-          `B9 fix verified: chr+mob parsed, dgn error captured; filesExtracted=3, filesParsed=2, parseErrors[0]=${failingExt.path}`,
+          `B9 fix verified: chr+mob parsed, act error captured; filesExtracted=3, filesParsed=2, parseErrors[0]=${failingExt.path}`,
         );
       } else {
         bug(
           "real-partial-failure",
-          `expected filesExtracted=3, filesParsed=2, parseErrors containing .dgn entry; got ${JSON.stringify(summary)}`,
+          `expected filesExtracted=3, filesParsed=2, parseErrors containing .act entry; got ${JSON.stringify(summary)}`,
         );
       }
     }
