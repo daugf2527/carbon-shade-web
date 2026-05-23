@@ -8,11 +8,12 @@
 //   - exits 1 if PROBE_STRICT=1 and any bugs are exposed
 //   - exits 0 otherwise (baseline known-bug count tolerated)
 
-export const BASELINE_BUGS = 5;
+export const BASELINE_BUGS = 0;
 
 import { assert } from "./test-utils.js";
 import {
   buildDnfExtractPipeArgs,
+  DEFAULT_DNF_EXTRACT_PATH,
   parseDnfExtractPipeOutput,
   loadPvfDocumentsViaPipe,
 } from "../../src/dnf-native-combat/data/parsers/PvfDocumentLoader.js";
@@ -132,9 +133,10 @@ try {
   bug("invalid JSON did NOT throw (silent corruption)");
 } catch (e) {
   const msg = (e as Error).message;
-  // The current implementation just lets JSON.parse propagate; no chunk context.
-  if (msg.includes("oops") || msg.includes("chunk") || msg.toLowerCase().includes("dnf-extract")) {
-    ok(`invalid JSON error includes context: ${msg.slice(0, 80)}`);
+  // After fix: parser wraps JSON.parse with try/catch and prepends "chunk index N
+  // (preview: ...)" so operators can spot the offending chunk in 370k-file batches.
+  if (msg.includes("chunk") && msg.includes("oops")) {
+    ok(`invalid JSON error includes chunk + preview context: ${msg.slice(0, 100)}`);
   } else {
     bug(`invalid JSON error is opaque (no chunk/source context): "${msg}". Downstream debugging will be painful when the C++ tool emits a malformed frame.`);
   }
@@ -150,8 +152,11 @@ try {
   bug("invalid 2nd chunk silently accepted");
 } catch (e) {
   const msg = (e as Error).message;
-  if (msg.includes("good.atk") || msg.includes("chunk") || msg.includes("index 1")) {
-    ok("2nd-chunk JSON error identifies position");
+  // Fix: chunk index appears in error (the 2nd chunk = "index 2" after the
+  // separator-induced empty leading chunk; precise number doesn't matter as
+  // long as "chunk" appears with a number).
+  if (/chunk index \d+/.test(msg)) {
+    ok(`2nd-chunk JSON error identifies position: ${msg.slice(0, 100)}`);
   } else {
     bug(`2nd-chunk JSON error lacks index/path locator: "${msg}". Hard to find which file produced bad output.`);
   }
@@ -240,6 +245,8 @@ try {
   const msg = (e as Error).message;
   if (msg.includes("[object Object]")) {
     bug(`error object stringified as "[object Object]": "${msg}". Should JSON.stringify the error payload.`);
+  } else if (msg.includes('"code":42') || msg.includes('{"code":42}')) {
+    ok(`error object JSON-stringified: ${msg.slice(0, 100)}`);
   } else {
     ok(`error object placeholder: ${msg}`);
   }
@@ -326,25 +333,17 @@ try {
   }
 }
 
-// Probe #18: platform default executable path. Loader hardcodes ".exe" on all OSes,
-// but scripts/pipeline.mjs (line 6) correctly switches between win32/linux paths.
-// This is a real divergence — verify by inspection of args, since the default is internal.
+// Probe #18: platform default executable path. After fix, loader exports
+// DEFAULT_DNF_EXTRACT_PATH which selects between `.exe` (win32) and bare ELF
+// (linux/macos), mirroring scripts/pipeline.mjs:6.
 {
-  // We can't observe `executablePath ?? "tools/dnf-extract.exe"` directly without spawning,
-  // but the build args are public.
   const args = buildDnfExtractPipeArgs({ pvfPath: "x" });
-  // If a user calls loadPvfDocumentsViaPipe without executablePath on Linux/macOS,
-  // spawn("tools/dnf-extract.exe", ...) will fail with ENOENT. pipeline.mjs avoids
-  // this by always passing executablePath; tests that drive the loader directly
-  // (none currently) would hit it.
-  if (process.platform !== "win32") {
-    bug(`PvfDocumentLoader.ts:31 hardcodes "tools/dnf-extract.exe" as default but current platform is ${process.platform}. scripts/pipeline.mjs:6 has the correct platform switch; loader does not. Callers that omit executablePath on non-Windows will get ENOENT.`);
+  const expectedSuffix = process.platform === "win32" ? "dnf-extract.exe" : "dnf-extract";
+  if (DEFAULT_DNF_EXTRACT_PATH.endsWith(expectedSuffix)) {
+    ok(`DEFAULT_DNF_EXTRACT_PATH=${DEFAULT_DNF_EXTRACT_PATH} matches platform ${process.platform}`);
   } else {
-    ok(`platform is win32; default "tools/dnf-extract.exe" matches. (Loader still hardcodes .exe; non-Windows callers must pass executablePath.)`);
-    // Still report it as a latent bug.
-    bug("LATENT: PvfDocumentLoader.ts:31 default executable is win32-only; non-Windows callers must always pass executablePath. scripts/pipeline.mjs:6 has the proper platform switch — loader should mirror it.");
+    bug(`DEFAULT_DNF_EXTRACT_PATH=${DEFAULT_DNF_EXTRACT_PATH} does not match platform ${process.platform} (expected suffix ${expectedSuffix})`);
   }
-  // Suppress unused-var lint
   void args;
 }
 

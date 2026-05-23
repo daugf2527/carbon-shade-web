@@ -10,26 +10,74 @@ export function buildDnfExtractPipeArgs(options: DnfExtractPipeOptions): string[
   return ["--pvf", options.pvfPath, "--pipe"];
 }
 
+// Platform-aware default — dnf-extract is built as `.exe` on Windows and a
+// bare ELF on Linux/macOS. Mirror scripts/pipeline.mjs:6 so non-Windows
+// callers that omit executablePath don't ENOENT on a stray .exe suffix.
+export const DEFAULT_DNF_EXTRACT_PATH = process.platform === "win32"
+  ? "tools/dnf-extract.exe"
+  : "tools/dnf-extract";
+
 export function parseDnfExtractPipeOutput(stdout: string): PvfDocument[] {
-  return stdout
-    .split(/(?:^|\r?\n)---\r?\n?/)
-    .map(chunk => chunk.trim())
-    .filter(Boolean)
-    .map(chunk => {
-      const document = JSON.parse(chunk) as PvfDocument & { error?: string };
-      if (document.type === "error") {
-        throw new Error(`dnf-extract error for ${document.path ?? "<unknown>"}: ${document.error ?? "unknown error"}`);
+  // Each document fragment is terminated by a `---` line. Between fragments,
+  // the C++ tool can emit additional standalone `---` lines (one per filter
+  // skip; see dnf-extract source line 1217). A regex split on `---` plus
+  // newlines mangles consecutive separators ("---\n---\n" leaves a bare "---"
+  // token that JSON.parse then chokes on). Tokenize line-by-line instead and
+  // group lines between `---` separators into chunks.
+  const lines = stdout.split(/\r?\n/);
+  const chunks: string[] = [];
+  let buffer: string[] = [];
+  for (const line of lines) {
+    if (line === "---") {
+      if (buffer.length > 0) {
+        chunks.push(buffer.join("\n"));
+        buffer = [];
       }
-      return document;
-    })
-    .filter(document => document.type === "document");
+    } else {
+      buffer.push(line);
+    }
+  }
+  if (buffer.length > 0) chunks.push(buffer.join("\n"));
+
+  const documents: PvfDocument[] = [];
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i].trim();
+    if (!chunk) continue;
+    let document: PvfDocument & { error?: unknown };
+    try {
+      document = JSON.parse(chunk) as PvfDocument & { error?: unknown };
+    } catch (parseError) {
+      const preview = chunk.length > 80 ? `${chunk.slice(0, 80)}…` : chunk;
+      const reason = parseError instanceof Error ? parseError.message : String(parseError);
+      throw new Error(
+        `dnf-extract pipe: JSON.parse failed for chunk index ${i} ` +
+        `(preview: ${JSON.stringify(preview)}): ${reason}`,
+      );
+    }
+    if (document.type === "error") {
+      const path = typeof document.path === "string" && document.path.length > 0
+        ? document.path
+        : "<unknown>";
+      // The C++ tool typically emits a string `error`, but defend against
+      // object payloads (e.g. structured error codes) by JSON-stringifying
+      // non-string values. Otherwise `${object}` produces "[object Object]".
+      const errorPayload = typeof document.error === "string"
+        ? document.error
+        : document.error === undefined
+          ? "unknown error"
+          : JSON.stringify(document.error);
+      throw new Error(`dnf-extract error for ${path} (chunk index ${i}): ${errorPayload}`);
+    }
+    documents.push(document);
+  }
+  return documents.filter(document => document.type === "document");
 }
 
 export async function loadPvfDocumentsViaPipe(
   paths: string[],
   options: DnfExtractPipeOptions,
 ): Promise<PvfDocument[]> {
-  const executablePath = options.executablePath ?? "tools/dnf-extract.exe";
+  const executablePath = options.executablePath ?? DEFAULT_DNF_EXTRACT_PATH;
   const child = spawn(executablePath, buildDnfExtractPipeArgs(options), {
     cwd: process.cwd(),
     stdio: ["pipe", "pipe", "pipe"],

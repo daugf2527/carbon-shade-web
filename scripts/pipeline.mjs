@@ -7,9 +7,26 @@ const EXTRACT = path.join(ROOT, "tools", process.platform === "win32" ? "dnf-ext
 
 function parseArgs(argv) {
   const args = { files: [], errors: [] };
+  // Helper: consume the next argv element as the value for `flag`, but reject
+  // when the next element starts with `--` (a sibling flag) — otherwise a
+  // bare placeholder like `--pattern --pvf foo.pvf` would silently eat `--pvf`.
+  const consumeValue = (flag, i) => {
+    const value = argv[i + 1];
+    if (value === undefined) {
+      args.errors.push(`${flag} requires a value (got end of argv)`);
+      return null;
+    }
+    if (value.startsWith("--")) {
+      args.errors.push(`${flag} requires a value, got next flag ${value}`);
+      return null;
+    }
+    return value;
+  };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
-    if (arg === "--pvf") args.pvf = argv[++i];
+    if (arg === "--pvf") {
+      const v = consumeValue(arg, i); if (v !== null) args.pvf = v; i++;
+    }
     else if (arg === "--file") {
       const value = argv[++i];
       if (!value || value.startsWith("--")) {
@@ -18,9 +35,16 @@ function parseArgs(argv) {
         args.files.push(value);
       }
     }
-    else if (arg === "--stop-at") args.stopAt = argv[++i];
-    else if (arg === "--debug-out") args.debugOut = argv[++i];
-    else if (arg === "--domain" || arg === "--job" || arg === "--pattern") i++;
+    else if (arg === "--stop-at") {
+      const v = consumeValue(arg, i); if (v !== null) args.stopAt = v; i++;
+    }
+    else if (arg === "--debug-out") {
+      const v = consumeValue(arg, i); if (v !== null) args.debugOut = v; i++;
+    }
+    else if (arg === "--domain" || arg === "--job" || arg === "--pattern") {
+      // No-op placeholders, but still validate that they don't eat a sibling flag.
+      const v = consumeValue(arg, i); if (v !== null) { /* discard */ } i++;
+    }
     else if (arg === "--full" || arg === "--incremental") args.mode = arg.slice(2);
     else if (arg === "--help" || arg === "-h") args.help = true;
     else if (arg.startsWith("--")) args.errors.push(`Unknown flag: ${arg}`);

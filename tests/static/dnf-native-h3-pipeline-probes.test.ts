@@ -11,7 +11,7 @@
  *   - exits 0 otherwise (baseline known-bug count tolerated for CI staging)
  */
 
-export const BASELINE_BUGS = 6;
+export const BASELINE_BUGS = 0;
 
 import { mkdir, mkdtemp, rm, readFile, stat } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
@@ -184,24 +184,19 @@ try {
   bug("parse-multi-dot", `threw: ${(e as Error).message}`);
 }
 
-// 1i. Hidden-file-style path ".chr" → extname returns "" (hidden file
-//     convention) → default branch → "No parser registered for .chr".
-//     Subtle pitfall if anyone ever passes a path with no parent like ".chr".
+// 1i. Hidden-file-style path ".chr" — after fix, parseStage's routing checks
+//     basename for ".chr"/".mob"/".atk" when extname returns "". This handles
+//     the surprising hidden-file convention that path.extname applies to dot-
+//     prefixed bare basenames.
 try {
-  parsePvfDocument(makeDocument(".chr"));
-  bug("parse-dotfile-ext-only", "expected throw");
+  parsePvfDocument(makeChrDoc(".chr"));
+  ok("parse-dotfile-ext-only", "basename-fallback routes .chr to ChrParser");
 } catch (e) {
   const msg = (e as Error).message;
-  if (msg === "No parser registered for .chr") {
-    bug(
-      "parse-dotfile-ext-only",
-      "extname('.chr') === '' so the .chr file is treated as having no " +
-        "extension and rejected. Caller could be surprised. " +
-        msg,
-    );
-  } else {
-    bug("parse-dotfile-ext-only", `unexpected error: ${msg}`);
-  }
+  bug(
+    "parse-dotfile-ext-only",
+    `expected ChrParser to accept basename '.chr' via dotfile fallback; threw: ${msg}`,
+  );
 }
 
 // 1j. Unsupported extension .ani — error includes path? Verify.
@@ -220,17 +215,20 @@ try {
   }
 }
 
-// 1k. Unsupported extension .skl
+// 1k. SklParser dispatch — .skl is now wired into parseStage (2026-05-23).
+// A minimal synthetic .skl Document should route to parseSklDocument without
+// throwing. SklParser only requires presence of standard sections; an empty
+// sections array yields a SkillDef with all optional fields null. The probe
+// verifies the dispatch path, not deep .skl semantics (those live in h6).
 try {
-  parsePvfDocument(makeDocument("character/swordman/swordman.skl"));
-  bug("parse-skl-unsupported", "expected throw");
-} catch (e) {
-  const msg = (e as Error).message;
-  if (msg.includes("character/swordman/swordman.skl")) {
-    ok("parse-skl-unsupported", "error includes path");
+  const result = parsePvfDocument(makeDocument("character/swordman/swordman.skl"));
+  if (result && (result as { kind?: string }).kind === "skl") {
+    ok("parse-skl-supported", "routed to SklParser (kind=skl)");
   } else {
-    bug("parse-skl-unsupported", `bad error: ${msg}`);
+    bug("parse-skl-supported", `expected kind=skl, got ${JSON.stringify(result).slice(0, 80)}`);
   }
+} catch (e) {
+  bug("parse-skl-supported", `unexpected throw: ${(e as Error).message}`);
 }
 
 // 1l. Trailing dot path "foo." → extname returns "." → not a registered ext
@@ -314,49 +312,60 @@ try {
 }
 
 // 2c. Partial-failure semantics: middle document has unsupported extension →
-//     entire pipeline aborts via the .map throw. No partial result, no
-//     per-document error capture. Design §2.3 promises 3-level error model
-//     (error/warning/info) but the runner has none of that.
+//     pipelineRunner catches per-document parse errors instead of aborting
+//     the whole batch (B9 fix). Result: filesExtracted=3, filesParsed=2,
+//     parseErrors[0] = unsupported-ani entry. Caller can see exactly which
+//     file failed without retrying one-by-one.
 try {
   const docs: PvfDocument[] = [
     makeDocument("character/swordman/attackinfo/ok1.atk", []),
-    makeDocument("anim/bad.ani", []), // unsupported ext → throws
+    makeDocument("anim/bad.ani", []), // unsupported ext → captured, not thrown
     makeDocument("character/swordman/attackinfo/ok2.atk", []),
   ];
   const debugOut = path.join(PROBE_TMP, "partial");
-  await runExtractParsePipeline({
+  const result = await runExtractParsePipeline({
     pvfPath: "fixture.pvf",
     files: docs.map(d => d.path),
     debugOut,
     loadDocuments: async () => docs,
   });
-  bug("runner-partial-failure", "expected throw, got success");
-} catch (e) {
-  const msg = (e as Error).message;
-  if (msg.includes("anim/bad.ani")) {
-    bug(
+  const aniError = result.parseErrors.find(e => e.path === "anim/bad.ani");
+  if (
+    result.filesExtracted === 3 &&
+    result.filesParsed === 2 &&
+    result.parseErrors.length === 1 &&
+    aniError !== undefined &&
+    /No parser registered/.test(aniError.message)
+  ) {
+    ok(
       "runner-partial-failure",
-      "single unparseable document aborts the entire batch; no partial result " +
-        "and no per-document error capture (design §2.3 promises error/warning/info " +
-        "model). Caller has to retry one-by-one to find the offender. Error: " +
-        msg,
+      `per-doc try/catch captured anim/bad.ani as parseErrors[0]; extracted=${result.filesExtracted} parsed=${result.filesParsed}`,
     );
   } else {
-    bug("runner-partial-failure", `unexpected error shape: ${msg}`);
+    bug(
+      "runner-partial-failure",
+      `expected partial success (2 parsed + 1 error), got extracted=${result.filesExtracted} parsed=${result.filesParsed} errors=${JSON.stringify(result.parseErrors)}`,
+    );
   }
-  // Side-effect probe: did debug-out files get written before the throw?
+  // Side-effect probe: debug-out files SHOULD now exist (runner writes all
+  // three jsonl files after the per-doc capture loop).
   try {
     const probeStat = await stat(path.join(PROBE_TMP, "partial", "extract.jsonl"));
-    bug(
-      "runner-partial-side-effect",
-      `extract.jsonl size=${probeStat.size} was written before throw (no rollback) — debug files now stale relative to parse.jsonl that never wrote`,
-    );
-  } catch {
     ok(
       "runner-partial-side-effect",
-      "no debug files left behind on failure (throw happens before writeFile — but extract.jsonl could still be partially written if extract succeeded and parse failed; this layout never gets there).",
+      `extract.jsonl written (size=${probeStat.size}) — partial-failure path no longer leaks "phantom dir without files"`,
+    );
+  } catch (statErr) {
+    bug(
+      "runner-partial-side-effect",
+      `expected debug-out files to exist after partial-failure run; stat threw: ${(statErr as Error).message}`,
     );
   }
+} catch (e) {
+  bug(
+    "runner-partial-failure",
+    `expected no throw (per-doc errors captured into parseErrors); got: ${(e as Error).message}`,
+  );
 }
 
 // 2d. debugOut with non-ASCII path (Chinese chars in directory name).
@@ -411,31 +420,39 @@ try {
   }
 }
 
-// 2f. Parser failure during .map → debug-out NOT written (mkdir happens after .map).
-//     Verifies failure ordering: parseStage throws before mkdir/writeFile.
+// 2f. Parser-only failure during for-loop: per-doc try/catch captures the
+//     unsupported-extension error and the pipeline still completes with
+//     parseErrors[0] populated and debug-out files written.
 try {
   const debugOut = path.join(PROBE_TMP, "parse-fail-no-mkdir");
   const docs: PvfDocument[] = [makeDocument("foo.ani", [])];
-  await runExtractParsePipeline({
+  const result = await runExtractParsePipeline({
     pvfPath: "fixture.pvf",
     files: ["foo.ani"],
     debugOut,
     loadDocuments: async () => docs,
   });
-  bug("runner-parse-fail-order", "expected throw");
-} catch {
-  try {
-    await stat(path.join(PROBE_TMP, "parse-fail-no-mkdir"));
-    bug(
-      "runner-parse-fail-order",
-      "debug-out directory created before parse-stage throw — leftover dir",
-    );
-  } catch {
+  if (
+    result.filesExtracted === 1 &&
+    result.filesParsed === 0 &&
+    result.parseErrors.length === 1 &&
+    result.parseErrors[0].path === "foo.ani"
+  ) {
     ok(
       "runner-parse-fail-order",
-      "parse failure aborts before mkdir; no leftover debug-out dir (good)",
+      `single-doc parse failure captured as parseErrors[0]; debug-out at ${debugOut}`,
+    );
+  } else {
+    bug(
+      "runner-parse-fail-order",
+      `expected 1 extracted + 0 parsed + 1 error; got ${JSON.stringify(result)}`,
     );
   }
+} catch (e) {
+  bug(
+    "runner-parse-fail-order",
+    `expected no throw (per-doc errors captured); got: ${(e as Error).message}`,
+  );
 }
 
 // 2g. Large-array memory concern: documents.map(JSON.stringify).join("\n") builds
@@ -528,12 +545,12 @@ function runCli(argv: string[]): { code: number; stdout: string; stderr: string 
   }
 }
 
-// 3e. --help flag → no dedicated handler; falls through. Since no --pvf was
-//     supplied, prints Usage and exits 2. Acceptable but the user gets a
-//     plain "Usage:" not a helpful description.
+// 3e. --help flag — after fix the CLI prints help to stdout and exits 0.
 {
   const r = runCli(["--help"]);
-  if (r.code === 2 && r.stderr.includes("Usage:")) {
+  if (r.code === 0 && r.stdout.includes("Usage:")) {
+    ok("cli-help", "exits 0 with help on stdout");
+  } else if (r.code === 2 && r.stderr.includes("Usage:")) {
     bug(
       "cli-help",
       "no dedicated --help handler; --help silently falls through to the " +
@@ -541,12 +558,12 @@ function runCli(argv: string[]): { code: number; stdout: string; stderr: string 
         "print help to stdout and exit 0.",
     );
   } else {
-    bug("cli-help", `unexpected: exit=${r.code} stderr=${JSON.stringify(r.stderr)}`);
+    bug("cli-help", `unexpected: exit=${r.code} stdout=${JSON.stringify(r.stdout.slice(0, 80))} stderr=${JSON.stringify(r.stderr.slice(0, 80))}`);
   }
 }
 
-// 3f. Unknown flag → silently consumed by parseArgs (no else branch).
-//     This hides typos like --debugout vs --debug-out.
+// 3f. Unknown flag — after fix parseArgs collects "Unknown flag: ..." into
+//     args.errors and the script exits 2 with that message in stderr.
 {
   const r = runCli([
     "--pvf",
@@ -558,8 +575,9 @@ function runCli(argv: string[]): { code: number; stdout: string; stderr: string 
     "--stop-at",
     "extract",
   ]);
-  // Should still exit at the --stop-at check; --debugout is silently ignored.
-  if (r.code === 2 && r.stderr.includes("Unsupported --stop-at extract")) {
+  if (r.code === 2 && r.stderr.includes("Unknown flag: --debugout")) {
+    ok("cli-unknown-flag", "typo'd --debugout rejected with Unknown flag error");
+  } else if (r.code === 2 && r.stderr.includes("Unsupported --stop-at extract")) {
     bug(
       "cli-unknown-flag",
       "typo'd --debugout (vs --debug-out) is silently swallowed by parseArgs; " +
@@ -567,19 +585,14 @@ function runCli(argv: string[]): { code: number; stdout: string; stderr: string 
         "warns or rejects unknown options.",
     );
   } else {
-    bug("cli-unknown-flag", `exit=${r.code} stderr=${JSON.stringify(r.stderr)}`);
+    bug("cli-unknown-flag", `exit=${r.code} stderr=${JSON.stringify(r.stderr.slice(0, 120))}`);
   }
 }
 
-// 3g. --pattern, --domain, --job consume the next arg without validation
-//     (per line 16 of pipeline.mjs they are deliberately swallowed). Probe
-//     that the consume-next semantics don't accidentally eat a real flag.
+// 3g. --pattern guard: after fix, consumeValue rejects the next argv element
+//     when it starts with `--`, so `--pattern --pvf foo.pvf` errors instead of
+//     silently eating `--pvf`.
 {
-  // sequence: --pattern --pvf foo.pvf --file x.atk
-  // parseArgs sees --pattern, advances i by 1 (consumes "--pvf"), then sees
-  // "foo.pvf" with no flag prefix — silently ignored. Then "--file" → "x.atk".
-  // Result: args.pvf is undefined → exit 2 with Usage. That's the bug: a
-  // CLI option swallowed a sibling flag.
   const r = runCli([
     "--pattern",
     "--pvf",
@@ -587,20 +600,18 @@ function runCli(argv: string[]): { code: number; stdout: string; stderr: string 
     "--file",
     "x.atk",
   ]);
-  if (r.code === 2 && r.stderr.includes("Usage:")) {
+  if (r.code === 2 && /--pattern requires a value, got next flag --pvf/.test(r.stderr)) {
+    ok("cli-pattern-guard", "--pattern refuses to swallow a sibling flag");
+  } else if (r.code === 2 && r.stderr.includes("Usage:") && !r.stderr.includes("--pattern requires")) {
     bug(
       "cli-pattern-eats-next-flag",
-      "--pattern (which takes a value but is currently a no-op placeholder) " +
-        "blindly consumes the next argv element — including the next flag. " +
-        "Putting `--pattern` before `--pvf` eats `--pvf`, then `foo.pvf` is " +
-        "ignored as a stray arg, and the script exits 2 with Usage. " +
-        "Fragile CLI design — consume-next placeholders should either be " +
-        "deleted or guarded against eating dashed args.",
+      "--pattern still blindly consumes the next argv element including " +
+        "the next flag.",
     );
   } else {
     bug(
-      "cli-pattern-eats-next-flag",
-      `exit=${r.code} stderr=${JSON.stringify(r.stderr)} — expected fragile behavior not reproduced`,
+      "cli-pattern-guard",
+      `unexpected: exit=${r.code} stderr=${JSON.stringify(r.stderr.slice(0, 200))}`,
     );
   }
 }

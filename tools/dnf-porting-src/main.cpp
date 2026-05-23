@@ -128,9 +128,23 @@ static std::string base64Encode(const uint8_t* data, size_t len) {
 // PVF output formatters
 // ══════════════════════════════════════════════════════════════
 
-static void printAnimationJson(const std::string& path, PvfAnimation& ani) {
+static void printAnimationJson(const std::string& path, PvfAnimation& ani,
+                               const std::string& extractorVersion = DNF_EXTRACT_VERSION,
+                               const std::string& extractTimestamp = "",
+                               const std::string& sourcePvfHash = "") {
     auto& frames = ani.getFrames();
-    printf("{\"path\":\"%s\",\"type\":\"animation\",\"framesCount\":%d,\"loop\":%s,\"frames\":[",
+    // D3 provenance preamble — matches printDocumentJson layout so all output
+    // types carry the same identity fields. Text + Animation modes previously
+    // omitted these, forcing downstream parsers (NutExtractor) to invent
+    // "unknown" sentinels which corrupted provenance audits.
+    printf("{\"extractor_version\":\"%s\"", escapeJson(extractorVersion).c_str());
+    if (!extractTimestamp.empty())
+        printf(",\"extract_timestamp\":\"%s\"", escapeJson(extractTimestamp).c_str());
+    if (!sourcePvfHash.empty())
+        printf(",\"source_pvf_hash\":\"%s\"", escapeJson(sourcePvfHash).c_str());
+    else
+        printf(",\"source_pvf_hash\":null");
+    printf(",\"path\":\"%s\",\"type\":\"animation\",\"framesCount\":%d,\"loop\":%s,\"frames\":[",
         escapeJson(path).c_str(), (int)frames.size(), ani.isLoop() ? "true" : "false");
     for (size_t i = 0; i < frames.size(); i++) {
         auto& f = frames[i];
@@ -484,8 +498,21 @@ static void printDocumentJson(const std::string& path, PvfDocument& doc,
     printf("]}\n");
 }
 
-static void printTextJson(const std::string& path, PvfTextScript& text) {
-    printf("{\"path\":\"%s\",\"type\":\"text\",\"content\":\"%s\"}\n",
+static void printTextJson(const std::string& path, PvfTextScript& text,
+                          const std::string& extractorVersion = DNF_EXTRACT_VERSION,
+                          const std::string& extractTimestamp = "",
+                          const std::string& sourcePvfHash = "") {
+    // D3 provenance preamble — symmetric with printDocumentJson / printAnimationJson.
+    // Without these, NutExtractor in the Stage 2 pipeline had to fabricate
+    // "unknown" sentinel values to satisfy ExtractedDocumentProvenance.
+    printf("{\"extractor_version\":\"%s\"", escapeJson(extractorVersion).c_str());
+    if (!extractTimestamp.empty())
+        printf(",\"extract_timestamp\":\"%s\"", escapeJson(extractTimestamp).c_str());
+    if (!sourcePvfHash.empty())
+        printf(",\"source_pvf_hash\":\"%s\"", escapeJson(sourcePvfHash).c_str());
+    else
+        printf(",\"source_pvf_hash\":null");
+    printf(",\"path\":\"%s\",\"type\":\"text\",\"content\":\"%s\"}\n",
         escapeJson(path).c_str(), escapeJson(text.getContent()).c_str());
 }
 
@@ -802,7 +829,11 @@ static void extractFile(PvfReader& reader, const std::string& rawPath,
     }
 
     if (script->getType() == PvfScriptType::Animation) {
-        printAnimationJson(rawPath, *static_cast<PvfAnimation*>(script.get()));
+        // ── D3: emit timestamp at extraction time (per-file, so concurrent
+        // extractions have accurate timestamps even in batch/pipe mode).
+        std::string ts = isoTimestampUtc();
+        printAnimationJson(rawPath, *static_cast<PvfAnimation*>(script.get()),
+                           DNF_EXTRACT_VERSION, ts, sourcePvfHash);
     } else if (script->getType() == PvfScriptType::Document) {
         // ── D3: emit timestamp at extraction time (per-file, so concurrent
         // extractions have accurate timestamps even in batch/pipe mode).
@@ -810,7 +841,9 @@ static void extractFile(PvfReader& reader, const std::string& rawPath,
         printDocumentJson(rawPath, *static_cast<PvfDocument*>(script.get()), &reader,
                           DNF_EXTRACT_VERSION, ts, sourcePvfHash);
     } else if (script->getType() == PvfScriptType::Text) {
-        printTextJson(rawPath, *static_cast<PvfTextScript*>(script.get()));
+        std::string ts = isoTimestampUtc();
+        printTextJson(rawPath, *static_cast<PvfTextScript*>(script.get()),
+                      DNF_EXTRACT_VERSION, ts, sourcePvfHash);
     } else if (script->getType() == PvfScriptType::Binary) {
         printBinaryJson(rawPath, *static_cast<PvfRawScript*>(script.get()), withData);
     }

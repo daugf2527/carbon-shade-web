@@ -378,9 +378,10 @@ if (!existsSync(EXTRACT_BIN)) {
     }
   }
 
-  // 3d. After B9 fix: .skl is emitted as type="document"; loader passes it
-  //     through; parsePvfDocument throws "No parser registered"; runner now
-  //     captures per-doc errors and exits 0 with parseErrors[] populated.
+  // 3d. After SklParser wired (2026-05-23): .skl now successfully routes to
+  //     SklParser. Pipeline reports filesExtracted=1, filesParsed=1, no
+  //     parseErrors. The previous baseline (filesParsed=0 because no parser
+  //     was registered) was a transitional state.
   {
     const r = runCli([
       "--pvf",
@@ -393,10 +394,10 @@ if (!existsSync(EXTRACT_BIN)) {
     if (r.code === 0) {
       try {
         const summary = JSON.parse(r.stdout);
-        if (summary.filesExtracted === 1 && summary.filesParsed === 0) {
-          ok("real-neg-skl", "B9 fix verified: .skl error captured per-doc (filesExtracted=1, filesParsed=0)");
+        if (summary.filesExtracted === 1 && summary.filesParsed === 1) {
+          ok("real-neg-skl", "SklParser wired: filesExtracted=1, filesParsed=1");
         } else {
-          bug("real-neg-skl", `expected filesExtracted=1, filesParsed=0; got ${JSON.stringify(summary)}`);
+          bug("real-neg-skl", `expected filesExtracted=1, filesParsed=1; got ${JSON.stringify(summary)}`);
         }
       } catch {
         bug("real-neg-skl", `CLI stdout not JSON: ${r.stdout.slice(0, 200)}`);
@@ -462,11 +463,10 @@ if (!existsSync(EXTRACT_BIN)) {
     }
   }
 
-  // 4c. Mid-batch parser failure: use chr + skl + mob to actually trigger B9's
-  //     per-document error capture. .skl is type="document" in dnf-extract
-  //     output so loader does NOT filter; parseStage throws "No parser
-  //     registered" (SklParser not yet built); runner now captures the error
-  //     and continues with the survivors.
+  // 4c. After SklParser wired (2026-05-23): .skl now parses successfully, so
+  //     the previous chr+skl+mob batch no longer exercises partial-failure
+  //     capture. Substitute a .dgn (dungeon definition — still no parser
+  //     registered) to keep the partial-failure path under test.
   {
     const debugOut = path.join(PROBE_TMP, "neg-partial");
     const r = runCli([
@@ -475,7 +475,7 @@ if (!existsSync(EXTRACT_BIN)) {
       "--file",
       "character/swordman/swordman.chr",
       "--file",
-      "creature/woodendoll/skill/skill1.skl",
+      "dungeon/act3/jungle.dgn",
       "--file",
       "monster/goblin/goblin.mob",
       "--debug-out",
@@ -491,16 +491,16 @@ if (!existsSync(EXTRACT_BIN)) {
       } catch {
         bug("real-partial-failure", `CLI stdout not JSON: ${r.stdout.slice(0, 200)}`);
       }
-      const skl = summary.parseErrors?.find(e => e.path.endsWith(".skl"));
-      if (summary.filesExtracted === 3 && summary.filesParsed === 2 && skl) {
+      const failingExt = summary.parseErrors?.find(e => e.path.endsWith(".dgn"));
+      if (summary.filesExtracted === 3 && summary.filesParsed === 2 && failingExt) {
         ok(
           "real-partial-failure",
-          `B9 fix verified: chr+mob parsed, skl error captured; filesExtracted=3, filesParsed=2, parseErrors[0]=${skl.path}`,
+          `B9 fix verified: chr+mob parsed, dgn error captured; filesExtracted=3, filesParsed=2, parseErrors[0]=${failingExt.path}`,
         );
       } else {
         bug(
           "real-partial-failure",
-          `expected filesExtracted=3, filesParsed=2, parseErrors containing .skl entry; got ${JSON.stringify(summary)}`,
+          `expected filesExtracted=3, filesParsed=2, parseErrors containing .dgn entry; got ${JSON.stringify(summary)}`,
         );
       }
     }

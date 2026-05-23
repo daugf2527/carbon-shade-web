@@ -10,6 +10,7 @@ import {
   sectionNumbers,
   sectionsByName,
   stringValue,
+  stripPvfTag,
   vectorFact,
 } from "./parserUtils.js";
 
@@ -98,10 +99,6 @@ export function parseChrDocument(document: PvfDocument): ChrDef {
     motionRefs: parseMotionRefs(document),
     raw: Object.freeze(document),
   };
-}
-
-function stripPvfTag(value: string): string {
-  return value.startsWith("[") && value.endsWith("]") ? value.slice(1, -1) : value;
 }
 
 function parseNumberMatrix(document: PvfDocument, sectionName: string): number[][] | null {

@@ -7,6 +7,7 @@ import {
   firstStringFact,
   refAttributes,
   stringValue,
+  stripPvfTag,
   vectorFact,
 } from "./parserUtils.js";
 
@@ -25,7 +26,7 @@ export function parseMobDocument(document: PvfDocument): MobDef {
     sight: firstNumberFact(document, "sight", "px"),
     weight: firstNumberFact(document, "weight", "raw"),
     hpMax: vectorFact(document, "hp max", "hp"),
-    attackInfo: refAttributes(firstSection(document, "attack info")),
+    attackInfo: refAttributes(firstSection(document, "attack info"), { allowMixed: true }),
     animationRefs: collectAnimationRefs(document),
     category: collectCategoryNames(document),
     raw: Object.freeze(document),
@@ -36,7 +37,9 @@ function collectAnimationRefs(document: PvfDocument): PvfRef[] {
   const seen = new Set<string>();
   const result: PvfRef[] = [];
   for (const section of document.sections) {
-    for (const ref of refAttributes(section)) {
+    // .mob sections legitimately mix ref / non-ref content (e.g. "attack info"
+    // can carry positional metadata alongside the ref); use best-effort mode.
+    for (const ref of refAttributes(section, { allowMixed: true })) {
       if (ref.targetKind !== "ani") continue;
       if (seen.has(ref.targetPath)) continue;
       seen.add(ref.targetPath);
@@ -57,10 +60,8 @@ function collectCategoryNames(document: PvfDocument): string[] {
     })
     // Real PVF never emits empty `[]` tags (0/200 mobs verified 2026-05-22), but
     // strip empty strings defensively so a malformed/synthetic input doesn't leak
-    // a meaningless "" into the category array.
-    .filter((value): value is string => value !== null && value !== "") ?? [];
-}
-
-function stripPvfTag(value: string): string {
-  return value.startsWith("[") && value.endsWith("]") ? value.slice(1, -1) : value;
+    // a meaningless "" into the category array. After stripPvfTag was hardened
+    // to preserve "[]" verbatim, the empty-string filter is now mostly dormant
+    // but kept as belt-and-suspenders for non-bracket empty values.
+    .filter((value): value is string => value !== null && value !== "" && value !== "[]") ?? [];
 }
