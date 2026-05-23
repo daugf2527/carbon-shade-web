@@ -199,7 +199,12 @@ auto PvfDocument::splitNode(const std::string& name) ->std::shared_ptr<IAttribut
 
 auto PvfDocument::pop(std::stack<Node*>& stack, const std::string& name) -> void
 {
-	if (node != nullptr && node != &root)
+	// Audit F14: convert tail recursion to iteration to avoid C stack overflow
+	// on deeply nested or pathologically-named PVF documents. Bounded by stack
+	// size (the explicit std::stack) instead of native call frames.
+	int32_t safetyDepth = 0;
+	const int32_t kMaxDepth = 100000;
+	while (node != nullptr && node != &root)
 	{
 		if (!stack.empty()) {
 			stack.pop();
@@ -212,11 +217,17 @@ auto PvfDocument::pop(std::stack<Node*>& stack, const std::string& name) -> void
 		{
 			node = nullptr;
 		}
-	
-		if (node != nullptr && node->name == name)
-		{
-			pop(stack, node->name);
+
+		if (node != nullptr && node->name == name) {
+			// Would have recursed; continue the loop instead.
+			if (++safetyDepth > kMaxDepth) {
+				fprintf(stderr, "[ERROR] PvfDocument::pop: aborting at depth %d in %s\n",
+					safetyDepth, filename.c_str());
+				return;
+			}
+			continue;
 		}
+		break;
 	}
 }
 

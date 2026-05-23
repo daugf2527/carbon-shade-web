@@ -96,6 +96,14 @@ auto NpkFile::unpack() -> void
 		return;
 	}
 
+	// Audit F16: header.count is file-controlled int32_t. Real NPK has hundreds
+	// to thousands of IMGs; cap at 100K to catch corruption / hostile values.
+	if (header.count < 0 || header.count > 100000) {
+		fprintf(stderr, "[ERROR] NpkFile::unpack: implausible header.count=%d in %s\n",
+			header.count, fileName.c_str());
+		return;
+	}
+
 	for (int32_t i = 0; i < header.count; ++i)
 	{
 		auto & node = imgNodes.emplace_back(this);
@@ -130,6 +138,13 @@ auto NpkFile::readBytes(uint32_t length) ->std::unique_ptr<uint8_t[]>
 
 auto NpkFile::readBytes(uint8_t* data, int32_t len) ->void
 {
+	// Audit F10: negative int32_t len passed to fread becomes huge size_t.
+	// Guard against negative AND clamp absurd positive values (real NPK reads
+	// are < 100MB; anything beyond suggests corruption or hostile input).
+	if (len < 0 || static_cast<int64_t>(len) > (1LL << 30)) {
+		fprintf(stderr, "[ERROR] NpkFile::readBytes: implausible len=%d\n", len);
+		return;
+	}
 	fread(data, len, 1, file);
 	offset += len;
 }

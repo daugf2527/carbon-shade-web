@@ -125,26 +125,52 @@ auto PvfReader::unpack() -> void
 {
 	fread(&header, sizeof(PvfHeader), 1, file);
 	auto headLength = header.dirTreeLength;
+
+	// Bounds-check file-derived size before allocation (Audit F7: a malicious
+	// or truncated PVF could declare dirTreeLength = -1 or 2GB, causing
+	// make_unique to receive SIZE_MAX or a multi-GB request).
+	if (header.dirTreeLength <= 0 || header.dirTreeLength > 256 * 1024 * 1024) {
+		fprintf(stderr, "[ERROR] PvfReader::unpack: implausible dirTreeLength=%d\n", header.dirTreeLength);
+		return;
+	}
 	auto dirTreeData = std::make_unique<uint8_t[]>(header.dirTreeLength);
 	fread(dirTreeData.get(), header.dirTreeLength, 1, file);
 	decrypt(dirTreeData.get(), header.dirTreeLength, header.dirTreeChecksum);
 
 	int32_t offset = 0;
-	auto outChr = std::make_unique<char[]>(1024);
+	// Audit F1: outChr was a fixed 1024 bytes but codeConvert was called with
+	// outlen = filePathLength * 2. A PVF declaring filePathLength > 512 →
+	// codeConvert writes past outChr → heap overflow. With filePathLength
+	// capped at 4096 below, max UTF-8 expansion is 4096*3 = 12288 bytes;
+	// a 16384-byte stack buffer is sufficient.
+	char outChr[16384];
 
 	for (int32_t i = 0; i < header.numFilesInDirTree; i++)
 	{
 
 		auto fileNumber		= read<uint32_t>(dirTreeData.get(), offset);
 		auto filePathLength = read<int32_t>(dirTreeData.get(), offset + 4);
+
+		// Audit F1: bounds-check file-controlled filePathLength.
+		// Real PVF paths are < 256 chars; cap at 4096 to allow generous margin
+		// while preventing pathological allocations or arithmetic overflow on
+		// `filePathLength * 3` below.
+		if (filePathLength <= 0 || filePathLength > 4096) {
+			fprintf(stderr, "[ERROR] PvfReader::unpack: implausible filePathLength=%d at entry %d\n", filePathLength, i);
+			return;
+		}
 		auto filePath		= dirTreeData.get() + offset + 8;
 		auto fileLength		= read<int32_t>(dirTreeData.get(), offset + 8 + filePathLength);
 		auto fileCrc32		= read<uint32_t>(dirTreeData.get(), offset + 12 + filePathLength);
 		auto relativeOffset = read<int32_t>(dirTreeData.get(), offset + 0x10 + filePathLength);
 
-		//CP949
-		codeConvert(PvfReader::ENCODING, "UTF-8", (char*)filePath, filePathLength, outChr.get(), filePathLength * 2);
-		std::string filePathName(outChr.get());
+		// codeConvert handles its own memset of the output buffer (PvfReader.cpp:97),
+		// so we don't pre-zero here. Pass the actual needed length (UTF-8 expansion
+		// up to 3× CP949 source). The internal memset bounds the work to `needed`.
+		const size_t needed = static_cast<size_t>(filePathLength) * 3 + 1;
+
+		codeConvert(PvfReader::ENCODING, "UTF-8", (char*)filePath, filePathLength, outChr, needed);
+		std::string filePathName(outChr);
 		rtrim(filePathName);
 		auto & node			= pvfNodes[filePathName];
 		node.fileNumber		= fileNumber;
@@ -153,12 +179,19 @@ auto PvfReader::unpack() -> void
 		// assignment `node.offset = filePath` stored a pointer into
 		// dirTreeData, which is freed when unpack() returns — every PvfNode
 		// would then hold a dangling pointer (use-after-free on dereference).
-		// The field is never read currently; if a future use needs an
-		// in-memory pointer, allocate ownership on PvfReader (e.g. keep
-		// dirTreeData alive as a member) instead of restoring this line.
 		node.fileLength		= fileLength;
 		node.fileCrc32		= fileCrc32;
-		node.relativeOffset = sizeof(PvfHeader) + header.dirTreeLength + relativeOffset;
+		// Audit F19: cast through int64_t to detect overflow before truncation.
+		{
+			int64_t computed = static_cast<int64_t>(sizeof(PvfHeader))
+				+ static_cast<int64_t>(header.dirTreeLength)
+				+ static_cast<int64_t>(relativeOffset);
+			if (computed < 0 || computed > INT32_MAX) {
+				fprintf(stderr, "[ERROR] PvfReader::unpack: relativeOffset overflow %lld at entry %d\n", (long long)computed, i);
+				return;
+			}
+			node.relativeOffset = static_cast<int32_t>(computed);
+		}
 		node.reader			= this;
 		node.fileName		= filePathName;
 		offset += filePathLength + 20;
@@ -245,9 +278,25 @@ auto PvfReader::unpackStringTable(const std::function<void(std::function<void* (
 
 	auto ptr = strtable.expand();
 
+	// Audit F6: if stringtable.bin is missing from the PVF (or has fileLength=0),
+	// pvfNodes["stringtable.bin"] inserts a default PvfNode whose expand() returns
+	// nullptr. Reading from a nullptr buffer below segfaults the entire extractor.
+	if (!ptr) {
+		fprintf(stderr, "[ERROR] PvfReader::unpackStringTable: stringtable.bin missing or empty in PVF\n");
+		return;
+	}
+
 	auto buffer = ptr.get();
 
 	int32_t count = read<int32_t>(ptr.get(), 0);
+
+	// Audit F8: stringtable count is file-controlled int32_t. Negative values
+	// become huge size_t via implicit conversion in resize(). Cap at 1M entries
+	// (real PVF has ~230K, generous headroom).
+	if (count < 0 || count > 1000000) {
+		fprintf(stderr, "[ERROR] PvfReader::unpackStringTable: implausible count=%d\n", count);
+		return;
+	}
 
 	stringBinMap.resize(count);
 	// CP949 → UTF-8 expansion is at most 3 bytes per source byte. The previous
@@ -280,17 +329,34 @@ auto PvfReader::unpackStringTable(const std::function<void(std::function<void* (
 	//##################################
 	auto& nstrtable = pvfNodes["n_string.lst"];
 	ptr = nstrtable.expand();
+
+	// Audit F6: same nullptr guard for n_string.lst.
+	if (!ptr) {
+		fprintf(stderr, "[ERROR] PvfReader::unpackStringTable: n_string.lst missing or empty in PVF\n");
+		return;
+	}
+
 	auto len = nstrtable.getComputedFileLength();
 
 	auto magicNumber = read<uint16_t>(ptr.get(), 0);
-	assert(magicNumber == 53424);
+	// Audit F17: assert() is a no-op in Release builds, letting garbage magic
+	// continue into the loop below where stringBinMap[v] becomes OOB. Replace
+	// with a real check that survives optimization.
+	if (magicNumber != 53424) {
+		fprintf(stderr, "[ERROR] PvfReader::unpackStringTable: bad n_string.lst magic 0x%04x (expected 0xD0B0)\n", magicNumber);
+		return;
+	}
 
 	for (auto i = 2; i < len; i += 10)
 	{
-		if (len - i >= 10)//��������ʮ���ֽڻ��������ʮ���ֽھͲ�ִ��
+		if (len - i >= 10)
 		{
-			//ǰ6λ����Ĳ�֪����6-10λ��intֵ��stringtable�ļ���ȡ����
 			auto v = read<int32_t>(ptr.get(), i + 6);
+			// Audit F3: v is unchecked int32_t from file. vector::operator[]
+			// is UB on OOB; negative or >= stringBinMap.size() must be filtered.
+			if (v < 0 || static_cast<size_t>(v) >= stringBinMap.size()) {
+				continue;  // skip malformed entry, don't crash extraction
+			}
 			const auto & k = stringBinMap[v];
 			//ȡ������stringtable��ֵ���ļ��б���һ���ļ����ļ���������ʹ�����շ�������Ҫ������ΪСд������ո�
 

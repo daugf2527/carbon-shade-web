@@ -62,8 +62,16 @@ auto PvfAnimation::unpack() -> void
 		}
 		frame.imgId = reader.read<uint16_t>();
 		frame.imgParam = reader.read<uint16_t>();
-		frame.path = sprites[frame.imgId];
-		assert(frame.imgId >= 0 && frame.imgId < sprites.size());
+		// Audit F2: bounds-check imgId BEFORE dereferencing sprites[].
+		// Previously the assert came after the access, and release-mode no-op'd
+		// the assert → vector OOB on a corrupted .ani.
+		if (frame.imgId >= sprites.size()) {
+			fprintf(stderr, "[ERROR] PvfAnimation: frame.imgId=%u out of range (sprites.size=%zu)\n",
+				(unsigned)frame.imgId, sprites.size());
+			frame.path.clear();
+		} else {
+			frame.path = sprites[frame.imgId];
+		}
 
 		frame.x = reader.read<int32_t>();
 		frame.y = reader.read<int32_t>();

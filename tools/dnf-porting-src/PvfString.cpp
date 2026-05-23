@@ -19,6 +19,10 @@ auto PvfString::contains(const std::string& str, const std::string& start) -> bo
 
 auto PvfString::endWith(const std::string& str, const std::string& start) -> bool
 {
+	// Audit F15: `str.length() - start.length()` underflows when start is
+	// longer than str (size_t arithmetic wraps to a huge value, then
+	// str.compare with that index throws std::out_of_range). Guard explicitly.
+	if (start.size() > str.size()) return false;
 	return str.compare(str.length() - start.length(), start.size(), start) == 0;
 }
 

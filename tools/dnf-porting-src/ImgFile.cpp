@@ -49,12 +49,24 @@ auto ImgFile::unpack() -> std::string
 auto ImgFile::openColorBoard(std::vector<uint32_t>& color) -> void
 {
 	auto count = file->read<int32_t>();
+	// Audit F9: bound file-controlled count. Real NPK color boards are 256 entries.
+	// Cap at 65536 to guard against negative, huge values, and integer overflow
+	// in the `sizeof(uint32_t) * count` multiplication below.
+	if (count < 0 || count > 65536) {
+		fprintf(stderr, "[ERROR] ImgFile::openColorBoard: implausible count=%d\n", count);
+		return;
+	}
 	color.resize(count);
 	file->readBytes((uint8_t*)color.data(), sizeof(uint32_t) * count);
 }
 
 auto ImgFile::openMapImages(int32_t size) -> void
 {
+	// Audit F13: same pattern. Real NPK map images count is small.
+	if (size < 0 || size > 65536) {
+		fprintf(stderr, "[ERROR] ImgFile::openMapImages: implausible size=%d\n", size);
+		return;
+	}
 	mapImages.resize(size);
 	file->readBytes((uint8_t*)mapImages.data(), sizeof(MapImage) * size);
 }
@@ -89,6 +101,14 @@ auto ImgFile::expand() -> void
 	header.keep =		file->read<int32_t>();
 	header.version =	file->read<int32_t>();
 	header.indexCount = file->read<int32_t>();
+
+	// Audit F12: bound indexCount before resize. Real IMG indexCount is < 10K.
+	// Cap at 1M to allow generous margin while preventing negative/overflow.
+	if (header.indexCount < 0 || header.indexCount > 1000000) {
+		fprintf(stderr, "[ERROR] ImgFile::expand: implausible indexCount=%d for %s\n",
+			header.indexCount, metaInfo.fileName);
+		return;
+	}
 
 	fprintf(stderr, " %s : Version %d \n", metaInfo.fileName, header.version);
 
@@ -179,6 +199,14 @@ auto ImgFile::expand() -> void
 	{
 		if (n.isLink)
 		{
+			// Audit F5: linkId is read from file (unchecked int32_t). Negative
+			// or out-of-range linkId → vector OOB on operator[]. Skip and
+			// log so the IMG remains usable for other frames.
+			if (n.linkId < 0 || static_cast<size_t>(n.linkId) >= nodes.size()) {
+				fprintf(stderr, "[ERROR] ImgFile::expand: invalid linkId=%d (nodes.size=%zu) in %s\n",
+					n.linkId, nodes.size(), metaInfo.fileName);
+				continue;
+			}
 			n.texture = nodes[n.linkId].texture;
 			n.offset = nodes[n.linkId].offset;
 			n.zlibInfo = nodes[n.linkId].zlibInfo;

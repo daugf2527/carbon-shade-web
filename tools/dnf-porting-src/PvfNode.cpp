@@ -5,6 +5,7 @@
 #include "PvfDocument.h"
 #include "PvfString.h"
 #include <assert.h>
+#include <stdexcept>
 
 auto PvfNode::unpack() -> std::shared_ptr<PvfScript>
 {
@@ -65,17 +66,25 @@ auto PvfNode::unpack() -> std::shared_ptr<PvfScript>
 auto PvfNode::expand() -> std::unique_ptr<uint8_t[]>
 {
 	if (fileLength > 0) {
+		// Audit F11: (fileLength + 3L) & 4294967292L can wrap to INT32_MIN
+		// when fileLength is near INT32_MAX, causing make_unique<uint8_t[]>
+		// to receive a huge size_t. Cap defensively before bitmask.
+		if (fileLength > (1 << 28)) {  // 256 MB per file is far beyond real PVF entries
+			fprintf(stderr, "[ERROR] PvfNode::expand: implausible fileLength=%d for %s\n",
+				fileLength, fileName.c_str());
+			return nullptr;
+		}
 		auto computedFileLength = (int32_t)((fileLength + 3L) & 4294967292L);
 		reader->setPosition(relativeOffset);
 		auto bytes = reader->readBytes(computedFileLength);
 		reader->decrypt(bytes.get(), computedFileLength, fileCrc32);
-	
+
 		for (int32_t i = 0; i < (computedFileLength - fileLength); i++)
 		{
 			bytes.get()[fileLength + i] = 0;
 		}
 		return bytes;
-	} 
+	}
 	return nullptr;
 }
 
@@ -110,5 +119,11 @@ auto PvfTreeNode::getByPath(const std::string& path) ->  PvfTreeNode&
 
 auto PvfTreeNode::unpack() ->std::shared_ptr< PvfScript>
 {
-	assert(node != nullptr); return node->unpack();
+	// Audit F20: assert() is no-op in Release. Resolved nullNode (returned
+	// when path lookup misses) has node=nullptr → null deref. Surface the
+	// failure explicitly so the caller can decide.
+	if (node == nullptr) {
+		throw std::runtime_error("PvfTreeNode::unpack: tree node has no underlying PvfNode (path not resolved)");
+	}
+	return node->unpack();
 }

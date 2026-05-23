@@ -724,6 +724,13 @@ loadManifestCrcMap(const std::string& path) {
     if (!f) return out;
     fseek(f, 0, SEEK_END);
     long sz = ftell(f);
+    // Audit F18: ftell returns -1L on error. Constructing std::string(sz,'\0')
+    // with sz=-1 converts to SIZE_MAX → bad_alloc / huge alloc.
+    if (sz < 0) {
+        fclose(f);
+        fprintf(stderr, "[ERROR] loadManifestCrcMap: ftell failed on %s\n", path.c_str());
+        return out;
+    }
     fseek(f, 0, SEEK_SET);
     std::string buf(sz, '\0');
     fread(buf.data(), 1, sz, f);
