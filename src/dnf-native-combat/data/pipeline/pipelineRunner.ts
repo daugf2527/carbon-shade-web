@@ -8,6 +8,11 @@ import {
   type ProvenanceAuditReport,
   type VerificationReport,
 } from "../validator.js";
+import {
+  importToSqlite,
+  type ImportMode,
+  type SqliteImportResult,
+} from "../importer/SqliteImporter.js";
 import type { PvfDocument } from "../types/PvfDocument.js";
 
 export interface PipelineRunOptions {
@@ -27,6 +32,12 @@ export interface PipelineRunOptions {
    * Pass `null` to disable report emission (still computes the in-memory report).
    */
   verificationOutDir?: string | null;
+  /**
+   * Path for SQLite mirror DB (LOAD stage). Use ":memory:" for tests.
+   * Default: undefined → LOAD stage is skipped. Pass an explicit path to enable.
+   */
+  sqliteDbPath?: string;
+  sqliteMode?: ImportMode;
 }
 
 export interface PipelineParseError {
@@ -36,7 +47,7 @@ export interface PipelineParseError {
 
 export interface PipelineRunResult {
   /** Highest stage successfully completed end-to-end. */
-  stage: "parse" | "validate";
+  stage: "parse" | "validate" | "load";
   filesExtracted: number;
   filesParsed: number;
   parseErrors: PipelineParseError[];
@@ -51,6 +62,8 @@ export interface PipelineRunResult {
     extractionReport: string | null;
     provenanceAudit: string | null;
   };
+  /** Populated only when sqliteDbPath is provided. */
+  sqliteImport: SqliteImportResult | null;
 }
 
 export async function runExtractParsePipeline(options: PipelineRunOptions): Promise<PipelineRunResult> {
@@ -124,8 +137,24 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
     await writeFile(provenanceAuditPath, JSON.stringify(provenanceAudit, null, 2));
   }
 
+  // ─── LOAD stage (opt-in) ───────────────────────────────────────────────
+  // Per design §2.2 PARSE → VALIDATE → **LOAD** → EXPORT. Default is opt-in
+  // via sqliteDbPath to keep tests independent of the SQLite Mirror — the
+  // production CLI sets it explicitly.
+  let sqliteImport: SqliteImportResult | null = null;
+  let highestStage: PipelineRunResult["stage"] = "validate";
+  if (typeof options.sqliteDbPath === "string") {
+    sqliteImport = importToSqlite(
+      { dbPath: options.sqliteDbPath, mode: options.sqliteMode ?? "full" },
+      documents,
+      parsed,
+      validation,
+    );
+    highestStage = "load";
+  }
+
   return {
-    stage: "validate",
+    stage: highestStage,
     filesExtracted: documents.length,
     filesParsed: parsed.length,
     parseErrors,
@@ -137,6 +166,7 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
       extractionReport: extractionReportPath,
       provenanceAudit: provenanceAuditPath,
     },
+    sqliteImport,
   };
 }
 

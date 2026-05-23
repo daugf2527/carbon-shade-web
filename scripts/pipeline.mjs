@@ -50,6 +50,12 @@ function parseArgs(argv) {
     else if (arg === "--run-id") {
       const v = consumeValue(arg, i); if (v !== null) args.runId = v; i++;
     }
+    else if (arg === "--sqlite-db") {
+      const v = consumeValue(arg, i); if (v !== null) args.sqliteDb = v; i++;
+    }
+    else if (arg === "--sqlite-mode") {
+      const v = consumeValue(arg, i); if (v !== null) args.sqliteMode = v; i++;
+    }
     else if (arg === "--domain" || arg === "--job" || arg === "--pattern") {
       // No-op placeholders, but still validate that they don't eat a sibling flag.
       const v = consumeValue(arg, i); if (v !== null) { /* discard */ } i++;
@@ -83,8 +89,12 @@ if (!args.pvf || args.files.length === 0) {
   usage();
   process.exit(2);
 }
-if (args.stopAt && args.stopAt !== "parse" && args.stopAt !== "validate") {
-  console.error(`Unsupported --stop-at ${args.stopAt}; Day 8-10 supports parse; Day 11 adds validate.`);
+if (args.stopAt && args.stopAt !== "parse" && args.stopAt !== "validate" && args.stopAt !== "load") {
+  console.error(`Unsupported --stop-at ${args.stopAt}; supports parse | validate | load.`);
+  process.exit(2);
+}
+if (args.sqliteMode && args.sqliteMode !== "full" && args.sqliteMode !== "incremental" && args.sqliteMode !== "partial") {
+  console.error(`Unsupported --sqlite-mode ${args.sqliteMode}; expected full | incremental | partial.`);
   process.exit(2);
 }
 
@@ -127,6 +137,8 @@ try {
     executablePath: EXTRACT,
     runId: args.runId,
     verificationOutDir: verificationOut,
+    sqliteDbPath: args.sqliteDb,
+    sqliteMode: args.sqliteMode,
   });
 
   console.log(JSON.stringify({
@@ -143,6 +155,7 @@ try {
       refResolvedCount: result.validation.refIntegrity.filter(r => r.status === "resolved").length,
       refMissingCount: result.validation.refIntegrity.filter(r => r.status === "missing").length,
     },
+    sqliteImport: result.sqliteImport,
     reportPaths: result.reportPaths,
   }, null, 2));
 } catch (error) {
