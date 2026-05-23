@@ -174,6 +174,12 @@ hitbox confusion). Two new tools complement it:
   re-reads each cited file:line and stamps findings VERIFIED /
   CITATION_DRIFT / FILE_MISSING. Agent claims are NEVER reported as facts
   until verify passes. See `.claude/skills/audit/SKILL.md`.
+- **`/closed-loop` skill + `npm run closed-loop:status`** — Full
+  audit → core-review → fix → fix-verify → gate → commit pipeline. Drives
+  the 9-step trust chain end-to-end with mandatory human checkpoints at
+  decision-critical steps (which findings to fix / diff approval / commit
+  message). State-machine resumable via artifact detection. See
+  `.claude/skills/closed-loop/SKILL.md`.
 
 The split: analyze = static gates, completion = presence gate, audit = semantic depth.
 
