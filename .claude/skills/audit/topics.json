@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "topics": [
+    {
+      "id": "memory-safety",
+      "scope": "tools/dnf-porting-src/",
+      "question": "Find memory-safety issues in the C++ dnf-extract source: leaks on exception paths, use-after-free, use-after-move, missing destructors, raw pointer aliasing across container rehash, heap overflow on attacker-controllable inputs, double-free.",
+      "model": "sonnet",
+      "max_findings": 20,
+      "exclude": ["build/", "*.exe"]
+    },
+    {
+      "id": "ts-parser-truth",
+      "scope": "src/dnf-native-combat/data/parsers/",
+      "question": "Find places where TS parsers silently drop, coerce, or fill in sentinel values instead of throwing on PVF-truth violations. Look for: provenance fields filled with 'unknown' or empty defaults, vec/mat length mismatches not throwing, ref attrs treated as plain strings, missing-field handling that hides corruption rather than surfacing it.",
+      "model": "sonnet",
+      "max_findings": 15,
+      "exclude": []
+    },
+    {
+      "id": "pipeline-closure",
+      "scope": "src/dnf-native-combat/data/pipeline/ src/dnf-native-combat/data/parsers/PvfDocumentLoader.ts scripts/pipeline.mjs",
+      "question": "Check the EXTRACT→PARSE pipeline closed-loop integrity: are all dnf-extract output types (document/animation/text/binary/img/frame/resolved_frame/pvf_list/error) handled or explicitly skipped with a comment? Are parser exceptions captured per-document or aborting the whole batch? Are debug-out artifacts (extract.jsonl / parse.jsonl) consistent with what was actually processed?",
+      "model": "sonnet",
+      "max_findings": 12,
+      "exclude": []
+    },
+    {
+      "id": "deliverable-presence",
+      "scope": "the whole repo, with reference to docs/plans/2026-05-22-stage1-data-pipeline-design.md §5",
+      "question": "For each Day N-M block in design doc §5 (Day 1-3 / 4-5 / 6-7 / 8-10 / 11-12 / 13-14 / 15-17), list which specific deliverables exist (file paths) and which are missing. Cross-check against npm run completion output. Flag any inconsistency between completion.mjs check and the design doc text.",
+      "model": "sonnet",
+      "max_findings": 10,
+      "exclude": []
+    },
+    {
+      "id": "test-effectiveness",
+      "scope": "tests/static/dnf-native-h*-probes.test.ts",
+      "question": "Identify probes that are tautological — i.e. the test fixture and the expected output were both written by the same hand without an independent oracle. Flag tests that would pass even if the parser silently returned the wrong value, because the expected value was derived from running the parser rather than from PVF ground truth. Distinguish 'real-PVF probes' (e.g. H5 against Script.pvf) from 'synthetic probes' (inline fixtures).",
+      "model": "sonnet",
+      "max_findings": 15,
+      "exclude": []
+    },
+    {
+      "id": "contract-symmetry",
+      "scope": "tools/dnf-porting-src/main.cpp tools/dnf-porting-src/PvfDocument.cpp tools/dnf-porting-src/PvfAnimation.cpp",
+      "question": "Check the C++ output contract across all printX functions (printDocumentJson / printAnimationJson / printTextJson / printBinaryJson). Are provenance fields (extractor_version / extract_timestamp / source_pvf_hash) emitted symmetrically? Are error JSON shapes consistent? Are stderr [LOG]/[READY]/[DONE]/[PROGRESS] lines uniform across modes?",
+      "model": "sonnet",
+      "max_findings": 8,
+      "exclude": []
+    }
+  ]
+}

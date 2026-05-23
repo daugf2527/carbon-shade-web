@@ -161,6 +161,22 @@ Two LSP plugins are active: `typescript-lsp` (TypeScript/TSX) and `pyright-lsp` 
 
 The project has a full static + dynamic analysis toolchain. Reports auto-generate in CI (every push/PR) and can be run locally via `npm run analyze`.
 
+**Closed-loop note (2026-05-23)**: `npm run analyze` (8 gates) catches surface
+issues but misses semantic bugs (iconv UB, NutExtractor sentinel lies, 6-int
+hitbox confusion). Two new tools complement it:
+
+- **`npm run completion`** — Day 1-17 deliverable presence audit (PRESENCE, not
+  correctness). Answers "Day N 实际完成没". Driven by `scripts/completion.mjs`
+  + hardcoded deliverable map. Output → `.tmp/completion.json`.
+- **`/audit` skill + `npm run audit:verify`** — Agent-driven semantic audit
+  with MANDATORY claim verification. The skill dispatches parallel Sonnet
+  agents per `.claude/skills/audit/topics.json`; `scripts/audit-verify.mjs`
+  re-reads each cited file:line and stamps findings VERIFIED /
+  CITATION_DRIFT / FILE_MISSING. Agent claims are NEVER reported as facts
+  until verify passes. See `.claude/skills/audit/SKILL.md`.
+
+The split: analyze = static gates, completion = presence gate, audit = semantic depth.
+
 ### Tool inventory
 
 | Tool | Type | What it does | Run |

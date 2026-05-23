@@ -13,7 +13,9 @@
     "validate:assets": "node scripts/validate-assets.mjs",
     "validate:combat": "node scripts/validate-combat-boundaries.mjs",
     "browser:smoke": "playwright test tests/browser/combat-smoke.spec.ts",
-    "analyze": "node scripts/analyze.mjs"
+    "analyze": "node scripts/analyze.mjs",
+    "completion": "node scripts/completion.mjs",
+    "audit:verify": "node scripts/audit-verify.mjs"
   },
   "dependencies": {
     "iconv-lite": "^0.7.2",
