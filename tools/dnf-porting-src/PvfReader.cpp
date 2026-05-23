@@ -454,33 +454,33 @@ auto PvfReader::decryptString(const std::unique_ptr<uint8_t[]>& buffer, int32_t 
 					case ValueType::IntString5:
 					{
 						out.append("\r\n");
-						out.append(stringBinMap[index]);
+						out.append(lookupBin(index));
 						out.append("\r\n");
 					}
 						break;
 					case ValueType::IntString7:
 					{
 						out.append("`");
-						out.append(stringBinMap[index]);
+						out.append(lookupBin(index));
 						out.append("`\r\n");
 					}
 						break;
 					case ValueType::IntString6:
-					case ValueType::IntString8: 
+					case ValueType::IntString8:
 					{
 						out.append("{");
 						out.append(std::to_string(type));
 						out.append("=`");
-						out.append(stringBinMap[index]);
+						out.append(lookupBin(index));
 						out.append("`}\r\n");
 					}
 						break;
-				
+
 					case ValueType::StringTable:
 					{
 						auto before = read<int32_t>(buffer.get(), i  - 4);
 
-						if (auto str = stringBinMap[index];str != "") {
+						if (auto str = lookupBin(index);str != "") {
 							out.append("<");
 							out.append(std::to_string(before));
 							out.append("::");

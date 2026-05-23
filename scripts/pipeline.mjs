@@ -41,6 +41,15 @@ function parseArgs(argv) {
     else if (arg === "--debug-out") {
       const v = consumeValue(arg, i); if (v !== null) args.debugOut = v; i++;
     }
+    else if (arg === "--verification-out") {
+      const v = consumeValue(arg, i); if (v !== null) args.verificationOut = v; i++;
+    }
+    else if (arg === "--no-verification") {
+      args.noVerification = true;
+    }
+    else if (arg === "--run-id") {
+      const v = consumeValue(arg, i); if (v !== null) args.runId = v; i++;
+    }
     else if (arg === "--domain" || arg === "--job" || arg === "--pattern") {
       // No-op placeholders, but still validate that they don't eat a sibling flag.
       const v = consumeValue(arg, i); if (v !== null) { /* discard */ } i++;
@@ -74,8 +83,8 @@ if (!args.pvf || args.files.length === 0) {
   usage();
   process.exit(2);
 }
-if (args.stopAt && args.stopAt !== "parse") {
-  console.error(`Unsupported --stop-at ${args.stopAt}; Day 8-10 skeleton only supports EXTRACT -> PARSE.`);
+if (args.stopAt && args.stopAt !== "parse" && args.stopAt !== "validate") {
+  console.error(`Unsupported --stop-at ${args.stopAt}; Day 8-10 supports parse; Day 11 adds validate.`);
   process.exit(2);
 }
 
@@ -103,6 +112,12 @@ const runnerUrl = pathToFileURL(path.join(
 const { runExtractParsePipeline } = await import(runnerUrl);
 
 const debugOut = args.debugOut ?? path.join(ROOT, ".tmp", "pipeline-debug");
+// Project-level verification/ by convention (design §2.4). Tests should
+// override via --verification-out to keep PROBE_TMP isolated; CLI default
+// targets repo root verification/ so reports survive between runs.
+const verificationOut = args.noVerification
+  ? null
+  : (args.verificationOut ?? path.join(ROOT, "verification"));
 
 try {
   const result = await runExtractParsePipeline({
@@ -110,6 +125,8 @@ try {
     files: args.files,
     debugOut,
     executablePath: EXTRACT,
+    runId: args.runId,
+    verificationOutDir: verificationOut,
   });
 
   console.log(JSON.stringify({
@@ -118,6 +135,15 @@ try {
     filesParsed: result.filesParsed,
     parseErrors: result.parseErrors,
     debugOut: result.debugOut,
+    validation: {
+      runId: result.validation.meta.runId,
+      stats: result.validation.stats,
+      tier3Count: result.validation.tier3Fields.length,
+      pvpFieldCount: result.validation.pvpFields.length,
+      refResolvedCount: result.validation.refIntegrity.filter(r => r.status === "resolved").length,
+      refMissingCount: result.validation.refIntegrity.filter(r => r.status === "missing").length,
+    },
+    reportPaths: result.reportPaths,
   }, null, 2));
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);

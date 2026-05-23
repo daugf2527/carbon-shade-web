@@ -55,6 +55,19 @@ public:
 	inline auto& getRoot()  { return root; }
 	inline auto isLoaded() const { return loaded; }
 
+	// Defense-in-depth bounds check for stringBinMap lookups. PvfReader is
+	// already filtering in unpackStringTable (see PvfReader.cpp F3 guard),
+	// but every other call site reads the index straight off a file byte
+	// stream. Returns a stable empty-string reference on OOB so callers can
+	// treat the value as "missing section / empty attribute" instead of UB.
+	inline const std::string& lookupBin(int32_t index) const {
+		static const std::string kEmpty{};
+		if (index < 0 || static_cast<size_t>(index) >= stringBinMap.size()) {
+			return kEmpty;
+		}
+		return stringBinMap[index];
+	}
+
 	template <typename T>
 	// Read a number and advance the buffer position.
 	inline T read(const uint8_t* buffer, int32_t offset)

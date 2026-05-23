@@ -34,7 +34,7 @@ auto PvfDocument::unpack() -> void
 				auto index = reader.read<int32_t>();
 				if (type == ValueType::Section)
 				{
-					tags.emplace(pvfReader->stringBinMap[index]);
+					tags.emplace(pvfReader->lookupBin(index));
 				}
 			}
 		}
@@ -69,7 +69,7 @@ auto PvfDocument::unpack() -> void
 
 				case ValueType::Section:
 				{
-					auto name = pvfReader->stringBinMap[index];
+					auto name = pvfReader->lookupBin(index);
 					auto endTagName = name;
 					endTagName.insert(endTagName.begin() + 1, '/');
 
@@ -102,30 +102,22 @@ auto PvfDocument::unpack() -> void
 
 				case ValueType::String://Child
 				{
-					node->addAttribute(pvfReader->stringBinMap[index]);
+					node->addAttribute(pvfReader->lookupBin(index));
 				}
 				break;
 				case ValueType::Command:
 				case ValueType::CommandSeparator:
 				{
-					node->addAttribute(pvfReader->stringBinMap[index]);
+					node->addAttribute(pvfReader->lookupBin(index));
 				}
 				break;
 
 				case ValueType::StringLink:
-					if (auto str = pvfReader->stringBinMap[index]; str != "") {
+					if (auto str = pvfReader->lookupBin(index); str != "") {
 						node->addLinkAttribute(pvfReader->stringStringMap[str]);
 						//std::cout<<str<<"  "<<pvfReader->stringStringMap[str]<<std::endl;
 					}
 					break;
-				/*case ValueType::StringLinkIndex:
-				{
-					//	out.append(std::to_string(before));//(buffer.get(), i - 4);
-					if (auto str = pvfReader->stringBinMap[index]; str != "") {
-						node->addLinkAttribute(pvfReader->stringStringMap[str]);
-					}
-				}*/
-				break;
 				}
 			}
 			else

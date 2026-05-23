@@ -153,6 +153,31 @@ export function requireValue<T>(value: T | null, label: string, sourcePath: stri
   return value;
 }
 
+/**
+ * Mark a PvfFact / PvfStringFact / PvfVectorFact as Tier-3 per CLAUDE.md
+ * "DNF/DFO reference truth rule":
+ *
+ *   "真实战斗 launch/gravity 曲线、hitstun 表硬编码在 DNF.exe C++ 二进制里，
+ *    PVF 拿不到... 这部分必须标注 sourceType: 'local_baseline' +
+ *    requiresManualVerification: true"
+ *
+ * Pass `null` through unchanged so call sites can chain:
+ *   `asTier3(firstNumberFact(doc, "jump power", "ambiguous"))`
+ *
+ * The validator (src/dnf-native-combat/data/validator.ts) walks each parsed
+ * def and surfaces all asTier3-marked fields into the Tier-3 audit subreport.
+ */
+export function asTier3<T extends { provenance: ParsedFieldProvenance }>(
+  fact: T | null,
+): T | null {
+  if (fact === null) return null;
+  return {
+    ...fact,
+    sourceType: "local_baseline" as const,
+    requiresManualVerification: true,
+  };
+}
+
 // Real PVF "width" / "weapon skill info" / "weapon durability decrease rate" /
 // "upgrade weapon attack power rate" sections contain pure-number attrs only
 // (verified across 11 player .chr 2026-05-22). Mixed-type content silently

@@ -138,6 +138,34 @@ node scripts/pipeline.mjs --export-only --out dist/data/
 └─────────────────────────────────────────────────────────────┘
 ```
 
+#### 2.2.1 Standalone parsers (animation / text / binary) — 已知设计后退
+
+design 默认的 PARSE stage 串行 7 个 parser 都假设单一输入类型 `PvfDocument`
+(`type:"document"`)。实际 PVF 还包含三类非 document 输出：
+
+| 输入 type | dnf-extract 模式 | parser | 接入方式 |
+|---|---|---|---|
+| `type:"animation"` (.ani) | document/pipe 模式产出 | `AniParser.ts` | **standalone**（不进 parseStage） |
+| `type:"text"` (.nut squirrel script) | document/pipe 模式产出 | `NutExtractor.ts` | **standalone** |
+| `type:"binary"` (.img neople-image) | npk + frame 模式产出 | `ImgParser.ts` | **standalone** |
+
+**决策（2026-05-23 Pre-Day-11）**：保持 standalone — 不强行接入统一 dispatch。
+
+理由：
+1. **shape 差异本质**：document 是 sections 数组，animation 是 frames 数组，
+   binary 是 base64 + headHex + sizeBytes。union 化 `parsePvfDocument` 入参
+   会把 router 复杂度从 6 行 switch 推高到 type-narrowing + 多 input
+   loader filter，破坏 dispatch 单一职责。
+2. **调用路径不同**：Ani/Nut/Img 主要由 Stage 2 渲染层和 SKL 内联引用消费，
+   不需要走"统一 PARSE Stage 输出 ParsedDef union"。各自暴露 `parseAniDocument`
+   / `extractNutText` / `parseImgBinary` 入口由专门 caller 调用即可。
+3. **不阻塞 VALIDATE / LOAD / EXPORT**：standalone parser 输出仍然带 provenance
+   + tier1 标记，可被 VALIDATE 单独审计（Day 11 schema 注册表会列入），不破
+   坏审计闭环。
+
+`parseStage.ts` 末尾 NOTE 注释已记录此决策（commit 250fb82 前已有）。
+PvfDocumentLoader 仅过滤 `type:"document"`，符合 design 单一职责。
+
 ### 2.3 关键决策
 
 | 项 | 决议 |

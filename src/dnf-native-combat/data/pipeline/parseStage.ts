@@ -5,20 +5,22 @@ import { parseMobDocument } from "../parsers/MobParser.js";
 import { parseSklDocument } from "../parsers/SklParser.js";
 import { parseDgnDocument } from "../parsers/DgnParser.js";
 import { parseEtcDocument } from "../parsers/EtcParser.js";
+import { parseMapDocument } from "../parsers/MapParser.js";
 import type { AtkDef } from "../types/AtkDef.js";
 import type { ChrDef } from "../types/ChrDef.js";
 import type { MobDef } from "../types/MobDef.js";
 import type { SkillDef } from "../types/SklDef.js";
 import type { DungeonDef } from "../types/DgnDef.js";
 import type { EtcDef } from "../types/EtcDef.js";
+import type { MapDef } from "../types/MapDef.js";
 import type { PvfDocument } from "../types/PvfDocument.js";
 
-export type ParsedPvfDocument = ChrDef | MobDef | AtkDef | SkillDef | DungeonDef | EtcDef;
+export type ParsedPvfDocument = ChrDef | MobDef | AtkDef | SkillDef | DungeonDef | EtcDef | MapDef;
 
 // Detect the routing extension, with a special case for paths whose basename is
-// just `.chr` / `.mob` / `.atk` / `.skl` / `.dgn` / `.etc`. Node's path.extname
-// returns "" for ".chr" (it treats the whole basename as a hidden-file name
-// with no extension). Real PVF paths are usually deep like
+// just `.chr` / `.mob` / `.atk` / `.skl` / `.dgn` / `.etc` / `.map`. Node's
+// path.extname returns "" for ".chr" (it treats the whole basename as a
+// hidden-file name with no extension). Real PVF paths are usually deep like
 // `character/swordman/swordman.chr`, but callers occasionally pass the bare
 // basename (e.g. tooling, tests, or REPL usage), and silently rejecting those
 // creates a surprising failure mode.
@@ -27,7 +29,8 @@ function routingExtension(filePath: string): string {
   if (ext !== "") return ext;
   const base = basename(filePath).toLowerCase();
   if (base === ".chr" || base === ".mob" || base === ".atk" ||
-      base === ".skl" || base === ".dgn" || base === ".etc") return base;
+      base === ".skl" || base === ".dgn" || base === ".etc" ||
+      base === ".map") return base;
   return "";
 }
 
@@ -45,6 +48,8 @@ export function parsePvfDocument(document: PvfDocument): ParsedPvfDocument {
       return parseDgnDocument(document);
     case ".etc":
       return parseEtcDocument(document);
+    case ".map":
+      return parseMapDocument(document);
     default:
       throw new Error(`No parser registered for ${document.path}`);
   }

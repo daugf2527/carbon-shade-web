@@ -202,13 +202,24 @@ const DAYS = [
         check: () => grepInFile("src/dnf-native-combat/data/parsers/PvfDocumentLoader.ts", "loadPvfDocumentsViaPipe") },
       { id: "pipeline-dispatch", desc: "parseStage.ts dispatch",
         check: () => grepInFile("src/dnf-native-combat/data/pipeline/parseStage.ts", "parsePvfDocument") },
-      { id: "parsers-target-7", desc: "≥7 parsers built (target was 7)",
+      { id: "parsers-target-7", desc: "7 named parsers per design §7 (Chr/Skl/Atk/Ani/Mob/Dgn/Map)",
         check: () => {
           const parserDir = join(ROOT, "src/dnf-native-combat/data/parsers");
           if (!existsSync(parserDir)) return { passed: false, evidence: "parsers dir missing" };
+          // design §7 names exactly these 7 parsers. We verify presence by name,
+          // not by count, so adding extras (Nut/Etc/Img) does not mask a missing
+          // canonical parser (regression caught Day 11 prep: MapParser was absent).
+          const required = ["ChrParser.ts", "SklParser.ts", "AtkParser.ts",
+                            "AniParser.ts", "MobParser.ts", "DgnParser.ts", "MapParser.ts"];
           const allFiles = readdirSync(parserDir);
-          const parsers = allFiles.filter(f => f.endsWith("Parser.ts") || f.endsWith("Extractor.ts"));
-          return { passed: parsers.length >= 7, evidence: `${parsers.length} parsers: ${parsers.join(", ")}` };
+          const present = required.filter(name => allFiles.includes(name));
+          const missing = required.filter(name => !allFiles.includes(name));
+          return {
+            passed: missing.length === 0,
+            evidence: missing.length === 0
+              ? `7/7 named: ${present.join(", ")}`
+              : `${present.length}/7 named; missing: ${missing.join(", ")}`,
+          };
         }},
       { id: "parsers-wired-in-dispatch", desc: "≥4 parsers wired into parseStage.ts (chr/mob/atk minimum + more)",
         check: () => {
@@ -231,9 +242,34 @@ const DAYS = [
   {
     range: "Day 11-12", name: "VALIDATE L2 + SQLite LOAD",
     items: [
-      { id: "validator-l2", desc: "validator.ts with schema check",
-        check: () => ({ passed: exists("src/dnf-native-combat/data/validator.ts"),
-                        evidence: exists("src/dnf-native-combat/data/validator.ts") ? "exists" : "missing" }) },
+      { id: "validator-l2", desc: "validator.ts with schema + ref + provenance + PvP audit, wired into pipelineRunner",
+        check: () => {
+          const validatorPath = "src/dnf-native-combat/data/validator.ts";
+          const runnerPath = "src/dnf-native-combat/data/pipeline/pipelineRunner.ts";
+          if (!exists(validatorPath)) return { passed: false, evidence: "validator.ts missing" };
+          const v = readFileSync(join(ROOT, validatorPath), "utf-8");
+          const required = [
+            "validateParsedDocuments",
+            "buildProvenanceAudit",
+            "VerificationReport",
+            "Tier3FieldEntry",
+            "PvpFieldEntry",
+            "RefEntry",
+          ];
+          const missing = required.filter(sym => !v.includes(sym));
+          if (missing.length > 0) {
+            return { passed: false, evidence: `validator.ts missing exports: ${missing.join(", ")}` };
+          }
+          if (!exists(runnerPath)) return { passed: false, evidence: "pipelineRunner.ts missing" };
+          const r = readFileSync(join(ROOT, runnerPath), "utf-8");
+          if (!r.includes("validateParsedDocuments")) {
+            return { passed: false, evidence: "pipelineRunner.ts does not import validateParsedDocuments" };
+          }
+          if (!r.includes("buildProvenanceAudit")) {
+            return { passed: false, evidence: "pipelineRunner.ts does not import buildProvenanceAudit" };
+          }
+          return { passed: true, evidence: "validator.ts has 6 exports + integrated in pipelineRunner.ts" };
+        }},
       { id: "sqlite-import-script", desc: "scripts/import-to-sqlite.mjs",
         check: () => ({ passed: exists("scripts/import-to-sqlite.mjs"),
                         evidence: exists("scripts/import-to-sqlite.mjs") ? "exists" : "missing" }) },

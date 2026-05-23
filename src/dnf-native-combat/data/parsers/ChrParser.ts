@@ -12,6 +12,7 @@ import {
   stringValue,
   stripPvfTag,
   vectorFact,
+  asTier3,
 } from "./parserUtils.js";
 
 const MOTION_SECTION_NAMES = [
@@ -64,12 +65,19 @@ export function parseChrDocument(document: PvfDocument): ChrDef {
       rawValue: jobRaw.value,
     },
     bodyImagePath: firstStringFact(document, "body image path"),
-    jumpPower: requireValue(firstNumberFact(document, "jump power", "ambiguous"), "jump power", document.path),
-    jumpSpeed: requireValue(firstNumberFact(document, "jump speed", "int"), "jump speed", document.path),
+    // Tier-3 marks — these fields have known semantic/unit ambiguity that
+    // PVF alone cannot resolve. Per CLAUDE.md DNF truth rule + memory
+    // `dnf-physics-phase1-data-summary` H1: jump_power's unit (pixels vs
+    // velocity) is a working hypothesis; jump_speed's int unit + weight's
+    // audio-only marker are project-internal labels; hit recovery's
+    // ms-or-multiplier label flags unresolved semantics. The validator
+    // surfaces all four in the Tier-3 audit subreport.
+    jumpPower: requireValue(asTier3(firstNumberFact(document, "jump power", "ambiguous")), "jump power", document.path),
+    jumpSpeed: requireValue(asTier3(firstNumberFact(document, "jump speed", "int")), "jump speed", document.path),
     moveSpeed: firstNumberFact(document, "move speed", "%xSPEED_VALUE_DEFAULT"),
     attackSpeed: firstNumberFact(document, "attack speed", "%xSPEED_VALUE_DEFAULT"),
     castSpeed: firstNumberFact(document, "cast speed", "%xSPEED_VALUE_DEFAULT"),
-    weight: requireValue(firstNumberFact(document, "weight", "audio-only"), "weight", document.path),
+    weight: requireValue(asTier3(firstNumberFact(document, "weight", "audio-only")), "weight", document.path),
     lightResistance: firstNumberFact(document, "light resistance", "%"),
     darkResistance: firstNumberFact(document, "dark resistance", "%"),
     widthBox: sectionNumbers(document, "width"),
@@ -77,7 +85,8 @@ export function parseChrDocument(document: PvfDocument): ChrDef {
       hpMax: requireValue(vectorFact(document, "hp max", "hp"), "hp max", document.path),
       mpMax: vectorFact(document, "mp max", "mp"),
       mpRegenSpeed: vectorFact(document, "mp regen speed", "mp/min"),
-      hitRecovery: vectorFact(document, "hit recovery", "ms-or-multiplier"),
+      // Tier-3 mark — hit recovery unit is ms-or-multiplier (semantic ambiguity).
+      hitRecovery: asTier3(vectorFact(document, "hit recovery", "ms-or-multiplier")),
       physicalAttack: requireValue(vectorFact(document, "physical attack", "physAtk"), "physical attack", document.path),
       magicalAttack: vectorFact(document, "magical attack", "magAtk"),
       physicalDefense: vectorFact(document, "physical defense", "physDef"),

@@ -45,11 +45,21 @@ const run = await runExtractParsePipeline({
   files: ["character/swordman/attackinfo/attack3.atk"],
   debugOut: ".tmp/pipeline-test-debug",
   loadDocuments: async () => documents,
+  // Day 11+: pipeline now goes EXTRACT → PARSE → VALIDATE. Disable
+  // verification report writes for this loader-focused test (we don't want
+  // to pollute the repo-level verification/ dir during static tests).
+  verificationOutDir: null,
 });
 
-assert.equal(run.stage, "parse");
+// Day 11 raised the highest-completed stage from "parse" to "validate"
+// (VALIDATE L2 is integrated into pipelineRunner per design §2.2).
+assert.equal(run.stage, "validate");
 assert.equal(run.filesExtracted, 1);
 assert.equal(run.filesParsed, 1);
 assert.equal(run.parsed[0]?.kind, "atk");
+// Validation report must be present and report zero failures for the happy path.
+assert.equal(run.validation.stats.filesParsed, 1);
+assert.equal(run.validation.stats.filesFailed, 0);
+assert.equal(run.validation.stats.errors, 0);
 
 console.log("pipeline-extract: loader args and parse routing assertions passed");
