@@ -36,8 +36,20 @@ PVF --pipe--> dnf-extract (C++) --> PvfDocument[] --> 9 parsers (TS) --> Zod val
 | `npm run completion` | Stage 1 deliverable presence audit |
 | `npm run audit:verify` | Re-check agent audit claims against cited file:line |
 | `npm run closed-loop:status` | Closed-loop workflow state machine status |
-| `npm run browser:smoke` | Playwright browser test (CI only, needs display) |
+| `npm run browser:smoke` | Playwright browser test (CI only, needs dev server + display) |
+| `npm run baseline` | Stage 1 sample baseline (19 curated files, ~4s) |
+| `npm run baseline:pve` | Stage 1 PVE-full baseline (8794 character + skill files, ~10min) |
 | `docker compose up --build` | Container on port 5173 |
+
+### Stage 1 baseline rerun
+
+`DNF_PVF_PATH=<path-to-Script.pvf> npm run baseline[:pve]` regenerates everything Stage 1 produces:
+- `.tmp/stage1-baseline.db` (SQLite mirror DB — derivable, gitignored, **do not commit**: binary is not deterministic across runs)
+- `dist/data/*.json` (entity-centric runtime shards — gitignored)
+- `verification/baseline-shards/**` (mirror of `dist/data/` for reviewer inspection — committed)
+- `verification/{extraction-report,provenance-audit,dist-manifest}-stage1-baseline.json` (committed)
+
+The SQLite DB is intentionally not persisted. It is a Mirror table layer for cross-domain queries; `verification/baseline-shards/` is the ground truth. To query the DB, rerun the baseline (~4s sample / ~10min PVE-full) — the DB regenerates from the same input.
 
 ## Tools
 

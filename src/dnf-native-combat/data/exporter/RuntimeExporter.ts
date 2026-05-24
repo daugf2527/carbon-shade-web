@@ -379,7 +379,15 @@ async function writeShardIncremental(
   const dir = dirnameOf(absPath);
   await mkdir(dir, { recursive: true });
 
-  const json = JSON.stringify(shape, null, 2);
+  // PVE-full baseline (2026-05-24) showed indent overhead ≈ 72% on
+  // large player shards (mage 18.7MB indent → 5.2MB compact). Stage 2
+  // consumers parse JSON into objects; whitespace is unobservable post-
+  // parse, so the file-on-disk encoding is purely a git-friendliness vs
+  // human-diff tradeoff. Compact wins at PVE-full scale — 98MB → 25MB
+  // total shard size makes the data tractable to commit. Reviewers can
+  // pretty-print on demand with `jq`. The sha256/contentFingerprint
+  // continues to cover whichever encoding is written.
+  const json = JSON.stringify(shape);
   const sha256 = createHash("sha256").update(json).digest("hex");
   const sizeBytes = Buffer.byteLength(json, "utf-8");
   const shapeVersion = (shape as { shape_version?: string }).shape_version ?? SHAPE_VERSION;

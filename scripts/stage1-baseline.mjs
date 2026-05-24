@@ -21,7 +21,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { copyFile, mkdir, readdir, rm } from "node:fs/promises";
+import { copyFile, mkdir, readdir, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -34,6 +34,10 @@ if (!pvfPath || pvfPath.trim() === "") {
   console.error("       DNF_PVF_PATH=/path/to/Script.pvf node scripts/stage1-baseline.mjs");
   process.exit(2);
 }
+
+const args = new Set(process.argv.slice(2));
+const PVE_FULL = args.has("--pve-full");
+const PVE_PATHS_SNAPSHOT = path.join(ROOT, "verification", "pvf-list-stdout.json");
 
 // Curated cross-section. All 11 player .chr + cross-parser representatives.
 const CURATED_FILES = [
@@ -65,6 +69,65 @@ const CURATED_FILES = [
   // Map sample
   "map/test_lorien/4.map",
 ];
+
+// PVE Phase 2A filter (2026-05-24): expand to all character/* + skill/* files.
+// Stage 1 EXPORT is entity-centric — one player shard per chr contains all
+// sub-resources (skl/atk/ani/etc) that share the same parent job dir. So
+// loading the player surface means loading every file under character/<job>/
+// and skill/<job>/. PVE-only by exclusion: ignore battlemode/pvpmode artifacts
+// and any non-runtime parser kinds (no .img / .ani metadata-only / .lst).
+// PvP fields inside loaded files are still sanitised by the EXPORT step
+// (sanitizeMapForRuntime / isPvpOnlyAtk).
+//
+// Phase 2B (later) would add monster/, dungeon/, map/, passiveobject/.
+async function pveFullFiles() {
+  // Auto-dump the PVF path list if absent. This makes baseline:pve runnable
+  // from a fresh clone without manual setup — the snapshot is a function of
+  // the .pvf file only (same crc32 ⇒ same path list), so it's a derivable
+  // artifact, not source-controlled. Stored under verification/ so reviewers
+  // can inspect the input without rerunning.
+  try {
+    await readFile(PVE_PATHS_SNAPSHOT, "utf8");
+  } catch {
+    console.log(`[baseline] pvf-list snapshot missing, generating via dnf-extract --list…`);
+    const stderrPath = path.join(ROOT, "verification", "pvf-list-stderr.log");
+    const { writeFile } = await import("node:fs/promises");
+    const result = spawnSync(EXTRACT, ["--pvf", pvfPath, "--list"], {
+      encoding: "utf8",
+      maxBuffer: 64 * 1024 * 1024,
+    });
+    if (result.status !== 0) {
+      console.error("dnf-extract --list failed:", result.stderr);
+      process.exit(result.status ?? 1);
+    }
+    await writeFile(PVE_PATHS_SNAPSHOT, result.stdout, "utf8");
+    if (result.stderr) await writeFile(stderrPath, result.stderr, "utf8");
+    console.log(`[baseline] pvf-list snapshot written to ${path.relative(ROOT, PVE_PATHS_SNAPSHOT)}`);
+  }
+  const snapshot = JSON.parse(await readFile(PVE_PATHS_SNAPSHOT, "utf8"));
+  const all = snapshot.files;
+  if (!Array.isArray(all)) {
+    throw new Error(`pvf-list-stdout.json missing files array (got ${typeof snapshot.files})`);
+  }
+  const PVE_PREFIXES = ["character/", "skill/"];
+  // Parser kinds the Stage 1 pipeline supports. Extensions not in this set
+  // are filtered out before submission to the pipeline.
+  // .act is in the PVF tree (character/common/action/*.act) but Stage 1
+  // has no ActParser registered; submitting them yields "No parser
+  // registered" errors that block EXPORT.
+  const PVE_EXTS = new Set([".chr", ".atk", ".skl", ".ani", ".etc", ".mob", ".dgn", ".map"]);
+  return all.filter(p => {
+    if (!PVE_PREFIXES.some(prefix => p.startsWith(prefix))) return false;
+    const dot = p.lastIndexOf(".");
+    if (dot < 0) return false;
+    return PVE_EXTS.has(p.slice(dot).toLowerCase());
+  });
+}
+
+const targetFiles = PVE_FULL ? await pveFullFiles() : CURATED_FILES;
+if (PVE_FULL) {
+  console.log(`[baseline] --pve-full mode: loaded ${targetFiles.length} files from PVF snapshot`);
+}
 
 // Compile TS once.
 const compile = spawnSync(process.execPath, [
@@ -105,14 +168,21 @@ const exportOut = path.join(ROOT, "dist", "data");
 await mkdir(verificationDir, { recursive: true });
 await mkdir(debugOut, { recursive: true });
 
+// PVE-full fix (2026-05-25): wipe exportOut before the pipeline runs so
+// stale shards from a prior --pve-sample run (e.g. dungeons/jungle.json
+// when --pve-full's character/+skill/ filter excludes .dgn/.mob) don't
+// survive into the next baseline's copyDir(exportOut, baseline-shards).
+await rm(exportOut, { recursive: true, force: true });
+await mkdir(exportOut, { recursive: true });
+
 const runId = "stage1-baseline";  // fixed runId so report filenames are stable
 
 const startMs = Date.now();
-console.log(`[baseline] starting on ${CURATED_FILES.length} curated files…`);
+console.log(`[baseline] starting on ${targetFiles.length} ${PVE_FULL ? "PVE-full" : "curated"} files…`);
 
 const result = await runExtractParsePipeline({
   pvfPath,
-  files: CURATED_FILES,
+  files: targetFiles,
   debugOut,
   executablePath: EXTRACT,
   runId,
