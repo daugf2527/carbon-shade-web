@@ -70,7 +70,35 @@ export function parseDnfExtractPipeOutput(stdout: string): PvfDocument[] {
     }
     documents.push(document);
   }
-  return documents.filter(document => document.type === "document");
+  // Audit F10 (ts-parser-truth) / F1 (pipeline-closure), 2026-05-24:
+  // The bare `.filter(d => d.type === "document")` silently dropped any
+  // `animation` / `text` / `binary` / `img` / `frame` / `resolved_frame`
+  // chunk a caller had piped through this loader, leaving zero trace.
+  // Standalone parsers (AniParser / NutExtractor / ImgParser) own those
+  // types; reaching the document loader is a caller-side mismatch but not
+  // a fatal one (e.g. H2/H5 explicitly mix types). Surface the skip via
+  // stderr warning instead of throwing — the user sees what was dropped
+  // and can correct routing.
+  const documentTyped: PvfDocument[] = [];
+  const nonDocumentTypes = new Map<string, number>();
+  for (const doc of documents) {
+    if (doc.type === "document") {
+      documentTyped.push(doc);
+    } else {
+      nonDocumentTypes.set(doc.type, (nonDocumentTypes.get(doc.type) ?? 0) + 1);
+    }
+  }
+  if (nonDocumentTypes.size > 0) {
+    const summary = Array.from(nonDocumentTypes.entries())
+      .map(([t, n]) => `${t}×${n}`)
+      .join(", ");
+    console.warn(
+      `[PvfDocumentLoader] skipped ${documents.length - documentTyped.length} ` +
+      `non-document chunk(s) [${summary}]. Route .ani via AniParser, .nut via NutExtractor, ` +
+      `and IMG binaries via ImgParser. This loader handles only type:"document".`,
+    );
+  }
+  return documentTyped;
 }
 
 export async function loadPvfDocumentsViaPipe(

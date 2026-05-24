@@ -86,6 +86,14 @@ export interface RuntimeManifestEntry {
   sizeBytes: number;
   kind: RuntimeKind;
   shape_version: string;
+  /**
+   * sha256 of the content fingerprint (per-field provenance.extractTimestamp
+   * stripped before hashing). Present iff `useContentFingerprint` was true at
+   * write time. Lets a subsequent export skip a shard whose semantic content
+   * is unchanged across distinct extractor runs (where raw sha256 would
+   * differ purely because of timestamp drift).
+   */
+  contentSha256?: string;
 }
 
 export interface RuntimeManifest {
@@ -128,10 +136,25 @@ export interface ExportOptions {
    * Incremental skip is most useful when the same parsed[]+aniDefs[] is
    * re-exported (e.g. retry after a transient I/O failure, or split-stage
    * pipeline where EXPORT is invoked without re-running EXTRACT). For
-   * content-equivalence skip across extractor runs, hash a fingerprint that
-   * strips per-field timestamps — Day 15+ work.
+   * content-equivalence skip across extractor runs, set `useContentFingerprint`
+   * (Day 17 work).
    */
   incrementalBaseManifest?: RuntimeManifest;
+  /**
+   * When true, the incremental-skip comparison uses a `contentSha256`
+   * fingerprint (sha256 of shard JSON with every `provenance.extractTimestamp`
+   * replaced by a fixed sentinel) instead of the raw sha256. This lets a
+   * re-export of byte-equivalent content — extracted at a different time —
+   * skip rewriting the file. The manifest entry's `sha256` field still
+   * reflects the raw on-disk bytes; a new `contentSha256` field is added
+   * alongside it. Default: false (preserves Day 13 raw-sha256 behavior).
+   *
+   * Recommended usage: set true for any pipeline where EXTRACT is re-run
+   * end-to-end against the same PVF (smoke tests, daily rebuilds), so that
+   * EXPORT can short-circuit on content equivalence rather than incidental
+   * timestamp drift.
+   */
+  useContentFingerprint?: boolean;
 }
 
 export interface ExportResult {
@@ -160,6 +183,7 @@ export async function exportRuntimeShards(options: ExportOptions): Promise<Expor
   const queueWrite = async (relPath: string, shape: unknown, kind: RuntimeKind) => {
     const result = await writeShardIncremental(
       options.outDir, relPath, shape, kind, baseByPath.get(relPath),
+      options.useContentFingerprint === true,
     );
     entries.push(result.entry);
     if (result.wrote) writtenCount += 1; else skippedCount += 1;
@@ -326,6 +350,7 @@ async function writeShardIncremental(
   shape: unknown,
   kind: RuntimeKind,
   baseEntry: RuntimeManifestEntry | undefined,
+  useContentFingerprint: boolean,
 ): Promise<{ entry: RuntimeManifestEntry; wrote: boolean }> {
   const absPath = join(outDir, relPath);
   const dir = dirnameOf(absPath);
@@ -335,21 +360,110 @@ async function writeShardIncremental(
   const sha256 = createHash("sha256").update(json).digest("hex");
   const sizeBytes = Buffer.byteLength(json, "utf-8");
   const shapeVersion = (shape as { shape_version?: string }).shape_version ?? SHAPE_VERSION;
+  const contentSha256 = useContentFingerprint
+    ? computeContentFingerprint(shape)
+    : undefined;
 
-  // Incremental skip: same sha256 → don't rewrite. Keep manifest entry pointing
-  // at the same path (assumed unchanged on disk).
-  if (baseEntry && baseEntry.sha256 === sha256) {
-    return {
-      entry: { path: relPath, sha256, sizeBytes, kind, shape_version: shapeVersion },
-      wrote: false,
+  // Build the manifest entry — contentSha256 only appears when fingerprint
+  // mode is on, keeping JSON shape backward-compatible by default.
+  const buildEntry = (overrides: Partial<RuntimeManifestEntry> = {}): RuntimeManifestEntry => {
+    const entry: RuntimeManifestEntry = {
+      path: relPath,
+      sha256,
+      sizeBytes,
+      kind,
+      shape_version: shapeVersion,
+      ...overrides,
     };
+    if (contentSha256 !== undefined) entry.contentSha256 = contentSha256;
+    return entry;
+  };
+
+  // Incremental skip:
+  //   - fingerprint mode: compare baseEntry.contentSha256 with the freshly
+  //     computed fingerprint. If baseEntry lacks contentSha256 (e.g. a
+  //     pre-Day-17 manifest), fall through to raw-sha256 comparison so we
+  //     don't spuriously rewrite.
+  //   - default mode: compare raw sha256 (preserves Day 13 semantics).
+  // When skipping, retain the prior path/sha256/sizeBytes (assumes the file
+  // on disk is unchanged); refresh contentSha256 to the value we just
+  // computed so the manifest stays useful for the *next* incremental run.
+  if (baseEntry) {
+    const skipByFingerprint =
+      useContentFingerprint &&
+      baseEntry.contentSha256 !== undefined &&
+      contentSha256 !== undefined &&
+      baseEntry.contentSha256 === contentSha256;
+    const skipByRaw = baseEntry.sha256 === sha256;
+    if (skipByFingerprint || skipByRaw) {
+      return {
+        entry: buildEntry({
+          path: baseEntry.path,
+          sha256: baseEntry.sha256,
+          sizeBytes: baseEntry.sizeBytes,
+          shape_version: baseEntry.shape_version,
+        }),
+        wrote: false,
+      };
+    }
   }
 
   await writeFile(absPath, json);
   return {
-    entry: { path: relPath, sha256, sizeBytes, kind, shape_version: shapeVersion },
+    entry: buildEntry(),
     wrote: true,
   };
+}
+
+/**
+ * Compute a content fingerprint: shape JSON with every timestamp-bearing
+ * field replaced by a fixed sentinel, then sha256'd. Two extractor runs that
+ * produce semantically identical shards but different timestamps yield
+ * identical fingerprints.
+ *
+ * Stripped keys (both naming conventions surface inside shards):
+ *   - `extractTimestamp` — camelCase from ParsedFieldProvenance
+ *     (every PvfFact in a parsed def carries one).
+ *   - `extract_timestamp` — snake_case from the raw PvfDocument
+ *     (preserved inside `parsedDef.raw`; the C++ extractor emits this name).
+ *
+ * The sentinel string `"<stripped:extractTimestamp>"` is deliberately
+ * impossible inside real provenance (ISO 8601 timestamps never contain `<`
+ * or `>`), so collisions with real data are not a concern.
+ *
+ * Implementation: structural walk that materializes a stripped copy, then
+ * stringifies with the same `(value, null, 2)` formatter used for on-disk
+ * shard JSON. Object key ordering is preserved (insertion order), so the
+ * fingerprint is deterministic across calls.
+ */
+export function computeContentFingerprint(shape: unknown): string {
+  const stripped = stripExtractTimestamps(shape);
+  const json = JSON.stringify(stripped, null, 2);
+  return createHash("sha256").update(json).digest("hex");
+}
+
+const TIMESTAMP_SENTINEL = "<stripped:extractTimestamp>";
+const TIMESTAMP_KEYS = new Set(["extractTimestamp", "extract_timestamp"]);
+
+function stripExtractTimestamps(value: unknown): unknown {
+  if (value === null || typeof value !== "object") return value;
+  if (Array.isArray(value)) {
+    return value.map(stripExtractTimestamps);
+  }
+  // Object: clone with each value walked. If the current node carries a known
+  // timestamp key (camelCase parsed-side or snake_case raw-side), replace
+  // that field's value with the sentinel.
+  const obj = value as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const key of Object.keys(obj)) {
+    const v = obj[key];
+    if (TIMESTAMP_KEYS.has(key) && typeof v === "string") {
+      out[key] = TIMESTAMP_SENTINEL;
+    } else {
+      out[key] = stripExtractTimestamps(v);
+    }
+  }
+  return out;
 }
 
 function dirnameOf(p: string): string {

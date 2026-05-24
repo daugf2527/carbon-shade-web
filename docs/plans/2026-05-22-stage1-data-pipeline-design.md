@@ -402,17 +402,19 @@ Day 15-17: 集成测试 + verification 产物 + 文档补完
   scripts/pipeline.mjs                                    # 5-stage 统一入口
   scripts/import-to-sqlite.mjs                            # LOAD 阶段独立工具（被 pipeline.mjs 调用）
   scripts/export-runtime-json.mjs                         # EXPORT 阶段独立工具
-  src/dnf-native-combat/data/parsers/ChrParser.ts          # ↓ 7 parser
+  src/dnf-native-combat/data/parsers/ChrParser.ts          # ↓ 7 parser 主流；AniParser 走 standalone (§2.2.1)
   src/dnf-native-combat/data/parsers/SklParser.ts
   src/dnf-native-combat/data/parsers/AtkParser.ts
-  src/dnf-native-combat/data/parsers/AniParser.ts
+  src/dnf-native-combat/data/parsers/AniParser.ts          # standalone (not in parseStage dispatch — see §2.2.1)
   src/dnf-native-combat/data/parsers/MobParser.ts
   src/dnf-native-combat/data/parsers/DgnParser.ts
   src/dnf-native-combat/data/parsers/MapParser.ts
+  src/dnf-native-combat/data/parsers/EtcParser.ts          # 7th main parser (added during Day 8-10)
   src/dnf-native-combat/data/parsers/CancelDecoder.ts      # cancel*.skl post-process（如果工具 L2 不能完全覆盖）
   src/dnf-native-combat/data/parsers/PvfDocumentLoader.ts  # dnf-extract stdout adapter
-  src/dnf-native-combat/data/types/*.ts                    # ChrDef / SklDef / AtkDef / AniDef / MobDef / DgnDef / MapDef / Provenance
-  src/dnf-native-combat/data/manifests/                    # EXPORT 输出目录
+  src/dnf-native-combat/data/types/*.ts                    # ChrDef / SklDef / AtkDef / AniDef / MobDef / DgnDef / MapDef / EtcDef / Provenance
+  dist/data/                                               # EXPORT 输出目录 (NOT src/data/manifests/ — corrected 2026-05-24, audit F1 deliverable-presence)
+  src/dnf-native-combat/data/exporter/RuntimeExporter.ts   # EXPORT shard composer
   src/dnf-native-combat/data/importer/SqliteImporter.ts
   src/dnf-native-combat/data/validator.ts
   tests/static/pipeline-extract.test.ts                    # ↓ 单元测试
@@ -420,6 +422,7 @@ Day 15-17: 集成测试 + verification 产物 + 文档补完
   tests/static/parser-mob.test.ts
   tests/static/parser-atk.test.ts
   tests/smoke/full-pipeline.test.ts                        # 真实 PVF 路径 smoke
+  tests/smoke/full-pipeline-double-run.test.ts            # double-run smoke (contentFingerprint, Day 15+ hardening)
 
 修改:
   tools/dnf-porting-src/PvfDocument.h                      # Defect 1 + Vector 结构识别

@@ -335,8 +335,13 @@ export function importToSqlite(
          VALUES (?, ?, ?, ?, ?, ?)`,
       );
       let refsInsertedLocal = 0;
+      // Audit F1 (test-effectiveness, 2026-05-24): from_field column was
+      // receiving `ref.targetKind` instead of the actual source field path
+      // (`animationRefs[3]` / `attackInfo.attackBase[0]` / etc), making
+      // both DB columns duplicates of `ref_type`. Now uses ref.fromField
+      // which the validator's walker populates from its `prefix` accumulator.
       for (const ref of validation.refIntegrity) {
-        insertRef.run(runId, ref.fromPath, ref.targetKind, ref.toPath, ref.targetKind, ref.status);
+        insertRef.run(runId, ref.fromPath, ref.fromField, ref.toPath, ref.targetKind, ref.status);
         refsInsertedLocal += 1;
       }
 

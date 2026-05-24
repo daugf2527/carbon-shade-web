@@ -12,6 +12,9 @@
  *     non-zero → pvpFields entry
  *   - 3-level error model: error vs warning vs info bucketing
  *   - buildProvenanceAudit summary correctness
+ *   - Zod schema-driven deep probes (H13-14+): nested PvfFact/PvfVectorFact
+ *     type errors, enum-field violations, multi-issue aggregation, tier-2
+ *     vs tier-3 walker selectivity, and ref/tier subsystem coexistence.
  *
  * Exit policy: BASELINE_BUGS=0, exits 1 on any unexpected outcome.
  */
@@ -421,8 +424,307 @@ function buildValidMob(p: string, animRefs: Array<{ targetKind: string; targetPa
   console.log("[OK] H13-13: buildProvenanceAudit summary correct");
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Zod schema-driven deep probes (H13-14 onward)
+//
+// The hand-rolled validator only checked top-level field PRESENCE (isObject,
+// isArray, isBoolean). Zod schemas validate the FULL PvfFact / PvfRef shape
+// recursively, so these probes verify the new validator catches the deep
+// violations the hand-rolled version was blind to.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Minimal-valid ChrDef builder. Mirrors the H13-6/13 chr fixtures but lets
+ * callers override individual fields to inject schema violations.
+ */
+function buildValidChr(p: string, overrides: Record<string, unknown> = {}): ChrDef {
+  const base = {
+    kind: "chr",
+    path: p,
+    provenance: docProv(p),
+    sections: [],
+    job: { value: "swordman", unit: "raw-string", provenance: fieldProv(p, "job") },
+    bodyImagePath: null,
+    jumpPower: { value: 800, unit: "px/s", provenance: fieldProv(p, "jump power") },
+    jumpSpeed: { value: 12, unit: "px/frame", provenance: fieldProv(p, "jump speed") },
+    moveSpeed: null, attackSpeed: null, castSpeed: null,
+    weight: { value: 50, unit: "kg", provenance: fieldProv(p, "weight") },
+    lightResistance: null, darkResistance: null,
+    widthBox: [10, 20, 30, 40],
+    growth: {
+      hpMax: { values: [100], unit: "hp", provenance: fieldProv(p, "hp max") },
+      mpMax: null, mpRegenSpeed: null, hitRecovery: null,
+      physicalAttack: { values: [10], unit: "atk", provenance: fieldProv(p, "physical attack") },
+      magicalAttack: null, physicalDefense: null, magicalDefense: null, inventoryLimit: null,
+    },
+    moduleDamageRate: null,
+    weaponHitInfo: [],
+    weaponWav: [],
+    weaponSkillInfo: [],
+    weaponDurabilityDecreaseRate: [],
+    upgradeWeaponAttackPowerRate: [],
+    attackInfo: { attackBase: [], etc: [], jumpAttack: null, dashAttack: null },
+    motionRefs: {},
+    raw: { extractor_version: "v2.0.0", extract_timestamp: "...", path: p, type: "document", sections: [] },
+    ...overrides,
+  };
+  return base as unknown as ChrDef;
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// H13-14: ChrDef.jumpPower.value is string (not number) → Zod catches the
+// nested type error that the hand-rolled isObject() check was blind to.
+// ───────────────────────────────────────────────────────────────────────────
+{
+  const p = "character/h13-14.chr";
+  const chr = buildValidChr(p, {
+    // value is "800" string instead of 800 number — schema must reject.
+    jumpPower: { value: "800", unit: "px/s", provenance: fieldProv(p, "jump power") },
+  });
+  const r = validateParsedDocuments([chr], META);
+  const err = r.errors.find(e => e.code === "missing_jump_power");
+  assert.ok(err !== undefined, `H13-14: missing_jump_power emitted for nested string value (errors=${r.errors.map(e => e.code).join(",")})`);
+  // The field path should surface the nested location for debugging.
+  assert.ok(err!.field.startsWith("jumpPower"), `H13-14: field path points at jumpPower (got "${err!.field}")`);
+  console.log("[OK] H13-14: nested PvfFact.value type error caught by Zod schema");
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// H13-15: ChrDef.jumpPower.provenance missing required `extractorVersion`
+// field. Hand-rolled validator only verified provenance was an object — the
+// Zod schema must walk into ParsedFieldProvenance and demand all required
+// keys.
+// ───────────────────────────────────────────────────────────────────────────
+{
+  const p = "character/h13-15.chr";
+  const chr = buildValidChr(p, {
+    jumpPower: {
+      value: 800,
+      unit: "px/s",
+      provenance: {
+        // extractorVersion intentionally omitted
+        extractTimestamp: "2026-05-23T16:00:00Z",
+        sourceRef: `pvf:${p}`,
+        sourcePvfHash: "h13-fake",
+        sectionName: "jump power",
+      },
+    },
+  });
+  const r = validateParsedDocuments([chr], META);
+  const err = r.errors.find(e => e.code === "missing_jump_power");
+  assert.ok(err !== undefined, `H13-15: provenance.extractorVersion missing caught (errors=${r.errors.map(e => e.code).join(",")})`);
+  // Audit F2 (test-effectiveness, 2026-05-24): the original assertion only
+  // checked that the top-level "missing_jump_power" code fired, which would
+  // also fire if jumpPower itself were absent. To actually prove Zod
+  // descended into the nested provenance object, assert the issue's field
+  // path mentions the nested key.
+  assert.ok(
+    err!.field.includes("provenance") && err!.field.includes("extractorVersion"),
+    `H13-15: error field path must reference nested provenance.extractorVersion ` +
+    `(got "${err!.field}"). Zod schema must walk into ParsedFieldProvenance.`,
+  );
+  console.log("[OK] H13-15: nested provenance.extractorVersion missing caught by Zod (field path verified)");
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// H13-16: Tier-3 walker treats sourceType="experimental" (any non-tier1/2)
+// as Tier-3. This is independent of Zod (walker is hand-rolled) but
+// confirms the walker still works after the schema refactor.
+// ───────────────────────────────────────────────────────────────────────────
+{
+  const p = "character/h13-16.chr";
+  const chr = buildValidChr(p, {
+    jumpPower: {
+      value: 800,
+      unit: "px/s",
+      provenance: fieldProv(p, "jump power"),
+      sourceType: "experimental",   // ← not tier1/2 → Tier-3 by walker rule
+      requiresManualVerification: false,
+    },
+  });
+  const r = validateParsedDocuments([chr], META);
+  assert.equal(r.tier3Fields.length, 1, `H13-16: 1 Tier-3 entry (got ${r.tier3Fields.length})`);
+  assert.equal(r.tier3Fields[0].sourceType, "experimental", "H13-16: sourceType preserved");
+  assert.equal(r.tier3Fields[0].requiresManualVerification, false, "H13-16: requiresManualVerification=false honoured");
+  console.log("[OK] H13-16: walker treats any non-tier1/2 as Tier-3");
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// H13-17: ChrDef.growth.hpMax.values is not number[] → schema invalidates
+// the deep PvfVectorFact shape.
+// ───────────────────────────────────────────────────────────────────────────
+{
+  const p = "character/h13-17.chr";
+  const chr = buildValidChr(p, {
+    growth: {
+      // values is string array, not number array
+      hpMax: { values: ["100"], unit: "hp", provenance: fieldProv(p, "hp max") },
+      mpMax: null, mpRegenSpeed: null, hitRecovery: null,
+      physicalAttack: { values: [10], unit: "atk", provenance: fieldProv(p, "physical attack") },
+      magicalAttack: null, physicalDefense: null, magicalDefense: null, inventoryLimit: null,
+    },
+  });
+  const r = validateParsedDocuments([chr], META);
+  const err = r.errors.find(e => e.code === "missing_growth");
+  assert.ok(err !== undefined, `H13-17: missing_growth (nested PvfVectorFact values type) caught (errors=${r.errors.map(e => e.code).join(",")})`);
+  assert.ok(err!.field.includes("hpMax"), `H13-17: field path points into growth.hpMax (got "${err!.field}")`);
+  console.log("[OK] H13-17: PvfVectorFact.values type validated deeply");
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// H13-18: AtkDef.attackKind="weird" — unknown enum value → invalid_attack_kind
+// ───────────────────────────────────────────────────────────────────────────
+{
+  const broken = buildValidAtk("atk/h13-18.atk", { attackKind: "weird" as unknown as "physic" });
+  const r = validateParsedDocuments([broken], META);
+  const err = r.errors.find(e => e.code === "invalid_attack_kind");
+  assert.ok(err !== undefined, `H13-18: invalid_attack_kind for unknown enum (errors=${r.errors.map(e => e.code).join(",")})`);
+  assert.equal(err!.pvfPath, "atk/h13-18.atk", "H13-18: error tags correct path");
+  console.log("[OK] H13-18: AtkDef.attackKind unknown enum → invalid_attack_kind");
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// H13-19: AtkDef.hitReaction unknown value → invalid_hit_reaction
+// ───────────────────────────────────────────────────────────────────────────
+{
+  const broken = buildValidAtk("atk/h13-19.atk", { hitReaction: "weird" as unknown as "none" });
+  const r = validateParsedDocuments([broken], META);
+  const err = r.errors.find(e => e.code === "invalid_hit_reaction");
+  assert.ok(err !== undefined, `H13-19: invalid_hit_reaction for unknown enum (errors=${r.errors.map(e => e.code).join(",")})`);
+  console.log("[OK] H13-19: AtkDef.hitReaction unknown enum → invalid_hit_reaction");
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// H13-20: SkillDef.skillType unknown value → invalid_skill_type
+// ───────────────────────────────────────────────────────────────────────────
+{
+  const skl: SkillDef = {
+    kind: "skl",
+    path: "skill/h13-20.skl",
+    provenance: docProv("skill/h13-20.skl"),
+    sections: [],
+    name: null,
+    skillType: "weird" as unknown as "active",   // ← invalid enum
+    weaponEffectType: "physical",
+    skillClass: null,
+    purchaseCost: null,
+    requiredLevel: null,
+    requiredLevelRange: null,
+    maximumLevel: null,
+    durabilityDecreaseRate: null,
+    growtypeMaximumLevel: null,
+    skillFitnessGrowtype: null,
+    hasPvp: false,
+    hasDungeon: false,
+    hasWarroom: false,
+    hasDeathTower: false,
+    autoCoolTimeApply: false,
+    cancelWindow: null,
+    raw: { extractor_version: "v2.0.0", extract_timestamp: "...", path: "skill/h13-20.skl", type: "document", sections: [] },
+  };
+  const r = validateParsedDocuments([skl], META);
+  const err = r.errors.find(e => e.code === "invalid_skill_type");
+  assert.ok(err !== undefined, `H13-20: invalid_skill_type emitted (errors=${r.errors.map(e => e.code).join(",")})`);
+  console.log("[OK] H13-20: SkillDef.skillType unknown enum → invalid_skill_type");
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// H13-21: MapDef.pvpStartArea is not an array → missing_pvp_start_area
+// ───────────────────────────────────────────────────────────────────────────
+{
+  // Override pvpStartArea with a non-array value.
+  const broken = buildValidMap("map/h13-21.map", { pvpStartArea: 42 as unknown as number[] });
+  const r = validateParsedDocuments([broken], META);
+  const err = r.errors.find(e => e.code === "missing_pvp_start_area");
+  assert.ok(err !== undefined, `H13-21: missing_pvp_start_area emitted (errors=${r.errors.map(e => e.code).join(",")})`);
+  console.log("[OK] H13-21: MapDef.pvpStartArea non-array → missing_pvp_start_area");
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// H13-22: Aggregate failure — one doc with multiple schema violations.
+// Zod returns ALL issues in one safeParse pass, so the validator must
+// emit one ValidationIssue per Zod issue (not stop at the first error).
+// ───────────────────────────────────────────────────────────────────────────
+{
+  const broken = buildValidAtk("atk/h13-22.atk", {
+    attackKind: "weird" as unknown as "physic",
+    hitReaction: "garbage" as unknown as "none",
+    attackEnemy: "true" as unknown as boolean,   // wrong type
+  });
+  const r = validateParsedDocuments([broken], META);
+  const codes = new Set(r.errors.map(e => e.code));
+  assert.ok(codes.has("invalid_attack_kind"), `H13-22: invalid_attack_kind in codes (got ${[...codes].join(",")})`);
+  assert.ok(codes.has("invalid_hit_reaction"), `H13-22: invalid_hit_reaction in codes (got ${[...codes].join(",")})`);
+  assert.ok(codes.has("missing_attack_enemy"), `H13-22: missing_attack_enemy in codes (got ${[...codes].join(",")})`);
+  assert.ok(r.stats.errors >= 3, `H13-22: ≥3 errors aggregated in single safeParse (got ${r.stats.errors})`);
+  console.log("[OK] H13-22: Zod aggregates multiple schema violations per doc");
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// H13-23: Tier-3 walker MUST NOT flag sourceType="tier2" entries.
+// Confirms the walker is selective (tier1/tier2 are first-class, only
+// other tiers + requiresManualVerification trip the audit).
+// ───────────────────────────────────────────────────────────────────────────
+{
+  const p = "character/h13-23.chr";
+  const chr = buildValidChr(p, {
+    jumpPower: {
+      value: 800,
+      unit: "px/s",
+      provenance: fieldProv(p, "jump power"),
+      sourceType: "tier2",                  // Neople API / wiki — not Tier-3
+      requiresManualVerification: false,
+    },
+  });
+  const r = validateParsedDocuments([chr], META);
+  assert.equal(r.tier3Fields.length, 0, `H13-23: tier2 entries NOT flagged as Tier-3 (got ${r.tier3Fields.length})`);
+  console.log("[OK] H13-23: sourceType=tier2 not surfaced in Tier-3 audit");
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// H13-24: Nested-evidence integration. A mob references an .ani that's not
+// in the parsed set (→ refIntegrity.status="missing"); the same mob also
+// has `warlike` as a tier1 PvfFact (not Tier-3). Confirms both subsystems
+// work in concert without bleed-over.
+// ───────────────────────────────────────────────────────────────────────────
+{
+  const p = "monster/h13-24.mob";
+  const mob: MobDef = {
+    kind: "mob",
+    path: p,
+    provenance: docProv(p),
+    sections: [],
+    name: null,
+    warlike: {
+      value: 100,
+      unit: "raw",
+      provenance: fieldProv(p, "warlike"),
+      sourceType: "tier1",   // explicit tier1 → not Tier-3
+      requiresManualVerification: false,
+    },
+    sight: null,
+    weight: null,
+    hpMax: null,
+    attackInfo: [],
+    animationRefs: [
+      { targetKind: "ani", targetPath: "anim/h13-24-missing.ani", raw: "anim/h13-24-missing.ani" },
+    ],
+    category: [],
+    raw: { extractor_version: "v2.0.0", extract_timestamp: "...", path: p, type: "document", sections: [] },
+  };
+  const r = validateParsedDocuments([mob], META);
+  // No schema errors expected.
+  assert.equal(r.stats.errors, 0, `H13-24: clean schema (got errors=${r.errors.map(e => e.code).join(",")})`);
+  // Ref must be reported as missing.
+  assert.equal(r.refIntegrity.length, 1, "H13-24: 1 ref collected");
+  assert.equal(r.refIntegrity[0].status, "missing", "H13-24: anim missing");
+  // Tier-3 walker must NOT flag the explicit tier1 warlike.
+  assert.equal(r.tier3Fields.length, 0, `H13-24: tier1 PvfFact not flagged as Tier-3 (got ${r.tier3Fields.length})`);
+  console.log("[OK] H13-24: nested ref-missing + tier1-PvfFact coexist cleanly");
+}
+
 // ───────────────────────────────────────────────────────────────────────────
 // Summary
 // ───────────────────────────────────────────────────────────────────────────
 console.log("");
-console.log("H13 VALIDATE L2 probes: all assertions passed (13 cases)");
+console.log("H13 VALIDATE L2 probes: all assertions passed (24 cases)");

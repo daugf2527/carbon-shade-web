@@ -132,6 +132,31 @@ function dgnFixture(path: string): DungeonDef {
   };
 }
 
+// Recursively rewrites every timestamp-bearing field (`extractTimestamp` —
+// camelCase from parsed defs; `extract_timestamp` — snake_case from raw
+// PvfDocument) within the parsed doc to `newTs`. Used by H15-9/H15-10 to
+// simulate a re-extraction where only the timestamps changed but the
+// semantic content is identical. Mutates in place and returns the same
+// reference for chaining (each call constructs a fresh fixture so cross-
+// test bleed is impossible).
+function stampExtractTimestamps<T>(doc: T, newTs: string): T {
+  const TS_KEYS = new Set(["extractTimestamp", "extract_timestamp"]);
+  const walk = (v: unknown): void => {
+    if (v === null || typeof v !== "object") return;
+    if (Array.isArray(v)) { for (const item of v) walk(item); return; }
+    const obj = v as Record<string, unknown>;
+    for (const key of Object.keys(obj)) {
+      if (TS_KEYS.has(key) && typeof obj[key] === "string") {
+        obj[key] = newTs;
+      } else {
+        walk(obj[key]);
+      }
+    }
+  };
+  walk(doc);
+  return doc;
+}
+
 // ───────────────────────────────────────────────────────────────────────────
 // Setup tmp output dir
 // ───────────────────────────────────────────────────────────────────────────
@@ -368,9 +393,106 @@ await mkdir(OUT_DIR, { recursive: true });
 }
 
 // ───────────────────────────────────────────────────────────────────────────
+// H15-9: Incremental EXPORT with contentFingerprint — different extract
+// timestamps on otherwise-identical content → shard still skipped.
+//
+// Simulates the Day 15 caveat fix: when PVF is re-extracted, every
+// PvfFact.provenance.extractTimestamp changes, so raw-sha256 incremental
+// skip cannot fire. useContentFingerprint:true strips timestamps before
+// hashing → fingerprint stays stable and skip fires.
+// ───────────────────────────────────────────────────────────────────────────
+{
+  const path = "character/fp/fp.chr";
+  const parsed1: ParsedPvfDocument[] = [chrFixture(path, "fp")];
+  const subOut = join(OUT_DIR, "fingerprint-skip");
+
+  // First export — baseline. Enable fingerprint mode so the manifest gains a
+  // contentSha256 for downstream comparison.
+  const r1 = await exportRuntimeShards({
+    outDir: subOut,
+    parsed: parsed1,
+    meta: { pvfHash: "h15-fp", extractorVersion: "v2.0.0", exportedAt: "2026-05-23T17:00:00Z" },
+    useContentFingerprint: true,
+  });
+  assert.equal(r1.filesSkipped, 0, "H15-9: first run has no skips");
+  const r1Entry = r1.manifest.files[0];
+  assert.ok(typeof r1Entry.contentSha256 === "string" && /^[0-9a-f]{64}$/.test(r1Entry.contentSha256),
+    `H15-9: baseline contentSha256 is 64-char hex (got ${r1Entry.contentSha256})`);
+
+  // Simulate a re-extraction: clone the parsed doc and stamp every
+  // extractTimestamp with a fresh value. All other semantic fields stay equal.
+  // Audit F3 (test-effectiveness, 2026-05-24): the helper above shares its
+  // key set with SUT.stripExtractTimestamps (mirror-coded). To prove SUT is
+  // actually performing a strip rather than a no-op coincidence, ALSO
+  // hand-edit a specific provenance.extractTimestamp on parsed2 — an
+  // independent oracle that doesn't depend on the helper.
+  const NEW_TS = "2026-05-24T09:30:42Z";
+  const parsed2: ParsedPvfDocument[] = [stampExtractTimestamps(chrFixture(path, "fp"), NEW_TS)];
+  // Independent hand-edit oracle: directly mutate a known-deep timestamp
+  // (jumpPower.provenance.extractTimestamp) to a third distinct value. If
+  // the SUT stripper truly walks all extractTimestamp occurrences, the
+  // fingerprint stays equal regardless of how the timestamps were stamped.
+  (parsed2[0] as { jumpPower: { provenance: { extractTimestamp: string } } })
+    .jumpPower.provenance.extractTimestamp = "2026-05-24T11:11:11Z";
+
+  const r2 = await exportRuntimeShards({
+    outDir: subOut,
+    parsed: parsed2,
+    meta: { pvfHash: "h15-fp", extractorVersion: "v2.0.0", exportedAt: "2026-05-24T09:30:42Z" },
+    useContentFingerprint: true,
+    incrementalBaseManifest: r1.manifest,
+  });
+  assert.ok(r2.filesSkipped >= 1, `H15-9: at least one shard skipped via fingerprint (got ${r2.filesSkipped})`);
+  const r2Entry = r2.manifest.files[0];
+  assert.ok(typeof r2Entry.contentSha256 === "string" && /^[0-9a-f]{64}$/.test(r2Entry.contentSha256),
+    "H15-9: fingerprint entry retains contentSha256 after skip");
+  assert.equal(r2Entry.contentSha256, r1Entry.contentSha256,
+    "H15-9: contentSha256 stable across re-extraction with hand-edited deep timestamp (timestamps stripped)");
+  console.log("[OK] H15-9: contentFingerprint skips re-extracted but unchanged shard (independent oracle)");
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// H15-10: contentFingerprint — semantic change defeats skip; new fingerprint
+// must differ. Guards against false positives where stripping timestamps
+// accidentally also strips real diffs.
+// ───────────────────────────────────────────────────────────────────────────
+{
+  const path = "character/fpdiff/fpdiff.chr";
+  const subOut = join(OUT_DIR, "fingerprint-diff");
+
+  const baseline = chrFixture(path, "test");
+  const r1 = await exportRuntimeShards({
+    outDir: subOut,
+    parsed: [baseline],
+    meta: { pvfHash: "h15-fpd", extractorVersion: "v2.0.0", exportedAt: "2026-05-23T17:00:00Z" },
+    useContentFingerprint: true,
+  });
+
+  // Mutate a real field (chr.job.value) AND stamp a fresh extractTimestamp.
+  // Even with timestamps stripped, the job change must surface as a new
+  // fingerprint → no skip, distinct contentSha256.
+  const renamed = stampExtractTimestamps(chrFixture(path, "test"), "2026-05-24T10:00:00Z");
+  (renamed as { job: { value: string } }).job.value = "renamed";
+
+  const r2 = await exportRuntimeShards({
+    outDir: subOut,
+    parsed: [renamed],
+    meta: { pvfHash: "h15-fpd", extractorVersion: "v2.0.0", exportedAt: "2026-05-24T10:00:00Z" },
+    useContentFingerprint: true,
+    incrementalBaseManifest: r1.manifest,
+  });
+  assert.equal(r2.filesSkipped, 0, `H15-10: semantic change is NOT skipped (got ${r2.filesSkipped})`);
+  const c1 = r1.manifest.files[0].contentSha256;
+  const c2 = r2.manifest.files[0].contentSha256;
+  assert.ok(c1 && c2 && c1 !== c2,
+    `H15-10: contentSha256 differs when content actually changes (c1=${c1}, c2=${c2})`);
+  console.log("[OK] H15-10: contentFingerprint guards against false-positive skips");
+}
+
+// ───────────────────────────────────────────────────────────────────────────
 // Cleanup
 // ───────────────────────────────────────────────────────────────────────────
 await rm(OUT_DIR, { recursive: true, force: true });
 
 console.log("");
-console.log("H15 EXPORT probes: all assertions passed (8 cases)");
+console.log("H15 EXPORT probes: all assertions passed (10 cases)");

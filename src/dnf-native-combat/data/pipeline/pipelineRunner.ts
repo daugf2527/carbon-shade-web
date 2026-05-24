@@ -47,6 +47,14 @@ export interface PipelineRunOptions {
    */
   exportBaseManifest?: RuntimeManifest;
   /**
+   * Forwarded verbatim to RuntimeExporter. When true, the exporter compares
+   * `contentSha256` (timestamp-stripped fingerprint) instead of raw sha256
+   * when deciding whether to skip a shard against `exportBaseManifest`. Lets
+   * a re-extracted-but-identical PVF skip rewrites even though every
+   * extractTimestamp is freshly minted. Default: false (Day 13 semantics).
+   */
+  exportUseContentFingerprint?: boolean;
+  /**
    * Stop pipeline at this stage. Default: undefined → run all enabled stages.
    * - "extract" — skip PARSE/VALIDATE/LOAD/EXPORT
    * - "parse" — skip VALIDATE/LOAD/EXPORT (still computes validation:null sentinel)
@@ -159,8 +167,16 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
   }
 
   // ─── LOAD stage ────────────────────────────────────────────────────────
+  // Audit pipeline-closure F5 (2026-05-24): VALIDATE errors must abort
+  // LOAD/EXPORT. Previously a corrupt PVF doc that produced a validator
+  // "error"-level issue (missing required field, wrong kind, etc.) was
+  // still upserted into SQLite + emitted in the runtime shard — bypassing
+  // the 3-level error model design (§2.3: "error 中断 / warning 继续").
+  // The stage advance now stops at "validate" when error count > 0.
+  const validationFatal =
+    shouldRun("validate") && validation.stats.errors > 0;
   let sqliteImport: SqliteImportResult | null = null;
-  if (shouldRun("load") && typeof options.sqliteDbPath === "string") {
+  if (!validationFatal && shouldRun("load") && typeof options.sqliteDbPath === "string") {
     sqliteImport = importToSqlite(
       { dbPath: options.sqliteDbPath, mode: options.sqliteMode ?? "full" },
       documents,
@@ -171,7 +187,7 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
 
   // ─── EXPORT stage ──────────────────────────────────────────────────────
   let exportResult: ExportResult | null = null;
-  if (shouldRun("export") && typeof options.exportOutDir === "string") {
+  if (!validationFatal && shouldRun("export") && typeof options.exportOutDir === "string") {
     exportResult = await exportRuntimeShards({
       outDir: options.exportOutDir,
       parsed,
@@ -180,6 +196,7 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
       sharedPhysics: options.sharedPhysics,
       sharedEnums: options.sharedEnums,
       incrementalBaseManifest: options.exportBaseManifest,
+      useContentFingerprint: options.exportUseContentFingerprint,
     });
   }
 

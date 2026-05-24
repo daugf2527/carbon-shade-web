@@ -59,6 +59,12 @@ function parseArgs(argv) {
     else if (arg === "--export-out") {
       const v = consumeValue(arg, i); if (v !== null) args.exportOut = v; i++;
     }
+    // Audit pipeline-closure F9 (2026-05-24): expose EXPORT contentFingerprint
+    // skip-mode so callers can run incremental EXPORT across re-extractions
+    // (where `extractTimestamp` differs but content is the same).
+    else if (arg === "--use-content-fingerprint") {
+      args.useContentFingerprint = true;
+    }
     else if (arg === "--domain" || arg === "--job" || arg === "--pattern") {
       // No-op placeholders, but still validate that they don't eat a sibling flag.
       const v = consumeValue(arg, i); if (v !== null) { /* discard */ } i++;
@@ -100,6 +106,17 @@ if (args.sqliteMode && args.sqliteMode !== "full" && args.sqliteMode !== "increm
   console.error(`Unsupported --sqlite-mode ${args.sqliteMode}; expected full | incremental | partial.`);
   process.exit(2);
 }
+// Audit pipeline-closure F7 (2026-05-24): SqliteImporter does NOT distinguish
+// "partial" from "full" — the option silently fell through to full behaviour,
+// hiding the fact that `partial` is not implemented. Until the importer grows
+// partial-aware semantics, reject the flag at the CLI rather than mislead.
+if (args.sqliteMode === "partial") {
+  console.error(
+    "--sqlite-mode partial is not implemented in SqliteImporter " +
+    "(BACKLOG.md: pipeline-closure F7). Use 'full' or 'incremental'."
+  );
+  process.exit(2);
+}
 
 const compile = spawnSync(process.execPath, [
   path.join(ROOT, "scripts", "run-tsc.mjs"),
@@ -134,24 +151,40 @@ const verificationOut = args.noVerification
 
 // --full / --incremental modes auto-enable LOAD + EXPORT with default paths
 // (so the user does not have to spell out 4 flags every run).
+// Audit pipeline-closure F8 (2026-05-24): when --stop-at is set to an
+// earlier stage, the auto-defaults silently materialized then silently
+// ignored — making the CLI look like LOAD/EXPORT ran. Gate defaults so
+// they only kick in when the pipeline will actually reach that stage.
+const stopsBeforeLoad = args.stopAt === "extract" || args.stopAt === "parse" || args.stopAt === "validate";
+const stopsBeforeExport = stopsBeforeLoad || args.stopAt === "load";
 let sqliteDb = args.sqliteDb;
 let exportOut = args.exportOut;
 let sqliteMode = args.sqliteMode;
 let exportBaseManifest;
 if (args.mode === "full" || args.mode === "incremental") {
-  sqliteDb = sqliteDb ?? path.join(ROOT, ".tmp", "pipeline.db");
-  exportOut = exportOut ?? path.join(ROOT, "dist", "data");
-  if (args.mode === "incremental") {
+  if (!stopsBeforeLoad) {
+    sqliteDb = sqliteDb ?? path.join(ROOT, ".tmp", "pipeline.db");
+  } else if (args.sqliteDb !== undefined) {
+    console.error(`--sqlite-db is ignored because --stop-at ${args.stopAt} runs before LOAD.`);
+  }
+  if (!stopsBeforeExport) {
+    exportOut = exportOut ?? path.join(ROOT, "dist", "data");
+  } else if (args.exportOut !== undefined) {
+    console.error(`--export-out is ignored because --stop-at ${args.stopAt} runs before EXPORT.`);
+  }
+  if (args.mode === "incremental" && !stopsBeforeLoad) {
     sqliteMode = sqliteMode ?? "incremental";
     // Load prior manifest for EXPORT diff. If absent, treat as first run.
-    const fs = await import("node:fs/promises");
-    const manifestPath = path.join(exportOut, "manifest.json");
-    try {
-      const content = await fs.readFile(manifestPath, "utf-8");
-      exportBaseManifest = JSON.parse(content);
-    } catch (e) {
-      // No prior manifest → incremental EXPORT becomes effectively "full"
-      // for this run, which is intentional (first run baseline).
+    if (!stopsBeforeExport) {
+      const fs = await import("node:fs/promises");
+      const manifestPath = path.join(exportOut, "manifest.json");
+      try {
+        const content = await fs.readFile(manifestPath, "utf-8");
+        exportBaseManifest = JSON.parse(content);
+      } catch (e) {
+        // No prior manifest → incremental EXPORT becomes effectively "full"
+        // for this run, which is intentional (first run baseline).
+      }
     }
   }
 }
@@ -168,6 +201,7 @@ try {
     sqliteMode,
     exportOutDir: exportOut,
     exportBaseManifest,
+    exportUseContentFingerprint: args.useContentFingerprint === true,
     stopAt: args.stopAt,
   });
 

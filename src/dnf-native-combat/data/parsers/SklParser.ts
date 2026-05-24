@@ -127,7 +127,15 @@ function parseAutoCoolTime(document: PvfDocument): boolean {
   if (attr.t === "int" || attr.t === "float") {
     return (attr as { t: string; v: number }).v === 1;
   }
-  return false;
+  // Audit F6 (ts-parser-truth, 2026-05-24): wrong-type attribute on a present
+  // section is a corrupted PVF, not "no auto-cooltime". Surface loudly so the
+  // VALIDATE stage sees it rather than silently returning false (which would
+  // be indistinguishable from "section absent").
+  throw new Error(
+    `[SklParser] parseAutoCoolTime: "auto cooltime apply" section in ${document.path} ` +
+    `has first attribute of type "${attr.t}" (expected int/float). Real PVF emits int v=0/1; ` +
+    `mixed-type attribute indicates corrupted input.`,
+  );
 }
 
 // ---------------------------------------------------------------------------

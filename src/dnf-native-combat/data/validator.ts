@@ -12,15 +12,23 @@
  *   5. 3-level error model (error → fail run, warning → continue, info → log)
  *
  * Design decisions:
- *   - **Hand-rolled (no Zod)** — project keeps deps minimal; Day 12 SQLite uses
- *     node:sqlite "零 npm 依赖" by the same principle. Each schema check
- *     is explicit, surfacing exact field paths instead of opaque parse errors.
+ *   - **Zod schema-driven, per design §4 Day 11.** Each ParsedDef kind has a
+ *     dedicated Zod schema built from the canonical type definitions in
+ *     ../data/types/*. safeParse() produces an issue list which we translate
+ *     to ValidationIssue entries with stable, human-readable `code` values
+ *     (e.g. `missing_provenance` / `wrong_kind` / `invalid_attack_kind`).
+ *     The mapping preserves every code emitted by the pre-Zod hand-rolled
+ *     validator so downstream consumers (H13 probes, smoke fixtures, the
+ *     report renderer) keep working without churn.
  *   - **Generic walker** for provenance + refs — every ParsedDef is a tree
  *     of typed fields; one walker handles all 7 (and forward-compat to 9).
+ *     The walker stays hand-rolled because it is a *traversal*, not a
+ *     schema check — Zod's job ends at shape, the walker collects evidence.
  *   - **Pure** — given the same parsed[] input, produces identical reports.
  *     Test fixtures pin runId/startedAt/finishedAt for determinism.
  */
 
+import { z } from "zod";
 import type { AtkDef } from "../data/types/AtkDef.js";
 import type { ChrDef } from "../data/types/ChrDef.js";
 import type { MobDef } from "../data/types/MobDef.js";
@@ -62,6 +70,15 @@ export type RefStatus = "resolved" | "missing" | "ambiguous";
 
 export interface RefEntry {
   fromPath: string;
+  /**
+   * The dotted/indexed field path on the source ParsedDef where the ref was
+   * found (e.g. `animationRefs[3]` or `attackInfo.attackBase[0]`).
+   * Audit F1 (test-effectiveness, 2026-05-24): SqliteImporter previously
+   * wrote `targetKind` into both `from_field` AND `ref_type` columns,
+   * duplicating the same value. The actual source-field path was discarded
+   * by the walker before reaching the importer. Now preserved end-to-end.
+   */
+  fromField: string;
   toPath: string;
   targetKind: string;
   status: RefStatus;
@@ -116,6 +133,442 @@ export interface ValidateOptions {
    */
   parseErrors?: Array<{ path: string; message: string }>;
 }
+
+// ─── Zod sub-schemas (Provenance / PvfFact variants / PvfRef) ───────────────
+//
+// These mirror src/dnf-native-combat/data/types/Provenance.ts and
+// PvfDocument.ts. Keep them in sync with the TS types — schema drift here
+// silently weakens validation, so prefer "stricter than the type" over the
+// reverse. Optional TS fields use z.optional(); nullable union members use
+// z.nullable(); arrays-of-PvfFact use z.array(PvfFactNumberSchema).
+
+/** Any plain object with string keys (used for `raw` slots & loose containers). */
+const PlainObjectSchema = z.record(z.string(), z.unknown());
+
+/** ExtractedDocumentProvenance — top-level provenance attached to every ParsedDef. */
+const ExtractedDocumentProvenanceSchema = z.object({
+  extractorVersion: z.string(),
+  extractTimestamp: z.string(),
+  sourcePvfHash: z.string().optional(),
+  sourceRef: z.string(),
+});
+
+/** ParsedFieldProvenance — provenance attached to every PvfFact (+ sectionName). */
+const ParsedFieldProvenanceSchema = z.object({
+  extractorVersion: z.string(),
+  extractTimestamp: z.string(),
+  sourcePvfHash: z.string().optional(),
+  sourceRef: z.string(),
+  sectionName: z.string(),
+});
+
+/** Shared optional-fact fields (sourceType + requiresManualVerification).
+ *
+ * Audit F11 (ts-parser-truth, 2026-05-24): sourceType is constrained to the
+ * SourceConfidenceTier enum from types/Provenance.ts so a typo like
+ * "tier_one" no longer parses cleanly. The walker still treats anything
+ * other than "tier1"/"tier2" as Tier-3 — but the SET of accepted values is
+ * now finite. H probes that intentionally test walker behaviour with
+ * out-of-enum strings must cast via `as unknown` to bypass the schema.
+ */
+const SourceConfidenceTierSchema = z.union([
+  z.literal("tier1"),
+  z.literal("tier2"),
+  z.literal("local_baseline"),
+  z.literal("experimental"),
+]);
+
+const PvfFactBaseFields = {
+  unit: z.string(),
+  provenance: ParsedFieldProvenanceSchema,
+  sourceType: SourceConfidenceTierSchema.optional(),
+  requiresManualVerification: z.boolean().optional(),
+};
+
+/** PvfFact<number>. */
+const PvfFactNumberSchema = z.object({
+  value: z.number(),
+  ...PvfFactBaseFields,
+});
+
+/** PvfStringFact (extends PvfFact<string> with optional rawValue). */
+const PvfStringFactSchema = z.object({
+  value: z.string(),
+  rawValue: z.string().optional(),
+  ...PvfFactBaseFields,
+});
+
+/** PvfVectorFact (values is number[]; no `value` field). */
+const PvfVectorFactSchema = z.object({
+  values: z.array(z.number()),
+  ...PvfFactBaseFields,
+});
+
+/** PvfRef — { targetKind, targetPath, raw } as emitted by parserUtils.ref(). */
+const PvfRefSchema = z.object({
+  targetKind: z.string(),
+  targetPath: z.string(),
+  raw: z.string(),
+});
+
+/** PvfAttribute — discriminated union by `t` tag, with passthrough fallback
+ *  for forward-compat unknown kinds. Audit F13 (ts-parser-truth, 2026-05-24):
+ *  MapDef.monsterSpawns / passiveObjects / specialPassiveObjects previously
+ *  declared `z.array(z.unknown())` — completely unconstrained. This schema
+ *  enforces at minimum that every attribute carries a string `t` tag. */
+const PvfAttributeSchema = z.object({ t: z.string() }).passthrough();
+
+/** PvfSection — { name, attributes: PvfAttribute[] }. */
+const PvfSectionSchema = z.object({
+  name: z.string(),
+  attributes: z.array(PvfAttributeSchema),
+});
+
+// ChrWeaponHitInfoRow — 6 fields, all primitives. Per types/ChrDef.ts.
+const ChrWeaponHitInfoRowSchema = z.object({
+  hitTag: z.string(),
+  bloodTag: z.string(),
+  damageScalePct: z.number(),
+  critOrSimilar: z.number(),
+  pushBack: z.number(),
+  launch: z.number(),
+});
+
+// ChrWeaponWavRow — discriminated union by `format` (stereo / mono / matrix).
+// Per types/ChrDef.ts. Each row in weaponWav can be one of these or null.
+const ChrWeaponWavRowSchema = z.discriminatedUnion("format", [
+  z.object({
+    format: z.literal("stereo"),
+    attackSwingA: z.string(),
+    attackSwingB: z.string(),
+    hitA: z.string(),
+    hitB: z.string(),
+  }),
+  z.object({
+    format: z.literal("mono"),
+    swing: z.string(),
+    hit: z.string(),
+  }),
+  z.object({
+    format: z.literal("matrix"),
+    entries: z.array(z.object({ swing: z.string(), hit: z.string() })),
+  }),
+]);
+
+// ─── Zod kind schemas (one per ParsedPvfDocument kind) ───────────────────────
+//
+// These are intentionally NOT exhaustive at every leaf — they enforce the
+// required-presence and type contracts the hand-rolled validator enforced,
+// plus deeper checks on PvfFact shapes (which the hand-rolled version
+// reduced to isObject()). Optional/nullable TS fields are mirrored faithfully.
+
+const ChrGrowthSchema = z.object({
+  hpMax: PvfVectorFactSchema,
+  mpMax: z.nullable(PvfVectorFactSchema),
+  mpRegenSpeed: z.nullable(PvfVectorFactSchema),
+  hitRecovery: z.nullable(PvfVectorFactSchema),
+  physicalAttack: PvfVectorFactSchema,
+  magicalAttack: z.nullable(PvfVectorFactSchema),
+  physicalDefense: z.nullable(PvfVectorFactSchema),
+  magicalDefense: z.nullable(PvfVectorFactSchema),
+  inventoryLimit: z.nullable(PvfVectorFactSchema),
+});
+
+const ChrAttackInfoSchema = z.object({
+  attackBase: z.array(PvfRefSchema),
+  etc: z.array(PvfRefSchema),
+  jumpAttack: z.nullable(PvfRefSchema),
+  dashAttack: z.nullable(PvfRefSchema),
+});
+
+const ChrSchema = z.object({
+  kind: z.literal("chr"),
+  path: z.string(),
+  provenance: ExtractedDocumentProvenanceSchema,
+  sections: z.array(PvfSectionSchema),
+  job: PvfStringFactSchema,
+  bodyImagePath: z.nullable(PvfStringFactSchema),
+  jumpPower: PvfFactNumberSchema,
+  jumpSpeed: PvfFactNumberSchema,
+  moveSpeed: z.nullable(PvfFactNumberSchema),
+  attackSpeed: z.nullable(PvfFactNumberSchema),
+  castSpeed: z.nullable(PvfFactNumberSchema),
+  weight: PvfFactNumberSchema,
+  lightResistance: z.nullable(PvfFactNumberSchema),
+  darkResistance: z.nullable(PvfFactNumberSchema),
+  widthBox: z.array(z.number()),
+  growth: ChrGrowthSchema,
+  moduleDamageRate: z.nullable(z.array(z.array(z.number()))),
+  // Audit F12 (ts-parser-truth, 2026-05-24): was z.array(z.unknown()) — now
+  // typed against ChrWeaponHitInfoRow / ChrWeaponWavRow per types/ChrDef.ts.
+  weaponHitInfo: z.array(ChrWeaponHitInfoRowSchema),
+  weaponWav: z.array(z.nullable(ChrWeaponWavRowSchema)),
+  weaponSkillInfo: z.array(z.number()),
+  weaponDurabilityDecreaseRate: z.array(z.number()),
+  upgradeWeaponAttackPowerRate: z.array(z.number()),
+  attackInfo: ChrAttackInfoSchema,
+  motionRefs: z.record(z.string(), z.array(PvfRefSchema)),
+  // raw is a full PvfDocument; we only enforce object-shape here (loose).
+  raw: PlainObjectSchema,
+});
+
+const MobSchema = z.object({
+  kind: z.literal("mob"),
+  path: z.string(),
+  provenance: ExtractedDocumentProvenanceSchema,
+  sections: z.array(PvfSectionSchema),
+  name: z.nullable(PvfStringFactSchema),
+  warlike: z.nullable(PvfFactNumberSchema),
+  sight: z.nullable(PvfFactNumberSchema),
+  weight: z.nullable(PvfFactNumberSchema),
+  hpMax: z.nullable(PvfVectorFactSchema),
+  attackInfo: z.array(PvfRefSchema),
+  animationRefs: z.array(PvfRefSchema),
+  category: z.array(z.string()),
+  raw: PlainObjectSchema,
+});
+
+const AtkAttackKindSchema = z.union([z.literal("physic"), z.literal("magic"), z.null()]);
+const AtkHitReactionSchema = z.union([
+  z.literal("none"),
+  z.literal("hit_down"),
+  z.literal("hit_lift_up"),
+  z.literal("hit_horizon"),
+]);
+const AtkElementSchema = z.union([
+  z.literal("none"),
+  z.literal("dark"),
+  z.literal("fire"),
+  z.literal("ice"),
+  z.literal("light"),
+]);
+
+const AtkSchema = z.object({
+  kind: z.literal("atk"),
+  path: z.string(),
+  provenance: ExtractedDocumentProvenanceSchema,
+  sections: z.array(PvfSectionSchema),
+  liftUp: z.nullable(PvfFactNumberSchema),
+  pushAside: z.nullable(PvfFactNumberSchema),
+  damageBonus: z.nullable(PvfFactNumberSchema),
+  attackEnemy: z.boolean(),
+  attackFriend: z.boolean(),
+  weaponDamageApply: z.boolean(),
+  attackKind: AtkAttackKindSchema,
+  element: AtkElementSchema,
+  hitReaction: AtkHitReactionSchema,
+  causesDown: z.boolean(),
+  causesStun: z.boolean(),
+  causesBounce: z.boolean(),
+  causesStuck: z.boolean(),
+  pvpOnly: z.boolean(),
+  ignoreWeight: z.boolean(),
+  hitWav: z.nullable(PvfStringFactSchema),
+  knuckBack: z.nullable(PvfFactNumberSchema),
+  raw: PlainObjectSchema,
+});
+
+const SklSkillTypeSchema = z.union([
+  z.literal("active"),
+  z.literal("passive"),
+  z.literal("unknown"),
+]);
+const SklWeaponEffectTypeSchema = z.union([
+  z.literal("physical"),
+  z.literal("magical"),
+  z.literal("unknown"),
+]);
+
+const SklCancelWindowSchema = z.object({
+  cancelWindowStart: z.number(),
+  cancelWindowDuration: z.number(),
+  cancelGroup: z.number(),
+  cancelWeaponMask: z.array(z.number()),
+  cancelTargetSlots: z.array(z.number()),
+});
+
+const SklSchema = z.object({
+  kind: z.literal("skl"),
+  path: z.string(),
+  provenance: ExtractedDocumentProvenanceSchema,
+  sections: z.array(PvfSectionSchema),
+  name: z.nullable(PvfStringFactSchema),
+  skillType: SklSkillTypeSchema,
+  weaponEffectType: SklWeaponEffectTypeSchema,
+  skillClass: z.nullable(PvfFactNumberSchema),
+  purchaseCost: z.nullable(PvfFactNumberSchema),
+  requiredLevel: z.nullable(PvfFactNumberSchema),
+  requiredLevelRange: z.nullable(PvfFactNumberSchema),
+  maximumLevel: z.nullable(PvfFactNumberSchema),
+  durabilityDecreaseRate: z.nullable(PvfFactNumberSchema),
+  growtypeMaximumLevel: z.nullable(z.array(z.number())),
+  skillFitnessGrowtype: z.nullable(z.array(z.number())),
+  hasPvp: z.boolean(),
+  hasDungeon: z.boolean(),
+  hasWarroom: z.boolean(),
+  hasDeathTower: z.boolean(),
+  autoCoolTimeApply: z.boolean(),
+  cancelWindow: z.nullable(SklCancelWindowSchema),
+  raw: PlainObjectSchema,
+});
+
+const DgnSchema = z.object({
+  kind: z.literal("dgn"),
+  path: z.string(),
+  provenance: ExtractedDocumentProvenanceSchema,
+  sections: z.array(PvfSectionSchema),
+  name: z.nullable(PvfStringFactSchema),
+  explain: z.nullable(PvfStringFactSchema),
+  basisLevel: z.nullable(PvfFactNumberSchema),
+  minimumRequiredLevel: z.nullable(PvfFactNumberSchema),
+  experienceIncreasingPoint: z.nullable(PvfFactNumberSchema),
+  backgroundPos: z.nullable(PvfFactNumberSchema),
+  startMap: z.nullable(z.array(z.number())),
+  bossMap: z.nullable(z.array(z.number())),
+  size: z.nullable(z.object({ width: z.number(), height: z.number() })),
+  mapSpecification: z.nullable(z.object({
+    rows: z.number(),
+    cols: z.number(),
+    items: z.array(z.array(z.number())),
+  })),
+  enteringTitleRefs: z.array(PvfRefSchema),
+  imageRefs: z.array(z.object({
+    section: z.string(),
+    path: z.string(),
+    resolved: z.boolean(),
+  })),
+  championLevels: z.nullable(z.array(z.number())),
+  pathgateObjects: z.nullable(z.array(z.number())),
+  eventMonsters: z.nullable(z.array(z.number())),
+  greedLayout: z.nullable(z.string()),
+  worldmapPatternInfo: z.nullable(z.array(z.unknown())),
+  raw: PlainObjectSchema,
+});
+
+const EtcKeyValueEntrySchema = z.object({
+  key: z.string(),
+  values: z.array(z.number()),
+  indexedValues: z.nullable(z.record(z.string(), z.number())),
+});
+
+const EtcSchema = z.object({
+  kind: z.literal("etc"),
+  path: z.string(),
+  provenance: ExtractedDocumentProvenanceSchema,
+  sections: z.array(PvfSectionSchema),
+  entries: z.array(EtcKeyValueEntrySchema),
+  byKey: z.record(z.string(), EtcKeyValueEntrySchema),
+  raw: PlainObjectSchema,
+});
+
+const MapSchema = z.object({
+  kind: z.literal("map"),
+  path: z.string(),
+  provenance: ExtractedDocumentProvenanceSchema,
+  sections: z.array(PvfSectionSchema),
+  name: z.nullable(PvfStringFactSchema),
+  mapType: z.nullable(PvfStringFactSchema),
+  dungeonId: z.nullable(PvfFactNumberSchema),
+  nearSightScroll: z.nullable(PvfFactNumberSchema),
+  middleSightScroll: z.nullable(PvfFactNumberSchema),
+  farSightScroll: z.nullable(PvfFactNumberSchema),
+  tiles: z.array(z.string()),
+  playerNumber: z.array(z.number()),
+  sounds: z.array(z.string()),
+  monsterAiHints: z.array(z.string()),
+  eventMonsterPositions: z.array(z.number()),
+  pathgatePos: z.array(z.number()),
+  pvpStartArea: z.array(z.number()),
+  // Audit F13 (ts-parser-truth, 2026-05-24): was z.array(z.unknown()) — now
+  // PvfAttribute[] per types/MapDef.ts. Section attributes preserve their
+  // typed `t` discriminator, so silent coercion at parser boundary surfaces.
+  monsterSpawns: z.array(PvfAttributeSchema),
+  passiveObjects: z.array(PvfAttributeSchema),
+  specialPassiveObjects: z.array(PvfAttributeSchema),
+  animationRefs: z.array(PvfRefSchema),
+  backgroundAnimation: z.array(PvfRefSchema),
+  greed: z.nullable(PvfStringFactSchema),
+  raw: PlainObjectSchema,
+});
+
+// ─── Issue translation: Zod issue → ValidationIssue code ────────────────────
+//
+// All hand-rolled validator codes are preserved here. The mapping is keyed
+// off the TOP-LEVEL field name (path[0]) so a nested type error (e.g.
+// jumpPower.value being a string) maps back to the same `missing_jump_power`
+// bucket the hand-rolled code used. This keeps H13 probes + downstream
+// consumers stable while still surfacing deep errors via the issue `field`.
+
+function camelToSnake(s: string): string {
+  return s.replace(/([A-Z])/g, "_$1").toLowerCase().replace(/^_+/, "");
+}
+
+interface CodeMapping {
+  code: string;
+  level: ValidationLevel;
+}
+
+/**
+ * Special-case map of top-level field name → code mapping.
+ * Anything not listed falls back to `missing_<camelToSnake(top)>`.
+ *
+ * `wrong_kind`, `invalid_attack_kind`, `invalid_hit_reaction`, and
+ * `invalid_skill_type` are the only codes that don't follow the default
+ * `missing_` prefix — they retain `invalid_` to signal "wrong value in a
+ * known enum slot" vs "field missing or wrong type".
+ */
+const FIELD_CODE_OVERRIDES: Record<string, string> = {
+  kind: "wrong_kind",
+  attackKind: "invalid_attack_kind",
+  hitReaction: "invalid_hit_reaction",
+  skillType: "invalid_skill_type",
+};
+
+function mapIssueToCode(issuePath: ReadonlyArray<PropertyKey>): string {
+  if (issuePath.length === 0) return "schema_error";
+
+  // Etc-specific entries[N].key missing → preserve hand-rolled code.
+  if (
+    issuePath[0] === "entries" &&
+    typeof issuePath[1] === "number" &&
+    issuePath[2] === "key"
+  ) {
+    return "etc_entry_missing_key";
+  }
+
+  const top = issuePath[0];
+  if (typeof top !== "string") return "schema_error";
+
+  const override = FIELD_CODE_OVERRIDES[top];
+  if (override !== undefined) return override;
+
+  return `missing_${camelToSnake(top)}`;
+}
+
+function fieldPathString(issuePath: ReadonlyArray<PropertyKey>): string {
+  if (issuePath.length === 0) return "<root>";
+  return issuePath
+    .map(seg => (typeof seg === "number" ? `[${seg}]` : String(seg)))
+    .reduce((acc, seg) => {
+      if (acc === "") return seg.startsWith("[") ? seg : seg;
+      return seg.startsWith("[") ? acc + seg : acc + "." + seg;
+    }, "");
+}
+
+interface KindSchemaSpec {
+  parser: string;
+  schema: z.ZodTypeAny;
+}
+
+const KIND_SCHEMAS: Record<string, KindSchemaSpec> = {
+  chr: { parser: "chr", schema: ChrSchema },
+  mob: { parser: "mob", schema: MobSchema },
+  atk: { parser: "atk", schema: AtkSchema },
+  skl: { parser: "skl", schema: SklSchema },
+  dgn: { parser: "dgn", schema: DgnSchema },
+  etc: { parser: "etc", schema: EtcSchema },
+  map: { parser: "map", schema: MapSchema },
+};
 
 // ─── Public API ─────────────────────────────────────────────────────────────
 
@@ -241,156 +694,111 @@ export function buildProvenanceAudit(report: VerificationReport): ProvenanceAudi
 // ─── Schema validation (per-kind dispatch) ─────────────────────────────────
 
 /**
- * Per-kind schema check. Confirms the parsed object's required fields are
- * present with correct types. Parsers already throw on most invariant
- * violations during parse; this stage catches anything they may have missed.
+ * Per-kind schema check. Routes by `def.kind` to a Zod schema; translates
+ * each Zod issue into a stable ValidationIssue (code + field path + level).
  *
- * Reports `error` (kind unknown, required missing/wrong-type) and `warning`
- * (optional present but wrong type) issues into the shared issues list.
+ * Unknown kinds bypass schema entirely and emit `unknown_kind`.
  */
 function validateSchema(def: ParsedPvfDocument, issues: ValidationIssue[]): void {
-  switch (def.kind) {
-    case "chr": return validateChrDef(def, issues);
-    case "mob": return validateMobDef(def, issues);
-    case "atk": return validateAtkDef(def, issues);
-    case "skl": return validateSklDef(def, issues);
-    case "dgn": return validateDgnDef(def, issues);
-    case "etc": return validateEtcDef(def, issues);
-    case "map": return validateMapDef(def, issues);
-    default:
-      issues.push({
-        level: "error",
-        pvfPath: (def as { path?: string }).path ?? "<unknown>",
-        parser: "<unknown>",
-        field: "kind",
-        code: "unknown_kind",
-        message: `Unknown ParsedDef.kind="${String((def as { kind: unknown }).kind)}". Expected one of chr/mob/atk/skl/dgn/etc/map.`,
-      });
+  const kind = (def as { kind?: unknown }).kind;
+  if (typeof kind !== "string" || !(kind in KIND_SCHEMAS)) {
+    issues.push({
+      level: "error",
+      pvfPath: (def as { path?: string }).path ?? "<unknown>",
+      parser: "<unknown>",
+      field: "kind",
+      code: "unknown_kind",
+      message: `Unknown ParsedDef.kind="${String(kind)}". Expected one of chr/mob/atk/skl/dgn/etc/map.`,
+    });
+    return;
+  }
+  const spec = KIND_SCHEMAS[kind];
+
+  switch (kind) {
+    case "chr": validateChrDef(def as ChrDef, issues, spec); break;
+    case "mob": validateMobDef(def as MobDef, issues, spec); break;
+    case "atk": validateAtkDef(def as AtkDef, issues, spec); break;
+    case "skl": validateSklDef(def as SkillDef, issues, spec); break;
+    case "dgn": validateDgnDef(def as DungeonDef, issues, spec); break;
+    case "etc": validateEtcDef(def as EtcDef, issues, spec); break;
+    case "map": validateMapDef(def as MapDef, issues, spec); break;
+    default: break; // unreachable — guarded by `kind in KIND_SCHEMAS` above
   }
 }
 
-function requireField(
-  obj: unknown,
-  pvfPath: string,
+/**
+ * Runs the given schema's safeParse against `def`, translating each issue
+ * into a ValidationIssue and pushing onto `issues`. Returns nothing.
+ *
+ * Issue → ValidationIssue contract:
+ *   - level: "error" by default (schema violations are hard fails)
+ *   - pvfPath: def.path
+ *   - parser: kind name
+ *   - field: dotted/bracketed path string for human reading
+ *   - code: stable code derived via mapIssueToCode (preserves hand-rolled names)
+ *   - message: Zod-formatted message prefixed with the field path
+ */
+function runSchema(
+  def: ParsedPvfDocument,
+  schema: z.ZodTypeAny,
   parser: string,
-  field: string,
-  predicate: (v: unknown) => boolean,
-  code: string,
-  message: string,
   issues: ValidationIssue[],
-  level: ValidationLevel = "error",
-): boolean {
-  const value = (obj as Record<string, unknown>)?.[field];
-  if (!predicate(value)) {
-    issues.push({ level, pvfPath, parser, field, code, message });
-    return false;
-  }
-  return true;
-}
-
-const isObject = (v: unknown): v is Record<string, unknown> =>
-  v !== null && typeof v === "object" && !Array.isArray(v);
-const isNonEmptyString = (v: unknown): v is string =>
-  typeof v === "string" && v.length > 0;
-const isFiniteNumber = (v: unknown): v is number =>
-  typeof v === "number" && Number.isFinite(v);
-const isArray = (v: unknown): v is unknown[] => Array.isArray(v);
-const isBoolean = (v: unknown): v is boolean => typeof v === "boolean";
-
-function validateChrDef(def: ChrDef, issues: ValidationIssue[]): void {
-  const p = def.path;
-  requireField(def, p, "chr", "kind", v => v === "chr", "wrong_kind", "ChrDef.kind must be 'chr'", issues);
-  requireField(def, p, "chr", "provenance", isObject, "missing_provenance", "ChrDef.provenance must be object", issues);
-  requireField(def, p, "chr", "sections", isArray, "missing_sections", "ChrDef.sections must be array", issues);
-  requireField(def, p, "chr", "job", isObject, "missing_job", "ChrDef.job (required PvfStringFact) missing", issues);
-  requireField(def, p, "chr", "jumpPower", isObject, "missing_jump_power", "ChrDef.jumpPower (required PvfFact<number>) missing", issues);
-  requireField(def, p, "chr", "jumpSpeed", isObject, "missing_jump_speed", "ChrDef.jumpSpeed (required PvfFact<number>) missing", issues);
-  requireField(def, p, "chr", "weight", isObject, "missing_weight", "ChrDef.weight (required PvfFact<number>) missing", issues);
-  requireField(def, p, "chr", "widthBox", isArray, "missing_width_box", "ChrDef.widthBox must be array", issues);
-  requireField(def, p, "chr", "growth", isObject, "missing_growth", "ChrDef.growth must be object", issues);
-  requireField(def, p, "chr", "weaponHitInfo", isArray, "missing_weapon_hit_info", "ChrDef.weaponHitInfo must be array", issues);
-  requireField(def, p, "chr", "attackInfo", isObject, "missing_attack_info", "ChrDef.attackInfo must be object", issues);
-  requireField(def, p, "chr", "motionRefs", isObject, "missing_motion_refs", "ChrDef.motionRefs must be object", issues);
-}
-
-function validateMobDef(def: MobDef, issues: ValidationIssue[]): void {
-  const p = def.path;
-  requireField(def, p, "mob", "kind", v => v === "mob", "wrong_kind", "MobDef.kind must be 'mob'", issues);
-  requireField(def, p, "mob", "provenance", isObject, "missing_provenance", "MobDef.provenance must be object", issues);
-  requireField(def, p, "mob", "sections", isArray, "missing_sections", "MobDef.sections must be array", issues);
-  requireField(def, p, "mob", "attackInfo", isArray, "missing_attack_info", "MobDef.attackInfo must be array", issues);
-  requireField(def, p, "mob", "animationRefs", isArray, "missing_animation_refs", "MobDef.animationRefs must be array", issues);
-  requireField(def, p, "mob", "category", isArray, "missing_category", "MobDef.category must be array", issues);
-}
-
-function validateAtkDef(def: AtkDef, issues: ValidationIssue[]): void {
-  const p = def.path;
-  requireField(def, p, "atk", "kind", v => v === "atk", "wrong_kind", "AtkDef.kind must be 'atk'", issues);
-  requireField(def, p, "atk", "provenance", isObject, "missing_provenance", "AtkDef.provenance must be object", issues);
-  requireField(def, p, "atk", "attackEnemy", isBoolean, "missing_attack_enemy", "AtkDef.attackEnemy must be boolean", issues);
-  requireField(def, p, "atk", "attackFriend", isBoolean, "missing_attack_friend", "AtkDef.attackFriend must be boolean", issues);
-  requireField(def, p, "atk", "pvpOnly", isBoolean, "missing_pvp_only", "AtkDef.pvpOnly must be boolean", issues);
-  const validKinds = new Set(["physic", "magic", null]);
-  if (!validKinds.has(def.attackKind)) {
+): void {
+  const result = schema.safeParse(def);
+  if (result.success) return;
+  for (const issue of result.error.issues) {
+    const path = issue.path;
+    const code = mapIssueToCode(path);
+    const fieldStr = fieldPathString(path);
     issues.push({
-      level: "error", pvfPath: p, parser: "atk", field: "attackKind",
-      code: "invalid_attack_kind",
-      message: `AtkDef.attackKind must be one of physic/magic/null, got "${String(def.attackKind)}"`,
-    });
-  }
-  const validReactions = new Set(["none", "hit_down", "hit_lift_up", "hit_horizon"]);
-  if (!validReactions.has(def.hitReaction)) {
-    issues.push({
-      level: "error", pvfPath: p, parser: "atk", field: "hitReaction",
-      code: "invalid_hit_reaction",
-      message: `AtkDef.hitReaction invalid: "${String(def.hitReaction)}"`,
+      level: "error",
+      pvfPath: def.path,
+      parser,
+      field: fieldStr,
+      code,
+      message: `${parser}: ${fieldStr} — ${issue.message}`,
     });
   }
 }
 
-function validateSklDef(def: SkillDef, issues: ValidationIssue[]): void {
-  const p = def.path;
-  requireField(def, p, "skl", "kind", v => v === "skl", "wrong_kind", "SkillDef.kind must be 'skl'", issues);
-  requireField(def, p, "skl", "provenance", isObject, "missing_provenance", "SkillDef.provenance must be object", issues);
-  requireField(def, p, "skl", "hasPvp", isBoolean, "missing_has_pvp", "SkillDef.hasPvp must be boolean", issues);
-  requireField(def, p, "skl", "hasDungeon", isBoolean, "missing_has_dungeon", "SkillDef.hasDungeon must be boolean", issues);
-  const validTypes = new Set(["active", "passive", "unknown"]);
-  if (!validTypes.has(def.skillType)) {
-    issues.push({
-      level: "error", pvfPath: p, parser: "skl", field: "skillType",
-      code: "invalid_skill_type",
-      message: `SkillDef.skillType invalid: "${String(def.skillType)}"`,
-    });
-  }
+function validateChrDef(def: ChrDef, issues: ValidationIssue[], spec: KindSchemaSpec): void {
+  runSchema(def, spec.schema, spec.parser, issues);
 }
 
-function validateDgnDef(def: DungeonDef, issues: ValidationIssue[]): void {
-  const p = def.path;
-  requireField(def, p, "dgn", "kind", v => v === "dgn", "wrong_kind", "DungeonDef.kind must be 'dgn'", issues);
-  requireField(def, p, "dgn", "provenance", isObject, "missing_provenance", "DungeonDef.provenance must be object", issues);
-  requireField(def, p, "dgn", "sections", isArray, "missing_sections", "DungeonDef.sections must be array", issues);
-  requireField(def, p, "dgn", "enteringTitleRefs", isArray, "missing_entering_title_refs", "DungeonDef.enteringTitleRefs must be array", issues);
-  requireField(def, p, "dgn", "imageRefs", isArray, "missing_image_refs", "DungeonDef.imageRefs must be array", issues);
-  requireField(def, p, "dgn", "raw", isObject, "missing_raw", "DungeonDef.raw must be object", issues);
+function validateMobDef(def: MobDef, issues: ValidationIssue[], spec: KindSchemaSpec): void {
+  runSchema(def, spec.schema, spec.parser, issues);
 }
 
-function validateEtcDef(def: EtcDef, issues: ValidationIssue[]): void {
-  const p = def.path;
-  requireField(def, p, "etc", "kind", v => v === "etc", "wrong_kind", "EtcDef.kind must be 'etc'", issues);
-  requireField(def, p, "etc", "provenance", isObject, "missing_provenance", "EtcDef.provenance must be object", issues);
-  requireField(def, p, "etc", "entries", isArray, "missing_entries", "EtcDef.entries must be array", issues);
-  requireField(def, p, "etc", "byKey", isObject, "missing_by_key", "EtcDef.byKey must be object", issues);
-  // Cross-check: entries[].key must all be findable in byKey (entries is source of truth)
-  for (const entry of def.entries) {
-    if (!isNonEmptyString(entry.key)) {
+function validateAtkDef(def: AtkDef, issues: ValidationIssue[], spec: KindSchemaSpec): void {
+  runSchema(def, spec.schema, spec.parser, issues);
+}
+
+function validateSklDef(def: SkillDef, issues: ValidationIssue[], spec: KindSchemaSpec): void {
+  runSchema(def, spec.schema, spec.parser, issues);
+}
+
+function validateDgnDef(def: DungeonDef, issues: ValidationIssue[], spec: KindSchemaSpec): void {
+  runSchema(def, spec.schema, spec.parser, issues);
+}
+
+function validateEtcDef(def: EtcDef, issues: ValidationIssue[], spec: KindSchemaSpec): void {
+  runSchema(def, spec.schema, spec.parser, issues);
+
+  // Cross-check (warning, not schema): entries[].key must all be findable
+  // in byKey. Schema already guarantees entries[].key is a string and byKey
+  // values are EtcKeyValueEntry — this is a *consistency* check across two
+  // schema-valid sub-trees, so it stays hand-rolled and emits at WARNING
+  // level (matches H13-10 expectation).
+  const entries = Array.isArray((def as EtcDef).entries) ? (def as EtcDef).entries : [];
+  const byKey = ((def as EtcDef).byKey ?? {}) as Record<string, unknown>;
+  for (const entry of entries) {
+    if (typeof entry?.key !== "string" || entry.key.length === 0) continue; // schema already flagged this
+    if (!(entry.key in byKey)) {
       issues.push({
-        level: "error", pvfPath: p, parser: "etc", field: "entries[].key",
-        code: "etc_entry_missing_key",
-        message: "EtcDef entry has missing or non-string key",
-      });
-    } else if (!(entry.key in def.byKey)) {
-      issues.push({
-        level: "warning", pvfPath: p, parser: "etc", field: `byKey["${entry.key}"]`,
+        level: "warning",
+        pvfPath: def.path,
+        parser: "etc",
+        field: `byKey["${entry.key}"]`,
         code: "etc_bykey_missing",
         message: `EtcDef.byKey missing entry for key "${entry.key}" (present in entries[])`,
       });
@@ -398,18 +806,16 @@ function validateEtcDef(def: EtcDef, issues: ValidationIssue[]): void {
   }
 }
 
-function validateMapDef(def: MapDef, issues: ValidationIssue[]): void {
-  const p = def.path;
-  requireField(def, p, "map", "kind", v => v === "map", "wrong_kind", "MapDef.kind must be 'map'", issues);
-  requireField(def, p, "map", "provenance", isObject, "missing_provenance", "MapDef.provenance must be object", issues);
-  requireField(def, p, "map", "sections", isArray, "missing_sections", "MapDef.sections must be array", issues);
-  requireField(def, p, "map", "tiles", isArray, "missing_tiles", "MapDef.tiles must be array", issues);
-  requireField(def, p, "map", "monsterSpawns", isArray, "missing_monster_spawns", "MapDef.monsterSpawns must be array", issues);
-  requireField(def, p, "map", "animationRefs", isArray, "missing_animation_refs", "MapDef.animationRefs must be array", issues);
-  requireField(def, p, "map", "pvpStartArea", isArray, "missing_pvp_start_area", "MapDef.pvpStartArea must be array (PvE scope: read but ignore)", issues);
+function validateMapDef(def: MapDef, issues: ValidationIssue[], spec: KindSchemaSpec): void {
+  runSchema(def, spec.schema, spec.parser, issues);
 }
 
 // ─── Generic walkers ────────────────────────────────────────────────────────
+
+const isObject = (v: unknown): v is Record<string, unknown> =>
+  v !== null && typeof v === "object" && !Array.isArray(v);
+const isNonEmptyString = (v: unknown): v is string =>
+  typeof v === "string" && v.length > 0;
 
 /**
  * Walk a typed ParsedDef recursively looking for PvfFact-shaped objects
@@ -486,6 +892,7 @@ function walkForRefs(
     const status: RefStatus = byPath.has(o.targetPath) ? "resolved" : "missing";
     out.push({
       fromPath,
+      fromField: prefix.length > 0 ? prefix : "<root>",
       toPath: o.targetPath,
       targetKind: o.targetKind,
       status,
@@ -532,7 +939,7 @@ function collectPvpFields(def: ParsedPvfDocument, out: PvpFieldEntry[]): void {
       // Real PVF often emits all-zero pvpStartArea as a placeholder. Only
       // record when at least one non-zero coordinate is present — that's
       // the signal the map actually has PvP spawn data.
-      if (def.pvpStartArea.length > 0 && def.pvpStartArea.some(v => v !== 0)) {
+      if (Array.isArray(def.pvpStartArea) && def.pvpStartArea.length > 0 && def.pvpStartArea.some(v => v !== 0)) {
         out.push({
           pvfPath: def.path, parser: "map", field: "pvpStartArea",
           reason: `MapDef.pvpStartArea has ${def.pvpStartArea.filter(v => v !== 0).length} non-zero entries`,
