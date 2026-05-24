@@ -215,12 +215,22 @@ static const char* attrSimpleType(const PvfDocument::IAttribute* attr) {
     }
 }
 
-// Helper: print a single leaf value for vec/mat items (unwrapped if type is
-// homogeneous, full {t,v} object if mixed). `homogeneous` is the shared type
-// or "mixed".
-static void printLeafValue(const PvfDocument::IAttribute* attr, const char* homogeneous) {
+// Helper: print a single leaf value for vec/mat items.
+//
+// Audit B3 (contract-symmetry, 2026-05-24): previously this function would
+// emit raw primitives (`42` or `1.5`) when the column type was homogeneous
+// across all leaves, and only fall back to typed `{t,v}` shape when the
+// column was "mixed". That dual-shape emission broke the symmetry kept by
+// every other code path (every other attribute site always emits typed
+// `{t,v}`). Now ALWAYS emit typed `{t,v}` regardless of `homogeneous`
+// classification — the `homogeneous` parameter is preserved for caller
+// hint but no longer toggles the leaf format. Downstream TS consumers
+// (parserUtils.vectorFact, ChrParser.parseNumberMatrix) accept both shapes
+// via the `extractLeafNumber()` helper so the migration is backward-
+// compatible: old PVF dumps with bare numbers still parse, new dumps with
+// typed leaves also parse, and the validator schema accepts the union.
+static void printLeafValue(const PvfDocument::IAttribute* attr, const char* /*homogeneous*/) {
     if (!attr) { printf("null"); return; }
-    bool useFull = (strcmp(homogeneous, "mixed") == 0);
     if (attr->type == PvfDocument::Number) {
         auto* na = static_cast<const PvfDocument::NumberAttribute*>(attr);
         if (na->isFloat) {
@@ -234,20 +244,14 @@ static void printLeafValue(const PvfDocument::IAttribute* attr, const char* homo
                 s.find('i') == std::string::npos) {
                 s += ".0";
             }
-            if (useFull) printf("{\"t\":\"float\",\"v\":%s}", s.c_str());
-            else printf("%s", s.c_str());
+            printf("{\"t\":\"float\",\"v\":%s}", s.c_str());
         } else {
-            if (useFull) printf("{\"t\":\"int\",\"v\":%d}", na->value.intValue);
-            else printf("%d", na->value.intValue);
+            printf("{\"t\":\"int\",\"v\":%d}", na->value.intValue);
         }
     } else {
         auto* sa = static_cast<const PvfDocument::StringAttribute*>(attr);
-        if (useFull) {
-            const char* tag = sa->isLink ? "link" : "str";
-            printf("{\"t\":\"%s\",\"v\":\"%s\"}", tag, escapeJson(sa->value).c_str());
-        } else {
-            printf("\"%s\"", escapeJson(sa->value).c_str());
-        }
+        const char* tag = sa->isLink ? "link" : "str";
+        printf("{\"t\":\"%s\",\"v\":\"%s\"}", tag, escapeJson(sa->value).c_str());
     }
 }
 
@@ -516,7 +520,10 @@ static void printTextJson(const std::string& path, PvfTextScript& text,
         escapeJson(path).c_str(), escapeJson(text.getContent()).c_str());
 }
 
-static void printBinaryJson(const std::string& path, PvfRawScript& raw, bool withData) {
+static void printBinaryJson(const std::string& path, PvfRawScript& raw, bool withData,
+                            const std::string& extractorVersion = DNF_EXTRACT_VERSION,
+                            const std::string& extractTimestamp = "",
+                            const std::string& sourcePvfHash = "") {
     const uint8_t* buf = raw.getBuffer();
     int32_t len = raw.getLength();
     // Always emit first 32 bytes as hex for quick inspection regardless of withData.
@@ -528,7 +535,20 @@ static void printBinaryJson(const std::string& path, PvfRawScript& raw, bool wit
         headHex.push_back(hexd[(buf[i] >> 4) & 0x0F]);
         headHex.push_back(hexd[buf[i] & 0x0F]);
     }
-    printf("{\"path\":\"%s\",\"type\":\"binary\",\"format\":\"%s\",\"sizeBytes\":%d,\"headHex\":\"%s\"",
+    // Audit B1 (contract-symmetry, 2026-05-24): D3 provenance preamble.
+    // Previously omitted from binary output, breaking the symmetry the D3
+    // comments claim (every PVF-derived JSON must carry extractor_version /
+    // extract_timestamp / source_pvf_hash so downstream pipeline audit can
+    // attribute records). NutExtractor and other consumers no longer need to
+    // fabricate "unknown" sentinels for binary records.
+    printf("{\"extractor_version\":\"%s\"", escapeJson(extractorVersion).c_str());
+    if (!extractTimestamp.empty())
+        printf(",\"extract_timestamp\":\"%s\"", escapeJson(extractTimestamp).c_str());
+    if (!sourcePvfHash.empty())
+        printf(",\"source_pvf_hash\":\"%s\"", escapeJson(sourcePvfHash).c_str());
+    else
+        printf(",\"source_pvf_hash\":null");
+    printf(",\"path\":\"%s\",\"type\":\"binary\",\"format\":\"%s\",\"sizeBytes\":%d,\"headHex\":\"%s\"",
         escapeJson(path).c_str(),
         escapeJson(raw.getFormatHint()).c_str(),
         len,
@@ -543,6 +563,30 @@ static void printBinaryJson(const std::string& path, PvfRawScript& raw, bool wit
 static void printErrorJson(const std::string& path, const std::string& error) {
     printf("{\"path\":\"%s\",\"type\":\"error\",\"error\":\"%s\"}\n",
         escapeJson(path).c_str(), escapeJson(error).c_str());
+}
+
+// Audit B2 (contract-symmetry, 2026-05-24): uniform error emitter for sprite /
+// img / frame variants. Previously inline error sites used three different
+// shapes — {"type":"error","sprite":...}, {"type":"error","img":...,"frameCount":...},
+// {"type":"error","error":"unknown_command"} — none matching the documented
+// {"type":"error","error":"..."} contract. Downstream parsers that branched
+// on `j.path` got `undefined` for sprite / img variants.
+//
+// All error emit sites now share the canonical shape:
+//   {"path":"<identifier>", "type":"error", "error":"<message>", <optional context>}
+// where <optional context> is a key/value subset that preserves the extra
+// fields the workflow protocol exposes (sprite/frame/img/frameCount). `path`
+// is ALWAYS present so a consumer can write `j.path` once and have it work.
+static void printErrorJsonExt(const std::string& path,
+                              const std::string& error,
+                              const std::string& contextJson) {
+    if (contextJson.empty()) {
+        printf("{\"path\":\"%s\",\"type\":\"error\",\"error\":\"%s\"}\n",
+            escapeJson(path).c_str(), escapeJson(error).c_str());
+    } else {
+        printf("{\"path\":\"%s\",\"type\":\"error\",\"error\":\"%s\",%s}\n",
+            escapeJson(path).c_str(), escapeJson(error).c_str(), contextJson.c_str());
+    }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -852,7 +896,12 @@ static void extractFile(PvfReader& reader, const std::string& rawPath,
         printTextJson(rawPath, *static_cast<PvfTextScript*>(script.get()),
                       DNF_EXTRACT_VERSION, ts, sourcePvfHash);
     } else if (script->getType() == PvfScriptType::Binary) {
-        printBinaryJson(rawPath, *static_cast<PvfRawScript*>(script.get()), withData);
+        // Audit B1 (contract-symmetry, 2026-05-24): pass per-file timestamp +
+        // provenance hash to printBinaryJson so binary records carry the same
+        // D3 fields as document / animation / text records.
+        std::string ts = isoTimestampUtc();
+        printBinaryJson(rawPath, *static_cast<PvfRawScript*>(script.get()), withData,
+                        DNF_EXTRACT_VERSION, ts, sourcePvfHash);
     }
 
     // L3 manifest record. We use the PvfNode that the tree resolved to; its
@@ -1053,8 +1102,14 @@ static int handleWorkflow(PvfReader& reader, long long loadMs, const std::string
                 printImgFrameFields(node, fi, line.find("\"withData\"") != std::string::npos);
                 printf("}\n---\n");
             } catch (const std::exception& e) {
-                printf("{\"type\":\"error\",\"sprite\":\"%s\",\"frame\":%d,\"error\":\"%s\"}\n---\n",
-                    escapeJson(sprite).c_str(), fi, escapeJson(e.what()).c_str());
+                // Audit B2 (contract-symmetry, 2026-05-24): emit through
+                // printErrorJsonExt so `path` is always present. Sprite +
+                // frame travel in the context tail.
+                char ctx[256];
+                snprintf(ctx, sizeof(ctx), "\"sprite\":\"%s\",\"frame\":%d",
+                    escapeJson(sprite).c_str(), fi);
+                printErrorJsonExt(sprite, e.what(), ctx);
+                printf("---\n");
             }
             fflush(stdout);
             continue;
@@ -1088,7 +1143,11 @@ static int handleWorkflow(PvfReader& reader, long long loadMs, const std::string
             continue;
         }
 
-        printf("{\"type\":\"error\",\"error\":\"unknown_command\"}\n---\n");
+        // Audit B2 (contract-symmetry, 2026-05-24): route through
+        // printErrorJsonExt so unknown_command has the same shape as every
+        // other error (path-first, type, error, optional context).
+        printErrorJsonExt("", "unknown_command", "");
+        printf("---\n");
         fflush(stdout);
     }
     return count;
@@ -1217,8 +1276,13 @@ int main(int argc, char* argv[]) {
 
             if (frameIdx >= 0) {
                 if (!img->isValidIndex(frameIdx)) {
-                    printf("{\"type\":\"error\",\"img\":\"%s\",\"frame\":%d,\"frameCount\":%d,\"error\":\"frame_index_out_of_range\"}\n",
+                    // Audit B2 (contract-symmetry, 2026-05-24): route through
+                    // printErrorJsonExt so `path` is always present (= imgName
+                    // here); img + frame + frameCount travel as context.
+                    char ctx[256];
+                    snprintf(ctx, sizeof(ctx), "\"img\":\"%s\",\"frame\":%d,\"frameCount\":%d",
                         escapeJson(imgName).c_str(), frameIdx, (int)img->getNodeCount());
+                    printErrorJsonExt(imgName, "frame_index_out_of_range", ctx);
                     fprintf(stderr, "[ERROR] frame %d out of range (img %s has %d frame(s))\n",
                         frameIdx, imgName.c_str(), (int)img->getNodeCount());
                     return 1;
@@ -1279,8 +1343,12 @@ int main(int argc, char* argv[]) {
             printf("}\n");
             return 0;
         } catch (const std::exception& e) {
-            printf("{\"type\":\"error\",\"sprite\":\"%s\",\"frame\":%d,\"error\":\"%s\"}\n",
-                escapeJson(spritePath).c_str(), useFrame, escapeJson(e.what()).c_str());
+            // Audit B2 (contract-symmetry, 2026-05-24): route through
+            // printErrorJsonExt for uniform path-first error shape.
+            char ctx[256];
+            snprintf(ctx, sizeof(ctx), "\"sprite\":\"%s\",\"frame\":%d",
+                escapeJson(spritePath).c_str(), useFrame);
+            printErrorJsonExt(spritePath, e.what(), ctx);
             fprintf(stderr, "[ERROR] %s\n", e.what());
             return 1;
         }
@@ -1375,9 +1443,13 @@ int main(int argc, char* argv[]) {
             if (onlyChanged && shouldSkipUnchanged(*reader, f, prevCrcMap)) {
                 skipped++;
                 fprintf(stderr, "[LOG] Skipped (unchanged): %s\n", f.c_str());
-                // Still emit the separator so consumers can count batch slots,
-                // but no progress line for skipped files (they didn't extract).
-                printf("---\n");
+                // Audit B4 (contract-symmetry, 2026-05-24): emit a "skipped"
+                // JSON object before the separator so downstream parsers that
+                // split on `---\n` and JSON.parse() each chunk don't crash
+                // on empty strings. The 1:1 invariant "one JSON line + ---
+                // per file" now actually holds for skipped slots too.
+                printf("{\"path\":\"%s\",\"type\":\"skipped\",\"reason\":\"unchanged\"}\n---\n",
+                    escapeJson(f).c_str());
                 continue;
             }
             emitProgress(idx, total, f);
@@ -1414,8 +1486,11 @@ int main(int argc, char* argv[]) {
             // --filter-ext applies to pipe input too (cheap pre-filter to
             // avoid round-tripping non-target paths).
             if (!filterExts.empty() && !matchesFilterExt(line, filterExts)) {
-                // Still emit separator + skip log so the stream stays aligned.
-                printf("---\n");
+                // Audit B4 (contract-symmetry, 2026-05-24): emit a "skipped"
+                // JSON before the separator so consumers can JSON.parse each
+                // chunk uniformly. Reason = "filter-ext".
+                printf("{\"path\":\"%s\",\"type\":\"skipped\",\"reason\":\"filter-ext\"}\n---\n",
+                    escapeJson(line).c_str());
                 fflush(stdout);
                 continue;
             }
@@ -1423,7 +1498,10 @@ int main(int argc, char* argv[]) {
             if (onlyChanged && shouldSkipUnchanged(*reader, line, prevCrcMap)) {
                 skipped++;
                 fprintf(stderr, "[LOG] Skipped (unchanged): %s\n", line.c_str());
-                printf("---\n");
+                // Audit B4 (contract-symmetry, 2026-05-24): same skipped
+                // JSON shape as the batch-mode unchanged path.
+                printf("{\"path\":\"%s\",\"type\":\"skipped\",\"reason\":\"unchanged\"}\n---\n",
+                    escapeJson(line).c_str());
                 fflush(stdout);
                 continue;
             }

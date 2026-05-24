@@ -6,7 +6,7 @@ const ROOT = process.cwd();
 const EXTRACT = path.join(ROOT, "tools", process.platform === "win32" ? "dnf-extract.exe" : "dnf-extract");
 
 function parseArgs(argv) {
-  const args = { files: [], errors: [] };
+  const args = { files: [], aniFiles: [], errors: [] };
   // Helper: consume the next argv element as the value for `flag`, but reject
   // when the next element starts with `--` (a sibling flag) — otherwise a
   // bare placeholder like `--pattern --pvf foo.pvf` would silently eat `--pvf`.
@@ -33,6 +33,20 @@ function parseArgs(argv) {
         args.errors.push(`--file requires a non-empty PVF path (got ${JSON.stringify(value ?? null)})`);
       } else {
         args.files.push(value);
+      }
+    }
+    else if (arg === "--ani-file") {
+      // Audit pipeline-closure F2 (2026-05-24): .ani files are parsed by the
+      // standalone AniParser (per design §2.2.1); they do NOT flow through
+      // parseStage dispatch like .chr/.atk/.skl/.mob/etc. Listing them via
+      // --ani-file routes them to loadAniDocumentsViaPipe + parseAniDocument,
+      // and the resulting AniDef[] is plumbed to RuntimeExporter via the
+      // `aniDefs` option so player/monster shard `animations` fields populate.
+      const value = argv[++i];
+      if (!value || value.startsWith("--")) {
+        args.errors.push(`--ani-file requires a non-empty PVF path (got ${JSON.stringify(value ?? null)})`);
+      } else {
+        args.aniFiles.push(value);
       }
     }
     else if (arg === "--stop-at") {
@@ -77,15 +91,23 @@ function parseArgs(argv) {
 }
 
 function usage() {
-  console.error("Usage: node scripts/pipeline.mjs --pvf <Script.pvf> --file <pvf-path> [--file <pvf-path>] [--debug-out <dir>] [--stop-at parse]");
+  console.error("Usage: node scripts/pipeline.mjs --pvf <Script.pvf> --file <pvf-path> [--file <pvf-path>] [--ani-file <pvf-path>] [--debug-out <dir>] [--stop-at parse]");
 }
 
 const args = parseArgs(process.argv.slice(2));
 
 if (args.help) {
-  console.log("Usage: node scripts/pipeline.mjs --pvf <Script.pvf> --file <pvf-path> [--file ...] [--debug-out <dir>] [--stop-at parse]");
+  console.log("Usage: node scripts/pipeline.mjs --pvf <Script.pvf> --file <pvf-path> [--file ...] [--ani-file <pvf-path>] [--debug-out <dir>] [--stop-at parse]");
   console.log("");
   console.log("Stage 1 pipeline runner (Day 8-10 skeleton: EXTRACT -> PARSE).");
+  console.log("");
+  console.log("Flags:");
+  console.log("  --file       PVF path for .chr/.atk/.skl/.mob/.dgn/.map/.etc — routed via parseStage dispatch.");
+  console.log("  --ani-file   PVF path for .ani — routed via standalone AniParser (design §2.2.1).");
+  console.log("               .ani files DO NOT flow through --file; they need this separate flag so");
+  console.log("               their AniDef[] is plumbed to RuntimeExporter's `aniDefs` option, which");
+  console.log("               populates the per-entity `animations` field in dist/data shards.");
+  console.log("");
   console.log("Outputs extract.jsonl, parse.jsonl, parse-errors.jsonl to --debug-out (default .tmp/pipeline-debug).");
   process.exit(0);
 }
@@ -94,7 +116,7 @@ if (args.errors.length > 0) {
   usage();
   process.exit(2);
 }
-if (!args.pvf || args.files.length === 0) {
+if (!args.pvf || (args.files.length === 0 && args.aniFiles.length === 0)) {
   usage();
   process.exit(2);
 }
@@ -140,6 +162,31 @@ const runnerUrl = pathToFileURL(path.join(
   "pipelineRunner.js",
 )).href;
 const { runExtractParsePipeline } = await import(runnerUrl);
+
+// Audit pipeline-closure F2 (2026-05-24): when --ani-file flags were provided,
+// extract those paths separately via dnf-extract --pipe and route them through
+// the standalone AniParser (design §2.2.1 — .ani does NOT flow through
+// parseStage dispatch). The resulting AniDef[] is passed to
+// runExtractParsePipeline via the `aniDefs` option, which RuntimeExporter
+// inlines into per-entity (player/monster) shard `animations` maps. Without
+// this plumb the `animations` field was permanently empty regardless of how
+// many .ani files the user listed.
+let aniDefs;
+if (args.aniFiles.length > 0) {
+  const loaderUrl = pathToFileURL(path.join(
+    ROOT, ".tmp", "test-js", "src", "dnf-native-combat", "data", "parsers", "PvfDocumentLoader.js",
+  )).href;
+  const aniParserUrl = pathToFileURL(path.join(
+    ROOT, ".tmp", "test-js", "src", "dnf-native-combat", "data", "parsers", "AniParser.js",
+  )).href;
+  const { loadAniDocumentsViaPipe } = await import(loaderUrl);
+  const { parseAniDocument } = await import(aniParserUrl);
+  const aniDocs = await loadAniDocumentsViaPipe(args.aniFiles, {
+    pvfPath: args.pvf,
+    executablePath: EXTRACT,
+  });
+  aniDefs = aniDocs.map(parseAniDocument);
+}
 
 const debugOut = args.debugOut ?? path.join(ROOT, ".tmp", "pipeline-debug");
 // Project-level verification/ by convention (design §2.4). Tests should
@@ -203,12 +250,14 @@ try {
     exportBaseManifest,
     exportUseContentFingerprint: args.useContentFingerprint === true,
     stopAt: args.stopAt,
+    aniDefs,
   });
 
   console.log(JSON.stringify({
     stage: result.stage,
     filesExtracted: result.filesExtracted,
     filesParsed: result.filesParsed,
+    aniDefsLoaded: aniDefs ? aniDefs.length : 0,
     parseErrors: result.parseErrors,
     debugOut: result.debugOut,
     validation: {

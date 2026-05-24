@@ -13,6 +13,7 @@ import {
   stripPvfTag,
   vectorFact,
   asTier3,
+  extractLeafNumber,
 } from "./parserUtils.js";
 
 const MOTION_SECTION_NAMES = [
@@ -124,9 +125,36 @@ function parseNumberMatrix(document: PvfDocument, sectionName: string): number[]
     );
     return null;
   }
-  return attr.items.map(row =>
-    row.filter((item): item is number => typeof item === "number" && Number.isFinite(item)),
-  );
+  // Audit F3 (ts-parser-truth, 2026-05-24): row.filter previously silently
+  // dropped non-numeric / non-finite cells, hiding corrupted PVF input behind
+  // shortened rows or empty rows. Real PVF "module damage rate" is uniformly
+  // a pure number matrix across all 11 player .chr files (verified 2026-05-22);
+  // any non-numeric content is corrupted input that should surface loudly.
+  return attr.items.map((row, rowIdx) => {
+    if (!Array.isArray(row)) {
+      throw new Error(
+        `[ChrParser] parseNumberMatrix: section "${sectionName}" row ${rowIdx} is not an array ` +
+        `in ${document.path}. Real PVF mat rows are uniformly arrays; non-array indicates corrupted input.`,
+      );
+    }
+    return row.map((item, colIdx) => {
+      // Audit B3 (contract-symmetry, 2026-05-24): C++ emits typed `{t,v}`
+      // leaves in vec/mat post-fix; older PVF dumps + fixtures still use
+      // bare numbers. extractLeafNumber unwraps both into number, throwing
+      // here only when the cell is neither a bare finite number nor a
+      // typed numeric object.
+      const unwrapped = extractLeafNumber(item);
+      if (unwrapped === null) {
+        throw new Error(
+          `[ChrParser] parseNumberMatrix: section "${sectionName}" row ${rowIdx} col ${colIdx} ` +
+          `is ${JSON.stringify(item)} (expected finite number or {t:int|float, v:number}) in ${document.path}. ` +
+          `Real PVF "module damage rate" is uniformly a pure number matrix; ` +
+          `non-numeric/non-finite content indicates corrupted input.`,
+        );
+      }
+      return unwrapped;
+    });
+  });
 }
 
 function parseWeaponHitInfo(document: PvfDocument): ChrWeaponHitInfoRow[] {
@@ -149,10 +177,11 @@ function parseWeaponHitInfo(document: PvfDocument): ChrWeaponHitInfoRow[] {
   for (let i = 0; i + 5 < section.attributes.length; i += 6) {
     const hitTag = stringValue(section.attributes[i]) ?? "";
     const bloodTag = stringValue(section.attributes[i + 1]) ?? "";
-    const damageScalePct = numeric(section.attributes[i + 2]);
-    const critOrSimilar = numeric(section.attributes[i + 3]);
-    const pushBack = numeric(section.attributes[i + 4]);
-    const launch = numeric(section.attributes[i + 5]);
+    const ctx = `${document.path} weapon hit info row ${i / 6}`;
+    const damageScalePct = numeric(section.attributes[i + 2], `${ctx} col 2 (damageScalePct)`);
+    const critOrSimilar = numeric(section.attributes[i + 3], `${ctx} col 3 (critOrSimilar)`);
+    const pushBack = numeric(section.attributes[i + 4], `${ctx} col 4 (pushBack)`);
+    const launch = numeric(section.attributes[i + 5], `${ctx} col 5 (launch)`);
     rows.push({ hitTag, bloodTag, damageScalePct, critOrSimilar, pushBack, launch });
   }
   return rows;
@@ -166,30 +195,95 @@ function parseWeaponWav(document: PvfDocument): Array<ChrWeaponWavRow | null> {
     // Matrix form (thief): 1 mat attr containing 6 rows × 2 cols (swing/hit per slot).
     if (attrs.length === 1 && attrs[0].t === "mat") {
       const matAttr = attrs[0] as PvfMatrixAttribute;
-      const entries = matAttr.items.map(row => ({
-        swing: typeof row[0] === "string" ? row[0] : "",
-        hit: typeof row[1] === "string" ? row[1] : "",
-      }));
+      // Audit F4 (ts-parser-truth, 2026-05-24): previously coerced non-string
+      // matrix cells to "" silently. Real PVF "weapon wav" matrix (thief)
+      // emits pure-str cells across all observed rows; any non-string indicates
+      // corrupted input that should fail loudly.
+      const entries = matAttr.items.map((row, rowIdx) => {
+        if (!Array.isArray(row)) {
+          throw new Error(
+            `[ChrParser] parseWeaponWav: matrix row ${rowIdx} is not an array in ${document.path}. ` +
+            `Real PVF weapon wav matrix rows are uniformly [swing, hit] arrays.`,
+          );
+        }
+        if (typeof row[0] !== "string") {
+          throw new Error(
+            `[ChrParser] parseWeaponWav: matrix row ${rowIdx} col 0 (swing) is ${JSON.stringify(row[0])} ` +
+            `(expected string) in ${document.path}. Real PVF emits pure-str matrix cells.`,
+          );
+        }
+        if (typeof row[1] !== "string") {
+          throw new Error(
+            `[ChrParser] parseWeaponWav: matrix row ${rowIdx} col 1 (hit) is ${JSON.stringify(row[1])} ` +
+            `(expected string) in ${document.path}. Real PVF emits pure-str matrix cells.`,
+          );
+        }
+        return { swing: row[0], hit: row[1] };
+      });
       return { format: "matrix", entries };
     }
 
     // Mono form (priest / mage family): 2 str attrs — single swing + single hit.
     if (attrs.length === 2) {
-      return {
-        format: "mono",
-        swing: stringValue(attrs[0]) ?? "",
-        hit: stringValue(attrs[1]) ?? "",
-      };
+      // Audit F4 (ts-parser-truth, 2026-05-24): previously fell back to "" on
+      // wrong-type attr, fabricating empty swing/hit. Real PVF priest/mage
+      // mono "weapon wav" emits pure-str attrs across all observed sections;
+      // any non-string indicates corrupted input.
+      const swing = stringValue(attrs[0]);
+      const hit = stringValue(attrs[1]);
+      if (swing === null) {
+        throw new Error(
+          `[ChrParser] parseWeaponWav: mono format attr[0] (swing) has type "${attrs[0].t}" ` +
+          `(expected str/link) in ${document.path}. Real PVF emits pure-str weapon wav attrs.`,
+        );
+      }
+      if (hit === null) {
+        throw new Error(
+          `[ChrParser] parseWeaponWav: mono format attr[1] (hit) has type "${attrs[1].t}" ` +
+          `(expected str/link) in ${document.path}. Real PVF emits pure-str weapon wav attrs.`,
+        );
+      }
+      return { format: "mono", swing, hit };
     }
 
     // Stereo form (swordman / fighter family): 4 str attrs.
     if (attrs.length === 4) {
+      // Audit F4 (ts-parser-truth, 2026-05-24): same `?? ""` fabrication pattern
+      // as mono. Real PVF swordman/fighter stereo sections emit pure-str.
+      const swingA = stringValue(attrs[0]);
+      const swingB = stringValue(attrs[1]);
+      const hitA = stringValue(attrs[2]);
+      const hitB = stringValue(attrs[3]);
+      if (swingA === null) {
+        throw new Error(
+          `[ChrParser] parseWeaponWav: stereo format attr[0] (attackSwingA) has type "${attrs[0].t}" ` +
+          `(expected str/link) in ${document.path}. Real PVF emits pure-str weapon wav attrs.`,
+        );
+      }
+      if (swingB === null) {
+        throw new Error(
+          `[ChrParser] parseWeaponWav: stereo format attr[1] (attackSwingB) has type "${attrs[1].t}" ` +
+          `(expected str/link) in ${document.path}. Real PVF emits pure-str weapon wav attrs.`,
+        );
+      }
+      if (hitA === null) {
+        throw new Error(
+          `[ChrParser] parseWeaponWav: stereo format attr[2] (hitA) has type "${attrs[2].t}" ` +
+          `(expected str/link) in ${document.path}. Real PVF emits pure-str weapon wav attrs.`,
+        );
+      }
+      if (hitB === null) {
+        throw new Error(
+          `[ChrParser] parseWeaponWav: stereo format attr[3] (hitB) has type "${attrs[3].t}" ` +
+          `(expected str/link) in ${document.path}. Real PVF emits pure-str weapon wav attrs.`,
+        );
+      }
       return {
         format: "stereo",
-        attackSwingA: stringValue(attrs[0]) ?? "",
-        attackSwingB: stringValue(attrs[1]) ?? "",
-        hitA: stringValue(attrs[2]) ?? "",
-        hitB: stringValue(attrs[3]) ?? "",
+        attackSwingA: swingA,
+        attackSwingB: swingB,
+        hitA,
+        hitB,
       };
     }
 
@@ -213,7 +307,33 @@ function parseMotionRefs(document: PvfDocument): Record<string, PvfRef[]> {
   return refs;
 }
 
-function numeric(attribute: PvfAttribute | undefined): number {
-  if ((attribute?.t === "int" || attribute?.t === "float") && typeof attribute.v === "number") return attribute.v;
-  return 0;
+// Audit F2 (ts-parser-truth, 2026-05-24): numeric() previously returned 0
+// on wrong-type / undefined / non-finite attributes, fabricating valid-looking
+// damageScalePct / critOrSimilar / pushBack / launch values from corrupted PVF.
+// Real PVF weapon-hit-info rows are uniformly (str, str, int, float, float, float)
+// across all 11 player .chr files (verified 2026-05-22); any other shape is
+// corrupted input that should surface loudly rather than be coerced to 0.
+function numeric(attribute: PvfAttribute | undefined, context: string): number {
+  if (attribute === undefined) {
+    throw new Error(
+      `[ChrParser] numeric: ${context} attribute is undefined. ` +
+      `Real PVF weapon hit info emits 6 attrs per row uniformly; ` +
+      `missing attribute indicates corrupted PVF or extractor bug.`,
+    );
+  }
+  if (attribute.t !== "int" && attribute.t !== "float") {
+    throw new Error(
+      `[ChrParser] numeric: ${context} attribute has type "${attribute.t}" (expected int/float). ` +
+      `Real PVF weapon hit info numeric slots are uniformly int/float; ` +
+      `wrong-type indicates corrupted input.`,
+    );
+  }
+  const value = (attribute as { t: string; v: unknown }).v;
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new Error(
+      `[ChrParser] numeric: ${context} attribute has non-finite value ${JSON.stringify(value)}. ` +
+      `Real PVF emits finite numbers; NaN/Infinity indicates corrupted input.`,
+    );
+  }
+  return value;
 }

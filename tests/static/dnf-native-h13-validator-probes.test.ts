@@ -159,7 +159,12 @@ function buildValidMob(p: string, animRefs: Array<{ targetKind: string; targetPa
   assert.equal(r.errors.length, 0, "H13-2: no error issues");
   assert.equal(r.pvpFields.length, 0, "H13-2: no PvP fields (pvpOnly=false)");
   assert.equal(r.tier3Fields.length, 0, "H13-2: no tier3 (all defaults are tier1)");
-  console.log("[OK] H13-2: valid AtkDef passes clean");
+  // Audit F5 test-effectiveness (2026-05-24): add schema-independent oracles
+  // so changes to ChrSchema fields don't silently invalidate this probe.
+  assert.equal(r.stats.warnings, 0, "H13-2: 0 warnings (schema-independent oracle)");
+  assert.equal(r.stats.filesFailed, 0, "H13-2: 0 upstream parse failures");
+  assert.equal(r.refIntegrity.length, 0, "H13-2: standalone atk has no refs to walk");
+  console.log("[OK] H13-2: valid AtkDef passes clean (with cross-validation oracles)");
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -264,7 +269,22 @@ function buildValidMob(p: string, animRefs: Array<{ targetKind: string; targetPa
   assert.equal(t3.field, "jump power", "H13-6: tier3 field = section name from provenance");
   assert.equal(t3.sourceType, "local_baseline", "H13-6: tier3 sourceType");
   assert.equal(t3.requiresManualVerification, true, "H13-6: requiresManualVerification flag");
-  console.log("[OK] H13-6: Tier-3 audit catches local_baseline + manual-verify");
+  // Audit F10 test-effectiveness DRIFT (2026-05-24): the assertion above
+  // checks `t3.field === "jump power"` but "jump power" was hand-set by the
+  // fixture into provenance.sectionName — the walker just echoes it. Add
+  // cross-validation that's NOT an echo: confirm jumpSpeed (sibling field
+  // with tier1 default) does NOT appear in tier3Fields, proving the walker
+  // discriminates and isn't merely listing every provenance.sectionName.
+  const t3FieldNames = r.tier3Fields.map(t => t.field);
+  assert.ok(
+    !t3FieldNames.includes("jump speed"),
+    `H13-6: sibling tier1 jumpSpeed must NOT appear in tier3Fields (got ${JSON.stringify(t3FieldNames)})`,
+  );
+  assert.ok(
+    !t3FieldNames.includes("weight"),
+    `H13-6: sibling tier1 weight must NOT appear in tier3Fields`,
+  );
+  console.log("[OK] H13-6: Tier-3 audit catches local_baseline + manual-verify (selectivity verified)");
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -644,6 +664,13 @@ function buildValidChr(p: string, overrides: Record<string, unknown> = {}): ChrD
 // H13-22: Aggregate failure — one doc with multiple schema violations.
 // Zod returns ALL issues in one safeParse pass, so the validator must
 // emit one ValidationIssue per Zod issue (not stop at the first error).
+//
+// Audit F4 test-effectiveness (2026-05-24): the error code strings asserted
+// below ARE the validator's stable wire format. Each maps the schema's
+// top-level field to a snake_case code via mapIssueToCode + FIELD_CODE_OVERRIDES
+// in validator.ts. Renaming any code here is a contract break for downstream
+// tooling (analyze.mjs aggregators, completion gates, alert rules). Update
+// docs/changelog/ + audit the consumers before changing.
 // ───────────────────────────────────────────────────────────────────────────
 {
   const broken = buildValidAtk("atk/h13-22.atk", {
@@ -678,7 +705,15 @@ function buildValidChr(p: string, overrides: Record<string, unknown> = {}): ChrD
   });
   const r = validateParsedDocuments([chr], META);
   assert.equal(r.tier3Fields.length, 0, `H13-23: tier2 entries NOT flagged as Tier-3 (got ${r.tier3Fields.length})`);
-  console.log("[OK] H13-23: sourceType=tier2 not surfaced in Tier-3 audit");
+  // Audit F8 test-effectiveness (2026-05-24): also assert by-content (not
+  // just by-length) — even if tier3Fields had unrelated entries, the tier2
+  // jumpPower specifically must NOT be in there. Catches a regression where
+  // the walker length stays 0 but the wrong field is filtered.
+  assert.ok(
+    !r.tier3Fields.some(t => t.pvfPath === p && t.field === "jump power"),
+    "H13-23: tier2 jumpPower must NOT appear by name in tier3Fields",
+  );
+  console.log("[OK] H13-23: sourceType=tier2 not surfaced in Tier-3 audit (content + length verified)");
 }
 
 // ───────────────────────────────────────────────────────────────────────────

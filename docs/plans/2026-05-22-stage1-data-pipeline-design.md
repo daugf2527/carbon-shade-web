@@ -192,6 +192,13 @@ interface VerificationReport {
 
 输出位置: `verification/extraction-report-<runId>.json` + `verification/provenance-audit-<runId>.json`。
 
+> **命名约定** (audit deliverable-presence F10, 2026-05-24): VerificationReport
+> 的 **field name** 用 lowerCamelCase (`tier3Fields` / `pvpFields` / `refIntegrity` /
+> `errors` / `warnings`), 而 **TypeScript type names** 用 PascalCase
+> (`Tier3FieldEntry` / `PvpFieldEntry` / `RefEntry` / `ValidationIssue`).
+> `scripts/completion.mjs` Day 11-12 gate 验证 type symbols (PascalCase exports),
+> 不是 field names —— 两者各有职责，不应被合并。
+
 ---
 
 ## 3. 数据库 schema (node:sqlite)

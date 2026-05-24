@@ -146,15 +146,32 @@ function buildProvenance(document: ImgBinaryDocument): ExtractedDocumentProvenan
     );
   }
 
+  // Audit ts-parser-truth F1 (2026-05-24): previously this function had a
+  // silent fallback to sentinel strings ("unknown-binary-no-preamble" /
+  // "unknown") when the C++ extractor didn't emit a D3 preamble. That C++
+  // gap is now closed by contract-symmetry B1 (printBinaryJson emits
+  // extractor_version / extract_timestamp / source_pvf_hash uniformly).
+  // The sentinel fallback is therefore unreachable for fresh PVF dumps;
+  // surface a missing preamble loudly so any future regression in the C++
+  // contract is caught at parse time rather than masquerading as Tier-1
+  // provenance.
+  if (typeof document.extractor_version !== "string" || document.extractor_version.length === 0) {
+    throw new Error(
+      `[ImgParser] extractor_version missing from binary document "${document.path}". ` +
+      `C++ printBinaryJson must emit D3 provenance preamble (contract-symmetry B1, 2026-05-24); ` +
+      `absent extractor_version indicates a stale dnf-extract binary or regressed contract.`,
+    );
+  }
+  if (typeof document.extract_timestamp !== "string" || document.extract_timestamp.length === 0) {
+    throw new Error(
+      `[ImgParser] extract_timestamp missing from binary document "${document.path}". ` +
+      `C++ printBinaryJson must emit D3 provenance preamble (contract-symmetry B1, 2026-05-24).`,
+    );
+  }
+
   const provenance: ExtractedDocumentProvenance = {
-    // C++ printBinaryJson doesn't emit these fields — fall back to sentinel values.
-    // When a future rebuild adds them, they'll be used directly.
-    extractorVersion: typeof document.extractor_version === "string" && document.extractor_version.length > 0
-      ? document.extractor_version
-      : "unknown-binary-no-preamble",
-    extractTimestamp: typeof document.extract_timestamp === "string" && document.extract_timestamp.length > 0
-      ? document.extract_timestamp
-      : "unknown",
+    extractorVersion: document.extractor_version,
+    extractTimestamp: document.extract_timestamp,
     sourceRef: `pvf:${document.path}`,
   };
 

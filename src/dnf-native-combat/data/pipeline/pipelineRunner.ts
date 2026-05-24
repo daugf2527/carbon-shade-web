@@ -76,6 +76,15 @@ export interface PipelineParseError {
 
 export interface PipelineRunResult {
   stage: "extract" | "parse" | "validate" | "load" | "export";
+  /**
+   * Audit pipeline-closure F10 (2026-05-24, DRIFT-verified): consumers
+   * previously had to inspect the deeply-nested `stage` string + check
+   * specific fields for null to know which stages actually ran. This
+   * array is an explicit sentinel — listing every stage that completed —
+   * so cross-stage logic can branch on inclusion rather than re-deriving
+   * it.
+   */
+  stagesRun: ReadonlyArray<"extract" | "parse" | "validate" | "load" | "export">;
   filesExtracted: number;
   filesParsed: number;
   parseErrors: PipelineParseError[];
@@ -204,13 +213,15 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
   // The stage actually reached reflects (a) stopAt cap AND (b) whether the
   // optional opt-in for load/export was provided.
   let highest: PipelineRunResult["stage"] = "extract";
-  if (shouldRun("parse")) highest = "parse";
-  if (shouldRun("validate")) highest = "validate";
-  if (shouldRun("load") && sqliteImport !== null) highest = "load";
-  if (shouldRun("export") && exportResult !== null) highest = "export";
+  const stagesRun: Array<"extract" | "parse" | "validate" | "load" | "export"> = ["extract"];
+  if (shouldRun("parse")) { highest = "parse"; stagesRun.push("parse"); }
+  if (shouldRun("validate")) { highest = "validate"; stagesRun.push("validate"); }
+  if (shouldRun("load") && sqliteImport !== null) { highest = "load"; stagesRun.push("load"); }
+  if (shouldRun("export") && exportResult !== null) { highest = "export"; stagesRun.push("export"); }
 
   return {
     stage: highest,
+    stagesRun,
     filesExtracted: documents.length,
     filesParsed: parsed.length,
     parseErrors,

@@ -1,9 +1,31 @@
 import { spawn } from "node:child_process";
 import type { PvfDocument } from "../types/PvfDocument.js";
+import type { AniDocument } from "../types/AniDef.js";
 
 export interface DnfExtractPipeOptions {
   pvfPath: string;
   executablePath?: string;
+}
+
+/**
+ * Audit pipeline-closure F6 (2026-05-24): for batch / pipeline use, callers
+ * need to collect per-doc errors rather than abort on the first
+ * `type:"error"` chunk. parseDnfExtractPipeOutputWithErrors returns both
+ * the successful documents AND the captured errors, leaving abort policy
+ * to the caller. The legacy parseDnfExtractPipeOutput keeps throw-on-first
+ * semantics so H2 fixtures and any "strict" call sites stay unchanged.
+ */
+export interface DnfExtractPipeError {
+  chunkIndex: number;
+  path: string;
+  message: string;
+}
+
+export interface DnfExtractPipeBatchResult {
+  documents: PvfDocument[];
+  errors: DnfExtractPipeError[];
+  /** Counts of non-document types that were skipped (animation/text/binary/etc). */
+  skippedTypes: Record<string, number>;
 }
 
 export function buildDnfExtractPipeArgs(options: DnfExtractPipeOptions): string[] {
@@ -101,6 +123,72 @@ export function parseDnfExtractPipeOutput(stdout: string): PvfDocument[] {
   return documentTyped;
 }
 
+/**
+ * Batch-friendly variant of parseDnfExtractPipeOutput. Per audit
+ * pipeline-closure F6 (2026-05-24): a single corrupt chunk should not
+ * abort an entire pipeline batch — most callers want to log the error,
+ * skip the failing path, and process the rest. This collects error chunks
+ * into `errors[]` and returns successful documents alongside, leaving the
+ * abort decision to the caller (pipelineRunner uses it; H2 strict tests
+ * keep calling the throw-on-first variant above).
+ */
+export function parseDnfExtractPipeOutputWithErrors(stdout: string): DnfExtractPipeBatchResult {
+  const lines = stdout.split(/\r?\n/);
+  const chunks: string[] = [];
+  let buffer: string[] = [];
+  for (const line of lines) {
+    if (line === "---") {
+      if (buffer.length > 0) {
+        chunks.push(buffer.join("\n"));
+        buffer = [];
+      }
+    } else {
+      buffer.push(line);
+    }
+  }
+  if (buffer.length > 0) chunks.push(buffer.join("\n"));
+
+  const documents: PvfDocument[] = [];
+  const errors: DnfExtractPipeError[] = [];
+  const skippedTypes: Record<string, number> = {};
+
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i].trim();
+    if (!chunk) continue;
+    let document: PvfDocument & { error?: unknown };
+    try {
+      document = JSON.parse(chunk) as PvfDocument & { error?: unknown };
+    } catch (parseError) {
+      const preview = chunk.length > 80 ? `${chunk.slice(0, 80)}…` : chunk;
+      const reason = parseError instanceof Error ? parseError.message : String(parseError);
+      errors.push({
+        chunkIndex: i,
+        path: "<unparseable>",
+        message: `JSON.parse failed (preview ${JSON.stringify(preview)}): ${reason}`,
+      });
+      continue;
+    }
+    if (document.type === "error") {
+      const path = typeof document.path === "string" && document.path.length > 0
+        ? document.path
+        : "<unknown>";
+      const errorPayload = typeof document.error === "string"
+        ? document.error
+        : document.error === undefined
+          ? "unknown error"
+          : JSON.stringify(document.error);
+      errors.push({ chunkIndex: i, path, message: errorPayload });
+      continue;
+    }
+    if (document.type === "document") {
+      documents.push(document);
+    } else {
+      skippedTypes[document.type] = (skippedTypes[document.type] ?? 0) + 1;
+    }
+  }
+  return { documents, errors, skippedTypes };
+}
+
 export async function loadPvfDocumentsViaPipe(
   paths: string[],
   options: DnfExtractPipeOptions,
@@ -132,4 +220,163 @@ export async function loadPvfDocumentsViaPipe(
   }
 
   return parseDnfExtractPipeOutput(stdout);
+}
+
+/**
+ * Audit pipeline-closure F6 (2026-05-24): graceful variant for batch
+ * pipelines. A single corrupted PVF entry no longer aborts the whole
+ * EXTRACT stage; per-chunk errors are returned alongside the documents
+ * so pipelineRunner can fold them into its parseErrors stream (parallel
+ * to the per-document PARSE-stage try/catch).
+ */
+export async function loadPvfDocumentsViaPipeWithErrors(
+  paths: string[],
+  options: DnfExtractPipeOptions,
+): Promise<DnfExtractPipeBatchResult> {
+  const executablePath = options.executablePath ?? DEFAULT_DNF_EXTRACT_PATH;
+  const child = spawn(executablePath, buildDnfExtractPipeArgs(options), {
+    cwd: process.cwd(),
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+
+  let stdout = "";
+  let stderr = "";
+  child.stdout.setEncoding("utf8");
+  child.stderr.setEncoding("utf8");
+  child.stdout.on("data", chunk => { stdout += chunk; });
+  child.stderr.on("data", chunk => { stderr += chunk; });
+
+  for (const path of paths) child.stdin.write(`${path}\n`);
+  child.stdin.write("quit\n");
+  child.stdin.end();
+
+  const exitCode = await new Promise<number | null>((resolve, reject) => {
+    child.on("error", reject);
+    child.on("close", resolve);
+  });
+
+  if (exitCode !== 0) {
+    throw new Error(`dnf-extract --pipe exited ${exitCode}\n${stderr}`);
+  }
+  return parseDnfExtractPipeOutputWithErrors(stdout);
+}
+
+/**
+ * Audit pipeline-closure F2 (2026-05-24): the pipeline CLI accepts .ani files
+ * via `--ani-file`, but AniParser is standalone (per design §2.2.1 — .ani
+ * does not flow through parseStage dispatch). This helper walks the
+ * dnf-extract `--pipe` output, filters for `type:"animation"` chunks, and
+ * returns them as `AniDocument[]` ready for `parseAniDocument()`. Symmetric
+ * with `loadPvfDocumentsViaPipe` for documents.
+ *
+ * `type:"error"` chunks throw (matches the strict variant of the document
+ * loader). Other non-animation chunks (e.g. text/binary) are silently
+ * skipped with a stderr warning so the user can spot routing mistakes.
+ */
+export async function loadAniDocumentsViaPipe(
+  paths: string[],
+  options: DnfExtractPipeOptions,
+): Promise<AniDocument[]> {
+  const executablePath = options.executablePath ?? DEFAULT_DNF_EXTRACT_PATH;
+  const child = spawn(executablePath, buildDnfExtractPipeArgs(options), {
+    cwd: process.cwd(),
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+
+  let stdout = "";
+  let stderr = "";
+  child.stdout.setEncoding("utf8");
+  child.stderr.setEncoding("utf8");
+  child.stdout.on("data", chunk => { stdout += chunk; });
+  child.stderr.on("data", chunk => { stderr += chunk; });
+
+  for (const path of paths) child.stdin.write(`${path}\n`);
+  child.stdin.write("quit\n");
+  child.stdin.end();
+
+  const exitCode = await new Promise<number | null>((resolve, reject) => {
+    child.on("error", reject);
+    child.on("close", resolve);
+  });
+
+  if (exitCode !== 0) {
+    throw new Error(`dnf-extract --pipe (ani) exited ${exitCode}\n${stderr}`);
+  }
+  return parseDnfExtractPipeOutputAnimations(stdout);
+}
+
+/**
+ * Parse dnf-extract pipe stdout, returning only `type:"animation"` chunks
+ * as `AniDocument[]`. Errors throw; non-animation/non-error chunks are
+ * counted and warned via stderr (mirror of parseDnfExtractPipeOutput's
+ * non-document skip behaviour).
+ */
+export function parseDnfExtractPipeOutputAnimations(stdout: string): AniDocument[] {
+  const lines = stdout.split(/\r?\n/);
+  const chunks: string[] = [];
+  let buffer: string[] = [];
+  for (const line of lines) {
+    if (line === "---") {
+      if (buffer.length > 0) {
+        chunks.push(buffer.join("\n"));
+        buffer = [];
+      }
+    } else {
+      buffer.push(line);
+    }
+  }
+  if (buffer.length > 0) chunks.push(buffer.join("\n"));
+
+  const animations: AniDocument[] = [];
+  const skippedTypes = new Map<string, number>();
+
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i].trim();
+    if (!chunk) continue;
+    // Parse as untyped first so we can branch on the runtime `type` field
+    // (AniDocument's `type: "animation"` literal would otherwise reject the
+    // "error" / other-type checks below at typecheck time).
+    let parsedRaw: { type?: string; error?: unknown; path?: unknown } & Record<string, unknown>;
+    try {
+      parsedRaw = JSON.parse(chunk) as { type?: string; error?: unknown; path?: unknown } & Record<string, unknown>;
+    } catch (parseError) {
+      const preview = chunk.length > 80 ? `${chunk.slice(0, 80)}…` : chunk;
+      const reason = parseError instanceof Error ? parseError.message : String(parseError);
+      throw new Error(
+        `dnf-extract pipe (ani): JSON.parse failed for chunk index ${i} ` +
+        `(preview: ${JSON.stringify(preview)}): ${reason}`,
+      );
+    }
+    if (parsedRaw.type === "error") {
+      const path = typeof parsedRaw.path === "string" && parsedRaw.path.length > 0
+        ? parsedRaw.path
+        : "<unknown>";
+      const errorPayload = typeof parsedRaw.error === "string"
+        ? parsedRaw.error
+        : parsedRaw.error === undefined
+          ? "unknown error"
+          : JSON.stringify(parsedRaw.error);
+      throw new Error(`dnf-extract error for ${path} (chunk index ${i}): ${errorPayload}`);
+    }
+    if (parsedRaw.type === "animation") {
+      animations.push(parsedRaw as unknown as AniDocument);
+    } else {
+      const t = parsedRaw.type ?? "<missing-type>";
+      skippedTypes.set(t, (skippedTypes.get(t) ?? 0) + 1);
+    }
+  }
+
+  if (skippedTypes.size > 0) {
+    const summary = Array.from(skippedTypes.entries())
+      .map(([t, n]) => `${t}×${n}`)
+      .join(", ");
+    console.warn(
+      `[PvfDocumentLoader] loadAniDocumentsViaPipe: skipped ${
+        Array.from(skippedTypes.values()).reduce((a, b) => a + b, 0)
+      } non-animation chunk(s) [${summary}]. ` +
+      `Only .ani paths should be passed to --ani-file. Other types (document/text/binary) ` +
+      `belong to --file.`,
+    );
+  }
+  return animations;
 }

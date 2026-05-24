@@ -52,6 +52,15 @@ public:
 	// out-of-bounds, segfault past capacity). The caller is responsible for
 	// checking isValidIndex() first; pass it through if you can't.
 	inline auto& operator[](int32_t index) { assert(isValidIndex(index)); return nodes[index]; }
+	// Audit A9 (memory-safety, 2026-05-24): re-parent ImgFile and all its
+	// ImgNodes onto a new NpkFile owner. Called by NpkFile's move ctor /
+	// move-assign to patch back-pointers after the imgNodes vector has been
+	// moved into the destination NpkFile — otherwise every ImgFile.file and
+	// ImgNode.reader still points at the moved-from husk (UAF on next read).
+	inline auto rebindOwner(NpkFile* newOwner) -> void {
+		file = newOwner;
+		for (auto& n : nodes) n.reader = newOwner;
+	}
 private:
 	NpkIndex metaInfo;
 	ImgHeader header;

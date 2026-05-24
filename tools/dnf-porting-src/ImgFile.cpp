@@ -278,12 +278,37 @@ auto ImgNode::getData() ->const std::vector<uint8_t> &
 	if (!input.empty()) {
 		return input;
 	}
+	// Audit A3 (memory-safety, 2026-05-24): texture.{width,height,size} come
+	// straight off disk (signed int32_t). Without bounds, a corrupt or hostile
+	// IMG can declare 32768×32768×4 which overflows int32_t to a negative
+	// number, output.resize(negative) reinterprets as SIZE_MAX → bad_alloc,
+	// or wraps small and convert4444To8888 writes width*height pixels into
+	// an undersized buffer → heap overflow. Cap at sane dimensions; the
+	// largest legitimate sprite atlases in DNF are 2048×2048.
+	const int32_t kMaxDim = 16384;
+	if (texture.width <= 0 || texture.height <= 0
+		|| texture.width > kMaxDim || texture.height > kMaxDim) {
+		fprintf(stderr, "[ERROR] ImgNode::getData: implausible texture dimensions %dx%d\n",
+			texture.width, texture.height);
+		return input;
+	}
+	// Overflow guard: width*height*4 must fit comfortably in int32_t.
+	// kMaxDim^2 = 16384*16384 = 2^28; *4 = 2^30 < INT32_MAX. We already
+	// rejected larger dims so this multiplication is safe — but check the
+	// declared texture.size too (also from disk).
+	if (texture.size < 0 || static_cast<int64_t>(texture.size) > (1LL << 30)) {
+		fprintf(stderr, "[ERROR] ImgNode::getData: implausible texture.size=%d\n", texture.size);
+		return input;
+	}
 	input.resize(texture.size);
 	reader->setPosition(offset);
 	reader->readBytes(input.data(),texture.size);
 	if (texture.extra == CompressType::COMPRESS_ZLIB) {
 		std::vector<uint8_t> output;
-		output.resize(texture.width * texture.height * (format == ARGB_8888 ? 4 : 2));
+		// Cast through size_t so the multiplication does not overflow int32_t
+		// even if a future kMaxDim bump pushes the product past 2^31.
+		const size_t pixels = static_cast<size_t>(texture.width) * static_cast<size_t>(texture.height);
+		output.resize(pixels * (format == ARGB_8888 ? 4 : 2));
 		unsigned long size = output.size();
 		auto err = uncompress(output.data(), &size, input.data(), input.size());
 		if (err != Z_OK)
@@ -295,12 +320,12 @@ auto ImgNode::getData() ->const std::vector<uint8_t> &
 			return input;
 		}
 
-		output.resize(texture.width * texture.height * 4);
+		output.resize(pixels * 4);
 
 		if (format == ARGB_4444) {
 			convert4444To8888(input, output, texture.width * texture.height);
 		}
-		else if (format == ARGB_1555) 
+		else if (format == ARGB_1555)
 		{
 			convert1555To8888(input, output, texture.width * texture.height);
 		}

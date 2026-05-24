@@ -28,7 +28,15 @@ export interface PvfVectorAttribute {
   t: "vec";
   length: number;
   item_type?: string;
-  items: number[];
+  /**
+   * Audit B3 (contract-symmetry, 2026-05-24): C++ printLeafValue now ALWAYS
+   * emits typed `{t,v}` for vec/mat leaves (previously dual-shape: bare
+   * primitive when homogeneous, typed when mixed). Old PVF dumps that still
+   * carry bare `number[]` remain valid — both shapes parse cleanly via the
+   * `extractLeafNumber()` helper in parserUtils.ts. Schemas in validator.ts
+   * accept the union via a custom transform.
+   */
+  items: Array<number | { t: string; v: number }>;
 }
 
 export interface PvfMatrixAttribute {

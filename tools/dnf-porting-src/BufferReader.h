@@ -23,11 +23,15 @@ public:
 	}
 
 	inline auto readAsciiString(int32_t len_) -> std::string {
-		if (offset + len_ > len) {
+		// Audit A2 (memory-safety, 2026-05-24): negative or huge len_ is UB.
+		// `len_` comes straight from disk (e.g. PvfAnimation reads int32_t length
+		// then passes to readAsciiString). Reject negatives and reads past the
+		// buffer end. An attacker-controlled negative len_ otherwise constructs
+		// a std::string from a reversed iterator pair → UB / heap blow-up.
+		if (len_ < 0 || len_ > len - offset) {
 			eof = true;
-			std::string str = { buffer + offset, buffer + this->len };
-			offset = this->len;
-			return str;
+			offset = len;
+			return {};
 		}
 		std::string str = { buffer + offset ,buffer + offset + len_ };
 		offset += len_;

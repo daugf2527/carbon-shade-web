@@ -394,6 +394,14 @@ function buildContext(docs: PvfDocument[]) {
 // H14-9: Multi-extension routing — chr/mob/skl/atk/dgn/etc/map all land in
 //         the correct per-domain view (extension column is the discriminator).
 //
+//         Audit F6 test-effectiveness (2026-05-24): path-suffix oracle is
+//         derived from the fixture's path string, so a regression where the
+//         SUT's extractExtension() always returned "other" would still pass
+//         the per-extension count check below. Mitigation: the per-domain
+//         view assertions further down verify each view returns ITS OWN
+//         row (e.g. characters view has 1 chr row), which IS independent —
+//         a misclassified extension would make the view counts uneven.
+//
 // Note: ani/nut/img are standalone parsers that bypass parseStage today
 // (see parseStage.ts comment) — they cannot reach pvf_files via importToSqlite
 // through the documents+parsed flow without manual fake parsed entries, so we
@@ -456,6 +464,17 @@ function buildContext(docs: PvfDocument[]) {
   assert.equal(row.job, "swordman", `H14-10: characters.job extracted (got "${row.job}")`);
   assert.equal(row.jump_power, 430, `H14-10: characters.jump_power extracted (got ${row.jump_power})`);
   assert.equal(row.weight, 68000, `H14-10: characters.weight extracted (got ${row.weight})`);
+  // Audit F7 test-effectiveness (2026-05-24): independent oracle — confirm
+  // the view's WHERE clause is doing real filtering, not echoing everything.
+  // Inserting a non-chr doc (mob) must NOT appear in characters view.
+  const before = db.prepare("SELECT COUNT(*) AS n FROM characters").get() as { n: number };
+  const ctxMob = buildContext([makeMobDoc("monster/x/x.mob", "anim/x.ani")]);
+  importToSqlite({ dbPath: tmpDb }, ctxMob.docs, ctxMob.parsed, ctxMob.validation);
+  const after = db.prepare("SELECT COUNT(*) AS n FROM characters").get() as { n: number };
+  assert.equal(after.n, before.n, `H14-10: characters view ignores mob inserts (n stable, got ${before.n}→${after.n})`);
+  // And jump_power for the new mob path returns nothing.
+  const mobLookup = db.prepare("SELECT jump_power FROM characters WHERE pvf_path = ?").get("monster/x/x.mob");
+  assert.equal(mobLookup, undefined, "H14-10: mob row NOT exposed via characters view");
 
   db.close();
   await fs.rm(tmpDb, { force: true });
@@ -478,6 +497,13 @@ function buildContext(docs: PvfDocument[]) {
   assert.equal(row.warlike, 80, `H14-11: monsters.warlike (got ${row.warlike})`);
   assert.equal(row.sight, 350, `H14-11: monsters.sight (got ${row.sight})`);
   assert.equal(row.weight, 25, `H14-11: monsters.weight (got ${row.weight})`);
+  // Audit F7 test-effectiveness (2026-05-24): independent oracle — inserting
+  // a non-mob doc must not appear in monsters view (proves the view's
+  // WHERE clause filters correctly, not just that round-trip works).
+  const ctxChr = buildContext([makeChrDoc("character/y/y.chr", { job: "y", jumpPower: 1, weight: 1 })]);
+  importToSqlite({ dbPath: tmpDb }, ctxChr.docs, ctxChr.parsed, ctxChr.validation);
+  const chrLookup = db.prepare("SELECT warlike FROM monsters WHERE pvf_path = ?").get("character/y/y.chr");
+  assert.equal(chrLookup, undefined, "H14-11: chr doc NOT exposed via monsters view");
 
   db.close();
   await fs.rm(tmpDb, { force: true });
@@ -509,6 +535,16 @@ function buildContext(docs: PvfDocument[]) {
   assert.equal(passive.skill_type, "passive", `H14-12: passive.skill_type (got "${passive.skill_type}")`);
   assert.equal(passive.has_pvp, 1, `H14-12: passive.has_pvp=1 (got ${passive.has_pvp})`);
   assert.equal(passive.has_dungeon, 0, `H14-12: passive.has_dungeon=0 (got ${passive.has_dungeon})`);
+  // Audit F7 test-effectiveness (2026-05-24): independent oracle — confirm
+  // skills view ignores docs of other extensions and that COUNT(*) reflects
+  // the actual upserted skl row count (catches a regression where the WHERE
+  // extension='skl' clause was lost).
+  const countRow = db.prepare("SELECT COUNT(*) AS n FROM skills").get() as { n: number };
+  assert.equal(countRow.n, 2, `H14-12: exactly 2 skl rows visible via skills view (got ${countRow.n})`);
+  const ctxAtk = buildContext([makeAtkDoc("atk/sentry.atk", 200)]);
+  importToSqlite({ dbPath: tmpDb }, ctxAtk.docs, ctxAtk.parsed, ctxAtk.validation);
+  const afterCount = db.prepare("SELECT COUNT(*) AS n FROM skills").get() as { n: number };
+  assert.equal(afterCount.n, 2, `H14-12: atk insert does NOT add row to skills view (still ${afterCount.n})`);
 
   db.close();
   await fs.rm(tmpDb, { force: true });

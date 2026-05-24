@@ -75,14 +75,35 @@ function detectCancelSkill(document: PvfDocument): boolean {
 }
 
 function parseSkillType(document: PvfDocument): SklSkillType {
+  // Audit F5 (ts-parser-truth, 2026-05-24): previously conflated three distinct
+  // cases by returning "unknown" for all of them:
+  //   A) section absent → legitimately "unknown" (schema accepts it)
+  //   B) section present but first attr wrong type → corrupted PVF
+  //   C) section present, attr is str/link, but tag value not in {active, passive}
+  //      → unexpected enum literal (corrupted PVF or new game patch)
+  // Real PVF .skl files emit "type" section with str "[active]" or "[passive]"
+  // uniformly when present; B/C indicate corruption that should surface loudly
+  // rather than silently masquerading as case A.
   const section = firstSection(document, "type");
-  if (!section) return "unknown";
+  if (!section) return "unknown"; // case A: legitimate absence
   const attr = section.attributes[0];
-  if (!attr || (attr.t !== "str" && attr.t !== "link")) return "unknown";
+  if (!attr || (attr.t !== "str" && attr.t !== "link")) {
+    // case B: wrong type
+    throw new Error(
+      `[SklParser] parseSkillType: "type" section in ${document.path} has first attribute of type ` +
+      `"${attr?.t ?? "undefined"}" (expected str/link). Real PVF emits str/link for skill type; ` +
+      `wrong-type attribute indicates corrupted input.`,
+    );
+  }
   const tag = stripPvfTag((attr as { t: string; v: string }).v ?? "");
   if (tag === "active") return "active";
   if (tag === "passive") return "passive";
-  return "unknown";
+  // case C: unrecognised enum value
+  throw new Error(
+    `[SklParser] parseSkillType: "type" section in ${document.path} has unrecognised tag ` +
+    `"${tag}" (expected "active" or "passive"). Real PVF skill types are uniformly active/passive; ` +
+    `unexpected tag indicates corrupted input or new game patch requiring parser update.`,
+  );
 }
 
 function parseWeaponEffectType(document: PvfDocument): SklWeaponEffectType {

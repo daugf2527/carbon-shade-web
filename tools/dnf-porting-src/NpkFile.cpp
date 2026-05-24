@@ -23,6 +23,21 @@ NpkFile::NpkFile(const std::string& initFile)
 
 NpkFile::~NpkFile()
 {
+	// Audit A11 (memory-safety, 2026-05-24): clear our entries from
+	// GlobalTable before destroying imgNodes. GlobalTable holds raw
+	// ImgFile* pointers into our `imgNodes` vector; if we let those
+	// pointers outlive us they dangle, and any later getNpkImgNode()
+	// lookup that hits the same key derefs freed memory. Iterate our
+	// nodes and erase only the keys whose value is one of ours — this
+	// is robust against subsequent re-loads that might have replaced
+	// the entry with a pointer into a different NpkFile.
+	for (auto& img : imgNodes) {
+		auto key = img.getFileName();
+		auto it = GlobalTable.find(key);
+		if (it != GlobalTable.end() && it->second == &img) {
+			GlobalTable.erase(it);
+		}
+	}
 	if (file != nullptr) {
 		fclose(file);
 		file = nullptr;
@@ -37,6 +52,12 @@ NpkFile::NpkFile(NpkFile&& other) noexcept
 	  imgNodes(std::move(other.imgNodes))
 {
 	other.file = nullptr;
+	// Audit A9 (memory-safety, 2026-05-24): every ImgFile in `imgNodes` was
+	// constructed with `this == &other`, and each contained ImgNode kept
+	// `reader = &other`. After the move, those raw back-pointers still
+	// reference the moved-from husk — any later getData() / expand() would
+	// UAF. Re-bind them all to the new owner.
+	for (auto& img : imgNodes) img.rebindOwner(this);
 }
 
 NpkFile& NpkFile::operator=(NpkFile&& other) noexcept
@@ -49,11 +70,23 @@ NpkFile& NpkFile::operator=(NpkFile&& other) noexcept
 		length = other.length;
 		imgNodes = std::move(other.imgNodes);
 		other.file = nullptr;
+		// Audit A9 (memory-safety, 2026-05-24): same re-parenting fix as
+		// the move constructor — imgNodes back-pointers must point at the
+		// new owner, not the moved-from `other`.
+		for (auto& img : imgNodes) img.rebindOwner(this);
 	}
 	return *this;
 }
 auto NpkFile::openFile() -> bool
 {
+	// Audit A4 (memory-safety, 2026-05-24): close any prior FILE* before
+	// re-opening. A second unpack() call (e.g. from --workflow npk-load on
+	// the same NPK) otherwise leaks the previous descriptor. Long-running
+	// workflow sessions can exhaust FDs.
+	if (file != nullptr) {
+		fclose(file);
+		file = nullptr;
+	}
 	file = fopen(fileName.c_str(), "rb");
 	if (file == nullptr) {
 		fprintf(stderr, "[ERROR] fail to open this file : %s\n", fileName.c_str());
@@ -71,9 +104,14 @@ auto NpkFile::loadAll(const std::string& path) -> void
 	{
 		bool isDir = std::filesystem::is_directory(entry);
 
+		// Audit A5 (memory-safety, 2026-05-24): operator-precedence fix.
+		// Original `endWith(".npk") || endWith(".NPK") && !isDir` parses as
+		// `endWith(".npk") || (endWith(".NPK") && !isDir)` — a directory
+		// named "foo.npk" slips through the first half and gets registered.
+		// Wrap the extension test in parens so `!isDir` gates both branches.
 		if (
-			PvfString::endWith(entry.path().string(), ".npk") ||
-			PvfString::endWith(entry.path().string(), ".NPK")
+			(PvfString::endWith(entry.path().string(), ".npk") ||
+			 PvfString::endWith(entry.path().string(), ".NPK"))
 			&& !isDir)
 		{
 			std::string fullPath = entry.path().string();
@@ -145,15 +183,39 @@ auto NpkFile::readBytes(uint8_t* data, int32_t len) ->void
 		fprintf(stderr, "[ERROR] NpkFile::readBytes: implausible len=%d\n", len);
 		return;
 	}
-	fread(data, len, 1, file);
+	// Audit A8 (memory-safety, 2026-05-24): check fread return. A short
+	// read leaves the tail of `data` uninitialized — callers like
+	// ImgFile::unpack pass a struct on the stack with no zero-init, so the
+	// uninitialized tail is later xor'd against FileNameFlag and stored as
+	// the IMG key, corrupting the GlobalTable map keys.
+	if (fread(data, len, 1, file) != 1) {
+		fprintf(stderr, "[ERROR] NpkFile::readBytes: short read (expected %d bytes from %s)\n",
+			len, fileName.c_str());
+		// Zero the buffer so callers don't xor against indeterminate bytes.
+		std::memset(data, 0, len);
+		return;
+	}
 	offset += len;
 }
 
 auto NpkFile::readString(int32_t len) -> std::string
 {
+	// Audit A8 (memory-safety, 2026-05-24): bound `len` before resize.
+	// Negative `len` makes str.resize() receive SIZE_MAX → bad_alloc.
+	// Huge positive `len` (corrupt or hostile NPK) is also rejected.
+	if (len < 0 || static_cast<int64_t>(len) > (1LL << 30)) {
+		fprintf(stderr, "[ERROR] NpkFile::readString: implausible len=%d\n", len);
+		return {};
+	}
 	std::string str;
 	str.resize(len);
-	fread(str.data(), len, 1, file);
+	// Audit A8 (memory-safety, 2026-05-24): check fread return on short
+	// read so callers don't operate on uninitialized bytes.
+	if (len > 0 && fread(str.data(), len, 1, file) != 1) {
+		fprintf(stderr, "[ERROR] NpkFile::readString: short read (expected %d bytes from %s)\n",
+			len, fileName.c_str());
+		return {};
+	}
 	offset += len;
 	return str;
 }

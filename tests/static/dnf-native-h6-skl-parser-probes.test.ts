@@ -442,6 +442,74 @@ probe("H6-P4.invariant.uppercaseExtension", () => {
   }
 });
 
+probe("H6-P4.invariant.skillTypeWrongTypeAttr", () => {
+  // Audit F5 (ts-parser-truth, 2026-05-24): parseSkillType previously returned
+  // "unknown" for both (a) section absent and (b) section present with
+  // wrong-type attr — conflating two distinct conditions. After the fix,
+  // (a) keeps returning "unknown" (legitimate absent state, accepted by schema)
+  // while (b) throws so corrupted PVF surfaces loudly rather than masquerading
+  // as "unknown".
+  const doc = makeDoc("skill/swordman/test.skl", [
+    { name: "type", attributes: [{ t: "int", v: 42 } as PvfAttribute] }, // wrong type
+  ]);
+  try {
+    parseSklDocument(doc);
+    return {
+      id: "H6-P4.invariant.skillTypeWrongTypeAttr",
+      status: "BUG",
+      detail: "expected throw on wrong-type \"type\" section attr, got success",
+    };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (!/parseSkillType.*type.*int/i.test(msg)) {
+      return {
+        id: "H6-P4.invariant.skillTypeWrongTypeAttr",
+        status: "BUG",
+        detail: `threw but unhelpful message: ${msg}`,
+      };
+    }
+    return {
+      id: "H6-P4.invariant.skillTypeWrongTypeAttr",
+      status: "OK",
+      detail: `wrong-type "type" attr now throws (no silent "unknown" fallback): ${msg}`,
+    };
+  }
+});
+
+probe("H6-P4.invariant.skillTypeUnknownTag", () => {
+  // Audit F5 (ts-parser-truth, 2026-05-24): the third conflated case —
+  // "type" section present, attr is str/link, but tag value is neither
+  // "active" nor "passive". Previously fell back to "unknown" silently;
+  // after the fix, throws because real PVF skill types are uniformly
+  // active/passive and any other tag indicates corrupted PVF or a new
+  // game patch requiring parser update.
+  const doc = makeDoc("skill/swordman/test.skl", [
+    { name: "type", attributes: [{ t: "str", v: "[arcane]" }] }, // unknown enum value
+  ]);
+  try {
+    parseSklDocument(doc);
+    return {
+      id: "H6-P4.invariant.skillTypeUnknownTag",
+      status: "BUG",
+      detail: "expected throw on unknown skill type tag, got success",
+    };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (!/parseSkillType.*unrecognised|unrecognized.*tag/i.test(msg)) {
+      return {
+        id: "H6-P4.invariant.skillTypeUnknownTag",
+        status: "BUG",
+        detail: `threw but unhelpful message: ${msg}`,
+      };
+    }
+    return {
+      id: "H6-P4.invariant.skillTypeUnknownTag",
+      status: "OK",
+      detail: `unknown skill type tag now throws: ${msg}`,
+    };
+  }
+});
+
 // ---------------------------------------------------------------------------
 // H6-P5: Provenance correctness
 // ---------------------------------------------------------------------------

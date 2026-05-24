@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cerrno>
 #include <cstring>
 #include "PvfReader.h"
 #include "iconv.h"
@@ -105,7 +106,18 @@ auto PvfReader::codeConvert(const char* fromCharset, const char* toCharset, cons
 		&& strcmp(toCharset, "UTF-8") == 0;
 	if (hotPath) {
 		iconv(iconvCdCp949ToUtf8, nullptr, nullptr, nullptr, nullptr);
-		iconv(iconvCdCp949ToUtf8, const_cast<char**>(&inbuf), &inlen, pout, &outlen);
+		// Audit A10 (memory-safety, 2026-05-24): check iconv() return.
+		// (size_t)-1 signals EILSEQ / EINVAL / E2BIG. On failure the outbuf is
+		// partial — flag the error via the return code so callers can detect
+		// truncation. We still leave the partial UTF-8 in outbuf (it's
+		// NUL-terminated by the memset above) so downstream code that reads
+		// the buffer doesn't crash, but we surface a negative return.
+		size_t rc = iconv(iconvCdCp949ToUtf8, const_cast<char**>(&inbuf), &inlen, pout, &outlen);
+		if (rc == (size_t)-1) {
+			fprintf(stderr, "[ERROR] PvfReader::codeConvert: iconv failed (errno=%d, inlen=%zu remaining)\n",
+				errno, inlen);
+			return -1;
+		}
 		return outlen;
 	}
 
@@ -115,15 +127,28 @@ auto PvfReader::codeConvert(const char* fromCharset, const char* toCharset, cons
 	if (cd == (iconv_t)-1)
 		return -1;
 
-	iconv(cd, const_cast<char**>(&inbuf), &inlen, pout, &outlen);
+	// Audit A10 (memory-safety, 2026-05-24): same return-check for the
+	// fallback per-call path.
+	size_t rc = iconv(cd, const_cast<char**>(&inbuf), &inlen, pout, &outlen);
 	iconv_close(cd);
+	if (rc == (size_t)-1) {
+		fprintf(stderr, "[ERROR] PvfReader::codeConvert: iconv failed (errno=%d, inlen=%zu remaining)\n",
+			errno, inlen);
+		return -1;
+	}
 	return outlen;
 }
 
 
 auto PvfReader::unpack() -> void
 {
-	fread(&header, sizeof(PvfHeader), 1, file);
+	// Audit A7 (memory-safety, 2026-05-24): check fread returns. If the file is
+	// truncated before the header is read, `header` is left in indeterminate
+	// state and every subsequent field read is UB. Same for the dirtree body.
+	if (fread(&header, sizeof(PvfHeader), 1, file) != 1) {
+		fprintf(stderr, "[ERROR] PvfReader::unpack: short read on PVF header (file truncated?)\n");
+		return;
+	}
 	auto headLength = header.dirTreeLength;
 
 	// Bounds-check file-derived size before allocation (Audit F7: a malicious
@@ -134,7 +159,14 @@ auto PvfReader::unpack() -> void
 		return;
 	}
 	auto dirTreeData = std::make_unique<uint8_t[]>(header.dirTreeLength);
-	fread(dirTreeData.get(), header.dirTreeLength, 1, file);
+	// Audit A7 (memory-safety, 2026-05-24): same — refuse to proceed on short
+	// read of the dirtree body. decrypt() and the per-entry walk both assume
+	// the buffer is fully populated.
+	if (fread(dirTreeData.get(), header.dirTreeLength, 1, file) != 1) {
+		fprintf(stderr, "[ERROR] PvfReader::unpack: short read on dirTree (file truncated, expected %d bytes)\n",
+			header.dirTreeLength);
+		return;
+	}
 	decrypt(dirTreeData.get(), header.dirTreeLength, header.dirTreeChecksum);
 
 	int32_t offset = 0;
@@ -147,6 +179,16 @@ auto PvfReader::unpack() -> void
 
 	for (int32_t i = 0; i < header.numFilesInDirTree; i++)
 	{
+		// Audit A1 (memory-safety, 2026-05-24): bounds-check field reads
+		// against the actual dirTreeData buffer (header.dirTreeLength).
+		// A truncated or hostile tree could declare numFilesInDirTree larger
+		// than the bytes actually present, walking us past the buffer end.
+		// Need 8 bytes here (fileNumber + filePathLength) before reading.
+		if (offset < 0 || offset + 8 > header.dirTreeLength) {
+			fprintf(stderr, "[ERROR] PvfReader::unpack: dirTreeData truncated at offset %d (entry %d, dirTreeLength=%d)\n",
+				offset, i, header.dirTreeLength);
+			return;
+		}
 
 		auto fileNumber		= read<uint32_t>(dirTreeData.get(), offset);
 		auto filePathLength = read<int32_t>(dirTreeData.get(), offset + 4);
@@ -157,6 +199,15 @@ auto PvfReader::unpack() -> void
 		// `filePathLength * 3` below.
 		if (filePathLength <= 0 || filePathLength > 4096) {
 			fprintf(stderr, "[ERROR] PvfReader::unpack: implausible filePathLength=%d at entry %d\n", filePathLength, i);
+			return;
+		}
+		// Audit A1 (memory-safety, 2026-05-24): the entry's tail spans
+		// [offset+8, offset+0x10+filePathLength+4) — filePath bytes plus three
+		// trailing int32_t fields (fileLength, fileCrc32, relativeOffset).
+		// Reject any entry whose tail would step past the dirTree buffer.
+		if (offset + 0x14 + filePathLength > header.dirTreeLength) {
+			fprintf(stderr, "[ERROR] PvfReader::unpack: entry %d tail exceeds dirTree (offset=%d, len=%d, dirTreeLength=%d)\n",
+				i, offset, filePathLength, header.dirTreeLength);
 			return;
 		}
 		auto filePath		= dirTreeData.get() + offset + 8;
@@ -235,6 +286,17 @@ auto PvfReader::decrypt(uint8_t* ptr, uint32_t len, uint32_t crc32) -> void
 
 auto PvfReader::dfsCreateNode(PvfNode& tag, PvfTreeNode * tree, const std::vector<std::string_view>& pathes, int32_t deep) -> void
 {
+	// Audit A6 (memory-safety, 2026-05-24): guard recursion depth. One frame
+	// per path segment; with filePathLength capped at 4096 a hostile PVF could
+	// in principle present 4096 single-char segments, blowing the 1 MB Windows
+	// stack. Real PVF paths are <16 segments; 64 is generous and catches
+	// pathological inputs before stack overflow.
+	if (deep > 64) {
+		fprintf(stderr, "[ERROR] PvfReader::dfsCreateNode: path depth %d exceeds limit (segments=%zu)\n",
+			deep, pathes.size());
+		return;
+	}
+
 	// One string allocation per level (for the map key); the rest is reused
 	// across siblings via the hoisted std::string_view vector in mapping().
 	std::string segment(pathes[deep]);

@@ -436,10 +436,18 @@ probe("P9.atk.pvpSectionName", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Probe 10 — firstNumberFact returns null on wrong-type attribute; requireValue
-// error is identical to "section completely missing" — diagnostic ambiguity.
+// Probe 10 — firstNumberFact distinguishes "section absent" from "section
+// present with wrong-type attribute" after Audit F7 fix. Wrong-type now throws
+// with a type-specific error message rather than masquerading as missing.
 // ---------------------------------------------------------------------------
 probe("P10.firstNumberFact.wrongTypeHint", () => {
+  // Audit F7 (ts-parser-truth, 2026-05-24): previously firstNumberFact returned
+  // null in BOTH "section absent" and "section present + wrong-type attr"
+  // cases, conflating diagnostically distinct conditions. After the fix:
+  //   - section absent → returns null (legitimate "not found")
+  //   - section present + wrong-type attr → throws with type-specific error
+  // Real PVF emits int/float uniformly for "jump power"; str-typed value
+  // indicates corruption and should surface loudly.
   const doc = makeDoc("character/test/test.chr", [
     { name: "job", attributes: [{ t: "str", v: "[swordman]" }] },
     { name: "jump power", attributes: [{ t: "str", v: "abc" }] }, // wrong type
@@ -450,18 +458,36 @@ probe("P10.firstNumberFact.wrongTypeHint", () => {
   ]);
   try {
     parseChrDocument(doc);
-    return { id: "P10.firstNumberFact.wrongTypeHint", status: "OK", detail: "no error" };
+    return {
+      id: "P10.firstNumberFact.wrongTypeHint",
+      status: "BUG",
+      detail: "expected throw on wrong-type jump power attribute, got success",
+    };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    // Same message as "section completely missing", no hint about type mismatch.
+    // Legacy check (kept for regression detection): the old format conflated
+    // absent + wrong-type into the same "Missing required..." error message.
     if (msg === "Missing required PVF section: jump power") {
       return {
         id: "P10.firstNumberFact.wrongTypeHint",
         status: "BUG",
-        detail: `Section "jump power" EXISTS but first attribute is str (not int/float). Error says 'Missing required PVF section: jump power' — misleads operator into thinking the section is absent. Should distinguish missing vs. wrong type.`,
+        detail: `legacy ambiguous "Missing" message resurfaced for wrong-type input`,
       };
     }
-    return { id: "P10.firstNumberFact.wrongTypeHint", status: "OK", detail: msg };
+    // New behavior: msg must mention the wrong-type cause and the section name
+    // so operators can distinguish corruption from a missing section.
+    if (!/firstNumberFact.*jump power.*type/i.test(msg)) {
+      return {
+        id: "P10.firstNumberFact.wrongTypeHint",
+        status: "BUG",
+        detail: `expected wrong-type error mentioning "firstNumberFact", "jump power", and "type"; got: ${msg}`,
+      };
+    }
+    return {
+      id: "P10.firstNumberFact.wrongTypeHint",
+      status: "OK",
+      detail: msg,
+    };
   }
 });
 
@@ -967,25 +993,37 @@ probe("P28.mob.nonAniRefFiltered", () => {
 // firstStringFact returns null for non-string, fine. But the parser does not warn.
 // ---------------------------------------------------------------------------
 probe("P29.mob.nameWrongType", () => {
-  // Agent C verified 2026-05-22: 194/200 mob.name are {t:"link",v:""},
-  // 6/200 are str (EUC-KR garbled), 0/200 are int. mob.name=null on type mismatch
-  // is the safe-fallback behavior; the impossible-int case is informational only.
+  // Audit F7 (ts-parser-truth, 2026-05-24): firstStringFact previously
+  // conflated "section absent" and "section present with wrong-type attr"
+  // by returning null in both cases. After the fix, wrong-type-on-present
+  // now throws. Agent C verified 2026-05-22: 194/200 mob.name are
+  // {t:"link",v:""}, 6/200 are str (EUC-KR garbled), 0/200 are int —
+  // so int-typed name is corrupted input that should surface loudly.
   const doc = makeDoc("monster/test/test.mob", [
     { name: "name", attributes: [{ t: "int", v: 42 }] },
   ]);
-  const mob = parseMobDocument(doc);
-  if (mob.name === null) {
+  try {
+    parseMobDocument(doc);
+    return {
+      id: "P29.mob.nameWrongType",
+      status: "BUG",
+      detail: "expected throw on wrong-type name attribute (corrupted PVF), got success",
+    };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (!/firstStringFact.*name.*type/i.test(msg)) {
+      return {
+        id: "P29.mob.nameWrongType",
+        status: "BUG",
+        detail: `threw but wrong message: ${msg}`,
+      };
+    }
     return {
       id: "P29.mob.nameWrongType",
       status: "OK",
-      detail: "int-type name returns null (safe fallback); real PVF never emits int names",
+      detail: `int-type name now throws (no silent null fallback); real PVF never emits int names`,
     };
   }
-  return {
-    id: "P29.mob.nameWrongType",
-    status: "BUG",
-    detail: `unexpected: ${JSON.stringify(mob.name)}`,
-  };
 });
 
 // ---------------------------------------------------------------------------

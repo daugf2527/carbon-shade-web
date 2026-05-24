@@ -63,17 +63,81 @@ export function stringValue(attribute: PvfAttribute | undefined): string | null 
   return null;
 }
 
+/**
+ * Audit B3 (contract-symmetry, 2026-05-24): vec/mat leaf items may be a
+ * bare primitive (`42`) OR a typed object (`{t:"int", v:42}` /
+ * `{t:"float", v:1.5}`). C++ printLeafValue now always emits typed shape;
+ * older PVF dumps and synthetic test fixtures still use bare primitives.
+ * Both shapes resolve to the same number through this helper, keeping
+ * `PvfVectorFact.values: number[]` stable as the parser-side contract.
+ *
+ * Returns null when the item cannot be coerced (typo, wrong tag, NaN/Inf),
+ * letting callers throw with field-specific context.
+ */
+export function extractLeafNumber(item: unknown): number | null {
+  if (typeof item === "number" && Number.isFinite(item)) return item;
+  if (item !== null && typeof item === "object") {
+    const obj = item as { t?: unknown; v?: unknown };
+    if (
+      (obj.t === "int" || obj.t === "float") &&
+      typeof obj.v === "number" &&
+      Number.isFinite(obj.v)
+    ) {
+      return obj.v;
+    }
+  }
+  return null;
+}
+
+// Audit F7 (ts-parser-truth, 2026-05-24): firstNumberFact / firstStringFact
+// previously conflated two distinct cases by returning null in both:
+//   A) section absent → legitimate "not found" (null is the correct signal)
+//   B) section present but first attribute wrong type → corrupted PVF
+// Real PVF data uniformly emits the expected attr type when the section is
+// present (verified across 11 player .chr, 200+ mobs, 382+ .atk, .skl/.dgn/.map).
+// Case B should fail loudly so the operator can triage the corrupt file
+// rather than silently degrade an optional field to null.
 export function firstNumberFact(document: PvfDocument, sectionName: string, unit: string): PvfFact<number> | null {
   const section = firstSection(document, sectionName);
-  const value = numberValue(section?.attributes[0]);
-  if (!section || value === null) return null;
+  if (!section) return null; // case A
+  const attr = section.attributes[0];
+  if (attr === undefined) {
+    throw new Error(
+      `[parserUtils] firstNumberFact: section "${sectionName}" present but has zero attributes ` +
+      `in ${document.path}. Real PVF emits at least one attribute for numeric fact sections; ` +
+      `empty attrs indicate corrupted input.`,
+    );
+  }
+  const value = numberValue(attr);
+  if (value === null) {
+    throw new Error(
+      `[parserUtils] firstNumberFact: section "${sectionName}" first attribute has type "${attr.t}" ` +
+      `(expected int/float) in ${document.path}. Real PVF emits int/float for numeric fact sections; ` +
+      `wrong-type or non-finite value indicates corrupted input.`,
+    );
+  }
   return { value, unit, provenance: fieldProvenance(document, sectionName) };
 }
 
 export function firstStringFact(document: PvfDocument, sectionName: string, unit = "raw-string"): PvfStringFact | null {
   const section = firstSection(document, sectionName);
-  const value = stringValue(section?.attributes[0]);
-  if (!section || value === null) return null;
+  if (!section) return null; // case A (Audit F7)
+  const attr = section.attributes[0];
+  if (attr === undefined) {
+    throw new Error(
+      `[parserUtils] firstStringFact: section "${sectionName}" present but has zero attributes ` +
+      `in ${document.path}. Real PVF emits at least one attribute for string fact sections; ` +
+      `empty attrs indicate corrupted input.`,
+    );
+  }
+  const value = stringValue(attr);
+  if (value === null) {
+    throw new Error(
+      `[parserUtils] firstStringFact: section "${sectionName}" first attribute has type "${attr.t}" ` +
+      `(expected str/link) in ${document.path}. Real PVF emits str/link for string fact sections; ` +
+      `wrong-type indicates corrupted input.`,
+    );
+  }
   return { value, unit, provenance: fieldProvenance(document, sectionName) };
 }
 
@@ -102,8 +166,24 @@ export function vectorFact(document: PvfDocument, sectionName: string, unit: str
       `Real PVF never emits zero-length vec attrs; empty vec indicates corrupted input or stripped data.`,
     );
   }
+  // Audit B3 (contract-symmetry, 2026-05-24): items may be bare numbers (old
+  // PVF dumps / fixtures) OR typed `{t,v}` objects (C++ post-B3-fix). Unwrap
+  // via the shared helper so the downstream contract `values: number[]` stays
+  // stable regardless of input shape.
+  const values: number[] = [];
+  for (let i = 0; i < attr.items.length; i++) {
+    const n = extractLeafNumber(attr.items[i]);
+    if (n === null) {
+      throw new Error(
+        `[parserUtils] vectorFact: section "${sectionName}" item[${i}] is not a number ` +
+        `(got ${JSON.stringify(attr.items[i])}) in ${document.path}. ` +
+        `Real PVF vec items are int/float; mixed-type indicates corrupted input.`,
+      );
+    }
+    values.push(n);
+  }
   return {
-    values: attr.items,
+    values,
     unit,
     provenance: fieldProvenance(document, sectionName),
   };

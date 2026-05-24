@@ -27,6 +27,13 @@ function makeImgDoc(overrides: Partial<ImgBinaryDocument>): ImgBinaryDocument {
     format: "neople-image",
     sizeBytes: 576732,
     headHex: "4e656f706c6520496d6167652046696c65001c0000000000010000000b000000",
+    // Audit ts-parser-truth F1 (2026-05-24): D3 preamble (extractor_version
+    // / extract_timestamp) is now required by ImgParser.buildProvenance —
+    // mirrors the C++ contract-symmetry B1 fix where printBinaryJson always
+    // emits these fields. Fixtures that need to test "missing preamble"
+    // behaviour can override these to undefined explicitly.
+    extractor_version: "v2.0.0",
+    extract_timestamp: "2026-05-23T10:00:00Z",
     ...overrides,
   } as ImgBinaryDocument;
 }
@@ -50,6 +57,9 @@ const throwwebDoc: ImgBinaryDocument = {
   format: "neople-image",
   sizeBytes: 576732,
   headHex: "4e656f706c6520496d6167652046696c65001c0000000000010000000b000000",
+  // D3 preamble required post-B1 (contract-symmetry, 2026-05-24).
+  extractor_version: "v2.0.0",
+  extract_timestamp: "2026-05-23T10:00:00Z",
 };
 
 const throwwebResult = parseImgBinaryDocument(throwwebDoc);
@@ -67,22 +77,37 @@ assert.equal(throwwebResult.headHex.length, 64, "H11-1: headHex is exactly 64 ch
 console.log(`[OK] H11-1: throwweb.img fixture: sizeBytes=${throwwebResult.sizeBytes}, headHex[0..11]=${throwwebResult.headHex.slice(0, 12)}`);
 
 // ---------------------------------------------------------------------------
-// H11-2: Happy path — provenance sentinel fallback when preamble absent
+// H11-2: Missing preamble → throw (was: sentinel fallback)
 //
-// C++ printBinaryJson does NOT emit extractor_version / extract_timestamp /
-// source_pvf_hash (main.cpp:519-541, verified 2026-05-23). Parser must build
-// provenance with fallback sentinel values, NOT throw.
+// Audit ts-parser-truth F1 (2026-05-24): post C++ contract-symmetry B1 fix,
+// printBinaryJson DOES emit D3 preamble (extractor_version /
+// extract_timestamp / source_pvf_hash). The previous silent sentinel
+// fallback was unreachable for fresh PVF dumps and masked future contract
+// regressions. ImgParser.buildProvenance now throws on missing preamble so
+// a stale dnf-extract binary or contract regression surfaces loudly.
 // ---------------------------------------------------------------------------
-assert.equal(throwwebResult.provenance.sourceRef, "pvf:monster/newmonsters/gbl/webcannon/action/throwweb.img",
-  "H11-2: sourceRef built from path");
-assert.ok(throwwebResult.provenance.extractorVersion.includes("unknown"),
-  "H11-2: extractorVersion is sentinel 'unknown-...' when preamble absent");
-assert.ok(throwwebResult.provenance.extractTimestamp.includes("unknown"),
-  "H11-2: extractTimestamp is sentinel 'unknown' when preamble absent");
-assert.equal(throwwebResult.provenance.sourcePvfHash, undefined,
-  "H11-2: sourcePvfHash is undefined when absent");
-
-console.log("[OK] H11-2: provenance sentinel fallback — no throw when preamble absent");
+{
+  const noPreambleDoc: ImgBinaryDocument = {
+    path: "monster/newmonsters/gbl/webcannon/action/throwweb.img",
+    type: "binary",
+    format: "neople-image",
+    sizeBytes: 576732,
+    headHex: "4e656f706c6520496d6167652046696c65001c0000000000010000000b000000",
+    // extractor_version / extract_timestamp deliberately omitted.
+  };
+  let threw = false;
+  let msg = "";
+  try {
+    parseImgBinaryDocument(noPreambleDoc);
+  } catch (e) {
+    threw = true;
+    msg = e instanceof Error ? e.message : String(e);
+  }
+  assert.ok(threw, "H11-2: missing preamble throws");
+  assert.ok(msg.includes("extractor_version") || msg.includes("preamble"),
+    `H11-2: throw message mentions preamble (got "${msg}")`);
+  console.log("[OK] H11-2: missing D3 preamble → throw (contract-symmetry B1 enforced)");
+}
 
 // ---------------------------------------------------------------------------
 // H11-3: Happy path — provenance from explicit fields when present
@@ -128,6 +153,8 @@ const withDataDoc: ImgBinaryDocument = {
   sizeBytes: 576732,
   headHex: "4e656f706c6520496d6167652046696c65001c0000000000010000000b000000",
   contentBase64: "TmVvcGxlIEltYWdlIEZpbGUA",  // Simulated: "Neople Image File\0"
+  extractor_version: "v2.0.0",
+  extract_timestamp: "2026-05-23T10:00:00Z",
 };
 
 const withDataResult = parseImgBinaryDocument(withDataDoc);
@@ -151,6 +178,8 @@ const emptyBase64Doc: ImgBinaryDocument = {
   sizeBytes: 0,
   headHex: "00",  // 1 byte = 2 hex chars (short file edge case)
   contentBase64: "",
+  extractor_version: "v2.0.0",
+  extract_timestamp: "2026-05-23T10:00:00Z",
 };
 
 const emptyBase64Result = parseImgBinaryDocument(emptyBase64Doc);
@@ -293,6 +322,8 @@ const nonImgBinaryDoc: ImgBinaryDocument = {
   format: "pe-executable",
   sizeBytes: 1024,
   headHex: "4d5a9000",  // MZ header
+  extractor_version: "v2.0.0",
+  extract_timestamp: "2026-05-23T10:00:00Z",
 };
 
 const nonImgResult = parseImgBinaryDocument(nonImgBinaryDoc);

@@ -160,7 +160,7 @@ const DAYS = [
         check: () => grepInFile("tools/dnf-porting-src/main.cpp", '\\"t\\":\\"vec\\"') },
       { id: "d3-provenance-extractor-version", desc: "D3: extractor_version in output preamble",
         check: () => grepInFile("tools/dnf-porting-src/main.cpp", "extractor_version") },
-      { id: "d3-provenance-symmetry", desc: "D3: provenance symmetric across Document/Animation/Text (Binary deferred)",
+      { id: "d3-provenance-symmetry", desc: "D3: provenance symmetric across Document/Animation/Text/Binary",
         check: () => {
           const txt = readFileSync(join(ROOT, "tools/dnf-porting-src/main.cpp"), "utf-8");
           // Each print function should contain `extractor_version` somewhere in its body.
@@ -185,8 +185,8 @@ const DAYS = [
           const inText = functionBodyContains("printTextJson", "extractor_version");
           const inBinary = functionBodyContains("printBinaryJson", "extractor_version");
           return {
-            passed: inDoc && inAni && inText,
-            evidence: `Document:${inDoc} Animation:${inAni} Text:${inText} Binary:${inBinary} (binary deferred)`,
+            passed: inDoc && inAni && inText && inBinary,
+            evidence: `Document:${inDoc} Animation:${inAni} Text:${inText} Binary:${inBinary}`,
           };
         }},
     ],
