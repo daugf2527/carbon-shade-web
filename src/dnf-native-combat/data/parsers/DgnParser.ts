@@ -3,6 +3,7 @@ import type { PvfAttribute, PvfDocument, PvfRef } from "../types/PvfDocument.js"
 import type { PvfStringFact } from "../types/Provenance.js";
 import {
   documentProvenance,
+  extractLeafNumber,
   firstSection,
   firstNumberFact,
   firstStringFact,
@@ -184,14 +185,18 @@ function parseMapSpecification(
     const parsedRow: number[] = [];
     for (let colIdx = 0; colIdx < row.length; colIdx++) {
       const cell = row[colIdx];
-      if (typeof cell !== "number" || !Number.isFinite(cell)) {
+      // Audit B3 (contract-symmetry, 2026-05-24): mat cells may be bare
+      // number OR typed `{t:"int"|"float",v:number}`. extractLeafNumber
+      // accepts both shapes; throws on genuine corruption.
+      const n = extractLeafNumber(cell);
+      if (n === null) {
         throw new Error(
           `[DgnParser] parseMapSpecification: mat items[${rowIdx}][${colIdx}] is not a finite number ` +
           `(got ${JSON.stringify(cell)}) in ${document.path}. ` +
-          `"map specification" mat uses item_type="int"; non-numeric cell indicates corrupted input.`,
+          `"map specification" mat uses item_type="int"; expected bare number or typed {t:"int"|"float",v:number}.`,
         );
       }
-      parsedRow.push(cell);
+      parsedRow.push(n);
     }
     parsedItems.push(parsedRow);
   }

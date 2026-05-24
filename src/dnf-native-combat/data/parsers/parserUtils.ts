@@ -89,6 +89,17 @@ export function extractLeafNumber(item: unknown): number | null {
   return null;
 }
 
+export function extractLeafString(item: unknown): string | null {
+  if (typeof item === "string") return item;
+  if (item !== null && typeof item === "object") {
+    const obj = item as { t?: unknown; v?: unknown };
+    if ((obj.t === "str" || obj.t === "link") && typeof obj.v === "string") {
+      return obj.v;
+    }
+  }
+  return null;
+}
+
 // Audit F7 (ts-parser-truth, 2026-05-24): firstNumberFact / firstStringFact
 // previously conflated two distinct cases by returning null in both:
 //   A) section absent → legitimate "not found" (null is the correct signal)

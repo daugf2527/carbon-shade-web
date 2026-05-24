@@ -14,6 +14,7 @@ import {
   vectorFact,
   asTier3,
   extractLeafNumber,
+  extractLeafString,
 } from "./parserUtils.js";
 
 const MOTION_SECTION_NAMES = [
@@ -200,10 +201,12 @@ function parseWeaponWav(document: PvfDocument): Array<ChrWeaponWavRow | null> {
     // Matrix form (thief): 1 mat attr containing 6 rows × 2 cols (swing/hit per slot).
     if (attrs.length === 1 && attrs[0].t === "mat") {
       const matAttr = attrs[0] as PvfMatrixAttribute;
-      // Audit F4 (ts-parser-truth, 2026-05-24): previously coerced non-string
-      // matrix cells to "" silently. Real PVF "weapon wav" matrix (thief)
-      // emits pure-str cells across all observed rows; any non-string indicates
-      // corrupted input that should fail loudly.
+      // Audit B3 (contract-symmetry, 2026-05-24): mat cells may be bare
+      // primitive (`"r_dagger"`) OR typed object (`{t:"str",v:"r_dagger"}`).
+      // C++ printLeafValue now always emits typed shape; older dumps and
+      // test fixtures may still carry bare primitives. extractLeafString
+      // accepts both shapes. Loud throw retained when cell is neither
+      // (genuine corruption — wrong type, NaN, missing).
       const entries = matAttr.items.map((row, rowIdx) => {
         if (!Array.isArray(row)) {
           throw new Error(
@@ -211,19 +214,21 @@ function parseWeaponWav(document: PvfDocument): Array<ChrWeaponWavRow | null> {
             `Real PVF weapon wav matrix rows are uniformly [swing, hit] arrays.`,
           );
         }
-        if (typeof row[0] !== "string") {
+        const swing = extractLeafString(row[0]);
+        if (swing === null) {
           throw new Error(
             `[ChrParser] parseWeaponWav: matrix row ${rowIdx} col 0 (swing) is ${JSON.stringify(row[0])} ` +
-            `(expected string) in ${document.path}. Real PVF emits pure-str matrix cells.`,
+            `(expected bare string or typed {t:"str"|"link",v:string}) in ${document.path}.`,
           );
         }
-        if (typeof row[1] !== "string") {
+        const hit = extractLeafString(row[1]);
+        if (hit === null) {
           throw new Error(
             `[ChrParser] parseWeaponWav: matrix row ${rowIdx} col 1 (hit) is ${JSON.stringify(row[1])} ` +
-            `(expected string) in ${document.path}. Real PVF emits pure-str matrix cells.`,
+            `(expected bare string or typed {t:"str"|"link",v:string}) in ${document.path}.`,
           );
         }
-        return { swing: row[0], hit: row[1] };
+        return { swing, hit };
       });
       return { format: "matrix", entries };
     }
