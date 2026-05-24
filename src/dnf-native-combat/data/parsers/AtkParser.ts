@@ -96,12 +96,15 @@ function parseHitReaction(document: PvfDocument): AtkHitReaction {
   if (hasSection(document, "hit down")) matches.push("hit_down");
   if (hasSection(document, "hit lift up")) matches.push("hit_lift_up");
   if (hasSection(document, "hit horizon")) matches.push("hit_horizon");
-  if (matches.length > 1) {
-    throw new Error(
-      `[AtkParser] parseHitReaction: mutually-exclusive hit reactions coexist in ${document.path}: ` +
-      `${matches.join(", ")}. Real PVF emits at most one (0/382 .atk files across 6 jobs have multi); ` +
-      `coexistence indicates corrupted or malformed PVF input.`,
-    );
-  }
+  // Audit (initial): hard-throw on multi based on 0/382 .atk files in the
+  // sample set. PVE-full baseline (2026-05-24, 614 .atk files across 11
+  // jobs incl. atfighter atattackinfo/) found 3 real multi-reaction files
+  // (lightningdance.atk, groundkick.atk, jumpsuplexlariat.atk — all
+  // atfighter). Multi is real game data, not corruption: female fighter
+  // grab moves combine vertical + horizontal reactions. AtkHitReaction
+  // remains a single enum until a consumer needs the second reaction;
+  // when multi, take the first in file order. Stage 2 implementations
+  // that depend on full reaction semantics should expand AtkHitReaction
+  // to AtkHitReaction[] and update the validator schema accordingly.
   return matches[0] ?? "none";
 }

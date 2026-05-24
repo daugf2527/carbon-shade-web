@@ -67,11 +67,21 @@ function hasSection(document: PvfDocument, sectionName: string): boolean {
   return firstSection(document, sectionName) !== null;
 }
 
-// Detect cancel-skill by presence of `static data` section (zero-attribute
-// sentinel emitted by dnf-extract for cancel* .skl files).
-// Tier-1 PVF truth: verified on cancelupperslash.skl sample 2026-05-23.
+// Detect cancel-skill by path convention. All 192 cancel skill files in
+// the real PVF have basenames starting with "cancel" (verified against
+// the full PVF list 2026-05-24). No non-cancel skill basename starts
+// with "cancel". Section-based detection (`static data` presence) was
+// the original heuristic but false-positives on passive skills like
+// elementtoleranceallupex.skl which also carry the `static data`
+// sentinel — PVE-full baseline exposed 275 such mis-detections.
+//
+// Test fixture compatibility: H6-P4 invariant probes use path
+// "skill/<job>/cancel.skl" — basename "cancel.skl" passes the startsWith
+// check, so the missing-required-field invariants still surface.
 function detectCancelSkill(document: PvfDocument): boolean {
-  return hasSection(document, "static data");
+  const slash = document.path.lastIndexOf("/");
+  const basename = slash < 0 ? document.path : document.path.slice(slash + 1);
+  return basename.toLowerCase().startsWith("cancel");
 }
 
 function parseSkillType(document: PvfDocument): SklSkillType {

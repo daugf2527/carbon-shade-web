@@ -346,34 +346,37 @@ probe("P7.numberValue.Infinity", () => {
 // when multiple competing sections coexist (extractor bug or malformed PVF).
 // ---------------------------------------------------------------------------
 probe("P8.atk.hitReactionPriority", () => {
-  // After P2-a fix: parseHitReaction now throws when multiple sections coexist.
-  // Real PVF data: 0/382 .atk files across 6 jobs have multi hit_reaction
-  // (verified 2026-05-22 via full-PVF scan). Silent-pick was dead code.
+  // PVE-full baseline (2026-05-24) reversed the 0/382 invariant. Three
+  // atfighter atattackinfo/ files (lightningdance/groundkick/jumpsuplexlariat)
+  // genuinely carry multiple hit reaction sections (grab moves combining
+  // vertical + horizontal). parseHitReaction now returns the first match
+  // in file order rather than throwing — Stage 2 consumers that need full
+  // reaction semantics can expand AtkHitReaction to an array.
   const doc = makeDoc("character/x/attackinfo/test.atk", [
     { name: "hit down", attributes: [] },
     { name: "hit lift up", attributes: [] },
     { name: "hit horizon", attributes: [] },
   ]);
   try {
-    parseAtkDocument(doc);
-    return {
-      id: "P8.atk.hitReactionPriority",
-      status: "BUG",
-      detail: "expected throw on multi hit_reaction, got success",
-    };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    if (!/mutually-exclusive/.test(msg)) {
+    const atk = parseAtkDocument(doc);
+    if (atk.hitReaction !== "hit_down") {
       return {
         id: "P8.atk.hitReactionPriority",
         status: "BUG",
-        detail: `threw but wrong message: ${msg}`,
+        detail: `multi hit_reaction should return first ("hit_down" per file order), got "${atk.hitReaction}"`,
       };
     }
     return {
       id: "P8.atk.hitReactionPriority",
       status: "OK",
-      detail: "multi hit_reaction now throws; silent-pick removed (0/382 .atk in real PVF)",
+      detail: 'multi hit_reaction returns first match ("hit_down"); 3/614 real PVE files have multi',
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return {
+      id: "P8.atk.hitReactionPriority",
+      status: "BUG",
+      detail: `unexpected throw: ${msg}`,
     };
   }
 });
