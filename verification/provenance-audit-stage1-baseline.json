@@ -1,0 +1,526 @@
+{
+  "meta": {
+    "runId": "stage1-baseline",
+    "startedAt": "2026-05-24T14:02:08.396Z",
+    "finishedAt": "2026-05-24T14:02:12.148Z",
+    "pvfHash": "crc32-head:c0779278|size:205695984",
+    "extractorVersion": "v2.0.0"
+  },
+  "summary": {
+    "tier3Count": 85,
+    "filesWithTier3": 15,
+    "requiresManualVerificationCount": 85
+  },
+  "tier3Fields": [
+    {
+      "pvfPath": "character/swordman/swordman.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/swordman.chr",
+      "field": "jump speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/swordman.chr",
+      "field": "move speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/swordman.chr",
+      "field": "attack speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/swordman.chr",
+      "field": "cast speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/swordman.chr",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/swordman.chr",
+      "field": "hit recovery",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/demonicswordman.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/demonicswordman.chr",
+      "field": "jump speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/demonicswordman.chr",
+      "field": "move speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/demonicswordman.chr",
+      "field": "attack speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/demonicswordman.chr",
+      "field": "cast speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/demonicswordman.chr",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/demonicswordman.chr",
+      "field": "hit recovery",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/gunner.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/gunner.chr",
+      "field": "jump speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/gunner.chr",
+      "field": "move speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/gunner.chr",
+      "field": "attack speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/gunner.chr",
+      "field": "cast speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/gunner.chr",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/gunner.chr",
+      "field": "hit recovery",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/atgunner.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/atgunner.chr",
+      "field": "jump speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/atgunner.chr",
+      "field": "move speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/atgunner.chr",
+      "field": "attack speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/atgunner.chr",
+      "field": "cast speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/atgunner.chr",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/atgunner.chr",
+      "field": "hit recovery",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/priest/priest.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/priest/priest.chr",
+      "field": "jump speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/priest/priest.chr",
+      "field": "move speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/priest/priest.chr",
+      "field": "attack speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/priest/priest.chr",
+      "field": "cast speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/priest/priest.chr",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/priest/priest.chr",
+      "field": "hit recovery",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/fighter.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/fighter.chr",
+      "field": "jump speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/fighter.chr",
+      "field": "move speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/fighter.chr",
+      "field": "attack speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/fighter.chr",
+      "field": "cast speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/fighter.chr",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/fighter.chr",
+      "field": "hit recovery",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/atfighter.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/atfighter.chr",
+      "field": "jump speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/atfighter.chr",
+      "field": "move speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/atfighter.chr",
+      "field": "attack speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/atfighter.chr",
+      "field": "cast speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/atfighter.chr",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/atfighter.chr",
+      "field": "hit recovery",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/mage.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/mage.chr",
+      "field": "jump speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/mage.chr",
+      "field": "move speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/mage.chr",
+      "field": "attack speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/mage.chr",
+      "field": "cast speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/mage.chr",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/mage.chr",
+      "field": "hit recovery",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/atmage.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/atmage.chr",
+      "field": "jump speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/atmage.chr",
+      "field": "move speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/atmage.chr",
+      "field": "attack speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/atmage.chr",
+      "field": "cast speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/atmage.chr",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/atmage.chr",
+      "field": "hit recovery",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/creatormage.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/creatormage.chr",
+      "field": "jump speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/creatormage.chr",
+      "field": "move speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/creatormage.chr",
+      "field": "attack speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/creatormage.chr",
+      "field": "cast speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/creatormage.chr",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/creatormage.chr",
+      "field": "hit recovery",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/thief/thief.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/thief/thief.chr",
+      "field": "jump speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/thief/thief.chr",
+      "field": "move speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/thief/thief.chr",
+      "field": "attack speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/thief/thief.chr",
+      "field": "cast speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/thief/thief.chr",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/thief/thief.chr",
+      "field": "hit recovery",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/attack1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/attack1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/attack3.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/attack3.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/dashattack.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/dashattack.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "monster/goblin/goblin.mob",
+      "field": "warlike",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "monster/goblin/goblin.mob",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    }
+  ]
+}

@@ -1,7 +1,12 @@
 node_modules/
 dist/
 .tmp/
-verification/
+verification/*
+!verification/baseline-shards/
+!verification/baseline-shards/**
+!verification/dist-manifest-stage1-baseline.json
+!verification/extraction-report-stage1-baseline.json
+!verification/provenance-audit-stage1-baseline.json
 playwright-report/
 test-results/
 
