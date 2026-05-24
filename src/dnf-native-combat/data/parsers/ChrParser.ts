@@ -101,7 +101,12 @@ export function parseChrDocument(document: PvfDocument): ChrDef {
     upgradeWeaponAttackPowerRate: sectionNumbers(document, "upgrade weapon attack power rate"),
     attackInfo: {
       attackBase: refAttributes(firstSection(document, "attack info")),
-      etc: refAttributes(firstSection(document, "etc attack info")),
+      // "etc attack info" and "etc motion" are mixed ref + non-ref across
+      // gunner/priest/fighter/thief real PVF data (verified 2026-05-24 via
+      // stage1-baseline). swordman alone has pure-ref but the broader set
+      // doesn't — allow mixed to preserve refs while non-ref content stays
+      // intact in document.sections (deep-cloned into chr.sections).
+      etc: refAttributes(firstSection(document, "etc attack info"), { allowMixed: true }),
       jumpAttack: refAttributes(firstSection(document, "jumpattack info"))[0] ?? null,
       dashAttack: refAttributes(firstSection(document, "dashattack info"))[0] ?? null,
     },
@@ -199,7 +204,10 @@ function parseWeaponWav(document: PvfDocument): Array<ChrWeaponWavRow | null> {
 function parseMotionRefs(document: PvfDocument): Record<string, PvfRef[]> {
   const refs: Record<string, PvfRef[]> = {};
   for (const sectionName of MOTION_SECTION_NAMES) {
-    const sectionRefs = refAttributes(firstSection(document, sectionName));
+    // Similar to attackInfo.etc — "etc motion" carries mixed content in
+    // priest/thief real PVF (114 ref + 8 non-ref / 119 ref + 1 non-ref).
+    // Allow mixed; non-ref preserved in document.sections.
+    const sectionRefs = refAttributes(firstSection(document, sectionName), { allowMixed: true });
     if (sectionRefs.length > 0) refs[sectionName] = sectionRefs;
   }
   return refs;

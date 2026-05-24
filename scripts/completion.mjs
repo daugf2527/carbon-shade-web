@@ -344,6 +344,26 @@ const DAYS = [
           const entries = readdirSync(dir);
           return { passed: entries.length > 0, evidence: `${entries.length} entries in verification/` };
         }},
+      { id: "stage1-baseline-script", desc: "scripts/stage1-baseline.mjs generates 3 baseline reports",
+        check: () => {
+          const scriptPath = "scripts/stage1-baseline.mjs";
+          if (!exists(scriptPath)) return { passed: false, evidence: "stage1-baseline.mjs missing" };
+          const txt = readFileSync(join(ROOT, scriptPath), "utf-8");
+          const markers = [
+            "extraction-report-stage1-baseline.json",
+            "provenance-audit-stage1-baseline.json",
+            "dist-manifest-stage1-baseline.json",
+          ];
+          const missing = markers.filter(m => !txt.includes(m));
+          return missing.length === 0
+            ? { passed: true, evidence: "all 3 baseline report filenames referenced" }
+            : { passed: false, evidence: `missing: ${missing.join(", ")}` };
+        }},
+      { id: "analyze-tooling-present", desc: "scripts/analyze.mjs exists (8-gate static analysis)",
+        check: () => ({
+          passed: exists("scripts/analyze.mjs"),
+          evidence: exists("scripts/analyze.mjs") ? "exists" : "missing",
+        }) },
       { id: "stage1-changelog", desc: "docs/changelog has stage1 entry",
         check: () => grepInDir("docs/changelog", "stage1") },
     ],
