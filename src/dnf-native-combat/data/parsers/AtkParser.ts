@@ -1,6 +1,7 @@
 import type { AtkAttackKind, AtkDef, AtkElement, AtkHitReaction } from "../types/AtkDef.js";
 import type { PvfDocument } from "../types/PvfDocument.js";
 import {
+  asTier3,
   documentProvenance,
   firstNumberFact,
   firstSection,
@@ -17,8 +18,13 @@ export function parseAtkDocument(document: PvfDocument): AtkDef {
     path: document.path,
     provenance: documentProvenance(document),
     sections: structuredClone(document.sections),
-    liftUp: firstNumberFact(document, "lift up", "px/s"),
-    pushAside: firstNumberFact(document, "push aside", "px/s"),
+    // D1 expansion (2026-05-24): launch / pushback / knockback are encoded
+    // in PVF as raw integers but the engine's velocity / distance mapping
+    // (launch curves, gravity application, hitstun timing) is hardcoded
+    // inside DNF.exe C++ binary per CRT-002. PVF alone cannot resolve
+    // unit semantics; mark Tier-3 until runtime-side verification.
+    liftUp: asTier3(firstNumberFact(document, "lift up", "px/s")),
+    pushAside: asTier3(firstNumberFact(document, "push aside", "px/s")),
     damageBonus: firstNumberFact(document, "damage bonus", "%"),
     attackEnemy: hasSection(document, "attack enemy"),
     attackFriend: hasSection(document, "attack friend"),
@@ -33,7 +39,7 @@ export function parseAtkDocument(document: PvfDocument): AtkDef {
     pvpOnly: hasPvpSection(document),
     ignoreWeight: hasSection(document, "ignore weight"),
     hitWav: firstStringFact(document, "hit wav", "sound-id"),
-    knuckBack: firstNumberFact(document, "knuck back", "raw"),
+    knuckBack: asTier3(firstNumberFact(document, "knuck back", "raw")),
     raw: Object.freeze(document),
   };
 }

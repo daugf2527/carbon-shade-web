@@ -75,9 +75,14 @@ export function parseChrDocument(document: PvfDocument): ChrDef {
     // surfaces all four in the Tier-3 audit subreport.
     jumpPower: requireValue(asTier3(firstNumberFact(document, "jump power", "ambiguous")), "jump power", document.path),
     jumpSpeed: requireValue(asTier3(firstNumberFact(document, "jump speed", "int")), "jump speed", document.path),
-    moveSpeed: firstNumberFact(document, "move speed", "%xSPEED_VALUE_DEFAULT"),
-    attackSpeed: firstNumberFact(document, "attack speed", "%xSPEED_VALUE_DEFAULT"),
-    castSpeed: firstNumberFact(document, "cast speed", "%xSPEED_VALUE_DEFAULT"),
+    // D1 expansion (2026-05-24): %xSPEED_VALUE_DEFAULT is a known unit string
+    // but the runtime multiplier semantics (per-frame? per-tick?) and the
+    // SPEED_VALUE_DEFAULT=1000 base divisor's interaction with character
+    // facing / animation rate is undocumented in PVF. Mark Tier-3 until
+    // runtime-side verification.
+    moveSpeed: asTier3(firstNumberFact(document, "move speed", "%xSPEED_VALUE_DEFAULT")),
+    attackSpeed: asTier3(firstNumberFact(document, "attack speed", "%xSPEED_VALUE_DEFAULT")),
+    castSpeed: asTier3(firstNumberFact(document, "cast speed", "%xSPEED_VALUE_DEFAULT")),
     weight: requireValue(asTier3(firstNumberFact(document, "weight", "audio-only")), "weight", document.path),
     lightResistance: firstNumberFact(document, "light resistance", "%"),
     darkResistance: firstNumberFact(document, "dark resistance", "%"),

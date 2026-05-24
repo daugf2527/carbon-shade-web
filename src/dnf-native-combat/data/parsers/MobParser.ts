@@ -1,6 +1,7 @@
 import type { MobDef } from "../types/MobDef.js";
 import type { PvfDocument, PvfEnumAttribute, PvfRef } from "../types/PvfDocument.js";
 import {
+  asTier3,
   documentProvenance,
   firstNumberFact,
   firstSection,
@@ -22,9 +23,14 @@ export function parseMobDocument(document: PvfDocument): MobDef {
     provenance: documentProvenance(document),
     sections: structuredClone(document.sections),
     name: firstStringFact(document, "name"),
-    warlike: firstNumberFact(document, "warlike", "raw"),
+    // D1 expansion (2026-05-24): warlike is the AI aggressiveness param —
+    // PVF emits an integer but the engine's threshold curves (when does the
+    // mob change FSM state? what range does it sample?) live inside DNF.exe.
+    // weight is the audio-only param shared with chr.weight (unit "raw").
+    // Both are Tier-3 pending runtime verification.
+    warlike: asTier3(firstNumberFact(document, "warlike", "raw")),
     sight: firstNumberFact(document, "sight", "px"),
-    weight: firstNumberFact(document, "weight", "raw"),
+    weight: asTier3(firstNumberFact(document, "weight", "raw")),
     hpMax: vectorFact(document, "hp max", "hp"),
     attackInfo: refAttributes(firstSection(document, "attack info"), { allowMixed: true }),
     animationRefs: collectAnimationRefs(document),

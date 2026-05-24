@@ -208,6 +208,81 @@ function logOk(item: string, observed: string) {
 }
 
 // ===========================================================================
+// PROBE 3 EXTEND — D1 expanded Tier-3 marks (2026-05-24, day11-17-ai-decisions-audit)
+// Original D1 only marked 4 ChrParser fields (jumpPower/jumpSpeed/weight/hitRecovery).
+// User directive (D1 答 "扩扫加标"): scan ChrParser + AtkParser + MobParser for
+// other unit-ambiguous fields and add asTier3 marks. New fields:
+//   ChrParser: moveSpeed, attackSpeed, castSpeed
+//     (unit "%xSPEED_VALUE_DEFAULT" — runtime multiplier semantics unverified)
+//   AtkParser: liftUp, pushAside, knuckBack
+//     (unit "px/s" / "raw" — launch curves hardcoded in DNF.exe per CRT-002,
+//      PVF emits the raw integer but the engine's velocity / distance mapping
+//      is opaque from PVF alone)
+//   MobParser: warlike, weight
+//     (unit "raw" — AI aggressiveness param + audio-only param, semantics unverified)
+// ===========================================================================
+{
+  // ChrParser — 3 new fields
+  const chrDoc = makeDoc("character/swordman/swordman.chr", [
+    section("job", [{ t: "str", v: "[swordman]" }]),
+    section("move speed", [{ t: "int", v: 1000 }]),
+    section("attack speed", [{ t: "int", v: 1000 }]),
+    section("cast speed", [{ t: "int", v: 1000 }]),
+    section("jump power", [{ t: "int", v: 690 }]),
+    section("jump speed", [{ t: "int", v: 1 }]),
+    section("weight", [{ t: "int", v: 55000 }]),
+    section("hp max", [{ t: "vec", length: 1, items: [100] }]),
+    section("physical attack", [{ t: "vec", length: 1, items: [10] }]),
+  ]);
+  const chrExt = parseChrDocument(chrDoc);
+  assert.equal((chrExt.moveSpeed as { sourceType?: string } | null)?.sourceType, "tier3",
+    "PROBE 3 EXTEND: chr.moveSpeed marked tier3");
+  assert.equal((chrExt.attackSpeed as { sourceType?: string } | null)?.sourceType, "tier3",
+    "PROBE 3 EXTEND: chr.attackSpeed marked tier3");
+  assert.equal((chrExt.castSpeed as { sourceType?: string } | null)?.sourceType, "tier3",
+    "PROBE 3 EXTEND: chr.castSpeed marked tier3");
+  logOk(
+    "D1 ChrParser tier3 expansion",
+    "moveSpeed / attackSpeed / castSpeed now carry sourceType:'tier3' + requiresManualVerification:true.",
+  );
+
+  // AtkParser — 3 new fields
+  const atkDoc = makeDoc("character/swordman/attackinfo/attack1.atk", [
+    section("lift up", [{ t: "int", v: 500 }]),
+    section("push aside", [{ t: "int", v: 300 }]),
+    section("knuck back", [{ t: "int", v: 100 }]),
+    section("physic", []),
+  ]);
+  const atk = parseAtkDocument(atkDoc);
+  assert.equal((atk.liftUp as { sourceType?: string } | null)?.sourceType, "tier3",
+    "PROBE 3 EXTEND: atk.liftUp marked tier3");
+  assert.equal((atk.pushAside as { sourceType?: string } | null)?.sourceType, "tier3",
+    "PROBE 3 EXTEND: atk.pushAside marked tier3");
+  assert.equal((atk.knuckBack as { sourceType?: string } | null)?.sourceType, "tier3",
+    "PROBE 3 EXTEND: atk.knuckBack marked tier3");
+  logOk(
+    "D1 AtkParser tier3 expansion",
+    "liftUp / pushAside / knuckBack now carry sourceType:'tier3' + requiresManualVerification:true.",
+  );
+
+  // MobParser — 2 new fields
+  const mobDoc = makeDoc("monster/goblin/goblin.mob", [
+    section("warlike", [{ t: "int", v: 5 }]),
+    section("weight", [{ t: "int", v: 20000 }]),
+    section("hp max", [{ t: "vec", length: 1, items: [200] }]),
+  ]);
+  const mob = parseMobDocument(mobDoc);
+  assert.equal((mob.warlike as { sourceType?: string } | null)?.sourceType, "tier3",
+    "PROBE 3 EXTEND: mob.warlike marked tier3");
+  assert.equal((mob.weight as { sourceType?: string } | null)?.sourceType, "tier3",
+    "PROBE 3 EXTEND: mob.weight marked tier3");
+  logOk(
+    "D1 MobParser tier3 expansion",
+    "warlike / weight now carry sourceType:'tier3' + requiresManualVerification:true.",
+  );
+}
+
+// ===========================================================================
 // PROBE 4 — ProvenanceMap vs ExtractedDocumentProvenance
 // Design §4.2 mentions ProvenanceMap (per-field). Code only has document-level
 // ExtractedDocumentProvenance. So ChrDef.provenance is one object, not a map.
