@@ -5,10 +5,12 @@
 > 处理责任：进入 Stage 2 第一个 system 实施前的 prep work。
 >
 > 入档原因：用户选择 sign-off Stage 1，把 P0 进 backlog 不阻断 Stage 2 brainstorm。
+>
+> **2026-05-24 22:00 状态更新**：所有 P0、P1-1、P1-3、P2-1 均已 RESOLVED（commit `2539b9c` + 后续修复）；新发现 typed-cell 适配漏洞 B1/B2 已修，B3 经实测撤回（无 bug）。新增 `tests/static/dnf-native-typed-cell-regression.test.ts` 守 ChrParser matrix + DgnParser mat 接 typed cell（3/3 passed）。Baseline 重跑通过：11 个独立 player shard、0 dup paths、0 parse/validation errors。剩余 open：P1-2 / P2-2 / P2-3。
 
 ## P0 — 阻塞 Stage 2 实施
 
-### P0-1: RuntimeExporter `players/<job>.json` path 冲突
+### P0-1: RuntimeExporter `players/<job>.json` path 冲突 ✅ RESOLVED (commit `2539b9c`)
 
 **位置**: `src/dnf-native-combat/data/exporter/RuntimeExporter.ts:481-486` `chrJob()`
 
@@ -27,13 +29,11 @@ baseline manifest 实际 collision 路径：
 
 5/11 个 sub-class chr 数据被覆盖丢失。
 
-**两个修法**（开工前需确定）：
-- **A**：同一职业一个 shard，内嵌 `subclasses: { demonicswordman: {...}, atswordman: {...} }`。优点：consumer 按职业组织，符合 DNF 内部职业-次职业的层级；缺点：shard 体积膨胀，atmage / creatormage 有较大 stat 差异，结构会复杂
-- **B**：11 chr → 11 shard，文件名用 chr basename stem（`players/demonicswordman.json` / `players/atswordman.json` / ...）。优点：扁平、直接；缺点：consumer 需要知道职业-次职业的归属表
+**采用修法 B**（扁平命名）：`chrJob()` 拆为 `chrShardKey()` (取 basename → 11 独立 shard) + `chrParentJob()` (取父目录 → 共享子资源前缀)。`PlayerRuntimeShape` 加 `parentJob` 字段，consumer 仍能恢复 resource-sharing key。`H15-11` regression test 守住 invariant：同父目录多 chr 写独立 shard + manifest 无 dup paths。
 
-**Stage 2 影响**: PlayerRuntimeShape 加载 swordman.json 不知道是 swordman 主类还是 demonicswordman 次职业，**数据不可逆地丢失**。
+**Verified (2026-05-24 22:00)**: baseline 重跑后 11 个独立 player shard 全归档，0 dup paths，每个 shard 真实大小不一（atmage 184KB / creatormage 102KB / swordman 275KB），证实 sub-class 数据未丢失。
 
-### P0-2: manifest.files dup entries
+### P0-2: manifest.files dup entries ✅ RESOLVED (commit `2539b9c`)
 
 **位置**: `src/dnf-native-combat/data/exporter/RuntimeExporter.ts`，整个 `exportRuntimeShards` 流程
 
@@ -50,11 +50,11 @@ baseline manifest 实际 collision 路径：
 
 **Stage 2 影响**: consumer 加载 manifest 不知道哪条 sha256 是当前正确的。
 
-**修法**: 与 P0-1 一并修（消除 path collision 后自然消除 dup entries），或在 manifest 输出前加 dedupe (last-write-wins by path)。
+**修法**: 与 P0-1 一并修（消除 path collision 后自然消除 dup entries）。已 verified：`dist-manifest-stage1-baseline.json` 现 15 entries 全 unique。
 
-### P0-3 (软): dist/data/ 实物不在工作树
+### P0-3 (软): dist/data/ 实物不在工作树 ✅ RESOLVED (commit `2539b9c` + .gitignore whitelist)
 
-**位置**: `.gitignore` 整体忽略 `dist/`
+**位置**: `.gitignore` 整体忽略 `dist/` / `verification/`
 
 **症状**: `dist/data/` 目录在当前工作树不存在。只有 `verification/dist-manifest-stage1-baseline.json` 是 manifest 副本。reviewer 无法直接 sample shard 内容（如 swordman.json 的 sourceProvenance / Tier-3 标记结构）。
 
@@ -65,19 +65,49 @@ DNF_PVF_PATH=/path/to/Script.pvf node scripts/stage1-baseline.mjs
 
 **Stage 2 影响**: 不直接阻塞代码，但 Stage 2 brainstorm 时讨论 consumer surface 字段没法对照实物。
 
-**修法**: 把 baseline shards 也 copy 到 `verification/baseline-shards/` 与 manifest 一起，或在 changelog 加 "复现命令" 链接。
+**修法**: `stage1-baseline.mjs` 把 `dist/data/*` copy 到 `verification/baseline-shards/`（commit `2539b9c`），`.gitignore` 用 `verification/*` 通配 + 白名单让 `verification/baseline-shards/**` 进 git。reviewer 现在可直接读 11 个 player shard 实物。
+
+## 新发现 — typed-cell 适配漏洞 (audit F4 ↔ B3 冲突)
+
+> 2026-05-24 22:00 验证 baseline 重跑时实测发现。根因：commit `bcaf91e` 的 audit F4 把 `?? ""` silent coerce 改成 hard throw，但同期 audit B3 把 C++ `printLeafValue` 改成 always-typed `{t,v}` 后，F4 设的 invariant "Real PVF emits pure-str cells" 已不成立。同类 hard throw 漏适配。
+
+### B1: ChrParser.parseWeaponWav typed cell ✅ RESOLVED (今日)
+
+**位置**: `src/dnf-native-combat/data/parsers/ChrParser.ts:214/220`
+
+**症状**: `typeof row[0] !== "string"` 拒了 typed cell `{t:"str",v:"r_dagger"}`。实测 thief.chr 真 PVF mat cell 即此格式 → baseline 重跑挂在 thief.chr，整个 EXPORT 跳过。
+
+**修法**: 新增 `parserUtils.extractLeafString` (镜像 `extractLeafNumber`)，接 bare 与 typed 双格式。matrix 分支改用 helper。
+
+### B2: DgnParser.parseMapSpecification typed cell ✅ RESOLVED (今日)
+
+**位置**: `src/dnf-native-combat/data/parsers/DgnParser.ts:187`
+
+**症状**: `typeof cell !== "number"` 拒了 typed cell `{t:"int",v:1}`。实测 jungle.dgn 真 PVF mat cell 即此格式 → 同样阻塞 baseline。
+
+**修法**: 改用已存在的 `extractLeafNumber` (它已支持双格式)。
+
+### B3 (误判): AniParser hitbox row typed cell — 无 bug
+
+**位置**: `src/dnf-native-combat/data/parsers/AniParser.ts:82`
+
+**初判**: `typeof row[i] !== "number"` 同样模式，以为也漏适配 typed cell。
+
+**实测撤回**: 用 `dnf-extract --file character/swordman/animation/attack1.ani` 提取真 PVF 数据，确认 .ani hitbox 仍 emit bare numbers `[-30,-5,-6,30,10,107]`。C++ B3 audit 改的是 `printLeafValue` 在 PvfDocument vec/mat leaf 输出格式，**.ani 走独立 `PvfAnimation` 流程不受 B3 影响**。AniParser 的检查正确，无须改。
+
+**回归保护**: `tests/static/dnf-native-typed-cell-regression.test.ts` 守 ChrParser matrix + DgnParser mat 接 typed cell，3/3 passed。不覆盖 AniParser（因为 .ani 不该走 typed-cell 路径）。
 
 ## P1 — 不阻塞但应处理
 
-### P1-1: dungeons baseline 0 覆盖
+### P1-1: dungeons baseline 0 覆盖 ✅ RESOLVED (commit `2539b9c`)
 
 **位置**: `scripts/stage1-baseline.mjs:39-63` `CURATED_FILES`
 
 **症状**: curated 列表含 1 个 .map 但 0 个 .dgn，Stage 2 DungeonRuntimeShape 没有 baseline 可对照。
 
-**修法**: 加 1-2 个真实 .dgn 进 curated（如 `dungeon/test_lorien/test_lorien.dgn`，待样本验证）。
+**修法**: 加入 `dungeon/act3/jungle.dgn`。Verified：`baseline-shards/dungeons/jungle.json` 已生成。
 
-### P1-2: dnf-extract `--list` warm-cache 4× 性能回归
+### P1-2: dnf-extract `--list` warm-cache 4× 性能回归 — Open
 
 **位置**: `tools/dnf-porting-src/` 源码（具体哪个 commit 引入未定位）
 
@@ -85,25 +115,25 @@ DNF_PVF_PATH=/path/to/Script.pvf node scripts/stage1-baseline.mjs
 
 **修法**: 跑 `node --prof tools/dnf-extract.exe --pvf … --list`，profile 之后定位热点。
 
-### P1-3: changelog "Known debt #6" 过时
+### P1-3: changelog "Known debt #6" 过时 ✅ RESOLVED (commit `2539b9c`)
 
 **位置**: `docs/changelog/2026-05-24-stage1-complete.md` "Known debt going into Stage 2" 第 6 项
 
 **症状**: 写 "Validator schema check is hand-rolled — chose this over Zod"。实际 `validator.ts:31` `import { z } from "zod"`，commit `bcaf91e` 标题就是 "Zod validator"。debt 列项过时。
 
-**修法**: 一行编辑改 changelog，标记 "已迁 Zod (commit bcaf91e)，debt 关闭"。
+**修法**: 已在 commit `2539b9c` 中标记为 "已迁 Zod (commit bcaf91e)，debt 关闭"。
 
 ## P2 — 信号/清理
 
-### P2-1: CLAUDE.md 30/31 滞后
+### P2-1: CLAUDE.md 30/31 滞后 ✅ RESOLVED (今日)
 
 **位置**: `CLAUDE.md` "Current state" 段
 
 **症状**: 写 "30/31 completion gates green"，实际 `npm run completion` 31/31。
 
-**修法**: 一字之差，写 "31/31 completion gates green"。
+**修法**: 一字之差，改为 "31/31 completion gates green"。
 
-### P2-2: audit-verify 引文行号偏差
+### P2-2: audit-verify 引文行号偏差 — Open
 
 **位置**: `verification/audit-2026-05-24-03-36-55-fixverify/agent-ts-parser-truth-fixverify.md` ImgParser:149-159 finding
 
@@ -111,7 +141,7 @@ DNF_PVF_PATH=/path/to/Script.pvf node scripts/stage1-baseline.mjs
 
 **修法**: 让 `audit-verify.mjs` 在 evidence_excerpt 检查时允许 ±10 行 fuzzy match，或者要求 agent 引文必须 cover 完整 fix block。
 
-### P2-3: knip 未用项
+### P2-3: knip 未用项 — Open
 
 **症状**: `npm run analyze` → knip 报 24 unused exports + 48 unused types。大部分在 Phaser 渲染层（`src/game/`、`src/combat/`），与 Stage 1 数据管线无关。
 
