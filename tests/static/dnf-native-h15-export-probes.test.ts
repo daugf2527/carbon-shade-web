@@ -490,9 +490,58 @@ await mkdir(OUT_DIR, { recursive: true });
 }
 
 // ───────────────────────────────────────────────────────────────────────────
+// H15-11: P0-1/P0-2 regression — multiple chr under the same parent job
+// directory (e.g. swordman/swordman.chr + swordman/demonicswordman.chr)
+// must write independent player shards keyed by chr basename stem, not by
+// parent directory. Manifest.files must not contain duplicate paths.
+// Sub-resources (skl/atk/ani) under the parent dir are shared by every
+// sub-class because that is how DNF organises them in the PVF tree.
+// ───────────────────────────────────────────────────────────────────────────
+{
+  const parsed: ParsedPvfDocument[] = [
+    chrFixture("character/swordman/swordman.chr", "swordman"),
+    chrFixture("character/swordman/demonicswordman.chr", "demonicswordman"),
+    sklFixture("skill/swordman/upperslash.skl"),
+    atkFixture("character/swordman/attackinfo/attack1.atk"),
+  ];
+  const subOut = join(OUT_DIR, "subclass");
+  const result = await exportRuntimeShards({
+    outDir: subOut,
+    parsed,
+    meta: { pvfHash: "h15-fake", extractorVersion: "v2.0.0", exportedAt: "2026-05-23T17:00:00Z" },
+  });
+
+  // Both chr shard files exist with independent content (no overwrite).
+  const swordmanShard = JSON.parse(
+    await readFile(join(subOut, "players", "swordman.json"), "utf-8"),
+  ) as { chr: { path: string }; skills: Record<string, unknown>; parentJob?: string };
+  assert.equal(swordmanShard.chr.path, "character/swordman/swordman.chr",
+    "H15-11: players/swordman.json holds swordman chr");
+
+  const demonicShard = JSON.parse(
+    await readFile(join(subOut, "players", "demonicswordman.json"), "utf-8"),
+  ) as { chr: { path: string }; skills: Record<string, unknown>; parentJob?: string };
+  assert.equal(demonicShard.chr.path, "character/swordman/demonicswordman.chr",
+    "H15-11: players/demonicswordman.json holds demonicswordman chr (NOT overwritten by swordman)");
+
+  // Sub-class inherits sub-resources from parent job directory.
+  assert.ok("upperslash" in swordmanShard.skills,
+    "H15-11: swordman shard sees skill/swordman/upperslash");
+  assert.ok("upperslash" in demonicShard.skills,
+    `H15-11: demonicswordman shard shares parent swordman/ skills (got skills=${Object.keys(demonicShard.skills).join(",")})`);
+
+  // Manifest has no duplicate path entries.
+  const paths = result.manifest.files.map(f => f.path);
+  const uniquePaths = new Set(paths);
+  assert.equal(paths.length, uniquePaths.size,
+    `H15-11: manifest.files has no duplicate paths (entries=${paths.length}, unique=${uniquePaths.size}; paths=${paths.join("|")})`);
+  console.log("[OK] H15-11: sub-class chr writes independent shard + manifest has no dup paths");
+}
+
+// ───────────────────────────────────────────────────────────────────────────
 // Cleanup
 // ───────────────────────────────────────────────────────────────────────────
 await rm(OUT_DIR, { recursive: true, force: true });
 
 console.log("");
-console.log("H15 EXPORT probes: all assertions passed (10 cases)");
+console.log("H15 EXPORT probes: all assertions passed (11 cases)");

@@ -21,7 +21,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { copyFile, mkdir, readdir } from "node:fs/promises";
+import { copyFile, mkdir, readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -58,6 +58,10 @@ const CURATED_FILES = [
   "skill/swordman/icewave.skl",
   // Monster sample
   "monster/goblin/goblin.mob",
+  // Dungeon sample — P1-1 fix (2026-05-24, complete-stage1-review): without
+  // a .dgn the baseline left dist/data/dungeons/ empty, leaving the Stage 2
+  // DungeonRuntimeShape consumer surface with no fixture to compare against.
+  "dungeon/act3/jungle.dgn",
   // Map sample
   "map/test_lorien/4.map",
 ];
@@ -143,6 +147,29 @@ const manifestDst = path.join(verificationDir, "dist-manifest-stage1-baseline.js
 await copyFile(extractionSrc, extractionDst);
 await copyFile(provenanceSrc, provenanceDst);
 await copyFile(manifestSrc, manifestDst);
+
+// P0-3 fix (2026-05-24, complete-stage1-review): persist the EXPORT shards
+// under verification/ alongside the manifest copy. Before this, the only
+// committed evidence that Stage 1 actually produced the shards was the
+// dist-manifest-stage1-baseline.json file — but the shards themselves
+// lived under dist/data/ which is gitignored, so reviewers had no way to
+// sample real shard structure without re-running the baseline. The shards
+// are now mirrored into verification/baseline-shards/ on every baseline
+// run, providing a frozen reference set for downstream regression checks.
+const baselineShardsDir = path.join(verificationDir, "baseline-shards");
+// Wipe the prior copy so removed entries don't linger across baseline runs.
+await rm(baselineShardsDir, { recursive: true, force: true });
+await mkdir(baselineShardsDir, { recursive: true });
+async function copyDir(src, dst) {
+  await mkdir(dst, { recursive: true });
+  for (const entry of await readdir(src, { withFileTypes: true })) {
+    const s = path.join(src, entry.name);
+    const d = path.join(dst, entry.name);
+    if (entry.isDirectory()) await copyDir(s, d);
+    else await copyFile(s, d);
+  }
+}
+await copyDir(exportOut, baselineShardsDir);
 
 console.log("");
 console.log(`[baseline] complete in ${durationMs}ms`);

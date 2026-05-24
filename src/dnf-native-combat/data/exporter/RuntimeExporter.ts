@@ -41,12 +41,26 @@ export const SHAPE_VERSION = "1.0.0";
 
 export interface PlayerRuntimeShape {
   shape_version: string;
-  job: string;                            // entity id (e.g. "swordman")
+  /**
+   * Shard identity — chr basename stem (e.g. "swordman", "demonicswordman").
+   * Each .chr file maps to exactly one shard, so sub-class chr files
+   * (`character/swordman/demonicswordman.chr`) get their own shard, not
+   * the parent job's. Use `parentJob` to recover the resource-sharing key.
+   */
+  job: string;
+  /**
+   * Parent job directory (e.g. "swordman" for both swordman.chr and
+   * demonicswordman.chr). All sub-resources — skills, attacks, animations,
+   * etc — are looked up under this prefix because DNF organises every
+   * sub-class under the main job's directory in the PVF tree. Sub-class
+   * shards therefore share the same skill / attack pool as their parent.
+   */
+  parentJob: string;
   chr: ChrDef;
   skills: Record<string, SkillDef>;       // key: skill file basename (no .skl)
   animations: Record<string, AniDef>;     // key: ani file basename (no .ani)
   attacks: Record<string, AtkDef>;        // key: atk file basename (no .atk)
-  etc: EtcDef | null;                     // character/characteretc/<job>.etc when present
+  etc: EtcDef | null;                     // character/characteretc/<parentJob>.etc when present
 }
 
 export interface MonsterRuntimeShape {
@@ -218,40 +232,49 @@ export async function exportRuntimeShards(options: ExportOptions): Promise<Expor
   }
 
   // ── Players ──────────────────────────────────────────────────────────
+  // Audit P0-1 fix (2026-05-24, complete-stage1-review): shard filename
+  // and shape.job use the chr file's basename stem, not the parent dir.
+  // Previously `chrJob()` returned `parts[1]` (parent dir), which caused
+  // `character/swordman/demonicswordman.chr` to overwrite swordman.chr
+  // at `players/swordman.json` and double-listed the path in manifest.
+  // Each .chr now writes to its own shard; `parentJob` carries the
+  // resource-sharing key so sub-class shards still see parent skills/atk.
   for (const chr of chrs) {
-    const job = chrJob(chr.path);
-    if (job === null) continue;
+    const shardKey = chrShardKey(chr.path);
+    const parentJob = chrParentJob(chr.path);
+    if (shardKey === null || parentJob === null) continue;
 
     const playerSkills: Record<string, SkillDef> = {};
     for (const skl of skls) {
-      if (skl.path.startsWith(`skill/${job}/`)) {
+      if (skl.path.startsWith(`skill/${parentJob}/`)) {
         playerSkills[basenameWithoutExt(skl.path)] = skl;
       }
     }
     const playerAttacks: Record<string, AtkDef> = {};
     for (const atk of atks) {
-      if (atk.path.startsWith(`character/${job}/attackinfo/`) && !isPvpOnlyAtk(atk)) {
+      if (atk.path.startsWith(`character/${parentJob}/attackinfo/`) && !isPvpOnlyAtk(atk)) {
         playerAttacks[basenameWithoutExt(atk.path)] = atk;
       }
     }
     const playerAnims: Record<string, AniDef> = {};
     for (const [aniPath, ani] of aniByPath) {
-      if (aniPath.startsWith(`character/${job}/animation/`)) {
+      if (aniPath.startsWith(`character/${parentJob}/animation/`)) {
         playerAnims[basenameWithoutExt(aniPath)] = ani;
       }
     }
-    const playerEtc = etcs.find(e => e.path === `character/characteretc/${job}.etc`) ?? null;
+    const playerEtc = etcs.find(e => e.path === `character/characteretc/${parentJob}.etc`) ?? null;
 
     const shape: PlayerRuntimeShape = {
       shape_version: SHAPE_VERSION,
-      job,
+      job: shardKey,
+      parentJob,
       chr,
       skills: playerSkills,
       animations: playerAnims,
       attacks: playerAttacks,
       etc: playerEtc,
     };
-    await queueWrite(`players/${job}.json`, shape, "player");
+    await queueWrite(`players/${shardKey}.json`, shape, "player");
   }
 
   // ── Monsters ─────────────────────────────────────────────────────────
@@ -478,8 +501,21 @@ function basenameWithoutExt(pvfPath: string): string {
   return dot < 0 ? base : base.slice(0, dot);
 }
 
-function chrJob(chrPath: string): string | null {
-  // character/<job>/<job>.chr
+function chrShardKey(chrPath: string): string | null {
+  // character/<parentJob>/<basename>.chr → basename (no extension)
+  // Each .chr writes to players/<basename>.json. Sub-class chr files like
+  // character/swordman/demonicswordman.chr therefore get their own shard
+  // at players/demonicswordman.json rather than overwriting swordman.json.
+  const parts = chrPath.split("/");
+  if (parts[0] !== "character" || parts.length < 3) return null;
+  const last = parts[parts.length - 1];
+  return last.replace(/\.chr$/i, "");
+}
+
+function chrParentJob(chrPath: string): string | null {
+  // character/<parentJob>/<basename>.chr → parentJob
+  // Used to resolve shared sub-resources (skills, attacks, animations, etc)
+  // because DNF places every sub-class under the parent job's directory.
   const parts = chrPath.split("/");
   if (parts[0] !== "character" || parts.length < 3) return null;
   return parts[1];

@@ -134,10 +134,13 @@ Not blocking Stage 1 sign-off but recorded for the next-pass list:
 - **CUSTOM_ATTACKINFO enum** — only first 84 values mapped. The actual
   enum block in `dnf_enum_header.nut` may extend further; check on next
   PVF re-inspection.
-- **Validator schema check is hand-rolled** — chose this over Zod for
-  zero-dep alignment with Day 12's `node:sqlite` policy. Per-field
-  invariants are explicit but verbose. If schemas grow significantly,
-  reconsider Zod (or a similar shape validator).
+- **Validator schema check migrated to Zod** — initially hand-rolled for
+  zero-dep alignment with Day 12's `node:sqlite` policy, then migrated to
+  Zod in commit `bcaf91e` once the per-field invariants started outweighing
+  the dep-budget concern. validator.ts (`src/dnf-native-combat/data/validator.ts`)
+  imports `z` and defines a `SourceConfidenceTierSchema` finite enum so
+  `sourceType: "local_baseline"` can't be misspelled silently. Debt
+  closed; entry kept here as a migration record.
 
 ## File inventory (new in Stage 1)
 
