@@ -310,6 +310,28 @@ const DAYS = [
           }
           return { passed: true, evidence: "RuntimeExporter has 5 shape exports + manifest schema + pipelineRunner integration" };
         }},
+      { id: "smoke-pipeline-test", desc: "tests/smoke/full-pipeline.test.ts (real-PVF end-to-end)",
+        check: () => ({
+          passed: exists("tests/smoke/full-pipeline.test.ts") && exists("scripts/smoke-test.mjs"),
+          evidence: exists("tests/smoke/full-pipeline.test.ts")
+            ? (exists("scripts/smoke-test.mjs") ? "tests/smoke + scripts/smoke-test.mjs both present" : "smoke test present but scripts/smoke-test.mjs missing")
+            : "tests/smoke/full-pipeline.test.ts missing",
+        }) },
+      { id: "pipeline-modes", desc: "pipeline.mjs supports --full / --incremental / --stop-at all stages",
+        check: () => {
+          const txt = readFileSync(join(ROOT, "scripts/pipeline.mjs"), "utf-8");
+          const features = [
+            { name: "--full", marker: '"--full"' },
+            { name: "--incremental", marker: '"--incremental"' },
+            { name: "stop-at extract", marker: '"extract"' },
+            { name: "stop-at export", marker: '"export"' },
+            { name: "exportBaseManifest", marker: "exportBaseManifest" },
+          ];
+          const missing = features.filter(f => !txt.includes(f.marker)).map(f => f.name);
+          return missing.length === 0
+            ? { passed: true, evidence: "all 5 pipeline modes / flags wired" }
+            : { passed: false, evidence: `missing in pipeline.mjs: ${missing.join(", ")}` };
+        }},
     ],
   },
   {

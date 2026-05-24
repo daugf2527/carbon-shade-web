@@ -9,6 +9,7 @@
     "typecheck": "node scripts/typecheck.mjs",
     "build": "node scripts/build.mjs",
     "static:test": "node scripts/static-test.mjs",
+    "smoke:pipeline": "node scripts/smoke-test.mjs",
     "validate:sprites": "node scripts/validate-sprites.mjs",
     "validate:assets": "node scripts/validate-assets.mjs",
     "validate:combat": "node scripts/validate-combat-boundaries.mjs",

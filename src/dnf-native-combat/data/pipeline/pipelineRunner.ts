@@ -16,6 +16,7 @@ import {
 import {
   exportRuntimeShards,
   type ExportResult,
+  type RuntimeManifest,
 } from "../exporter/RuntimeExporter.js";
 import type { AniDef } from "../types/AniDef.js";
 import type { PvfDocument } from "../types/PvfDocument.js";
@@ -40,6 +41,24 @@ export interface PipelineRunOptions {
   /** Optional physics + enum content for shared/*.json shards. */
   sharedPhysics?: Record<string, unknown>;
   sharedEnums?: { tables: Record<string, Record<string, string>>; field_to_enum: Record<string, string> };
+  /**
+   * Optional prior manifest for incremental EXPORT (unchanged shards skipped).
+   * Loader (CLI) reads existing dist/data/manifest.json and passes it through.
+   */
+  exportBaseManifest?: RuntimeManifest;
+  /**
+   * Stop pipeline at this stage. Default: undefined → run all enabled stages.
+   * - "extract" — skip PARSE/VALIDATE/LOAD/EXPORT
+   * - "parse" — skip VALIDATE/LOAD/EXPORT (still computes validation:null sentinel)
+   * - "validate" — skip LOAD/EXPORT
+   * - "load" — skip EXPORT
+   * - "export" — full pipeline (default behavior)
+   *
+   * VALIDATE always computes when stopAt is undefined/validate/load/export (even
+   * if not written to disk). For "extract"/"parse" stops, validation report
+   * is an empty placeholder.
+   */
+  stopAt?: "extract" | "parse" | "validate" | "load" | "export";
 }
 
 export interface PipelineParseError {
@@ -48,7 +67,7 @@ export interface PipelineParseError {
 }
 
 export interface PipelineRunResult {
-  stage: "parse" | "validate" | "load" | "export";
+  stage: "extract" | "parse" | "validate" | "load" | "export";
   filesExtracted: number;
   filesParsed: number;
   parseErrors: PipelineParseError[];
@@ -66,6 +85,11 @@ export interface PipelineRunResult {
 
 export async function runExtractParsePipeline(options: PipelineRunOptions): Promise<PipelineRunResult> {
   const startedAt = new Date().toISOString();
+  const stopAt = options.stopAt ?? "export";
+  const stageOrder = ["extract", "parse", "validate", "load", "export"] as const;
+  const stopIdx = stageOrder.indexOf(stopAt);
+  const shouldRun = (s: typeof stageOrder[number]) => stageOrder.indexOf(s) <= stopIdx;
+
   const documents = options.loadDocuments
     ? await options.loadDocuments(options.files)
     : await loadPvfDocumentsViaPipe(options.files, {
@@ -73,60 +97,59 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
       executablePath: options.executablePath,
     });
 
+  // ─── PARSE stage ───────────────────────────────────────────────────────
   const parsed: ParsedPvfDocument[] = [];
   const parseErrors: PipelineParseError[] = [];
-  for (const document of documents) {
-    try {
-      parsed.push(parsePvfDocument(document));
-    } catch (error) {
-      parseErrors.push({
-        path: document.path ?? "<unknown>",
-        message: error instanceof Error ? error.message : String(error),
-      });
+  if (shouldRun("parse")) {
+    for (const document of documents) {
+      try {
+        parsed.push(parsePvfDocument(document));
+      } catch (error) {
+        parseErrors.push({
+          path: document.path ?? "<unknown>",
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
   }
 
   // ─── VALIDATE stage ────────────────────────────────────────────────────
-  // Per design §2.2: PARSE → VALIDATE → LOAD. Always run validation; emit
-  // reports only when verificationOutDir is non-null (default: enabled).
   const runId = options.runId ?? slugifyTimestamp(startedAt);
   const finishedAt = new Date().toISOString();
-  // Provenance hash + extractor version come from any one document (they're
-  // PVF-level, identical across all docs in the same run). Pick first defined.
   const pvfHash = pickFirstDefined(documents, d => d.source_pvf_hash) ?? null;
   const extractorVersion = pickFirstDefined(documents, d => d.extractor_version) ?? null;
 
-  const validation = validateParsedDocuments(parsed, {
-    runId,
-    startedAt,
-    finishedAt,
-    pvfHash,
-    extractorVersion,
-    parseErrors,
-  });
+  const validation = shouldRun("validate")
+    ? validateParsedDocuments(parsed, {
+        runId, startedAt, finishedAt, pvfHash, extractorVersion, parseErrors,
+      })
+    : emptyValidationReport(runId, startedAt, finishedAt, pvfHash, extractorVersion);
   const provenanceAudit = buildProvenanceAudit(validation);
 
-  // ─── Debug dumps + verification reports ────────────────────────────────
+  // ─── Debug dumps ───────────────────────────────────────────────────────
   await mkdir(options.debugOut, { recursive: true });
   await writeJsonlStreaming(
     join(options.debugOut, "extract.jsonl"),
     documents,
     document => JSON.stringify(document),
   );
-  await writeJsonlStreaming(
-    join(options.debugOut, "parse.jsonl"),
-    parsed,
-    parsedDoc => JSON.stringify(stripRawAndSections(parsedDoc)),
-  );
-  await writeJsonlStreaming(
-    join(options.debugOut, "parse-errors.jsonl"),
-    parseErrors,
-    error => JSON.stringify(error),
-  );
+  if (shouldRun("parse")) {
+    await writeJsonlStreaming(
+      join(options.debugOut, "parse.jsonl"),
+      parsed,
+      parsedDoc => JSON.stringify(stripRawAndSections(parsedDoc)),
+    );
+    await writeJsonlStreaming(
+      join(options.debugOut, "parse-errors.jsonl"),
+      parseErrors,
+      error => JSON.stringify(error),
+    );
+  }
 
+  // ─── Verification reports ──────────────────────────────────────────────
   let extractionReportPath: string | null = null;
   let provenanceAuditPath: string | null = null;
-  if (options.verificationOutDir !== null) {
+  if (shouldRun("validate") && options.verificationOutDir !== null) {
     const outDir = options.verificationOutDir ?? join(options.debugOut, "..", "verification");
     await mkdir(outDir, { recursive: true });
     extractionReportPath = join(outDir, `extraction-report-${runId}.json`);
@@ -135,43 +158,42 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
     await writeFile(provenanceAuditPath, JSON.stringify(provenanceAudit, null, 2));
   }
 
-  // ─── LOAD stage (opt-in) ───────────────────────────────────────────────
-  // Per design §2.2 PARSE → VALIDATE → **LOAD** → EXPORT. Default is opt-in
-  // via sqliteDbPath to keep tests independent of the SQLite Mirror — the
-  // production CLI sets it explicitly.
+  // ─── LOAD stage ────────────────────────────────────────────────────────
   let sqliteImport: SqliteImportResult | null = null;
-  let highestStage: PipelineRunResult["stage"] = "validate";
-  if (typeof options.sqliteDbPath === "string") {
+  if (shouldRun("load") && typeof options.sqliteDbPath === "string") {
     sqliteImport = importToSqlite(
       { dbPath: options.sqliteDbPath, mode: options.sqliteMode ?? "full" },
       documents,
       parsed,
       validation,
     );
-    highestStage = "load";
   }
 
-  // ─── EXPORT stage (opt-in) ─────────────────────────────────────────────
-  // Per design §4: entity-centric JSON shards + manifest.
+  // ─── EXPORT stage ──────────────────────────────────────────────────────
   let exportResult: ExportResult | null = null;
-  if (typeof options.exportOutDir === "string") {
+  if (shouldRun("export") && typeof options.exportOutDir === "string") {
     exportResult = await exportRuntimeShards({
       outDir: options.exportOutDir,
       parsed,
       aniDefs: options.aniDefs,
-      meta: {
-        pvfHash,
-        extractorVersion,
-        exportedAt: finishedAt,
-      },
+      meta: { pvfHash, extractorVersion, exportedAt: finishedAt },
       sharedPhysics: options.sharedPhysics,
       sharedEnums: options.sharedEnums,
+      incrementalBaseManifest: options.exportBaseManifest,
     });
-    highestStage = "export";
   }
 
+  // ─── Determine highest completed stage ─────────────────────────────────
+  // The stage actually reached reflects (a) stopAt cap AND (b) whether the
+  // optional opt-in for load/export was provided.
+  let highest: PipelineRunResult["stage"] = "extract";
+  if (shouldRun("parse")) highest = "parse";
+  if (shouldRun("validate")) highest = "validate";
+  if (shouldRun("load") && sqliteImport !== null) highest = "load";
+  if (shouldRun("export") && exportResult !== null) highest = "export";
+
   return {
-    stage: highestStage,
+    stage: highest,
     filesExtracted: documents.length,
     filesParsed: parsed.length,
     parseErrors,
@@ -185,6 +207,18 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
     },
     sqliteImport,
     exportResult,
+  };
+}
+
+function emptyValidationReport(
+  runId: string, startedAt: string, finishedAt: string,
+  pvfHash: string | null, extractorVersion: string | null,
+): VerificationReport {
+  return {
+    meta: { runId, startedAt, finishedAt, pvfHash, extractorVersion },
+    stats: { filesTotal: 0, filesParsed: 0, filesFailed: 0, errors: 0, warnings: 0, infos: 0 },
+    errors: [], warnings: [], infos: [],
+    tier3Fields: [], pvpFields: [], refIntegrity: [],
   };
 }
 

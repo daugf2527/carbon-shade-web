@@ -115,19 +115,55 @@ export interface ExportOptions {
   sharedPhysics?: Record<string, unknown>;
   /** Optional override for shared/enums.json content. */
   sharedEnums?: { tables: Record<string, Record<string, string>>; field_to_enum: Record<string, string> };
+  /**
+   * Incremental mode: when an existing manifest is provided, shards whose
+   * computed sha256 matches the prior entry are NOT rewritten to disk.
+   * Manifest entries for skipped shards retain prior path/sha256/sizeBytes
+   * verbatim. The reported `filesWritten` excludes skipped shards but
+   * `manifest.files` still lists them (consumers need the full index).
+   *
+   * Caveat: sha256 reflects the *complete* shard JSON, including per-field
+   * provenance.extractTimestamp. PVF re-extraction generates fresh timestamps,
+   * so byte-identical shards are uncommon across distinct extractor runs.
+   * Incremental skip is most useful when the same parsed[]+aniDefs[] is
+   * re-exported (e.g. retry after a transient I/O failure, or split-stage
+   * pipeline where EXPORT is invoked without re-running EXTRACT). For
+   * content-equivalence skip across extractor runs, hash a fingerprint that
+   * strips per-field timestamps — Day 15+ work.
+   */
+  incrementalBaseManifest?: RuntimeManifest;
 }
 
 export interface ExportResult {
   outDir: string;
   manifestPath: string;
   manifest: RuntimeManifest;
+  /** Number of shards actually written to disk this run (excludes incremental skips). */
   filesWritten: number;
+  /** Number of shards skipped because their sha256 matched the base manifest. */
+  filesSkipped: number;
   durationMs: number;
 }
 
 export async function exportRuntimeShards(options: ExportOptions): Promise<ExportResult> {
   const startedAtMs = Date.now();
   const entries: RuntimeManifestEntry[] = [];
+  let writtenCount = 0;
+  let skippedCount = 0;
+
+  // Build a path → entry index from the base manifest for incremental diff.
+  const baseByPath = new Map<string, RuntimeManifestEntry>();
+  for (const e of options.incrementalBaseManifest?.files ?? []) {
+    baseByPath.set(e.path, e);
+  }
+
+  const queueWrite = async (relPath: string, shape: unknown, kind: RuntimeKind) => {
+    const result = await writeShardIncremental(
+      options.outDir, relPath, shape, kind, baseByPath.get(relPath),
+    );
+    entries.push(result.entry);
+    if (result.wrote) writtenCount += 1; else skippedCount += 1;
+  };
 
   // Index parsed defs by kind for entity composition
   const byPath = new Map<string, ParsedPvfDocument>();
@@ -191,7 +227,7 @@ export async function exportRuntimeShards(options: ExportOptions): Promise<Expor
       attacks: playerAttacks,
       etc: playerEtc,
     };
-    entries.push(await writeShard(options.outDir, `players/${job}.json`, shape, "player"));
+    await queueWrite(`players/${job}.json`, shape, "player");
   }
 
   // ── Monsters ─────────────────────────────────────────────────────────
@@ -219,7 +255,7 @@ export async function exportRuntimeShards(options: ExportOptions): Promise<Expor
       attacks: monsterAttacks,
       animations: monsterAnims,
     };
-    entries.push(await writeShard(options.outDir, `monsters/${id}.json`, shape, "monster"));
+    await queueWrite(`monsters/${id}.json`, shape, "monster");
   }
 
   // ── Dungeons ─────────────────────────────────────────────────────────
@@ -227,19 +263,10 @@ export async function exportRuntimeShards(options: ExportOptions): Promise<Expor
     const id = dungeonId(dgn.path);
     if (id === null) continue;
 
-    // Maps belong to a dungeon when their dungeonId matches. dungeon.dgn
-    // doesn't expose a numeric ID directly — fall back to path/folder match.
-    // For Stage 1 EXPORT we include all maps whose path starts with map/<id>/
-    // (which mirrors how PVF organizes them) or whose dungeonId === some
-    // discoverable mapping.
     const dungeonMaps = maps
       .filter(m => m.path.startsWith(`map/${id}/`))
       .map(m => sanitizeMapForRuntime(m));
 
-    // Collect monster references (path → ID only, not inline) by looking at
-    // dungeon paths. dgn → mob refs aren't directly typed; use refs walk via
-    // raw section if needed. For Stage 1, leave empty unless we discover a
-    // tractable mapping.
     const monsterRefs: string[] = [];
 
     const shape: DungeonRuntimeShape = {
@@ -249,7 +276,7 @@ export async function exportRuntimeShards(options: ExportOptions): Promise<Expor
       maps: dungeonMaps,
       monsterRefs,
     };
-    entries.push(await writeShard(options.outDir, `dungeons/${id}.json`, shape, "dungeon"));
+    await queueWrite(`dungeons/${id}.json`, shape, "dungeon");
   }
 
   // ── Shared / physics + enums ─────────────────────────────────────────
@@ -258,7 +285,7 @@ export async function exportRuntimeShards(options: ExportOptions): Promise<Expor
       shape_version: SHAPE_VERSION,
       constants: options.sharedPhysics,
     };
-    entries.push(await writeShard(options.outDir, "shared/physics.json", physicsShape, "shared"));
+    await queueWrite("shared/physics.json", physicsShape, "shared");
   }
   if (options.sharedEnums) {
     const enumsShape: SharedEnumsShape = {
@@ -266,7 +293,7 @@ export async function exportRuntimeShards(options: ExportOptions): Promise<Expor
       tables: options.sharedEnums.tables,
       field_to_enum: options.sharedEnums.field_to_enum,
     };
-    entries.push(await writeShard(options.outDir, "shared/enums.json", enumsShape, "shared"));
+    await queueWrite("shared/enums.json", enumsShape, "shared");
   }
 
   // ── Manifest ─────────────────────────────────────────────────────────
@@ -285,37 +312,43 @@ export async function exportRuntimeShards(options: ExportOptions): Promise<Expor
     outDir: options.outDir,
     manifestPath,
     manifest,
-    filesWritten: entries.length + 1,  // +1 for manifest itself
+    filesWritten: writtenCount + 1,  // +1 for manifest itself (always written)
+    filesSkipped: skippedCount,
     durationMs: Date.now() - startedAtMs,
   };
 }
 
 // ─── Internal helpers ──────────────────────────────────────────────────────
 
-async function writeShard(
+async function writeShardIncremental(
   outDir: string,
   relPath: string,
   shape: unknown,
   kind: RuntimeKind,
-): Promise<RuntimeManifestEntry> {
+  baseEntry: RuntimeManifestEntry | undefined,
+): Promise<{ entry: RuntimeManifestEntry; wrote: boolean }> {
   const absPath = join(outDir, relPath);
   const dir = dirnameOf(absPath);
   await mkdir(dir, { recursive: true });
 
-  // Serialize with stable key order — JSON.stringify uses insertion order;
-  // since the shape was built from explicit literals with consistent ordering,
-  // output is deterministic across runs given the same input.
   const json = JSON.stringify(shape, null, 2);
-  await writeFile(absPath, json);
-
   const sha256 = createHash("sha256").update(json).digest("hex");
   const sizeBytes = Buffer.byteLength(json, "utf-8");
+  const shapeVersion = (shape as { shape_version?: string }).shape_version ?? SHAPE_VERSION;
+
+  // Incremental skip: same sha256 → don't rewrite. Keep manifest entry pointing
+  // at the same path (assumed unchanged on disk).
+  if (baseEntry && baseEntry.sha256 === sha256) {
+    return {
+      entry: { path: relPath, sha256, sizeBytes, kind, shape_version: shapeVersion },
+      wrote: false,
+    };
+  }
+
+  await writeFile(absPath, json);
   return {
-    path: relPath,
-    sha256,
-    sizeBytes,
-    kind,
-    shape_version: (shape as { shape_version?: string }).shape_version ?? SHAPE_VERSION,
+    entry: { path: relPath, sha256, sizeBytes, kind, shape_version: shapeVersion },
+    wrote: true,
   };
 }
 

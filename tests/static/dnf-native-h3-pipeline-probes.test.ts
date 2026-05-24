@@ -522,16 +522,21 @@ function runCli(argv: string[]): { code: number; stdout: string; stderr: string 
   }
 }
 
-// 3c. Bad --stop-at value 'extract' → exits 2 with explicit message.
+// 3c. --stop-at extract is accepted (Day 14 added extract as a valid stage).
+//     The CLI accepts the value, tries to spawn dnf-extract on foo.pvf, and
+//     exits 1 with a "Pipeline failed: ..." line. Different from the old
+//     pre-Day-14 behavior (exit 2 with "Unsupported --stop-at extract").
 {
   const r = runCli(["--pvf", "foo.pvf", "--file", "x.atk", "--stop-at", "extract"]);
-  if (r.code === 2 && r.stderr.includes("Unsupported --stop-at extract")) {
-    ok("cli-stopAt-extract", "exits 2 with named-stage rejection");
-  } else {
+  if (r.code === 1 && r.stderr.includes("Pipeline failed:")) {
+    ok("cli-stopAt-extract", "exits 1 (extract accepted; pipeline fails on bogus PVF — expected)");
+  } else if (r.code === 2 && r.stderr.includes("Unsupported --stop-at extract")) {
     bug(
       "cli-stopAt-extract",
-      `exit=${r.code} stderr=${JSON.stringify(r.stderr)} — message doesn't tell user which stages are valid`,
+      "Day 14 should accept 'extract' as a valid stop stage; CLI still rejects it.",
     );
+  } else {
+    bug("cli-stopAt-extract", `exit=${r.code} stderr=${JSON.stringify(r.stderr.slice(0, 200))}`);
   }
 }
 

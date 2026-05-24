@@ -326,9 +326,51 @@ await mkdir(OUT_DIR, { recursive: true });
 }
 
 // ───────────────────────────────────────────────────────────────────────────
+// H15-8: Incremental EXPORT — unchanged shards skipped on second run
+// ───────────────────────────────────────────────────────────────────────────
+{
+  const parsed: ParsedPvfDocument[] = [chrFixture("character/inc/inc.chr", "inc")];
+  const subOut = join(OUT_DIR, "incremental");
+
+  // First run — baseline
+  const r1 = await exportRuntimeShards({
+    outDir: subOut,
+    parsed,
+    meta: { pvfHash: "h15-stable", extractorVersion: "v2.0.0", exportedAt: "2026-05-23T17:00:00Z" },
+  });
+  assert.equal(r1.filesSkipped, 0, "H15-8: first run has no skips");
+  // filesWritten counts shards + manifest; we wrote 1 shard + manifest = 2
+  assert.ok(r1.filesWritten >= 2, `H15-8: first run wrote shards (got ${r1.filesWritten})`);
+
+  // Second run with same input + manifest as base — shard should be skipped
+  const r2 = await exportRuntimeShards({
+    outDir: subOut,
+    parsed,
+    meta: { pvfHash: "h15-stable", extractorVersion: "v2.0.0", exportedAt: "2026-05-23T17:00:00Z" },
+    incrementalBaseManifest: r1.manifest,
+  });
+  assert.equal(r2.filesSkipped, 1, `H15-8: 1 shard skipped (got ${r2.filesSkipped})`);
+  // Manifest still lists the entry — same sha256 as r1
+  assert.equal(r2.manifest.files.length, r1.manifest.files.length, "H15-8: manifest entry count preserved");
+  assert.equal(r2.manifest.files[0].sha256, r1.manifest.files[0].sha256, "H15-8: skipped entry sha256 preserved");
+
+  // Third run with modified input — shard should be REWRITTEN (no skip)
+  const modifiedParsed: ParsedPvfDocument[] = [chrFixture("character/inc/inc.chr", "inc_modified")];
+  const r3 = await exportRuntimeShards({
+    outDir: subOut,
+    parsed: modifiedParsed,
+    meta: { pvfHash: "h15-stable", extractorVersion: "v2.0.0", exportedAt: "2026-05-23T17:00:00Z" },
+    incrementalBaseManifest: r1.manifest,
+  });
+  assert.equal(r3.filesSkipped, 0, `H15-8: modified content not skipped (got ${r3.filesSkipped})`);
+  assert.notEqual(r3.manifest.files[0].sha256, r1.manifest.files[0].sha256, "H15-8: new sha256 differs");
+  console.log("[OK] H15-8: incremental EXPORT skips unchanged shards");
+}
+
+// ───────────────────────────────────────────────────────────────────────────
 // Cleanup
 // ───────────────────────────────────────────────────────────────────────────
 await rm(OUT_DIR, { recursive: true, force: true });
 
 console.log("");
-console.log("H15 EXPORT probes: all assertions passed (7 cases)");
+console.log("H15 EXPORT probes: all assertions passed (8 cases)");

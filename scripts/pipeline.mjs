@@ -56,6 +56,9 @@ function parseArgs(argv) {
     else if (arg === "--sqlite-mode") {
       const v = consumeValue(arg, i); if (v !== null) args.sqliteMode = v; i++;
     }
+    else if (arg === "--export-out") {
+      const v = consumeValue(arg, i); if (v !== null) args.exportOut = v; i++;
+    }
     else if (arg === "--domain" || arg === "--job" || arg === "--pattern") {
       // No-op placeholders, but still validate that they don't eat a sibling flag.
       const v = consumeValue(arg, i); if (v !== null) { /* discard */ } i++;
@@ -89,8 +92,8 @@ if (!args.pvf || args.files.length === 0) {
   usage();
   process.exit(2);
 }
-if (args.stopAt && args.stopAt !== "parse" && args.stopAt !== "validate" && args.stopAt !== "load") {
-  console.error(`Unsupported --stop-at ${args.stopAt}; supports parse | validate | load.`);
+if (args.stopAt && args.stopAt !== "extract" && args.stopAt !== "parse" && args.stopAt !== "validate" && args.stopAt !== "load" && args.stopAt !== "export") {
+  console.error(`Unsupported --stop-at ${args.stopAt}; supports extract | parse | validate | load | export.`);
   process.exit(2);
 }
 if (args.sqliteMode && args.sqliteMode !== "full" && args.sqliteMode !== "incremental" && args.sqliteMode !== "partial") {
@@ -129,6 +132,30 @@ const verificationOut = args.noVerification
   ? null
   : (args.verificationOut ?? path.join(ROOT, "verification"));
 
+// --full / --incremental modes auto-enable LOAD + EXPORT with default paths
+// (so the user does not have to spell out 4 flags every run).
+let sqliteDb = args.sqliteDb;
+let exportOut = args.exportOut;
+let sqliteMode = args.sqliteMode;
+let exportBaseManifest;
+if (args.mode === "full" || args.mode === "incremental") {
+  sqliteDb = sqliteDb ?? path.join(ROOT, ".tmp", "pipeline.db");
+  exportOut = exportOut ?? path.join(ROOT, "dist", "data");
+  if (args.mode === "incremental") {
+    sqliteMode = sqliteMode ?? "incremental";
+    // Load prior manifest for EXPORT diff. If absent, treat as first run.
+    const fs = await import("node:fs/promises");
+    const manifestPath = path.join(exportOut, "manifest.json");
+    try {
+      const content = await fs.readFile(manifestPath, "utf-8");
+      exportBaseManifest = JSON.parse(content);
+    } catch (e) {
+      // No prior manifest → incremental EXPORT becomes effectively "full"
+      // for this run, which is intentional (first run baseline).
+    }
+  }
+}
+
 try {
   const result = await runExtractParsePipeline({
     pvfPath: args.pvf,
@@ -137,8 +164,11 @@ try {
     executablePath: EXTRACT,
     runId: args.runId,
     verificationOutDir: verificationOut,
-    sqliteDbPath: args.sqliteDb,
-    sqliteMode: args.sqliteMode,
+    sqliteDbPath: sqliteDb,
+    sqliteMode,
+    exportOutDir: exportOut,
+    exportBaseManifest,
+    stopAt: args.stopAt,
   });
 
   console.log(JSON.stringify({
@@ -156,6 +186,12 @@ try {
       refMissingCount: result.validation.refIntegrity.filter(r => r.status === "missing").length,
     },
     sqliteImport: result.sqliteImport,
+    exportResult: result.exportResult ? {
+      outDir: result.exportResult.outDir,
+      manifestPath: result.exportResult.manifestPath,
+      filesWritten: result.exportResult.filesWritten,
+      durationMs: result.exportResult.durationMs,
+    } : null,
     reportPaths: result.reportPaths,
   }, null, 2));
 } catch (error) {
