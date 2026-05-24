@@ -7,7 +7,7 @@
  * VALIDATE L2 produces a structured report covering:
  *   1. Schema sanity (kind correct, key fields present, types match)
  *   2. Ref integrity (PvfRef.targetPath resolvable against parsed set)
- *   3. Provenance audit (Tier-3 / local_baseline / requiresManualVerification)
+ *   3. Provenance audit (Tier-3 / requiresManualVerification)
  *   4. PvP scope (per [[feedback-dnf-pve-scope-only]]: read all, runtime ignores)
  *   5. 3-level error model (error → fail run, warning → continue, info → log)
  *
@@ -54,7 +54,7 @@ export interface ValidationIssue {
 export interface Tier3FieldEntry {
   pvfPath: string;
   field: string;
-  /** "local_baseline" or any future SourceConfidenceTier other than "tier1"/"tier2". */
+  /** "tier3" (formerly "local_baseline"), or any future SourceConfidenceTier other than "tier1"/"tier2". */
   sourceType: string;
   requiresManualVerification: boolean;
 }
@@ -170,12 +170,18 @@ const ParsedFieldProvenanceSchema = z.object({
  * other than "tier1"/"tier2" as Tier-3 — but the SET of accepted values is
  * now finite. H probes that intentionally test walker behaviour with
  * out-of-enum strings must cast via `as unknown` to bypass the schema.
+ *
+ * D2 fix (2026-05-24, day11-17-ai-decisions-audit): the 4-value enum
+ * (tier1/tier2/local_baseline/experimental) is collapsed to a 3-value
+ * enum (tier1/tier2/tier3) so the schema, CLAUDE.md "three-tier rule",
+ * and Stage 2 brainstorm doc all share the same vocabulary. The previously
+ * AI-introduced "experimental" tier is removed entirely — it never had
+ * a place in the user's three-tier truth rule.
  */
 const SourceConfidenceTierSchema = z.union([
   z.literal("tier1"),
   z.literal("tier2"),
-  z.literal("local_baseline"),
-  z.literal("experimental"),
+  z.literal("tier3"),
 ]);
 
 const PvfFactBaseFields = {

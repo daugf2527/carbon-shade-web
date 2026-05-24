@@ -238,7 +238,7 @@ export function requireValue<T>(value: T | null, label: string, sourcePath: stri
  * "DNF/DFO reference truth rule":
  *
  *   "真实战斗 launch/gravity 曲线、hitstun 表硬编码在 DNF.exe C++ 二进制里，
- *    PVF 拿不到... 这部分必须标注 sourceType: 'local_baseline' +
+ *    PVF 拿不到... 这部分必须标注 sourceType: 'tier3' (历史曾称 'local_baseline') +
  *    requiresManualVerification: true"
  *
  * Pass `null` through unchanged so call sites can chain:
@@ -253,7 +253,7 @@ export function asTier3<T extends { provenance: ParsedFieldProvenance }>(
   if (fact === null) return null;
   return {
     ...fact,
-    sourceType: "local_baseline" as const,
+    sourceType: "tier3" as const,
     requiresManualVerification: true,
   };
 }

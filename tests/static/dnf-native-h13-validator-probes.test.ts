@@ -6,7 +6,7 @@
  *     report meta + stats consistent
  *   - Schema rejection: corrupt def (wrong kind / missing required) → error issue
  *   - Ref integrity: resolved + missing cases reported with correct status
- *   - Tier-3 audit: PvfFact with sourceType="local_baseline" or
+ *   - Tier-3 audit: PvfFact with sourceType="tier3" or
  *     requiresManualVerification=true → tier3Fields entry
  *   - PvP scope: AtkDef.pvpOnly / SkillDef.hasPvp / MapDef.pvpStartArea
  *     non-zero → pvpFields entry
@@ -234,7 +234,7 @@ function buildValidMob(p: string, animRefs: Array<{ targetKind: string; targetPa
       value: 800,
       unit: "px/s",
       provenance: fieldProv("character/test/test.chr", "jump power"),
-      sourceType: "local_baseline",       // ← Tier-3 trigger
+      sourceType: "tier3",       // ← Tier-3 trigger
       requiresManualVerification: true,
     },
     jumpSpeed: { value: 12, unit: "px/frame", provenance: fieldProv("character/test/test.chr", "jump speed") },
@@ -267,7 +267,7 @@ function buildValidMob(p: string, animRefs: Array<{ targetKind: string; targetPa
   const t3 = r.tier3Fields[0];
   assert.equal(t3.pvfPath, "character/test/test.chr", "H13-6: tier3 pvfPath");
   assert.equal(t3.field, "jump power", "H13-6: tier3 field = section name from provenance");
-  assert.equal(t3.sourceType, "local_baseline", "H13-6: tier3 sourceType");
+  assert.equal(t3.sourceType, "tier3", "H13-6: tier3 sourceType");
   assert.equal(t3.requiresManualVerification, true, "H13-6: requiresManualVerification flag");
   // Audit F10 test-effectiveness DRIFT (2026-05-24): the assertion above
   // checks `t3.field === "jump power"` but "jump power" was hand-set by the
@@ -414,7 +414,7 @@ function buildValidMob(p: string, animRefs: Array<{ targetKind: string; targetPa
       value: 800,
       unit: "px/s",
       provenance: fieldProv("character/lb.chr", "jump power"),
-      sourceType: "local_baseline",
+      sourceType: "tier3",
       requiresManualVerification: true,
     },
     jumpSpeed: { value: 12, unit: "px/frame", provenance: fieldProv("character/lb.chr", "jump speed") },
@@ -547,9 +547,13 @@ function buildValidChr(p: string, overrides: Record<string, unknown> = {}): ChrD
 }
 
 // ───────────────────────────────────────────────────────────────────────────
-// H13-16: Tier-3 walker treats sourceType="experimental" (any non-tier1/2)
+// H13-16: Tier-3 walker treats sourceType="tier3" (any non-tier1/2)
 // as Tier-3. This is independent of Zod (walker is hand-rolled) but
 // confirms the walker still works after the schema refactor.
+// D2 fix (2026-05-24): previously tested with sourceType="experimental"
+// (the schema's 4th-tier value), now collapsed away. tier3 is the only
+// non-tier1/2 value the schema accepts; this test now confirms it triggers
+// the walker exactly like the historical local_baseline value did.
 // ───────────────────────────────────────────────────────────────────────────
 {
   const p = "character/h13-16.chr";
@@ -558,13 +562,13 @@ function buildValidChr(p: string, overrides: Record<string, unknown> = {}): ChrD
       value: 800,
       unit: "px/s",
       provenance: fieldProv(p, "jump power"),
-      sourceType: "experimental",   // ← not tier1/2 → Tier-3 by walker rule
+      sourceType: "tier3",   // ← not tier1/2 → Tier-3 by walker rule
       requiresManualVerification: false,
     },
   });
   const r = validateParsedDocuments([chr], META);
   assert.equal(r.tier3Fields.length, 1, `H13-16: 1 Tier-3 entry (got ${r.tier3Fields.length})`);
-  assert.equal(r.tier3Fields[0].sourceType, "experimental", "H13-16: sourceType preserved");
+  assert.equal(r.tier3Fields[0].sourceType, "tier3", "H13-16: sourceType preserved");
   assert.equal(r.tier3Fields[0].requiresManualVerification, false, "H13-16: requiresManualVerification=false honoured");
   console.log("[OK] H13-16: walker treats any non-tier1/2 as Tier-3");
 }

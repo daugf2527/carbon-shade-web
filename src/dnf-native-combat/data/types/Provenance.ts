@@ -1,11 +1,13 @@
 /**
  * Confidence tier per CLAUDE.md "DNF/DFO reference truth rule":
- *   tier1          — direct dnf-extract output from real PVF (Tier-1 truth)
- *   tier2          — Neople API / DFO-specific wiki cross-reference
- *   local_baseline — values in docs/ or src/ not yet verified against Tier-1/2;
- *                    requiresManualVerification SHOULD be true for these
+ *   tier1 — direct dnf-extract output from real PVF (Tier-1 truth)
+ *   tier2 — Neople API / DFO-specific wiki cross-reference
+ *   tier3 — values in docs/ or src/ not yet verified against Tier-1/2;
+ *           requiresManualVerification SHOULD be true for these.
+ *           (Historically called "local_baseline" in CLAUDE.md and prior
+ *           Stage 1 commits; renamed 2026-05-24 for schema/doc parity.)
  */
-export type SourceConfidenceTier = "tier1" | "tier2" | "local_baseline";
+export type SourceConfidenceTier = "tier1" | "tier2" | "tier3";
 
 export interface ExtractedDocumentProvenance {
   extractorVersion: string;
@@ -28,15 +30,15 @@ interface PvfFactBase {
   provenance: ParsedFieldProvenance;
   /**
    * Confidence tier. Omitted ⇒ "tier1" (default for any field extracted from
-   * real PVF). Explicitly set "local_baseline" when the value is a project-
-   * internal hypothesis (e.g. jump_power unit ambiguity, hitstun frame tables)
+   * real PVF). Explicitly set "tier3" when the value is a project-internal
+   * hypothesis (e.g. jump_power unit ambiguity, hitstun frame tables)
    * pending Tier-1/2 verification.
    */
   sourceType?: SourceConfidenceTier;
   /**
    * True when the field's value is project-internal and not yet verified
    * against the source PVF or an authoritative external reference. Pairs with
-   * sourceType="local_baseline".
+   * sourceType="tier3".
    */
   requiresManualVerification?: boolean;
 }

@@ -143,7 +143,7 @@ function logOk(item: string, observed: string) {
 // ===========================================================================
 // PROBE 3 — Tier-3 marker gap (sourceType / requiresManualVerification)
 // CLAUDE.md DNF/DFO truth rule + design §6: fields where PVF can't reach truth
-// must be marked sourceType:"local_baseline" + requiresManualVerification:true.
+// must be marked sourceType:"tier3" + requiresManualVerification:true.
 // ===========================================================================
 {
   // Test: Provenance shape currently lacks these fields
@@ -177,10 +177,10 @@ function logOk(item: string, observed: string) {
   const jpAny = chr.jumpPower as unknown as Record<string, unknown>;
   const jsAny = chr.jumpSpeed as unknown as Record<string, unknown>;
   const weightAny = chr.weight as unknown as Record<string, unknown>;
-  assert.equal(jpAny.sourceType, "local_baseline");
+  assert.equal(jpAny.sourceType, "tier3");
   assert.equal(jpAny.requiresManualVerification, true);
-  assert.equal(jsAny.sourceType, "local_baseline");
-  assert.equal(weightAny.sourceType, "local_baseline");
+  assert.equal(jsAny.sourceType, "tier3");
+  assert.equal(weightAny.sourceType, "tier3");
   logOk(
     "Tier-3 marks applied (Day 11 closure)",
     "ChrParser marks jumpPower/jumpSpeed/weight with sourceType:'local_baseline' + requiresManualVerification:true per CLAUDE.md truth rule. Validator surfaces these in the audit subreport (h13-6 covers walker logic).",
