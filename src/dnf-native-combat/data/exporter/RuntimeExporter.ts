@@ -1,0 +1,364 @@
+/**
+ * Stage 1 EXPORT — entity-centric JSON shards + manifest.
+ *
+ * Per docs/plans/2026-05-22-stage1-data-pipeline-design.md §4:
+ *   dist/data/players/<job>.json       — chr + skl + ani + atk inline
+ *   dist/data/monsters/<id>.json       — mob + atk + ani inline
+ *   dist/data/dungeons/<id>.json       — dgn + map + monsterRefs (refs only, not inline)
+ *   dist/data/shared/physics.json      — global constants
+ *   dist/data/shared/enums.json        — enum dictionaries
+ *   dist/data/manifest.json            — index + sha256 + sizeBytes
+ *
+ * PvP scope filtering (per [[feedback-dnf-pve-scope-only]] + design §6):
+ *   - AtkDef where pvpOnly===true → omitted entirely from runtime JSON
+ *   - MapDef.pvpStartArea → cleared to [] before export
+ *   - SkillDef.hasPvp flag preserved (the skill itself remains; PvE/PvP
+ *     branches inside raw sections are out of scope to selectively prune)
+ *
+ * Not yet inlined: AniDef. Standalone-parser path (per design §2.2.1) means
+ * .ani docs don't flow through ParsedPvfDocument. EXPORT accepts an optional
+ * `aniDefs` input to inline animations when present; otherwise the
+ * `animations` map is empty and runtime can lazy-load.
+ */
+
+import { createHash } from "node:crypto";
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+
+import type { AtkDef } from "../types/AtkDef.js";
+import type { ChrDef } from "../types/ChrDef.js";
+import type { MobDef } from "../types/MobDef.js";
+import type { SkillDef } from "../types/SklDef.js";
+import type { DungeonDef } from "../types/DgnDef.js";
+import type { EtcDef } from "../types/EtcDef.js";
+import type { MapDef } from "../types/MapDef.js";
+import type { AniDef } from "../types/AniDef.js";
+import type { ParsedPvfDocument } from "../pipeline/parseStage.js";
+
+// ─── Public shape contracts (mirror design §4.2) ───────────────────────────
+
+export const SHAPE_VERSION = "1.0.0";
+
+export interface PlayerRuntimeShape {
+  shape_version: string;
+  job: string;                            // entity id (e.g. "swordman")
+  chr: ChrDef;
+  skills: Record<string, SkillDef>;       // key: skill file basename (no .skl)
+  animations: Record<string, AniDef>;     // key: ani file basename (no .ani)
+  attacks: Record<string, AtkDef>;        // key: atk file basename (no .atk)
+  etc: EtcDef | null;                     // character/characteretc/<job>.etc when present
+}
+
+export interface MonsterRuntimeShape {
+  shape_version: string;
+  id: string;                             // entity id (e.g. "goblin")
+  mob: MobDef;
+  attacks: Record<string, AtkDef>;
+  animations: Record<string, AniDef>;
+}
+
+export interface DungeonRuntimeShape {
+  shape_version: string;
+  id: string;                             // dungeon entity id
+  dgn: DungeonDef;
+  maps: MapDef[];                         // included by MapDef.dungeonId matching DungeonDef
+  monsterRefs: string[];                  // monster IDs only (don't inline mobs — runtime lazy-loads)
+}
+
+export interface SharedPhysicsShape {
+  shape_version: string;
+  constants: Record<string, unknown>;
+}
+
+export interface SharedEnumsShape {
+  shape_version: string;
+  tables: Record<string, Record<string, string>>;
+  field_to_enum: Record<string, string>;
+}
+
+// ─── Manifest ──────────────────────────────────────────────────────────────
+
+export type RuntimeKind = "player" | "monster" | "dungeon" | "shared";
+
+export interface RuntimeManifestEntry {
+  path: string;          // relative to outDir
+  sha256: string;
+  sizeBytes: number;
+  kind: RuntimeKind;
+  shape_version: string;
+}
+
+export interface RuntimeManifest {
+  manifest_version: string;
+  exported_at: string;
+  pvf_hash: string | null;
+  extractor_version: string | null;
+  files: RuntimeManifestEntry[];
+}
+
+const MANIFEST_VERSION = "1.0.0";
+
+// ─── Public API ────────────────────────────────────────────────────────────
+
+export interface ExportOptions {
+  /** Output root (e.g. "dist/data"). */
+  outDir: string;
+  parsed: ReadonlyArray<ParsedPvfDocument>;
+  /** Optional inline animations. When omitted, `animations` shape field stays {}. */
+  aniDefs?: ReadonlyArray<AniDef>;
+  meta: {
+    pvfHash: string | null;
+    extractorVersion: string | null;
+    exportedAt: string;
+  };
+  /** Optional override for shared/physics.json content. */
+  sharedPhysics?: Record<string, unknown>;
+  /** Optional override for shared/enums.json content. */
+  sharedEnums?: { tables: Record<string, Record<string, string>>; field_to_enum: Record<string, string> };
+}
+
+export interface ExportResult {
+  outDir: string;
+  manifestPath: string;
+  manifest: RuntimeManifest;
+  filesWritten: number;
+  durationMs: number;
+}
+
+export async function exportRuntimeShards(options: ExportOptions): Promise<ExportResult> {
+  const startedAtMs = Date.now();
+  const entries: RuntimeManifestEntry[] = [];
+
+  // Index parsed defs by kind for entity composition
+  const byPath = new Map<string, ParsedPvfDocument>();
+  const chrs: ChrDef[] = [];
+  const mobs: MobDef[] = [];
+  const skls: SkillDef[] = [];
+  const atks: AtkDef[] = [];
+  const dgns: DungeonDef[] = [];
+  const etcs: EtcDef[] = [];
+  const maps: MapDef[] = [];
+  for (const def of options.parsed) {
+    byPath.set(def.path, def);
+    switch (def.kind) {
+      case "chr": chrs.push(def); break;
+      case "mob": mobs.push(def); break;
+      case "skl": skls.push(def); break;
+      case "atk": atks.push(def); break;
+      case "dgn": dgns.push(def); break;
+      case "etc": etcs.push(def); break;
+      case "map": maps.push(def); break;
+    }
+  }
+
+  // Index animations by basename for lookup during entity composition
+  const aniByPath = new Map<string, AniDef>();
+  for (const ani of options.aniDefs ?? []) {
+    aniByPath.set(ani.path, ani);
+  }
+
+  // ── Players ──────────────────────────────────────────────────────────
+  for (const chr of chrs) {
+    const job = chrJob(chr.path);
+    if (job === null) continue;
+
+    const playerSkills: Record<string, SkillDef> = {};
+    for (const skl of skls) {
+      if (skl.path.startsWith(`skill/${job}/`)) {
+        playerSkills[basenameWithoutExt(skl.path)] = skl;
+      }
+    }
+    const playerAttacks: Record<string, AtkDef> = {};
+    for (const atk of atks) {
+      if (atk.path.startsWith(`character/${job}/attackinfo/`) && !isPvpOnlyAtk(atk)) {
+        playerAttacks[basenameWithoutExt(atk.path)] = atk;
+      }
+    }
+    const playerAnims: Record<string, AniDef> = {};
+    for (const [aniPath, ani] of aniByPath) {
+      if (aniPath.startsWith(`character/${job}/animation/`)) {
+        playerAnims[basenameWithoutExt(aniPath)] = ani;
+      }
+    }
+    const playerEtc = etcs.find(e => e.path === `character/characteretc/${job}.etc`) ?? null;
+
+    const shape: PlayerRuntimeShape = {
+      shape_version: SHAPE_VERSION,
+      job,
+      chr,
+      skills: playerSkills,
+      animations: playerAnims,
+      attacks: playerAttacks,
+      etc: playerEtc,
+    };
+    entries.push(await writeShard(options.outDir, `players/${job}.json`, shape, "player"));
+  }
+
+  // ── Monsters ─────────────────────────────────────────────────────────
+  for (const mob of mobs) {
+    const id = mobId(mob.path);
+    if (id === null) continue;
+
+    const monsterAttacks: Record<string, AtkDef> = {};
+    for (const atk of atks) {
+      if (atk.path.startsWith(`monster/${id}/attackinfo/`) && !isPvpOnlyAtk(atk)) {
+        monsterAttacks[basenameWithoutExt(atk.path)] = atk;
+      }
+    }
+    const monsterAnims: Record<string, AniDef> = {};
+    for (const [aniPath, ani] of aniByPath) {
+      if (aniPath.startsWith(`monster/${id}/animation/`)) {
+        monsterAnims[basenameWithoutExt(aniPath)] = ani;
+      }
+    }
+
+    const shape: MonsterRuntimeShape = {
+      shape_version: SHAPE_VERSION,
+      id,
+      mob,
+      attacks: monsterAttacks,
+      animations: monsterAnims,
+    };
+    entries.push(await writeShard(options.outDir, `monsters/${id}.json`, shape, "monster"));
+  }
+
+  // ── Dungeons ─────────────────────────────────────────────────────────
+  for (const dgn of dgns) {
+    const id = dungeonId(dgn.path);
+    if (id === null) continue;
+
+    // Maps belong to a dungeon when their dungeonId matches. dungeon.dgn
+    // doesn't expose a numeric ID directly — fall back to path/folder match.
+    // For Stage 1 EXPORT we include all maps whose path starts with map/<id>/
+    // (which mirrors how PVF organizes them) or whose dungeonId === some
+    // discoverable mapping.
+    const dungeonMaps = maps
+      .filter(m => m.path.startsWith(`map/${id}/`))
+      .map(m => sanitizeMapForRuntime(m));
+
+    // Collect monster references (path → ID only, not inline) by looking at
+    // dungeon paths. dgn → mob refs aren't directly typed; use refs walk via
+    // raw section if needed. For Stage 1, leave empty unless we discover a
+    // tractable mapping.
+    const monsterRefs: string[] = [];
+
+    const shape: DungeonRuntimeShape = {
+      shape_version: SHAPE_VERSION,
+      id,
+      dgn,
+      maps: dungeonMaps,
+      monsterRefs,
+    };
+    entries.push(await writeShard(options.outDir, `dungeons/${id}.json`, shape, "dungeon"));
+  }
+
+  // ── Shared / physics + enums ─────────────────────────────────────────
+  if (options.sharedPhysics) {
+    const physicsShape: SharedPhysicsShape = {
+      shape_version: SHAPE_VERSION,
+      constants: options.sharedPhysics,
+    };
+    entries.push(await writeShard(options.outDir, "shared/physics.json", physicsShape, "shared"));
+  }
+  if (options.sharedEnums) {
+    const enumsShape: SharedEnumsShape = {
+      shape_version: SHAPE_VERSION,
+      tables: options.sharedEnums.tables,
+      field_to_enum: options.sharedEnums.field_to_enum,
+    };
+    entries.push(await writeShard(options.outDir, "shared/enums.json", enumsShape, "shared"));
+  }
+
+  // ── Manifest ─────────────────────────────────────────────────────────
+  const manifest: RuntimeManifest = {
+    manifest_version: MANIFEST_VERSION,
+    exported_at: options.meta.exportedAt,
+    pvf_hash: options.meta.pvfHash,
+    extractor_version: options.meta.extractorVersion,
+    files: entries,
+  };
+  const manifestPath = join(options.outDir, "manifest.json");
+  await mkdir(options.outDir, { recursive: true });
+  await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
+
+  return {
+    outDir: options.outDir,
+    manifestPath,
+    manifest,
+    filesWritten: entries.length + 1,  // +1 for manifest itself
+    durationMs: Date.now() - startedAtMs,
+  };
+}
+
+// ─── Internal helpers ──────────────────────────────────────────────────────
+
+async function writeShard(
+  outDir: string,
+  relPath: string,
+  shape: unknown,
+  kind: RuntimeKind,
+): Promise<RuntimeManifestEntry> {
+  const absPath = join(outDir, relPath);
+  const dir = dirnameOf(absPath);
+  await mkdir(dir, { recursive: true });
+
+  // Serialize with stable key order — JSON.stringify uses insertion order;
+  // since the shape was built from explicit literals with consistent ordering,
+  // output is deterministic across runs given the same input.
+  const json = JSON.stringify(shape, null, 2);
+  await writeFile(absPath, json);
+
+  const sha256 = createHash("sha256").update(json).digest("hex");
+  const sizeBytes = Buffer.byteLength(json, "utf-8");
+  return {
+    path: relPath,
+    sha256,
+    sizeBytes,
+    kind,
+    shape_version: (shape as { shape_version?: string }).shape_version ?? SHAPE_VERSION,
+  };
+}
+
+function dirnameOf(p: string): string {
+  const idx = Math.max(p.lastIndexOf("/"), p.lastIndexOf("\\"));
+  return idx >= 0 ? p.slice(0, idx) : ".";
+}
+
+function basenameWithoutExt(pvfPath: string): string {
+  const slash = pvfPath.lastIndexOf("/");
+  const base = slash < 0 ? pvfPath : pvfPath.slice(slash + 1);
+  const dot = base.lastIndexOf(".");
+  return dot < 0 ? base : base.slice(0, dot);
+}
+
+function chrJob(chrPath: string): string | null {
+  // character/<job>/<job>.chr
+  const parts = chrPath.split("/");
+  if (parts[0] !== "character" || parts.length < 3) return null;
+  return parts[1];
+}
+
+function mobId(mobPath: string): string | null {
+  // monster/<id>/<id>.mob — or any depth ≥3 under monster/
+  const parts = mobPath.split("/");
+  if (parts[0] !== "monster" || parts.length < 3) return null;
+  return parts[1];
+}
+
+function dungeonId(dgnPath: string): string | null {
+  // dungeon/<id>/<id>.dgn or dungeon/<id>.dgn
+  const parts = dgnPath.split("/");
+  if (parts[0] !== "dungeon" || parts.length < 2) return null;
+  const last = parts[parts.length - 1];
+  return last.replace(/\.dgn$/i, "");
+}
+
+function isPvpOnlyAtk(atk: AtkDef): boolean {
+  return atk.pvpOnly === true;
+}
+
+function sanitizeMapForRuntime(m: MapDef): MapDef {
+  // PvE-only scope: clear pvpStartArea before export. See
+  // [[feedback-dnf-pve-scope-only]] and design §6 line 391.
+  return { ...m, pvpStartArea: [] };
+}

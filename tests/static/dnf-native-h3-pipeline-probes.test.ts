@@ -535,13 +535,15 @@ function runCli(argv: string[]): { code: number; stdout: string; stderr: string 
   }
 }
 
-// 3d. --stop-at load → exits 2.
+// 3d. Bad --stop-at value 'render' → exits 2 (render is not a real stage).
+// (Previously this test used 'load' as the bogus value; Day 12 added LOAD
+// stage so 'load' became valid. 'render' is still unsupported.)
 {
-  const r = runCli(["--pvf", "foo.pvf", "--file", "x.atk", "--stop-at", "load"]);
-  if (r.code === 2 && r.stderr.includes("Unsupported --stop-at load")) {
-    ok("cli-stopAt-load", "exits 2 (correct)");
+  const r = runCli(["--pvf", "foo.pvf", "--file", "x.atk", "--stop-at", "render"]);
+  if (r.code === 2 && r.stderr.includes("Unsupported --stop-at render")) {
+    ok("cli-stopAt-bogus", "exits 2 with named-stage rejection for unknown stage");
   } else {
-    bug("cli-stopAt-load", `exit=${r.code} stderr=${JSON.stringify(r.stderr)}`);
+    bug("cli-stopAt-bogus", `exit=${r.code} stderr=${JSON.stringify(r.stderr)}`);
   }
 }
 

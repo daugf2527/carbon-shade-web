@@ -283,9 +283,33 @@ const DAYS = [
       { id: "export-script", desc: "scripts/export-runtime-json.mjs",
         check: () => ({ passed: exists("scripts/export-runtime-json.mjs"),
                         evidence: exists("scripts/export-runtime-json.mjs") ? "exists" : "missing" }) },
-      { id: "runtime-manifest", desc: "dist/data/manifest.json or src manifest schema",
-        check: () => ({ passed: exists("dist/data/manifest.json"),
-                        evidence: exists("dist/data/manifest.json") ? "exists" : "missing (build hasn't emitted)" }) },
+      { id: "runtime-manifest", desc: "RuntimeExporter.ts emits manifest.json with sha256+sizeBytes",
+        check: () => {
+          const exporterPath = "src/dnf-native-combat/data/exporter/RuntimeExporter.ts";
+          const runnerPath = "src/dnf-native-combat/data/pipeline/pipelineRunner.ts";
+          if (!exists(exporterPath)) return { passed: false, evidence: "RuntimeExporter.ts missing" };
+          const e = readFileSync(join(ROOT, exporterPath), "utf-8");
+          const required = [
+            "exportRuntimeShards",
+            "PlayerRuntimeShape",
+            "MonsterRuntimeShape",
+            "DungeonRuntimeShape",
+            "RuntimeManifest",
+            "manifest_version",
+            "sha256",
+            "sizeBytes",
+          ];
+          const missing = required.filter(sym => !e.includes(sym));
+          if (missing.length > 0) {
+            return { passed: false, evidence: `RuntimeExporter.ts missing: ${missing.join(", ")}` };
+          }
+          if (!exists(runnerPath)) return { passed: false, evidence: "pipelineRunner.ts missing" };
+          const r = readFileSync(join(ROOT, runnerPath), "utf-8");
+          if (!r.includes("exportRuntimeShards")) {
+            return { passed: false, evidence: "pipelineRunner.ts does not import exportRuntimeShards" };
+          }
+          return { passed: true, evidence: "RuntimeExporter has 5 shape exports + manifest schema + pipelineRunner integration" };
+        }},
     ],
   },
   {

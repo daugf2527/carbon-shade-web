@@ -13,6 +13,11 @@ import {
   type ImportMode,
   type SqliteImportResult,
 } from "../importer/SqliteImporter.js";
+import {
+  exportRuntimeShards,
+  type ExportResult,
+} from "../exporter/RuntimeExporter.js";
+import type { AniDef } from "../types/AniDef.js";
 import type { PvfDocument } from "../types/PvfDocument.js";
 
 export interface PipelineRunOptions {
@@ -21,23 +26,20 @@ export interface PipelineRunOptions {
   debugOut: string;
   executablePath?: string;
   loadDocuments?: (files: string[]) => Promise<PvfDocument[]>;
-  /**
-   * Optional run identifier for VALIDATE stage report.
-   * Defaults to a timestamp slug if absent.
-   */
   runId?: string;
-  /**
-   * Directory to drop verification/*.json reports.
-   * Defaults to `<debugOut>/../verification/` if absent.
-   * Pass `null` to disable report emission (still computes the in-memory report).
-   */
   verificationOutDir?: string | null;
-  /**
-   * Path for SQLite mirror DB (LOAD stage). Use ":memory:" for tests.
-   * Default: undefined → LOAD stage is skipped. Pass an explicit path to enable.
-   */
   sqliteDbPath?: string;
   sqliteMode?: ImportMode;
+  /**
+   * Output directory for EXPORT stage runtime JSON shards (dist/data style).
+   * Default: undefined → EXPORT stage is skipped. Pass a path to enable.
+   */
+  exportOutDir?: string;
+  /** Optional AniDef[] loaded outside the dispatch (animation parser is standalone). */
+  aniDefs?: ReadonlyArray<AniDef>;
+  /** Optional physics + enum content for shared/*.json shards. */
+  sharedPhysics?: Record<string, unknown>;
+  sharedEnums?: { tables: Record<string, Record<string, string>>; field_to_enum: Record<string, string> };
 }
 
 export interface PipelineParseError {
@@ -46,24 +48,20 @@ export interface PipelineParseError {
 }
 
 export interface PipelineRunResult {
-  /** Highest stage successfully completed end-to-end. */
-  stage: "parse" | "validate" | "load";
+  stage: "parse" | "validate" | "load" | "export";
   filesExtracted: number;
   filesParsed: number;
   parseErrors: PipelineParseError[];
   debugOut: string;
   parsed: ParsedPvfDocument[];
-  /** VALIDATE stage output. Always populated. */
   validation: VerificationReport;
-  /** Companion provenance-focused report (subset of validation). */
   provenanceAudit: ProvenanceAuditReport;
-  /** When verificationOutDir is non-null, paths of written JSON reports. */
   reportPaths: {
     extractionReport: string | null;
     provenanceAudit: string | null;
   };
-  /** Populated only when sqliteDbPath is provided. */
   sqliteImport: SqliteImportResult | null;
+  exportResult: ExportResult | null;
 }
 
 export async function runExtractParsePipeline(options: PipelineRunOptions): Promise<PipelineRunResult> {
@@ -153,6 +151,25 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
     highestStage = "load";
   }
 
+  // ─── EXPORT stage (opt-in) ─────────────────────────────────────────────
+  // Per design §4: entity-centric JSON shards + manifest.
+  let exportResult: ExportResult | null = null;
+  if (typeof options.exportOutDir === "string") {
+    exportResult = await exportRuntimeShards({
+      outDir: options.exportOutDir,
+      parsed,
+      aniDefs: options.aniDefs,
+      meta: {
+        pvfHash,
+        extractorVersion,
+        exportedAt: finishedAt,
+      },
+      sharedPhysics: options.sharedPhysics,
+      sharedEnums: options.sharedEnums,
+    });
+    highestStage = "export";
+  }
+
   return {
     stage: highestStage,
     filesExtracted: documents.length,
@@ -167,6 +184,7 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
       provenanceAudit: provenanceAuditPath,
     },
     sqliteImport,
+    exportResult,
   };
 }
 
