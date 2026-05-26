@@ -1,11 +1,13 @@
 # Carbon Harness Implementation Plan — 对照 harmony 19 项反推
 
-> 计划日期：2026-05-25
+> 计划日期：2026-05-25（2026-05-26 调查修订）
 > 适用仓库：`D:/carbon-shade-web`（本仓库）
 > 源参照：`D:/windsulf/daugf2527-repos/harmonyos-libretro-emulator/docs/plans/2026-05-24-harness-fusion-design.md`（两仓库共享设计文档）
 > harmony 已落地状态：S2 (P0) + S4 (12/12 P1) = 19 项 closed（commit `0bb99ce` / `fb2c6a4` / `c0d18bc` / `9944fbb`）
-> 本计划状态：S1 完成（本文件）；S2-S5 待实施
+> 本计划状态：S1 完成（本文件）；S2-S6 待实施；S4.5 作废（2026-05-26）
 > 实施 cwd：必须 `cd D:/carbon-shade-web`（任何步骤切错 cwd 会让 hook 误指向 harmony）
+>
+> **⚠️ S 编号说明**：本文 §9 的 S2-S6 是 **carbon 内部编号**；`docs/plans/2026-05-24-harness-fusion-design.md` §6 的 S2-S6 是 **双仓库共享编号**，二者不同（fusion §6 S3 = carbon plan §9 S2）。跨文档对话或回查 commit 时按本文 §9 编号走。
 
 ---
 
@@ -54,9 +56,9 @@
 | 3 | B1 disable-model-invocation | auto-commit-cicd | ✗ closed-loop + audit 都没设 | **B1.carbon — P0** |
 | 4 | C1 permissions.deny | harmony 已有 4 条 | ✗ 完全空 | **C1 — P0** |
 | 5 | C2 defaultMode: acceptEdits | harmony 已有 | ✗ 缺 | **C2 — P0** |
-| 6 | CT1 CLAUDE.md ≤200 行 | root 102 行（已分层） | ⚠ 单文件 350 行（边界值） | **CT1 — P1 评估后再定** |
-| 7 | CT2 .claudeignore | harmony 已有 | ✗ MISSING | **CT2 — P0** |
-| 8 | CT3 @import 子 CLAUDE.md | `@entry/.../ets/CLAUDE.md` + `cpp/CLAUDE.md` | ✗ 没分层，自然不需要 | **CT3 — 视 CT1 决策** |
+| 6 | CT1 CLAUDE.md ≤200 行 | root 102 行（已分层） | ✓ 实测 **194 行**（< 200 上限） | ~~**CT1**~~ **作废**（2026-05-26 调查：plan 350 行估算偏高 156 行；联动 CT3 @import 也作废） |
+| 7 | CT2 .claudeignore | harmony 已有 | ✗ MISSING + 有 `.claude/phase4-4b-research-report.md` 游离 / `scheduled_tasks.lock` | **CT2 — P0**（范围扩，与 HK1 配套） |
+| 8 | CT3 @import 子 CLAUDE.md | `@entry/.../ets/CLAUDE.md` + `cpp/CLAUDE.md` | ✗ 没分层，自然不需要 | ~~**CT3**~~ **作废**（CT1 不拆，CT3 自然无意义） |
 | 9 | CT5 subagent memory | `napi-boundary-reviewer.memory.md` | ✗ 缺 | **CT5 — P1** |
 | 10 | B2 learnings.md | 2 个 skill 各一份 | ✗ 6 个 skill 全无 | **B2 — P1** |
 | 11 | H3 SessionStart context-inject | git status + log + 上次 quick_signals | ⚠ 有 reset-status.mjs 但只写 status.json 不 echo 给 Claude | **H3.carbon — P1（改造 reset-status）** |
@@ -66,7 +68,7 @@
 | 15 | OS1 项目级 statusLine | bash 解析 quick_signals + idle | ⚠ 有 status.json 但 settings.json 无 statusLine 字段 | **OS1.carbon — P1** |
 | 16 | NT1 Notification hook | BurntToast / msg fallback | ✗ 缺 | **NT1.carbon — P1** |
 | 17 | PG1 plugin marketplace audit | 决策不装 | ✗ 没 audit 过 | **PG1.carbon — P1** |
-| 18 | FB1 pre-commit hook | `.git/hooks/pre-commit` 跑 quick_signals | ✗ MISSING | **FB1.carbon — P1** |
+| 18 | FB1 pre-commit hook | `.git/hooks/pre-commit` 跑 quick_signals | ⚠ 已有 `scripts/hooks/pre-push` 跑 `npm run analyze`；pre-commit 层 MISSING | **FB1.carbon — P1 改写**（基于 pre-push 现状 3 选 1） |
 | 19 | SC1+SC2 skill frontmatter | allowed-tools + model: sonnet | ✗ 6 个 skill 全无 | **SC1+SC2 — P1** |
 
 **额外（harmony 没列但 carbon 该有的）**:
@@ -79,7 +81,14 @@
 | 23 | PM1+PM2 plan mode 指引 + Alt+M | harmony root CLAUDE.md W6 速查表 | ✗ 完全缺 | **PM1+PM2 — P1** |
 | 24 | WIN1.carbon Windows 速查表 | harmony root CLAUDE.md "Windows 注意事项速查" | ✗ 完全缺 | **WIN1.carbon — P0** |
 
-**总计**: P0 = 5 项 / P1 = 13 项 / 0 项故意不做的 P0 / P1 中 CT1 需先评估再决策。
+**总计**: P0 = 5 项 / P1 = 14 项（CT1 / CT3 作废 -2；SE4 升 P1 / VA1 / HK1 新增 +3；FB1 改写）
+
+> **修订说明（2026-05-26 Explore agent 实地摸底）**：5 处 plan 与实情不一致已修订：
+> 1. CLAUDE.md 实测 194 行（plan 估 350）→ **CT1 + CT3 作废**
+> 2. closed-loop SKILL.md **13587 字节占 6 skill 总和 40%**（合计 33543 字节）→ **SE4 从 P2 升 P1**
+> 3. `scripts/hooks/pre-push` 已存在 → **FB1.carbon 改写**为 3 选 1
+> 4. verify-all skill 3 gate ≠ npm run analyze 8 gate → **新增 VA1**
+> 5. `.claude/phase4-4b-research-report.md` 游离 / `scheduled_tasks.lock` → **新增 HK1 + CT2 范围扩**
 
 ---
 
@@ -114,7 +123,7 @@
   - `.claude/skills/audit/SKILL.md` frontmatter 加 `disable-model-invocation: true`
 - **验收**: prompt "跑闭环" / "audit X"，skill 不自动触发；只有显式 `/closed-loop` / `/audit` 才触发。
 
-### CT2 — 新建 .claudeignore
+### CT2 — 新建 .claudeignore（含 .claude/ 卫生扩展）
 
 - **harmony 对照**: `D:/windsulf/.../harmonyos-libretro-emulator/.claudeignore`（包含 `deprecated/legacy/` 等）
 - **carbon 落地**: `D:/carbon-shade-web/.claudeignore` 新建：
@@ -134,8 +143,17 @@
   .codex/
   .codex_tmp/
   .windsurf/
+
+  # .claude/ runtime residue (2026-05-26 调查新增；与 HK1 配套)
+  .claude/scheduled_tasks.lock
+  .claude/.last-*-ts
+  .claude/.last-*.txt
+  .claude/worktrees/
   ```
-- **验收**: carbon 会话内 Grep `dist/` 不再扫到（除非显式 `--no-claudeignore`）。
+- **验收**:
+  1. carbon 会话内 Grep `dist/` 不再扫到（除非显式 `--no-claudeignore`）
+  2. Grep `.claude/scheduled_tasks` 不再扫到
+- **配套**: 游离文件 `.claude/phase4-4b-research-report.md` 不在此 ignore 范围内（单点文件移走更合理）→ 见 §4 新增 HK1 块
 
 ### WIN1.carbon — CLAUDE.md 加 Windows 注意事项速查表
 
@@ -273,18 +291,26 @@ P0 全部完成后 `git add -A && git commit -m "chore(harness): S2 — P0 5 项
   ```
 - **验收**: 模拟 16 分钟 idle (`echo $(($(date +%s) - 1000)) > .claude/.last-activity-ts`)，下一次 UserPromptSubmit 产出 `[auto-detected idle:]` sentinel，触发用户级 session-debrief skill 主动询问。
 
-#### FB1.carbon — pre-commit hook
+#### FB1.carbon — pre-commit hook（基于 pre-push 现状改写）
 
 - **harmony 对照**: `.git/hooks/pre-commit`（裸 git hook，跑 `bash scripts/check/quick_signals.sh`）
-- **carbon 落地**: 新建 `.git/hooks/pre-commit`（裸文件，chmod +x）:
+- **carbon 现状**（2026-05-26 调查）: 已存在 `scripts/hooks/pre-push` 跑 `npm run analyze`（8 gate 阻塞 push）—— pre-commit 层 MISSING
+- **3 选 1 决策**（实施时拍板）:
+  - **A. 补 pre-commit 快速门**（推荐）: 新建 `.git/hooks/pre-commit` 跑 `npm run typecheck && npm run static:test`（~30s，不跑 build），承担"快速验证"；pre-push 继续跑全 8 gate analyze。两层并存：pre-commit 阻 typo/类型错，pre-push 阻深度 gate。
+  - **B. 仅扩 pre-push**: 不补 pre-commit，让 pre-push 已有的 8 gate analyze 兜底；接受"commit 不验，push 才验"现状。理由：DNF Stage 1 期间 commit 量大且多为草稿，每次 commit 跑 lint 打扰。
+  - **C. 不补**: 完全靠 PostToolUse hook + Claude 主动 verify-all 兜底。
+- **若选 A，落地脚本**:
   ```bash
   #!/usr/bin/env bash
-  # carbon pre-commit — runs verify-all gates before allowing commit.
+  # carbon pre-commit — fast type/static gate only. Full analyze runs on pre-push.
   # Bypass with: git commit --no-verify (use sparingly).
   npm run typecheck && npm run static:test
   ```
-  *注*: 不跑全 `verify-all`（含 build），因为 build 太慢；只跑 typecheck + static:test 两道快门。
-- **验收**: 命令行手敲 `git commit` 时本地 lint 失败拒提交；`git commit --no-verify` 可跳过。
+- **若选 A，setup**: `scripts/setup-git-hooks.mjs` 一键 symlink（同 pre-push 现有 setup 模式）
+- **验收**:
+  - 若 A: `git commit` 时 typecheck 失败拒提；`git commit --no-verify` 可跳过；pre-push 8 gate 仍生效
+  - 若 B: 本段加注 "决策 B：仅扩 pre-push，不补 pre-commit"
+  - 若 C: 本段加注 "决策 C：不补，靠 PostToolUse 兜底"
 
 #### NT1.carbon — Notification hook
 
@@ -315,7 +341,44 @@ P0 全部完成后 `git add -A && git commit -m "chore(harness): S2 — P0 5 项
 - **前置条件**: 用户一次性 `powershell -Command "Install-Module BurntToast -Scope CurrentUser -Force"`（与 harmony 一样不自动装）。
 - **验收**: 让 Claude 跑 `npm run build`（数十秒），结束时桌面右下角弹通知。
 
-**S4 commit message**: `chore(harness): S4 — P1 反馈塔补齐 (C3/CB2/FB1/NT1)`
+#### SE4 — Skill listing budget 调参（2026-05-26 升 P1）
+
+- **来源**: Explore agent 量化：6 个 SKILL.md 合计 33543 字节，closed-loop 单文件 **13587 字节 = 40% 占比**；Claude Code 默认 `skillListingBudgetFraction: 0.01`（1%）即将撞顶；微信公众号「克劳德猎手」一文给出诊断 + 调参方案
+- **carbon 落地**（注：写到 user-level `~/.claude/settings.json`，不写项目级，因为 budget 影响所有 skill 含 user 级 + 跨项目通用）:
+  ```json
+  {
+    "skillListingBudgetFraction": 0.02,
+    "skillListingMaxDescChars": 200
+  }
+  ```
+- **前置条件**: Claude Code 版本 ≥ v2.1.129（实施前 `claude doctor` 确认）
+- **D7 决策点**: 若 `claude doctor` 报字段不识别 → 跳过 SE4 调参，转走 SC6（SKILL.md frontmatter `paths:`）路径作用域兜底（见 §13.3 D7）
+- **验收**:
+  1. `/context` 显示 skill listing budget 不再有 dropped warning
+  2. 在 carbon 项目内输入"跑闭环 X"，`/closed-loop` 仍能被列出（描述未被砍）
+  3. `/doctor` 输出 skill 总数与 `ls ~/.claude/skills + ls .claude/skills` 总数一致
+
+#### VA1 — verify-all skill 与 npm run analyze 语义对齐（2026-05-26 新增）
+
+- **来源**: Explore agent 发现 `verify-all/SKILL.md` 跑 3 gate（typecheck / static:test / build），但 `npm run analyze` 是 8 gate（多 depcruise / event-trace / pipeline-dump / manifest-consumers / knip）。Claude 可能误信"verify-all 通过 = CI 通过"
+- **carbon 落地**（2 选 1）:
+  - **A. 扩 verify-all 跑全 8 gate**: 改 SKILL.md 让命令变成 `npm run analyze`（与 CI 一致）；缺点：含 build 跑时间从 ~30s 涨到 ~60-90s，"快速验证"语义破坏
+  - **B. 显式标"快速预检 ≠ CI"**（推荐）: SKILL.md frontmatter `description` 改成 "Quick 3-gate pre-check (typecheck/static:test/build). Does NOT cover the 8-gate analyze used by CI" + 内容里加一行 "若需 CI 等价，跑 `npm run analyze` 而非 /verify-all"
+- **验收**: `/verify-all` 触发时输出明示"3 gate 快速预检，CI 等价要跑 analyze"
+- **风险**: 选 A 时 verify-all 跑时间显著拉长，日常打扰增加；选 B 时依赖 Claude 看 description（可能仍误信）
+
+#### HK1 — .claude/ 目录卫生（2026-05-26 新增）
+
+- **来源**: Explore agent 发现 `.claude/phase4-4b-research-report.md` 游离（疑似会话临时产物遗留）+ `.claude/scheduled_tasks.lock` 运行时锁文件未在 .gitignore
+- **carbon 落地**:
+  1. 移走或归档 `.claude/phase4-4b-research-report.md` → `docs/research/2026-05-XX-phase4-4b-jump-velocity.md`（按内容主题归位 docs/research/）
+  2. `.gitignore` 加 `.claude/scheduled_tasks.lock` + `.claude/.last-*-ts` + `.claude/.last-*.txt` + `.claude/worktrees/`（与 CT2 .claudeignore 协同）
+  3. 加 Stop hook 末段检查 `.claude/` 根目录是否有 `*.md` 文件不属于 skills/agents/，警告但不阻塞
+- **验收**:
+  1. `ls .claude/*.md` 仅 settings 类（如有）+ 不应有研究文档
+  2. `git status` 不再把 `.claude/scheduled_tasks.lock` 列为 untracked
+
+**S4 commit message**: `chore(harness): S4 — P1 反馈塔 + 调查修订 (C3/CB2/FB1/NT1/SE4/VA1/HK1)`
 
 ---
 
@@ -457,23 +520,16 @@ P0 全部完成后 `git add -A && git commit -m "chore(harness): S2 — P0 5 项
 
 ---
 
-### S4.5（可选）— CT1 评估会话
+### ~~S4.5（可选）— CT1 评估会话~~ **作废（2026-05-26）**
 
-#### CT1 — 评估 CLAUDE.md 350 行是否需要拆分
+#### ~~CT1 — 评估 CLAUDE.md 350 行是否需要拆分~~
 
-- **harmony 对照**: root 102 行 + ets/ 67 行 + cpp/ 50 行 = 分层结构
-- **carbon 现状**: 单文件 350 行
-- **决策树**:
-  - 350 行 < harness-fusion 推荐 ≤200 行的 1.75 倍 → 边界值
-  - 若内容已含明确模块边界（如 "Combat kernel" / "Data layer" / "Phaser isolation" 各自独立段）→ **拆**
-  - 若全是顶层项目身份 + 全局约束 → **不拆**，标 P2
-- **若决定拆**:
-  - 拆出 `src/combat/CLAUDE.md`（Combat kernel + Phaser isolation + replay determinism 段）
-  - 拆出 `src/data/CLAUDE.md` 或 `src/data/manifest/CLAUDE.md`（versioned manifest + provenance 三级置信度铁律）
-  - root CLAUDE.md 用 `@src/combat/CLAUDE.md` `@src/data/CLAUDE.md` 引用（CT3 一并落）
-- **验收**:
-  - 若拆: `wc -l` 每个 ≤200，且 grep 关键术语（"Phaser isolation" / "sourceProvenance"）在子文件而非 root。
-  - 若不拆: 本文件 CT1 段加注 "评估结论: 350 行内容不可分，标 P2 探索"。
+> **作废理由**: 2026-05-26 Explore agent 实地摸底，carbon root `CLAUDE.md` 实测 **194 行**（plan 350 行估算偏高 156 行），低于 harness-fusion 推荐 ≤200 行的上限。无需拆分。联动 **CT3 @import 子 CLAUDE.md** 也作废（无子文件可 @import）。
+>
+> **若未来 CLAUDE.md 扩张超 200 行**：重启 CT1 评估走原决策树（按模块边界拆 `src/combat/CLAUDE.md` / `src/data/CLAUDE.md`）。原决策树内容保留作未来参考：
+> - 350 行 < ≤200 行的 1.75 倍 → 边界值
+> - 若内容已含明确模块边界 → 拆 + CT3 @import 一并落
+> - 若全是顶层项目身份 + 全局约束 → 不拆
 
 ---
 
@@ -527,7 +583,7 @@ P0 全部完成后 `git add -A && git commit -m "chore(harness): S2 — P0 5 项
 | 5 | WIN1.carbon | `grep -E "W[1-9]" CLAUDE.md` | ≥ 8 行 |
 | 6 | C3 Stop hook | 让 Claude stop 后查 `.claude/.last-activity-ts` | mtime 是刚才 |
 | 7 | CB2 idle 检测 | 模拟 16min idle，触发 UserPromptSubmit | 注入 `[auto-detected idle:]` sentinel |
-| 8 | FB1.carbon | 命令行 `git commit` 引入 typecheck 错 | 提交被拒 |
+| 8 | FB1.carbon | 视 3 选 1 决策：A→ `git commit` 引入 typecheck 错应被拒；B→ `git push` 时 8 gate analyze 阻塞；C→ 本段加注"选 C，无 pre-commit/pre-push 主动验" | 同列对应 |
 | 9 | NT1.carbon | `echo '{"message":"test"}' \| node .claude/hooks/notify.mjs` | 弹通知 |
 | 10 | H3.carbon | 新会话开场 prompt "现状如何？" | Claude 立刻知道分支 + 3 commit + 上次 analyze |
 | 11 | OS1.carbon | 看状态栏 | `[branch*] az:PASS <task> idle:Nm` |
@@ -539,8 +595,11 @@ P0 全部完成后 `git add -A && git commit -m "chore(harness): S2 — P0 5 项
 | 17 | CT5 | 派 combat-kernel-reviewer 审一个文件 | 引用 memory.md invariants |
 | 18 | PM1+PM2 | `grep -E "plan mode|Alt\+M" CLAUDE.md` | ≥ 3 行 |
 | 19 | PG1 | 本文件 PG1 段 | 有 "Status YYYY-MM-DD" 决策行 |
+| 20 | SE4 (2026-05-26 升 P1) | `/context` 在 carbon 项目内查 skill listing | 无 dropped warning + `/closed-loop` 列出 |
+| 21 | VA1 (2026-05-26 新增) | 触发 `/verify-all` | 输出"3 gate 快速预检 ≠ CI"或跑全 8 gate（视 A/B 决策） |
+| 22 | HK1 (2026-05-26 新增) | `ls .claude/*.md` + `git status` | 无游离研究文档 + `scheduled_tasks.lock` 不 untracked |
 
-**全 19 项通过 = harmony 19 项功能在 carbon 完全等价落地**。
+**全 22 项通过 = harmony 19 项 + carbon 调查新增 3 项 = carbon harness 完全到位**。
 
 ---
 
@@ -552,9 +611,12 @@ P0 全部完成后 `git add -A && git commit -m "chore(harness): S2 — P0 5 项
 | NT1 BurntToast 未装 | notify.mjs 已写 `msg "%USERNAME%"` fallback，但 fallback 弹的是阻塞 message box 影响 UX，用户需一次性 `Install-Module BurntToast` |
 | FB1 pre-commit hook 不在 git tracked（`.git/hooks/` 不版本化） | 设置脚本 `scripts/setup-git-hooks.mjs` 一键 install；README "Setup" 段加一句 "run once: `node scripts/setup-git-hooks.mjs`" |
 | H3 改造 reset-status.mjs 时破坏现有 status.json 重置逻辑 | 改造严格按 "原逻辑 + 末尾 append echo" 顺序，不删原代码；先跑 dry-run 一次 `node .claude/hooks/reset-status.mjs` 看 status.json 是否仍正确 |
-| CT5 combat-kernel-reviewer.memory.md 内容写错 invariants 误导 review | 第一版从 src/combat/CLAUDE.md（拆出来的）或现有 combat-kernel-reviewer.md body 中提炼，不自创 |
-| CT1 拆 CLAUDE.md 时拆得太碎 | 严守"拆完每个文件 ≤200 行且单一主题"；若边拆边发现单主题超 200，停止本次拆分回到 P2 |
-| 实施时 cwd 误设为 harmony | 每个 Bash 步骤先 `pwd \| grep carbon-shade-web` 或 `cd D:/carbon-shade-web && pwd`；本计划所有路径都用绝对 `D:/carbon-shade-web/...` |
+| CT5 combat-kernel-reviewer.memory.md 内容写错 invariants 误导 review | 第一版从现有 combat-kernel-reviewer.md body 中提炼，不自创（CT1 作废后无 src/combat/CLAUDE.md 可提炼） |
+| ~~CT1 拆 CLAUDE.md 时拆得太碎~~ | ~~原兜底~~ — **作废 2026-05-26**：CLAUDE.md 实测 194 行不需要拆 |
+| SE4 字段 Claude Code 版本不识别 | `claude doctor` 先验；不识别走 D7 分支转 SC6（SKILL.md `paths:`）兜底；最后兜底 user 手动裁剪 closed-loop SKILL.md（最大文件 13587 字节占 40%） |
+| VA1 选 A 跑时间从 ~30s 涨到 60-90s 打扰 | 默认选 B（仅改 description）；只有当 Claude 多次误信 "verify-all = CI" 才升级到 A |
+| HK1 移走 phase4-4b 时归位错位 | 移之前 `git mv .claude/phase4-4b-research-report.md docs/research/2026-05-XX-phase4-4b-jump-velocity.md` 保留 git 历史；归位前看文件首段确认主题 |
+| 实施 cwd 误设为 harmony / working tree dirty | 每个 Bash 步骤先 `pwd \| grep carbon-shade-web && git status -s`；本计划所有路径用绝对 `D:/carbon-shade-web/...`；dirty 时只 `git add <specific-file>` 不用 `-A`（详见 §10 dirty tree handling） |
 | auto-commit-cicd 移植后 CI workflow 名/job 名与 harmony 不一致 | S6 实施前先 `gh workflow list` 查 carbon 主 CI workflow 名（推测是 build-dnf-extract.yml 或 ci.yml），按实际名替换 SKILL.md 模板的 `harmonyos-pr-ci.yml` |
 | 一次实施跨多会话 context 漂移 | 每个 S 阶段独立 commit，下次会话 `git log --oneline -10` 即可定位上一阶段进度 |
 
@@ -565,22 +627,30 @@ P0 全部完成后 `git add -A && git commit -m "chore(harness): S2 — P0 5 项
 | 阶段 | cwd | 预算 | 范围 | 验收 | 状态 |
 |---|---|---|---|---|---|
 | **S1（本会话）** | harmony | ≈1.5h | 产出本计划 + 与 harness-fusion-design.md 互相引用 | 本文件 commit | ✅ 2026-05-25（待 commit） |
-| **S2** | **carbon** | ≤2h | P0 5 项（C1/C2/B1.carbon/CT2/WIN1.carbon） | 7. 验证清单 #1-#5 通过 | ⏳ pending |
+| **S2** | **carbon** | ≤2h | P0 5 项（C1/C2/B1.carbon/CT2/WIN1.carbon） | 7. 验证清单 #1-#5 通过 | ✅ 2026-05-26 |
 | **S3** | carbon | ≤2h | P1 frontmatter 标准化（SC1/SC2/SE1/AG1） | 验证清单 #12-#14 通过 | ⏳ pending |
-| **S4** | carbon | ≤2h | P1 反馈塔（C3/CB2/FB1.carbon/NT1.carbon） | 验证清单 #6-#9 通过 | ⏳ pending |
+| **S4** | carbon | ≤2.5h | P1 反馈塔（C3/CB2/FB1.carbon/NT1.carbon）+ **调查修订（SE4/VA1/HK1）** | 验证清单 #6-#9 + #20-#22 通过 | ⏳ pending |
 | **S5** | carbon | ≤2h | P1 上下文 + statusline（H3.carbon/OS1.carbon/PM1+PM2） | 验证清单 #10-#11、#18 通过 | ⏳ pending |
 | **S6** | carbon | ≤1.5h | 高阶（CB1/B2/CT5/PG1.carbon） | 验证清单 #15-#17、#19 通过 | ⏳ pending |
-| **S4.5（可选）** | carbon | ≤1h | CT1 评估 CLAUDE.md 拆分 | 决策结论写回本文件 | ⏳ 视 S5 时挂 |
+| ~~**S4.5（可选）**~~ | — | — | ~~CT1 评估~~ **作废 2026-05-26**（CLAUDE.md 194 行不需要拆） | — | ✗ 作废 |
 | **S7+** | 视情况 | - | P2 探索 8 项（SE2/SC3-5/WT2/OS2/NT2/WIN3/CB3） | 各自条件触发后 | ⏳ 观察期 |
 
-**总预算**: S2-S6 = 9.5h，分摊 2-3 周。
+**总预算**: S2-S6 = 10h（含 SE4/VA1/HK1 调查修订 +0.5h），分摊 2-3 周。
 
 ---
 
 ## 10. 本计划如何使用（给下次会话的指引）
 
-**开 S2 会话时**（务必 `cd D:/carbon-shade-web`，statusline 看到 `[main*]` 而不是 `[refactor/build-method-split-newarch*]` 才对）:
+**开 S2 会话时**（务必 `cd D:/carbon-shade-web`，statusline 看到 `[dnf-native*]` 才对；master 已 frozen 2026-05-21）:
 
+**前置检查 — dirty tree handling**（2026-05-26 新增）:
+- `git status -s` 看是否有业务 in-progress；若 dirty（如 dnf-extract / parsers 在改），3 选 1：
+  - **A. 先 commit 业务再做 harness**（推荐 — 干净起步，避免 commit 时 add 错）
+  - **B. stash 业务 → 做完 harness → pop stash**
+  - **C. 在 dirty 上直接做 harness，commit 时只 `git add <specific-file>` 不用 `-A`**（避免污染）
+- harness 改的文件（settings.json / skills / .claudeignore / CLAUDE.md）与业务文件（src/ tools/dnf-porting-src/）**不重叠**，技术上可跑，但 specific add 是底线
+
+**实施步骤**:
 1. 读本文件第 3 节 P0 5 项
 2. 按列出顺序：C1 → C2 → B1.carbon → CT2 → WIN1.carbon
 3. 每条按"validation"段手动验证通过才进下一条
@@ -650,7 +720,7 @@ graph LR
     C1[C1 deny]
     C2[C2 acceptEdits]
     B1[B1.carbon disable-model-invocation]
-    CT2[CT2 .claudeignore]
+    CT2[CT2 .claudeignore<br/>+ .claude/ 卫生扩展]
     WIN1[WIN1.carbon Windows 速查]
   end
   subgraph S3["S3 P1 frontmatter"]
@@ -659,11 +729,14 @@ graph LR
     SE1[SE1 项目级 model]
     AG1[AG1 combat-kernel-reviewer frontmatter]
   end
-  subgraph S4["S4 P1 反馈塔"]
+  subgraph S4["S4 P1 反馈塔 + 2026-05-26 调查修订"]
     C3[C3 Stop hook<br/>产出 .last-analyze.txt + .last-activity-ts]
     CB2[CB2 idle 检测<br/>读 .last-activity-ts]
-    FB1[FB1 pre-commit]
+    FB1[FB1.carbon pre-commit<br/>D8 3 选 1 决策]
     NT1[NT1 通知]
+    SE4[SE4 skillListingBudget<br/>升 P1 2026-05-26]
+    VA1[VA1 verify-all gate 对齐<br/>新增 2026-05-26]
+    HK1[HK1 .claude/ 卫生<br/>新增 2026-05-26]
   end
   subgraph S5["S5 P1 上下文 + statusline"]
     H3[H3.carbon SessionStart<br/>读 .last-analyze.txt]
@@ -691,6 +764,9 @@ graph LR
 - **C3 是 S4 的拓扑根**——它产出 `.last-analyze.txt` 和 `.last-activity-ts`，S4 的 CB2 + S5 的 H3/OS1 都依赖这两个文件存在。
 - **OS1 是 SC2 的验证 enabler**——不通过 OS1 看不出 statusline 的 model 字段是否生效。
 - **S2 五项完全独立**——P0 内可乱序，但 S3 以后必须按 DAG 走。
+- **SE4 / VA1 / HK1（2026-05-26 调查新增）独立无依赖**——可在 S4 内任意顺序与 C3/CB2/FB1/NT1 并行插入；SE4 单独有 D7 决策点（字段不识别时走 SC6 SKILL.md `paths:` 兜底）；HK1 是清理任务，与 CT2 配套（同一会话内做或拆）。
+- **FB1 改写为 D8 3 选 1**（pre-commit 快速门 / 仅扩 pre-push / 不补），影响 S2-S6 整体 commit 节奏。
+- **作废节点**：~~CT1（CLAUDE.md 拆）~~ + ~~CT3（@import）~~ — 2026-05-26 实测 194 行不需要拆，原 S4.5 阶段同步作废。
 
 ### 13.2 局部回退矩阵（不动 commit）
 
@@ -716,30 +792,36 @@ graph LR
 | B2 learnings | session-debrief append 写错文件 | 删错误的 learnings.md 重建 |
 | CT5 | review 引用错误 invariants | 删 `combat-kernel-reviewer.memory.md` |
 | PG1 | 无（audit 决策） | 决策行回滚 |
+| SE4 (P1 新) | budget 字段不识别 / 调参后 skill 仍 dropped | `~/.claude/settings.json` 删 `skillListingBudgetFraction` 行；走 D7 转 SC6 兜底；或裁剪 closed-loop SKILL.md（13587 字节缩到 ≤8000） |
+| VA1 (P1 新) | verify-all 跑炸 / 选 A 后跑太慢 | SKILL.md description 回滚；若选 A 则改回 3 gate 命令 |
+| HK1 (P1 新) | phase4-4b 移走后丢失 / .gitignore 误伤 | `git mv` 已保 history 可 `git mv` 回；.gitignore 精确改行 |
 
 每项也独立 commit → 实在不行 `git revert <sha>`。
 
 ### 13.3 carbon 实施时的 if-then 分支节点
 
-实施时这些岔路口必须 stop and decide（与 harmony 附录 P.3 D1-D6 共享，重列 carbon 相关 4 个）：
+实施时这些岔路口必须 stop and decide（与 harmony 附录 P.3 D1-D6 共享 + 2026-05-26 调查新增 D7-D9）：
 
 | 决策点 | 判断 | 主路径 | 分支路径 |
 |---|---|---|---|
 | **D1 SE1** | `claude doctor` `model` 字段支持？ | 落 `"model": "sonnet"` | 删 SE1，仅 SC2 + 用户级 default 兜底 |
 | **D2 BurntToast** | `Get-Module -ListAvailable BurntToast` 有结果？ | `New-BurntToastNotification` | `msg "%USERNAME%"` fallback（阻塞 message box 但能用） |
-| **D3 CT1 拆 CLAUDE.md** | 350 行有明确模块边界？ | S4.5 拆 + CT3 @import | CT1 标 P2，不拆 |
+| ~~**D3 CT1 拆 CLAUDE.md**~~ | ~~350 行有明确模块边界？~~ | — | **作废 2026-05-26**：CLAUDE.md 实测 194 行不需要拆 |
 | **D4 CB1 移植** | S2-S5 跑完后手动 `git push + gh pr create` 体感够用？ | S6 移植 CB1 | CB1 降级 P2，S6 只做 B2/CT5/PG1 |
 | **D5 PG1** | marketplace 有能替代自维护件的 plugin？ | install + 删对应自维护件 | 继续自维护（与 harmony 同走此路） |
-| **D6 cwd** | `pwd \| grep carbon-shade-web` 匹配？ | 继续 | 立刻 cd carbon + `git diff` 验证改动没落错仓库 |
+| **D6 cwd + dirty tree** | `pwd \| grep carbon-shade-web` 匹配且 `git status -s` 干净？ | 继续 | 立刻 cd carbon；若 dirty 走 §10 dirty tree handling A/B/C |
+| **D7 SE4 budget 字段** (新 2026-05-26) | `claude doctor` 报 `skillListingBudgetFraction` 字段支持？ | 落 `0.02` + `skillListingMaxDescChars: 200` | 跳过 SE4，转 SC6 SKILL.md `paths:` 路径作用域 + 手动裁剪 closed-loop SKILL.md |
+| **D8 FB1 pre-commit** (新 2026-05-26) | DNF Stage 1 期间能接受每次 commit 跑 30s typecheck？ | A — 补 pre-commit 跑 typecheck + static:test | B — 仅扩 pre-push（接受 commit 不验）/ C — 不补任何 |
+| **D9 VA1 verify-all** (新 2026-05-26) | Claude 是否已经多次误信 verify-all = CI？ | A — 扩 verify-all 跑全 8 gate analyze | B — 仅改 description 标"快速预检 ≠ CI"（推荐默认） |
 
-### 13.4 闭环反向边（§7 19 项验证失败 → 回到哪一阶段）
+### 13.4 闭环反向边（§7 22 项验证失败 → 回到哪一阶段）
 
 | 验证项 | 失败 | 反向流转 |
 |---|---|---|
 | #1 C1 deny | 拒错 | S2 改 settings.json deny 模式 |
 | #6 C3 Stop hook | `.last-activity-ts` 没更新 | S4 改 stop-hook.mjs 写文件逻辑 |
 | #7 CB2 idle | sentinel 不输出 | S4 改 reset-status.mjs idle 段（gap 计算 / 阈值） |
-| #8 FB1 | commit 没被拒 | S4 重新 chmod +x `.git/hooks/pre-commit` |
+| #8 FB1 | 视 D8 决策：A 失败=`.git/hooks/pre-commit` 未 +x；B/C 失败=未按段加注 | S4 重做 D8 决策落地 |
 | #9 NT1 | 桌面无通知 | 走 D2 分支（msg fallback） |
 | #10 H3 | 开场无摘要 | S5 改 reset-status.mjs 末尾 echo；或检查 `.last-analyze.txt` 是否存在（C3 前置） |
 | #11 OS1 | statusline 不显 | S5 改 statusline.mjs；字段不支持回 P.2 局部禁用 |
@@ -750,9 +832,12 @@ graph LR
 | #16 B2 | learnings 没 Append | 检查 session-debrief skill 路径配置 |
 | #17 CT5 | review 没引用 memory | 检查 AG1 先通过；通过仍没引用 = 等 Claude Code v2.1.33+ |
 | #19 PG1 | 决策行没写 | S6 补写 audit 结论行 |
+| **#20 SE4** (新) | `/context` 仍 dropped | S4 改 `~/.claude/settings.json` budget 值；字段不识别走 D7 |
+| **#21 VA1** (新) | `/verify-all` 输出未含"3 gate ≠ CI"提示 | S4 改 verify-all SKILL.md description；若选 A 则验跑全 8 gate |
+| **#22 HK1** (新) | 仍有游离 .md / `scheduled_tasks.lock` untracked | S4 检查 `git mv` 是否完成 / .gitignore 新行是否生效 |
 
-**与 harmony fusion-design.md 附录 P 互引**：harmony 侧已完成 19 项的 DAG / 回退 / 分支节点在那边；carbon 侧 pending 19 项的同口径表本节给出；两侧合起来才是"完美闭环 + DAG + 可回退 + 分支主干"的全图。
+**与 harmony fusion-design.md 附录 P 互引**：harmony 侧已完成 19 项的 DAG / 回退 / 分支节点在那边；carbon 侧 pending **22 项**（19 + 调查新增 SE4/VA1/HK1）的同口径表本节给出；两侧合起来才是"完美闭环 + DAG + 可回退 + 分支主干"的全图。
 
 ---
 
-> **End of plan v2** (加 §13 后约 540 行)。完整决策点 = P0 5 + P1 13 + P2 8 + 故意不做 15 + 分支决策 6 = 47 项，无 "TBD" 占位。
+> **End of plan v3** (2026-05-26 Explore agent 调查修订)。完整决策点 = P0 5 + P1 14 + P2 8 + 故意不做 15 + 分支决策 9 (D1-D9，D3 作废) + 作废 2 (CT1/CT3) = **53 项**，无 "TBD" 占位。

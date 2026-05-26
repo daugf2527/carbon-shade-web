@@ -1,5 +1,6 @@
 ---
 name: closed-loop
+disable-model-invocation: true
 description: |
   Run the full audit → core-review → fix → fix-verify → gate → commit
   workflow on a stage1 topic. Use when user says "跑闭环 X" / "audit + fix X"

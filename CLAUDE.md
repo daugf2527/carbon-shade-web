@@ -192,3 +192,16 @@ Weapons at `equipment/character/<job>/weapon/<type>/<id>/<action>.ani`.
 - dnf-extract `--pipe` mode requires `quit` sentinel on stdin; missing it causes hang
 - Pipeline smoke tests require `DNF_PVF_PATH` env — absent on Termux/Android
 - `tools/dnf-extract` is aarch64 Android binary; `tools/dnf-extract.exe` is Windows
+
+## Windows 注意事项速查
+
+| # | 坑 | 一句话应对 |
+|---|---|---|
+| W1 | `cmd /c` 包装 stdio MCP | MCP JSON `"command":"cmd","args":["/c","npx","-y","<pkg>"]` |
+| W2 | Git Bash 不在 PATH 时 Claude Code 起不来 | `CLAUDE_CODE_GIT_BASH_PATH=C:\Program Files\Git\bin\bash.exe` |
+| W3 | PowerShell `claude` not recognized | 加 `$env:USERPROFILE\.local\bin` 到 User PATH |
+| W4 | `%USERPROFILE%` vs `~` | PowerShell + Git Bash 用 `~`；CMD 用 `%USERPROFILE%` |
+| W5 | PowerShell 中文 / emoji 乱码 | `chcp 65001; [Console]::OutputEncoding=[Text.Encoding]::UTF8` |
+| W6 | Plan mode Shift+Tab 某些终端 skip | 改按 **Alt+M** 进入 plan mode |
+| W7 | MCP server OAuth 后启动超时 | 启动前 `$env:MCP_TIMEOUT=10000` |
+| W9 | 不知 Claude Code 健康状态 | `/doctor` 或 `claude doctor` |

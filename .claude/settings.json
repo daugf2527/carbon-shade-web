@@ -1,0 +1,99 @@
+{
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npm ls *)",
+      "Bash(npm install *)",
+      "Bash(node scripts/*)",
+      "Bash(node .claude/hooks/*)",
+      "Bash(git *)",
+      "Bash(npx playwright *)"
+    ],
+    "deny": [
+      "Bash(rm -rf*)",
+      "Bash(curl*)",
+      "Bash(* | bash*)",
+      "Read(**.env)",
+      "Read(**secrets**)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/guard-generated-dirs.mjs",
+            "description": "阻止编辑 dist/.tmp/verification/node_modules"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/guard-phaser-boundary.mjs",
+            "description": "拦截 src/combat/ 中的 Phaser 导入"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/guard-velocity-writes.mjs",
+            "description": "限制 velocity 写入位置 (CI 边界规则)"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/guard-lockfile.mjs",
+            "description": "保护 package-lock.json"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/post-typecheck.mjs",
+            "description": "编辑 .ts 文件后自动 typecheck"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/reset-status.mjs",
+            "description": "会话开始时重置 .claude/status.json (statusline 显示)"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/reset-status.mjs",
+            "description": "新 prompt 提交时重置 .claude/status.json (新任务开工)"
+          }
+        ]
+      }
+    ]
+  }
+}

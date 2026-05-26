@@ -1,5 +1,6 @@
 ---
 name: audit
+disable-model-invocation: true
 description: |
   Run agent-based audits with MANDATORY claim verification. Use when you need
   deeper than-test inspection of dnf-extract C++ / dnf-native parsers / pipeline

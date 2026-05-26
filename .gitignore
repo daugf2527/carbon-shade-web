@@ -10,9 +10,10 @@ verification/*
 playwright-report/
 test-results/
 
-# Local Claude harness state (settings + status) is ignored;
-# skills / agents / hooks are shared with the team via the repo.
+# Local Claude harness state (status.json etc.) is ignored;
+# settings.json / skills / agents / hooks are shared via the repo.
 .claude/*
+!.claude/settings.json
 !.claude/skills/
 !.claude/agents/
 !.claude/hooks/

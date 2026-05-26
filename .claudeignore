@@ -1,0 +1,21 @@
+# Build outputs / generated
+dist/
+node_modules/
+.tmp/
+verification/
+bash.exe.stackdump
+
+# Test artifacts
+playwright-report/
+test-results/
+
+# Personal AI tooling
+.codex/
+.codex_tmp/
+.windsurf/
+
+# .claude/ runtime residue
+.claude/scheduled_tasks.lock
+.claude/.last-*-ts
+.claude/.last-*.txt
+.claude/worktrees/
