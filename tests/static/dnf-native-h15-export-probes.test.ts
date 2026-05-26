@@ -93,6 +93,10 @@ function sklFixture(path: string): SkillDef {
     growtypeMaximumLevel: null, skillFitnessGrowtype: null,
     hasPvp: false, hasDungeon: true, hasWarroom: false, hasDeathTower: false,
     autoCoolTimeApply: false, cancelWindow: null,
+    command: null, coolTime: null, consumeMp: null, castingTime: null,
+    levelProperty: null, levelInfo: null, preRequiredSkill: null,
+    featureSkillIndex: null, icon: null, consumeItem: null,
+    maintainMp: null, skillCommandAdvantage: null,
     raw: FAKE_DOC(path),
   };
 }

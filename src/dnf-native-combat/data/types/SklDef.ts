@@ -1,4 +1,4 @@
-import type { PvfDocument, PvfSection } from "./PvfDocument.js";
+import type { PvfAttribute, PvfDocument, PvfSection } from "./PvfDocument.js";
 import type { ExtractedDocumentProvenance, PvfFact, PvfStringFact } from "./Provenance.js";
 
 /**
@@ -103,12 +103,81 @@ export interface SkillDef {
    */
   cancelWindow: SklCancelWindowDef | null;
 
+  // === Phase 4 (2026-05-26) Stage 2 启动门槛 — 12 raw section typed 化 ===
+  // Per stage1-completeness-verification-2026-05-26.md §2.2.
+  // 实测于 dashattackmultihit.skl / icewave.skl / hellbenter.skl (3 个 active 技能样本)。
+
+  /** Input command sequence as token list, e.g. ["(right)", ",", "(down)", ",", "(skill)"].
+   *  Tokens are PVF-internal: "(left)/(right)/(up)/(down)" 方向键, "(skill)/(attack)/(buff)" 动作键,
+   *  "," 分隔符。InputLayer 下游需要 tokenize 这个序列。
+   *  Source: section `[command]` (88/205 swordman skills carry this). */
+  command: string[] | null;
+
+  /** Cooldown in milliseconds [dungeon_ms, pvp_ms]. icewave: 7000/7000.
+   *  Source: section `[cool time]` (22/205). */
+  coolTime: { dungeonMs: number; pvpMs: number } | null;
+
+  /** MP cost [base_mp, lvl_max_mp]. icewave: 27→308.
+   *  Source: section `[consume mp]` (32/205). */
+  consumeMp: { baseMp: number; lvlMaxMp: number } | null;
+
+  /** Casting time in milliseconds [base_ms, lvl20_ms]. icewave: 300/300.
+   *  Source: section `[casting time]` (20/205). */
+  castingTime: { baseMs: number; lvl20Ms: number } | null;
+
+  /** Per-level formula payload — 9-12 mixed int/float/link values.
+   *  Real PVF emits a positional vector whose semantics vary per skill type.
+   *  Preserved verbatim as PvfAttribute[]; Stage 2 skill-engine consumers
+   *  decode per skillType.
+   *  Source: section `[level property]` (155/205, highest non-icon hit). */
+  levelProperty: PvfAttribute[] | null;
+
+  /** Per-level numeric table (variable shape). Absent in 3/3 sampled active
+   *  skills (dashattack/icewave/hellbenter) but present in 27/205 swordman
+   *  skills. Preserved as PvfAttribute[] for downstream unpacking.
+   *  Source: section `[level info]` (27/205). */
+  levelInfo: PvfAttribute[] | null;
+
+  /** Prerequisite skill chain — [skillId, level, ...]. hellbenter: [81, 3].
+   *  Variable length suggests multi-prereq variants exist; keep as int[].
+   *  Source: section `[pre required skill]` (103/205). */
+  preRequiredSkill: number[] | null;
+
+  /** Engine-side classification index. khazan: 164, icewave: 216.
+   *  Source: section `[feature skill index]` (50/205). */
+  featureSkillIndex: number | null;
+
+  /** Skill icon — [atlas, frame, lit_atlas, lit_frame]. atlas paths point to
+   *  `character/<job>/effect/skillicon.img` (external NPK reference).
+   *  Source: section `[icon]` (205/205, every skill carries this). */
+  icon: {
+    atlasPath: string;
+    frame: number;
+    litAtlasPath: string;
+    litFrame: number;
+  } | null;
+
+  /** Consumable items needed to cast — [itemId, count, ...]. hellbenter:
+   *  [3037, 5, 5]. Variable shape; downstream unpacks per item kind.
+   *  Source: section `[consume item]` (37/205). */
+  consumeItem: number[] | null;
+
+  /** Continuous MP drain (toggle/buff skills). Single number.
+   *  Absent in 3/3 sampled active skills; only 4/205 carry this.
+   *  Source: section `[maintain mp]` (4/205). */
+  maintainMp: number | null;
+
+  /** Input window buffer advantage in ms. icewave/hellbenter: [20, 40].
+   *  [normal_priority_ms, advanced_priority_ms] — InputLayer command-buffer
+   *  uses these to decide which skill wins when commands overlap.
+   *  Source: section `[skill command advantage]` (35/205). */
+  skillCommandAdvantage: { normal: number; advanced: number } | null;
+
   // --- escape hatch ---
   /**
    * All sections from the raw document that were not decoded into structured fields.
-   * Keyed by section name. Retains sections with: level property, command, icon,
-   * feature skill index, pre required skill, skill command advantage,
-   * level info, shake screen, consume item, and any other unrecognized sections.
+   * Keyed by section name. Retains sections with: shake screen, basic explain,
+   * explain, etc.
    */
   raw: PvfDocument;
 }

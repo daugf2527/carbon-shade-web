@@ -1,5 +1,5 @@
 import type { SklCancelWindowDef, SklSkillType, SklWeaponEffectType, SkillDef } from "../types/SklDef.js";
-import type { PvfDocument, PvfSection } from "../types/PvfDocument.js";
+import type { PvfAttribute, PvfDocument, PvfSection } from "../types/PvfDocument.js";
 import type { PvfFact, PvfStringFact } from "../types/Provenance.js";
 import {
   documentProvenance,
@@ -54,6 +54,20 @@ export function parseSklDocument(document: PvfDocument): SkillDef {
     autoCoolTimeApply: parseAutoCoolTime(document),
 
     cancelWindow: isCancelSkill ? parseCancelWindow(document) : null,
+
+    // Phase 4 (2026-05-26) Stage 2 启动门槛 — 12 raw section typed 化
+    command: parseCommand(document),
+    coolTime: parseCoolTime(document),
+    consumeMp: parseConsumeMp(document),
+    castingTime: parseCastingTime(document),
+    levelProperty: parseAttrArray(document, "level property"),
+    levelInfo: parseAttrArray(document, "level info"),
+    preRequiredSkill: parseIntArray(document, "pre required skill"),
+    featureSkillIndex: parseSingleInt(document, "feature skill index"),
+    icon: parseIcon(document),
+    consumeItem: parseIntArray(document, "consume item"),
+    maintainMp: parseSingleInt(document, "maintain mp"),
+    skillCommandAdvantage: parseSkillCommandAdvantage(document),
 
     raw: Object.freeze(document),
   };
@@ -254,4 +268,118 @@ function parseCancelNumberArray(document: PvfDocument, sectionName: string, alia
     nums.push((attr as { t: string; v: number }).v);
   }
   return nums;
+}
+
+// ---------------------------------------------------------------------------
+// Phase 4 (2026-05-26) typed-field helpers for 12 raw sections
+// ---------------------------------------------------------------------------
+
+/** Extract a string[] of token values from a section like `[command]`.
+ *  Returns null if section absent or no str/link attrs. */
+function parseCommand(document: PvfDocument): string[] | null {
+  const section = firstSection(document, "command");
+  if (!section || section.attributes.length === 0) return null;
+  const tokens: string[] = [];
+  for (const attr of section.attributes) {
+    if (attr.t === "str" || attr.t === "link") {
+      tokens.push((attr as { t: string; v: string }).v);
+    } else {
+      // Real-PVF observation: command tokens are uniformly str/link. Non-str
+      // attribute indicates corrupted input or a new game patch. Surface loudly.
+      throw new Error(
+        `[SklParser] parseCommand: "command" section in ${document.path} has non-str attribute ` +
+        `of type "${attr.t}". Real PVF command sections emit pure-str token sequences; ` +
+        `mixed-type indicates corrupted input.`,
+      );
+    }
+  }
+  return tokens;
+}
+
+/** Extract [dungeonMs, pvpMs] from `[cool time]`. Real PVF emits 2 ints. */
+function parseCoolTime(document: PvfDocument): { dungeonMs: number; pvpMs: number } | null {
+  const nums = sectionNumbers(document, "cool time");
+  if (nums.length < 2) return null;
+  return { dungeonMs: nums[0], pvpMs: nums[1] };
+}
+
+/** Extract [baseMp, lvlMaxMp] from `[consume mp]`. */
+function parseConsumeMp(document: PvfDocument): { baseMp: number; lvlMaxMp: number } | null {
+  const nums = sectionNumbers(document, "consume mp");
+  if (nums.length < 2) return null;
+  return { baseMp: nums[0], lvlMaxMp: nums[1] };
+}
+
+/** Extract [baseMs, lvl20Ms] from `[casting time]`. */
+function parseCastingTime(document: PvfDocument): { baseMs: number; lvl20Ms: number } | null {
+  const nums = sectionNumbers(document, "casting time");
+  if (nums.length < 2) return null;
+  return { baseMs: nums[0], lvl20Ms: nums[1] };
+}
+
+/** Generic "preserve raw PvfAttribute[] from a section". Used for sections
+ *  whose semantic shape varies per skill (level property, level info). */
+function parseAttrArray(document: PvfDocument, sectionName: string): PvfAttribute[] | null {
+  const section = firstSection(document, sectionName);
+  if (!section || section.attributes.length === 0) return null;
+  return structuredClone(section.attributes);
+}
+
+/** Generic int[] extraction for sections like `[pre required skill]`,
+ *  `[consume item]` whose semantics are positional and may vary in length.
+ *  Returns null if section absent. */
+function parseIntArray(document: PvfDocument, sectionName: string): number[] | null {
+  const section = firstSection(document, sectionName);
+  if (!section || section.attributes.length === 0) return null;
+  const nums: number[] = [];
+  for (const attr of section.attributes) {
+    if (attr.t === "int" || attr.t === "float") {
+      nums.push((attr as { t: string; v: number }).v);
+    } else {
+      // Tolerate mixed types in these forward-compat sections — skip non-numeric
+      // attrs rather than throw. Downstream still gets the int subset.
+      // (Different from cancel sections which are strict pure-int.)
+    }
+  }
+  return nums.length > 0 ? nums : null;
+}
+
+/** Extract single int from a section's first attribute. Returns null if absent. */
+function parseSingleInt(document: PvfDocument, sectionName: string): number | null {
+  const section = firstSection(document, sectionName);
+  if (!section || section.attributes.length === 0) return null;
+  const attr = section.attributes[0];
+  if (attr.t === "int" || attr.t === "float") {
+    return (attr as { t: string; v: number }).v;
+  }
+  return null;
+}
+
+/** Parse `[icon]` 4-attr structure: [atlas:str, frame:int, lit_atlas:str, lit_frame:int].
+ *  Atlas paths often have `_note: "ref_ext_but_path_not_found"` — preserved as
+ *  the raw string. Returns null when section absent or shape doesn't match. */
+function parseIcon(document: PvfDocument): {
+  atlasPath: string; frame: number; litAtlasPath: string; litFrame: number;
+} | null {
+  const section = firstSection(document, "icon");
+  if (!section || section.attributes.length < 4) return null;
+  const attrs = section.attributes;
+  const a0 = attrs[0], a1 = attrs[1], a2 = attrs[2], a3 = attrs[3];
+  if ((a0.t !== "str" && a0.t !== "link") || a1.t !== "int" ||
+      (a2.t !== "str" && a2.t !== "link") || a3.t !== "int") {
+    return null;
+  }
+  return {
+    atlasPath: (a0 as { t: string; v: string }).v,
+    frame: (a1 as { t: "int"; v: number }).v,
+    litAtlasPath: (a2 as { t: string; v: string }).v,
+    litFrame: (a3 as { t: "int"; v: number }).v,
+  };
+}
+
+/** Parse `[skill command advantage]` [normal_ms, advanced_ms]. */
+function parseSkillCommandAdvantage(document: PvfDocument): { normal: number; advanced: number } | null {
+  const nums = sectionNumbers(document, "skill command advantage");
+  if (nums.length < 2) return null;
+  return { normal: nums[0], advanced: nums[1] };
 }

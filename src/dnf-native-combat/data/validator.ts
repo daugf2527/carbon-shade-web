@@ -458,6 +458,38 @@ const SklSchema = z.object({
   hasDeathTower: z.boolean(),
   autoCoolTimeApply: z.boolean(),
   cancelWindow: z.nullable(SklCancelWindowSchema),
+  // Phase 4 (2026-05-26) — 12 raw-section typed fields per
+  // stage1.5-revised-plan §二.P0-2. Real-PVF shape verified against
+  // dashattackmultihit.skl / icewave.skl / hellbenter.skl samples.
+  command: z.nullable(z.array(z.string()).max(1000)),
+  coolTime: z.nullable(z.object({
+    dungeonMs: z.number().finite(),
+    pvpMs: z.number().finite(),
+  }).strict()),
+  consumeMp: z.nullable(z.object({
+    baseMp: z.number().finite(),
+    lvlMaxMp: z.number().finite(),
+  }).strict()),
+  castingTime: z.nullable(z.object({
+    baseMs: z.number().finite(),
+    lvl20Ms: z.number().finite(),
+  }).strict()),
+  levelProperty: z.nullable(z.array(PvfAttributeSchema).max(1000)),
+  levelInfo: z.nullable(z.array(PvfAttributeSchema).max(1000)),
+  preRequiredSkill: z.nullable(z.array(z.number().finite()).max(100)),
+  featureSkillIndex: z.nullable(z.number().finite()),
+  icon: z.nullable(z.object({
+    atlasPath: z.string(),
+    frame: z.number().finite(),
+    litAtlasPath: z.string(),
+    litFrame: z.number().finite(),
+  }).strict()),
+  consumeItem: z.nullable(z.array(z.number().finite()).max(100)),
+  maintainMp: z.nullable(z.number().finite()),
+  skillCommandAdvantage: z.nullable(z.object({
+    normal: z.number().finite(),
+    advanced: z.number().finite(),
+  }).strict()),
   raw: PlainObjectSchema,
 }).strict();
 

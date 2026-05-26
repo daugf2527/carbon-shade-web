@@ -352,6 +352,10 @@ function buildValidMob(p: string, animRefs: Array<{ targetKind: string; targetPa
     hasDeathTower: false,
     autoCoolTimeApply: false,
     cancelWindow: null,
+    command: null, coolTime: null, consumeMp: null, castingTime: null,
+    levelProperty: null, levelInfo: null, preRequiredSkill: null,
+    featureSkillIndex: null, icon: null, consumeItem: null,
+    maintainMp: null, skillCommandAdvantage: null,
     raw: { extractor_version: "v2.0.0", extract_timestamp: "...", path: "skill/test/active.skl", type: "document", sections: [] },
   };
   const r = validateParsedDocuments([skl], META);
@@ -657,6 +661,10 @@ function buildValidChr(p: string, overrides: Record<string, unknown> = {}): ChrD
     hasDeathTower: false,
     autoCoolTimeApply: false,
     cancelWindow: null,
+    command: null, coolTime: null, consumeMp: null, castingTime: null,
+    levelProperty: null, levelInfo: null, preRequiredSkill: null,
+    featureSkillIndex: null, icon: null, consumeItem: null,
+    maintainMp: null, skillCommandAdvantage: null,
     raw: { extractor_version: "v2.0.0", extract_timestamp: "...", path: "skill/h13-20.skl", type: "document", sections: [] },
   };
   const r = validateParsedDocuments([skl], META);
