@@ -353,6 +353,8 @@ export async function exportRuntimeShards(options: ExportOptions): Promise<Expor
   };
   const manifestPath = join(options.outDir, "manifest.json");
   await mkdir(options.outDir, { recursive: true });
+  // audit P1-24 (2026-05-25): non-atomic writeFile — should use tmp+rename to
+  // survive mid-write crash. Original ref :331 drifted to :354.
   await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
 
   return {

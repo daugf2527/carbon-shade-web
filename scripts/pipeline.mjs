@@ -192,6 +192,8 @@ const debugOut = args.debugOut ?? path.join(ROOT, ".tmp", "pipeline-debug");
 // Project-level verification/ by convention (design §2.4). Tests should
 // override via --verification-out to keep PROBE_TMP isolated; CLI default
 // targets repo root verification/ so reports survive between runs.
+// audit P1-28 (2026-05-25): --no-verification name is misleading — only
+// skips report writing; validate runs and can still abort LOAD/EXPORT.
 const verificationOut = args.noVerification
   ? null
   : (args.verificationOut ?? path.join(ROOT, "verification"));

@@ -132,6 +132,8 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
 
   // ─── VALIDATE stage ────────────────────────────────────────────────────
   const runId = options.runId ?? slugifyTimestamp(startedAt);
+  // audit P1-19 (2026-05-25): finishedAt should be captured AFTER EXPORT,
+  // not before VALIDATE. Original ref :126 drifted to :135.
   const finishedAt = new Date().toISOString();
   const pvfHash = pickFirstDefined(documents, d => d.source_pvf_hash) ?? null;
   const extractorVersion = pickFirstDefined(documents, d => d.extractor_version) ?? null;

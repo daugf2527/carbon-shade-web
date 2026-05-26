@@ -194,6 +194,7 @@ export async function loadPvfDocumentsViaPipe(
   options: DnfExtractPipeOptions,
 ): Promise<PvfDocument[]> {
   const executablePath = options.executablePath ?? DEFAULT_DNF_EXTRACT_PATH;
+  // audit P1-20 (2026-05-25): no timeout option — PVF corruption can hang pipeline indefinitely.
   const child = spawn(executablePath, buildDnfExtractPipeArgs(options), {
     cwd: process.cwd(),
     stdio: ["pipe", "pipe", "pipe"],
@@ -206,6 +207,7 @@ export async function loadPvfDocumentsViaPipe(
   child.stdout.on("data", chunk => { stdout += chunk; });
   child.stderr.on("data", chunk => { stderr += chunk; });
 
+  // audit P2-39 (2026-05-25): stdin.write() return value unchecked — large path list can backpressure.
   for (const path of paths) child.stdin.write(`${path}\n`);
   child.stdin.write("quit\n");
   child.stdin.end();
@@ -234,6 +236,7 @@ export async function loadPvfDocumentsViaPipeWithErrors(
   options: DnfExtractPipeOptions,
 ): Promise<DnfExtractPipeBatchResult> {
   const executablePath = options.executablePath ?? DEFAULT_DNF_EXTRACT_PATH;
+  // audit P1-20 (2026-05-25): no timeout option — PVF corruption can hang pipeline indefinitely.
   const child = spawn(executablePath, buildDnfExtractPipeArgs(options), {
     cwd: process.cwd(),
     stdio: ["pipe", "pipe", "pipe"],
@@ -246,6 +249,7 @@ export async function loadPvfDocumentsViaPipeWithErrors(
   child.stdout.on("data", chunk => { stdout += chunk; });
   child.stderr.on("data", chunk => { stderr += chunk; });
 
+  // audit P2-39 (2026-05-25): stdin.write() return value unchecked — large path list can backpressure.
   for (const path of paths) child.stdin.write(`${path}\n`);
   child.stdin.write("quit\n");
   child.stdin.end();
@@ -278,6 +282,7 @@ export async function loadAniDocumentsViaPipe(
   options: DnfExtractPipeOptions,
 ): Promise<AniDocument[]> {
   const executablePath = options.executablePath ?? DEFAULT_DNF_EXTRACT_PATH;
+  // audit P1-20 (2026-05-25): no timeout option — PVF corruption can hang pipeline indefinitely.
   const child = spawn(executablePath, buildDnfExtractPipeArgs(options), {
     cwd: process.cwd(),
     stdio: ["pipe", "pipe", "pipe"],
@@ -290,6 +295,7 @@ export async function loadAniDocumentsViaPipe(
   child.stdout.on("data", chunk => { stdout += chunk; });
   child.stderr.on("data", chunk => { stderr += chunk; });
 
+  // audit P2-39 (2026-05-25): stdin.write() return value unchecked — large path list can backpressure.
   for (const path of paths) child.stdin.write(`${path}\n`);
   child.stdin.write("quit\n");
   child.stdin.end();
