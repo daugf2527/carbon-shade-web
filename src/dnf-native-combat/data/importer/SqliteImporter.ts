@@ -251,28 +251,6 @@ export function importToSqlite(
 
     const mode = options.mode ?? "full";
 
-    // ── extraction_runs row ─────────────────────────────────────────────
-    db.prepare(
-      `INSERT INTO extraction_runs (run_uid, started_at, finished_at, pvf_hash, mode,
-                                    files_total, files_extracted, files_failed,
-                                    errors, warnings, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    ).run(
-      validation.meta.runId,
-      validation.meta.startedAt,
-      validation.meta.finishedAt,
-      validation.meta.pvfHash,
-      mode,
-      validation.stats.filesTotal,
-      validation.stats.filesParsed,
-      validation.stats.filesFailed,
-      validation.stats.errors,
-      validation.stats.warnings,
-      "completed",
-    );
-    const runRow = db.prepare("SELECT last_insert_rowid() AS id").get() as { id: number };
-    const runId = runRow.id;
-
     // ── pvf_files upsert ────────────────────────────────────────────────
     const parsedByPath = new Map<string, ParsedPvfDocument>();
     for (const def of parsed) parsedByPath.set(def.path, def);
@@ -300,8 +278,37 @@ export function importToSqlite(
     let filesSkipped = 0;
 
     // Transaction wrap for batch insert performance + atomicity.
+    // Audit P0-8 (2026-05-26): extraction_runs INSERT was previously issued
+    // BEFORE db.exec("BEGIN"), which auto-committed it outside the txn.
+    // Any subsequent ROLLBACK then left an orphan run row whose stats
+    // disagreed with the empty pvf_files / refs tables. Now both writes
+    // share one BEGIN/COMMIT/ROLLBACK boundary, so failure either commits
+    // everything or nothing — restoring the "atomicity per pipeline run"
+    // contract documented in plans/2026-05-22-stage1-data-pipeline-design.md §3.
     db.exec("BEGIN");
     try {
+      // ── extraction_runs row (inside txn for atomic rollback) ──────────
+      db.prepare(
+        `INSERT INTO extraction_runs (run_uid, started_at, finished_at, pvf_hash, mode,
+                                      files_total, files_extracted, files_failed,
+                                      errors, warnings, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).run(
+        validation.meta.runId,
+        validation.meta.startedAt,
+        validation.meta.finishedAt,
+        validation.meta.pvfHash,
+        mode,
+        validation.stats.filesTotal,
+        validation.stats.filesParsed,
+        validation.stats.filesFailed,
+        validation.stats.errors,
+        validation.stats.warnings,
+        "completed",
+      );
+      const runRow = db.prepare("SELECT last_insert_rowid() AS id").get() as { id: number };
+      const runId = runRow.id;
+
       for (const doc of documents) {
         const docHash = doc.source_pvf_hash ?? null;
         if (mode === "incremental" && docHash !== null) {
