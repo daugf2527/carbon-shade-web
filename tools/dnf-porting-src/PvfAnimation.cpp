@@ -29,7 +29,15 @@ auto PvfAnimation::unpack() -> void
 		PvfString::toLower(sprites.back());
 	}
 
+	// Audit P1-13 (2026-05-26): global-params switch only handled LOOP and
+	// SHADOW. For any other attribute type the implicit default no-op'd —
+	// stream pointer did NOT advance past the unread payload, so the
+	// subsequent frames loop read mis-aligned data. We don't know the
+	// payload size of unknown global params, so the conservative fix is:
+	// log the unknown type to stderr and abort the entire .ani parse
+	// (clear frames so consumers see "0 frames" rather than garbage).
 	auto params = reader.read<uint16_t>();
+	bool globalParamsCorrupt = false;
 	for (auto j = 0; j < params; j++)
 	{
 		auto type = reader.read<uint16_t>();
@@ -42,7 +50,20 @@ auto PvfAnimation::unpack() -> void
 		case AnimationNodeType::SHADOW:
 			shadow = reader.read<int8_t>();
 			break;
+
+		default:
+			fprintf(stderr, "[ERROR] PvfAnimation: unknown global param type %d "
+				"(cannot determine payload size) — aborting params/frames parse\n",
+				(int)type);
+			globalParamsCorrupt = true;
+			break;
 		}
+		if (globalParamsCorrupt) break;
+	}
+	if (globalParamsCorrupt) {
+		framesCount = 0;
+		frames.clear();
+		return;
 	}
 
 	for (auto i = 0; i < framesCount; i++)
@@ -77,6 +98,17 @@ auto PvfAnimation::unpack() -> void
 		frame.y = reader.read<int32_t>();
 
 		int32_t propertyCount = reader.read<uint16_t>();
+		// Audit P0-3 (2026-05-26): per-frame property switch had empty
+		// `case 2/4/5/6/19/20/21/22:` and `case DAMAGE_BOX/ATTACK_BOX/SPECTRUM:`
+		// no-op branches plus an implicit default no-op. For any of these
+		// the stream pointer did NOT advance past the attribute's payload
+		// (because the payload size is unknown), so subsequent attributes
+		// (and subsequent frames) parsed garbage. Conservative fix: on any
+		// unhandled attribute type, log to stderr and abort the rest of
+		// this animation's frame loop. We drop the partially-parsed current
+		// frame so consumers see a clean truncation rather than half-set
+		// frame data.
+		bool frameStreamCorrupt = false;
 		for (int32_t m = 0; m < propertyCount; m++)
 		{
 			AnimationNodeType type = (AnimationNodeType)reader.read<uint16_t>();
@@ -89,18 +121,6 @@ auto PvfAnimation::unpack() -> void
 				break;
 			case INTERPOLATION:
 				frame.interpolation = reader.read<int8_t>();
-				break;
-			case 2:
-			case 4:
-			case 5:
-			case 6:
-			case DAMAGE_BOX:
-			case ATTACK_BOX:
-			case SPECTRUM://18
-			case 19://18
-			case 20:
-			case 21:
-			case 22:
 				break;
 			case Ani_COORD:
 				frame.coord = reader.read<uint16_t>();
@@ -159,8 +179,27 @@ auto PvfAnimation::unpack() -> void
 				frame.clip[3] = reader.read<int16_t>();
 				break;
 			default:
+				// Unknown attribute type (observed gaps: 2/4/5/6/19/20/21/22)
+				// or types whose per-frame payload we don't model
+				// (DAMAGE_BOX/ATTACK_BOX/SPECTRUM appear at the frame-boxes
+				// level, not the property level — encountering them here
+				// indicates either corruption or an unmodeled .ani variant).
+				fprintf(stderr, "[ERROR] PvfAnimation: unknown per-frame attribute "
+					"type %d at frame %d, property %d "
+					"(cannot determine payload size) — aborting frame parse\n",
+					(int)type, i, m);
+				frameStreamCorrupt = true;
 				break;
 			}
+			if (frameStreamCorrupt) break;
+		}
+		if (frameStreamCorrupt) {
+			// Drop the partially-populated current frame so callers see
+			// only fully-parsed frames; downstream consumers handle a
+			// short frames[] gracefully.
+			frames.resize(i);
+			framesCount = (int32_t)frames.size();
+			return;
 		}
 	}
 }
