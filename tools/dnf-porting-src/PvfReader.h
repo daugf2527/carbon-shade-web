@@ -70,17 +70,20 @@ public:
 
 	template <typename T>
 	// Read a number and advance the buffer position.
+	// Accumulate into uint64_t to avoid C++17 §[expr.shift]/2 UB when shifting
+	// a signed value into the sign bit (e.g. int32_t val << 24 when byte >= 0x80).
+	// Unsigned shift is well-defined; static_cast<T> at the end recovers the
+	// intended signedness via implementation-defined narrowing conversion.
 	inline T read(const uint8_t* buffer, int32_t offset)
 	{
-		size_t count = sizeof(T) / sizeof(int8_t);
-		T all = 0;
+		size_t count = sizeof(T);
+		uint64_t accum = 0;
 		for (size_t i = 0; i < count; i++)
 		{
-			T val = static_cast<T>(buffer[offset]);
-			all += val << (8 * i);
+			accum |= static_cast<uint64_t>(buffer[offset]) << (8 * i);
 			offset++;
 		}
-		return static_cast<T>(all);
+		return static_cast<T>(accum);
 	}
 
 	auto unpackStringTable(const std::function<void(
