@@ -95,6 +95,28 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/stop-hook.mjs",
+            "description": "Stop 时写 .last-activity-ts (idle 检测 + statusline)"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/notify.mjs",
+            "description": "桌面通知 BurntToast → msg fallback"
+          }
+        ]
+      }
     ]
   }
 }

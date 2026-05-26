@@ -17,7 +17,13 @@ test-results/
 !.claude/skills/
 !.claude/agents/
 !.claude/hooks/
+!.claude/stop-hook.mjs
+!.claude/statusline.mjs
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
+.claude/.last-*-ts
+.claude/.last-*.txt
+.claude/worktrees/
 
 *.log
 *.tsbuildinfo

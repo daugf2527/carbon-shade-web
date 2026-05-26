@@ -1,0 +1,9 @@
+#!/bin/sh
+# carbon pre-commit — fast type/static gate only. Full analyze runs on pre-push.
+# Bypass with: git commit --no-verify (use sparingly).
+set -e
+echo "[pre-commit] typecheck..."
+npm run typecheck
+echo "[pre-commit] static:test..."
+npm run static:test
+echo "[pre-commit] OK"

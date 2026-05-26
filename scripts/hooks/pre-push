@@ -1,14 +1,20 @@
 #!/bin/sh
 # Pre-push analysis: run full toolchain, save report, block on gate failure.
+# Also writes .claude/.last-analyze.txt for statusline / SessionStart echo.
 # To skip (not recommended): git push --no-verify
 
 set -e
 
 REPORT="verification/pre-push-$(date +%Y%m%d-%H%M%S).json"
-mkdir -p verification
+mkdir -p verification .claude
 
 echo "[pre-push] Running full analysis..."
-npm run analyze -- --out-file "$REPORT"
+if npm run analyze -- --out-file "$REPORT"; then
+  printf 'PASS @%s\nreport: %s\n' "$(date +%Y-%m-%d_%H:%M:%S)" "$REPORT" > .claude/.last-analyze.txt
+else
+  printf 'FAIL @%s\nreport: %s\n' "$(date +%Y-%m-%d_%H:%M:%S)" "$REPORT" > .claude/.last-analyze.txt
+  exit 1
+fi
 
 # Link latest report for easy access
 ln -sf "$(basename "$REPORT")" verification/latest-report.json
