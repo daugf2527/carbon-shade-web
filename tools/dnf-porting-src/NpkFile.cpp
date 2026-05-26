@@ -160,6 +160,10 @@ auto NpkFile::setPosition(uint32_t position) -> void
 	if (position > length)
 	{
 		fprintf(stderr, "[ERROR] NpkFile :: OutOfFileSizeException : %d \n", position);
+		// Audit P0-4 (2026-05-26): an out-of-range seek indicates the NPK
+		// declared a sub-file offset past EOF — typical signature of a
+		// truncated archive. Set the sticky error so main.cpp exits 1.
+		m_error = true;
 		return;
 	}
 	fseek(file, position, SEEK_SET);
@@ -169,7 +173,15 @@ auto NpkFile::setPosition(uint32_t position) -> void
 auto NpkFile::readBytes(uint32_t length) ->std::unique_ptr<uint8_t[]>
 {
 	auto bytes = std::make_unique<uint8_t[]>(length);
-	fread(bytes.get(), length, 1, file);
+	// Audit P0-4 (2026-05-26): check fread return. The unique_ptr overload
+	// is used by zlib decompress paths; uninitialized data → garbled image
+	// or crash. Zero the buffer + flag error on short read.
+	if (length > 0 && fread(bytes.get(), length, 1, file) != 1) {
+		fprintf(stderr, "[ERROR] NpkFile::readBytes(uint32_t): short read (expected %u bytes from %s)\n",
+			length, fileName.c_str());
+		std::memset(bytes.get(), 0, length);
+		m_error = true;
+	}
 	offset += length;
 	return bytes;
 }
@@ -193,6 +205,9 @@ auto NpkFile::readBytes(uint8_t* data, int32_t len) ->void
 			len, fileName.c_str());
 		// Zero the buffer so callers don't xor against indeterminate bytes.
 		std::memset(data, 0, len);
+		// Audit P0-4 (2026-05-26): propagate to sticky error flag so
+		// main.cpp NPK paths can exit(1) instead of silent exit(0).
+		m_error = true;
 		return;
 	}
 	offset += len;
@@ -214,6 +229,9 @@ auto NpkFile::readString(int32_t len) -> std::string
 	if (len > 0 && fread(str.data(), len, 1, file) != 1) {
 		fprintf(stderr, "[ERROR] NpkFile::readString: short read (expected %d bytes from %s)\n",
 			len, fileName.c_str());
+		// Audit P0-4 (2026-05-26): propagate to sticky error flag so
+		// main.cpp NPK paths can exit(1) instead of silent exit(0).
+		m_error = true;
 		return {};
 	}
 	offset += len;

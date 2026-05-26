@@ -1226,6 +1226,20 @@ int main(int argc, char* argv[]) {
         }
         fprintf(stderr, "[READY] NPK loaded.\n");
 
+        // Audit P0-4 (2026-05-26): after each NPK mode handler emits its JSON,
+        // surface any short-read / corruption that NpkFile collected during
+        // unpack() or per-frame reads as exit code 1 — previously a 20KB
+        // truncated NPK printed [ERROR] lines AND exited 0, so CI couldn't
+        // distinguish from intact runs. Encapsulated in a lambda so each
+        // return site is one line.
+        auto exitWithNpkErrorCheck = [&](int normalCode) -> int {
+            if (npk.hasError()) {
+                fprintf(stderr, "[ERROR] NPK corruption detected — output may be incomplete\n");
+                return 1;
+            }
+            return normalCode;
+        };
+
         if (listMode && imgName.empty()) {
             // List all IMG files in NPK
             // Build the images array first so we can prefix the count.
@@ -1240,7 +1254,7 @@ int main(int argc, char* argv[]) {
             }
             printf("{\"type\":\"npk\",\"path\":\"%s\",\"imgCount\":%d,\"images\":[%s]}\n",
                 escapeJson(npkPath).c_str(), imgCount, imagesJson.c_str());
-            return 0;
+            return exitWithNpkErrorCheck(0);
         }
 
         if (!imgName.empty()) {
@@ -1271,7 +1285,7 @@ int main(int argc, char* argv[]) {
                 }
                 printf("]}\n");
                 fprintf(stderr, "[DONE] Listed %d frame(s) in %s.\n", n, imgName.c_str());
-                return 0;
+                return exitWithNpkErrorCheck(0);
             }
 
             if (frameIdx >= 0) {
@@ -1291,7 +1305,7 @@ int main(int argc, char* argv[]) {
                 printf("{\"type\":\"frame\",\"img\":\"%s\",", escapeJson(imgName).c_str());
                 printImgFrameFields(node, frameIdx, withData);
                 printf("}\n");
-                return 0;
+                return exitWithNpkErrorCheck(0);
             }
         }
 
@@ -1335,12 +1349,24 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "[LOG] Resolving sprite: %s frame=%d\n", spritePath.c_str(), frameIdx);
         NpkFile::loadAll(npkDir);
         int useFrame = frameIdx >= 0 ? frameIdx : 0;
+        // Audit P0-4 (2026-05-26): scan the global table to surface any NPK
+        // short-read / corruption that fell out of getNpkImgNode's lazy loads.
+        auto checkGlobalNpkErrors = []() -> bool {
+            for (auto& [k, v] : NpkFile::GlobalFileTable) {
+                if (v && v->hasError()) return true;
+            }
+            return false;
+        };
         try {
             auto& node = NpkFile::getNpkImgNode(spritePath, useFrame);
             printf("{\"type\":\"resolved_frame\",\"sprite\":\"%s\",\"frame\":%d,",
                 escapeJson(spritePath).c_str(), useFrame);
             printImgFrameFields(node, useFrame, withData);
             printf("}\n");
+            if (checkGlobalNpkErrors()) {
+                fprintf(stderr, "[ERROR] NPK corruption detected — output may be incomplete\n");
+                return 1;
+            }
             return 0;
         } catch (const std::exception& e) {
             // Audit B2 (contract-symmetry, 2026-05-24): route through

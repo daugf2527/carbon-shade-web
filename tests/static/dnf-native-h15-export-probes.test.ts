@@ -102,6 +102,13 @@ function mobFixture(path: string): MobDef {
     kind: "mob", path,
     provenance: docProv(path), sections: [],
     name: null, warlike: null, sight: null, weight: null, hpMax: null,
+    // Phase 3 (2026-05-26): new MobDef fields for the 8 sections all 5/5
+    // verified goblin mobs carry. Defaults to null in the H15 fixture since
+    // these probes exercise the EXPORT layer's entity classification —
+    // mob-section content is irrelevant here.
+    weightDual: null, abilityCategory: null, level: null, attackDelay: null,
+    moveSpeed: null, hitRecovery: null, widthBox: null, stuckbonusOnDamage: null,
+    attackKind: null,
     attackInfo: [], animationRefs: [], category: [],
     raw: FAKE_DOC(path),
   };

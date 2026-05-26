@@ -3,6 +3,7 @@
 #pragma once
 #include "Npk.h"
 #include <cstdio>
+#include <cstring>
 #include <string>
 #include <memory>
 #include <vector>
@@ -34,19 +35,40 @@ public:
 	auto unpack() -> void;
 	inline auto isUnpacked() const { return !imgNodes.empty(); }
 
+	// Audit P0-4 (2026-05-26): callers (main.cpp NPK modes) check this after
+	// unpack() / I/O batches to surface short-read / corruption to exit code.
+	// Set by read<T>() / readBytes() / readString() when fread returns < 1.
+	inline auto hasError() const -> bool { return m_error; }
+
 
 	template <typename T>
 	inline auto read() -> T
 	{
 		T t;
-		fread(&t, sizeof(T), 1, file);
+		if (fread(&t, sizeof(T), 1, file) != 1) {
+			// Audit P0-4 (2026-05-26): previously fread return was discarded;
+			// short reads leaked uninitialized memory into downstream parsers
+			// AND the exit code stayed 0 so CI/harness couldn't distinguish
+			// "intact NPK" from "truncated NPK". Zero T to keep callers in a
+			// defined state, flag the error, log to stderr.
+			fprintf(stderr, "[ERROR] NpkFile::read<T>: short read (expected %zu bytes from %s)\n",
+				sizeof(T), fileName.c_str());
+			std::memset(&t, 0, sizeof(T));
+			m_error = true;
+		}
 		offset += sizeof(T);
 		return t;
 	}
 	template <typename T>
 	inline auto read(T& t) -> void
 	{
-		fread(&t, sizeof(T), 1, file);
+		if (fread(&t, sizeof(T), 1, file) != 1) {
+			// See Audit P0-4 note on the value-returning overload above.
+			fprintf(stderr, "[ERROR] NpkFile::read<T>(T&): short read (expected %zu bytes from %s)\n",
+				sizeof(T), fileName.c_str());
+			std::memset(&t, 0, sizeof(T));
+			m_error = true;
+		}
 		offset += sizeof(T);
 	}
 
@@ -65,4 +87,8 @@ private:
 	uint32_t offset = 0;
 	uint32_t length = 0;
 	std::vector<ImgFile> imgNodes;
+	// Audit P0-4 (2026-05-26): sticky error flag. read<T>(), readBytes(),
+	// readString() set this to true on any short read; main.cpp inspects it
+	// via hasError() before returning, mapping corruption → exit code 1.
+	bool m_error = false;
 };

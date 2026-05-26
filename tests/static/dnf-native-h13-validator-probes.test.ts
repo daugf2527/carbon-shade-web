@@ -127,6 +127,19 @@ function buildValidMob(p: string, animRefs: Array<{ targetKind: string; targetPa
     sight: null,
     weight: null,
     hpMax: null,
+    // Phase 3 (2026-05-26): new MobDef fields for the 8 sections all 5/5
+    // verified goblin mobs carry. Default to null here since these probes
+    // exercise the VALIDATOR's schema/provenance/ref walkers — the actual
+    // section content is irrelevant for H13.
+    weightDual: null,
+    abilityCategory: null,
+    level: null,
+    attackDelay: null,
+    moveSpeed: null,
+    hitRecovery: null,
+    widthBox: null,
+    stuckbonusOnDamage: null,
+    attackKind: null,
     attackInfo: [],
     animationRefs: animRefs,
     category: [],
@@ -744,6 +757,17 @@ function buildValidChr(p: string, overrides: Record<string, unknown> = {}): ChrD
     sight: null,
     weight: null,
     hpMax: null,
+    // Phase 3 (2026-05-26): new MobDef fields, all null for this Tier-3
+    // probe (which exercises warlike sourceType + missing-ref reporting).
+    weightDual: null,
+    abilityCategory: null,
+    level: null,
+    attackDelay: null,
+    moveSpeed: null,
+    hitRecovery: null,
+    widthBox: null,
+    stuckbonusOnDamage: null,
+    attackKind: null,
     attackInfo: [],
     animationRefs: [
       { targetKind: "ani", targetPath: "anim/h13-24-missing.ani", raw: "anim/h13-24-missing.ani" },

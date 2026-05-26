@@ -213,6 +213,16 @@ const PvfVectorFactSchema = z.object({
   ...PvfFactBaseFields,
 });
 
+/** PvfFact<Record<string, number>> — keyed scalar map (e.g. mob "ability
+ *  category" stat->percent). Phase 3 (2026-05-26). Numeric values are
+ *  .finite(). Map key cardinality is bounded by the PVF section structure
+ *  (typically <=10 stat keys per mob); no explicit cap is added since the
+ *  parser already throws on duplicate keys and divisible-by-3 invariant. */
+const PvfFactRecordNumberSchema = z.object({
+  value: z.record(z.string(), z.number().finite()),
+  ...PvfFactBaseFields,
+});
+
 /** PvfRef — { targetKind, targetPath, raw } as emitted by parserUtils.ref(). */
 const PvfRefSchema = z.object({
   targetKind: z.string(),
@@ -343,7 +353,24 @@ const MobSchema = z.object({
   warlike: z.nullable(PvfFactNumberSchema),
   sight: z.nullable(PvfFactNumberSchema),
   weight: z.nullable(PvfFactNumberSchema),
+  // Phase 3 (2026-05-26, completeness-verifier-4): MobParser now reads the
+  // 8 sections all 5/5 verified goblin mobs carry. Schema mirrors MobDef
+  // type — every new field is nullable so legacy / partial fixtures still
+  // validate without backward break.
+  weightDual: z.nullable(PvfVectorFactSchema),
   hpMax: z.nullable(PvfVectorFactSchema),
+  abilityCategory: z.nullable(PvfFactRecordNumberSchema),
+  level: z.nullable(PvfVectorFactSchema),
+  attackDelay: z.nullable(PvfFactNumberSchema),
+  moveSpeed: z.nullable(PvfVectorFactSchema),
+  hitRecovery: z.nullable(PvfVectorFactSchema),
+  widthBox: z.nullable(PvfVectorFactSchema),
+  stuckbonusOnDamage: z.nullable(PvfVectorFactSchema),
+  // attackKind preserved as raw PvfAttribute[] (variable shape per mob
+  // archetype — see MobDef.attackKind doc). PvfAttributeSchema enforces
+  // the `t` discriminator; deeper validation requires Stage 2 archetype
+  // schemas. Array capped at 10000 to bound payload.
+  attackKind: z.nullable(z.array(PvfAttributeSchema).max(10000)),
   attackInfo: z.array(PvfRefSchema).max(10000),
   animationRefs: z.array(PvfRefSchema).max(10000),
   category: z.array(z.string()).max(10000),
