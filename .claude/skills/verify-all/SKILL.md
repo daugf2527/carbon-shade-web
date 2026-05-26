@@ -1,6 +1,8 @@
 ---
 name: verify-all
-description: "一键运行三道验证门：typecheck → static:test → build，对应 CI 完整流程"
+allowed-tools: Bash
+model: sonnet
+description: "Quick 3-gate pre-check (typecheck/static:test/build). Does NOT cover the 8-gate analyze used by CI — for CI parity run `npm run analyze`."
 ---
 
 # Verify All Skill

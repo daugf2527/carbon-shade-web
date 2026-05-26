@@ -1,5 +1,7 @@
 ---
 name: gen-test
+allowed-tools: Read, Grep, Glob, Write
+model: sonnet
 description: "生成符合项目约定的 static test 文件 — 无框架、node:assert/strict、standalone Node 执行"
 ---
 

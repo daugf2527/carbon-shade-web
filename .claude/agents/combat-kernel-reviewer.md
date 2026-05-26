@@ -1,3 +1,10 @@
+---
+name: combat-kernel-reviewer
+description: Review changes under src/combat/ for kernel purity and determinism. Use when files in src/combat/ are added, modified, or refactored — focuses on Phaser-isolation, replay determinism, frame-data provenance, hit/damage/status invariants. NOT for src/game/ or src/data/ general TypeScript review.
+tools: Read, Grep, Glob, Bash
+model: sonnet
+---
+
 # Combat Kernel Reviewer
 
 审查 `src/combat/` 目录下的代码改动，确保战斗内核的纯净性和确定性。

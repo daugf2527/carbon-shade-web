@@ -1,5 +1,7 @@
 ---
 name: add-action
+allowed-tools: Read, Grep, Glob, Edit, Write
+model: sonnet
 description: "引导添加新的 FrameDataAction，确保 provenance、hitbox、reaction、cancel policy 完整"
 ---
 

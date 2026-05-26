@@ -1,6 +1,8 @@
 ---
 name: closed-loop
 disable-model-invocation: true
+allowed-tools: Bash, Read, Grep, Glob, Edit, Write, Agent, TaskCreate, TaskUpdate, TaskList, TaskGet
+model: sonnet
 description: |
   Run the full audit → core-review → fix → fix-verify → gate → commit
   workflow on a stage1 topic. Use when user says "跑闭环 X" / "audit + fix X"

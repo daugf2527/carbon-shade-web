@@ -1,6 +1,8 @@
 ---
 name: audit
 disable-model-invocation: true
+allowed-tools: Bash, Read, Grep, Glob, Agent
+model: sonnet
 description: |
   Run agent-based audits with MANDATORY claim verification. Use when you need
   deeper than-test inspection of dnf-extract C++ / dnf-native parsers / pipeline

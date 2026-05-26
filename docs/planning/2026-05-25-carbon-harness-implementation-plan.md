@@ -112,7 +112,7 @@
 ### C2 — 加 defaultMode: acceptEdits
 
 - **harmony 对照**: `.claude/settings.json:2`
-- **carbon 落地**: settings.json 顶层加 `"defaultMode": "acceptEdits"`
+- **carbon 落地**: settings.json `permissions` 内加 `"defaultMode": "acceptEdits"`（**注：2026-05-26 S2 实测 schema 要求在 `permissions.defaultMode` 而非顶层**，plan v3 原写顶层会被 schema 拒）
 - **验收**: cwd=carbon 时新会话默认进 acceptEdits 模式，Edit/Write 不再弹窗。
 
 ### B1.carbon — 副作用 skill 加 disable-model-invocation
@@ -154,6 +154,15 @@
   1. carbon 会话内 Grep `dist/` 不再扫到（除非显式 `--no-claudeignore`）
   2. Grep `.claude/scheduled_tasks` 不再扫到
 - **配套**: 游离文件 `.claude/phase4-4b-research-report.md` 不在此 ignore 范围内（单点文件移走更合理）→ 见 §4 新增 HK1 块
+- **.gitignore 豁免配套（2026-05-26 S2 实测踩坑）**: 原 `.gitignore` 第 15 行 `.claude/*` 通配会忽略 `settings.json`，commit 时会丢；需加 `!.claude/settings.json` 豁免。当前 `.gitignore` 已 / 应包含 4 条豁免：
+  ```
+  .claude/*
+  !.claude/settings.json    # ← S2 实施时新增
+  !.claude/skills/
+  !.claude/agents/
+  !.claude/hooks/
+  .claude/settings.local.json
+  ```
 
 ### WIN1.carbon — CLAUDE.md 加 Windows 注意事项速查表
 
@@ -295,10 +304,10 @@ P0 全部完成后 `git add -A && git commit -m "chore(harness): S2 — P0 5 项
 
 - **harmony 对照**: `.git/hooks/pre-commit`（裸 git hook，跑 `bash scripts/check/quick_signals.sh`）
 - **carbon 现状**（2026-05-26 调查）: 已存在 `scripts/hooks/pre-push` 跑 `npm run analyze`（8 gate 阻塞 push）—— pre-commit 层 MISSING
-- **3 选 1 决策**（实施时拍板）:
-  - **A. 补 pre-commit 快速门**（推荐）: 新建 `.git/hooks/pre-commit` 跑 `npm run typecheck && npm run static:test`（~30s，不跑 build），承担"快速验证"；pre-push 继续跑全 8 gate analyze。两层并存：pre-commit 阻 typo/类型错，pre-push 阻深度 gate。
-  - **B. 仅扩 pre-push**: 不补 pre-commit，让 pre-push 已有的 8 gate analyze 兜底；接受"commit 不验，push 才验"现状。理由：DNF Stage 1 期间 commit 量大且多为草稿，每次 commit 跑 lint 打扰。
-  - **C. 不补**: 完全靠 PostToolUse hook + Claude 主动 verify-all 兜底。
+- **3 选 1 决策**（**决策 A — 2026-05-26 S2 后拍板**）:
+  - **A. 补 pre-commit 快速门 ✅ 拍板**: 新建 `.git/hooks/pre-commit` 跑 `npm run typecheck && npm run static:test`（~30s，不跑 build），承担"快速验证"；pre-push 继续跑全 8 gate analyze。两层并存：pre-commit 阻 typo/类型错，pre-push 阻深度 gate。
+  - ~~B. 仅扩 pre-push~~: 不补 pre-commit，让 pre-push 已有的 8 gate analyze 兜底；接受"commit 不验，push 才验"现状。理由：DNF Stage 1 期间 commit 量大且多为草稿，每次 commit 跑 lint 打扰。
+  - ~~C. 不补~~: 完全靠 PostToolUse hook + Claude 主动 verify-all 兜底。
 - **若选 A，落地脚本**:
   ```bash
   #!/usr/bin/env bash
@@ -628,7 +637,7 @@ P0 全部完成后 `git add -A && git commit -m "chore(harness): S2 — P0 5 项
 |---|---|---|---|---|---|
 | **S1（本会话）** | harmony | ≈1.5h | 产出本计划 + 与 harness-fusion-design.md 互相引用 | 本文件 commit | ✅ 2026-05-25（待 commit） |
 | **S2** | **carbon** | ≤2h | P0 5 项（C1/C2/B1.carbon/CT2/WIN1.carbon） | 7. 验证清单 #1-#5 通过 | ✅ 2026-05-26 |
-| **S3** | carbon | ≤2h | P1 frontmatter 标准化（SC1/SC2/SE1/AG1） | 验证清单 #12-#14 通过 | ⏳ pending |
+| **S3** | carbon | ≤2h | P1 frontmatter 标准化（SC1/SC2/SE1/AG1）+ VA1 顺手 + plan v3.1 回写 | 验证清单 #12-#14 + #21 通过 | ✅ 2026-05-26 |
 | **S4** | carbon | ≤2.5h | P1 反馈塔（C3/CB2/FB1.carbon/NT1.carbon）+ **调查修订（SE4/VA1/HK1）** | 验证清单 #6-#9 + #20-#22 通过 | ⏳ pending |
 | **S5** | carbon | ≤2h | P1 上下文 + statusline（H3.carbon/OS1.carbon/PM1+PM2） | 验证清单 #10-#11、#18 通过 | ⏳ pending |
 | **S6** | carbon | ≤1.5h | 高阶（CB1/B2/CT5/PG1.carbon） | 验证清单 #15-#17、#19 通过 | ⏳ pending |
@@ -811,7 +820,7 @@ graph LR
 | **D5 PG1** | marketplace 有能替代自维护件的 plugin？ | install + 删对应自维护件 | 继续自维护（与 harmony 同走此路） |
 | **D6 cwd + dirty tree** | `pwd \| grep carbon-shade-web` 匹配且 `git status -s` 干净？ | 继续 | 立刻 cd carbon；若 dirty 走 §10 dirty tree handling A/B/C |
 | **D7 SE4 budget 字段** (新 2026-05-26) | `claude doctor` 报 `skillListingBudgetFraction` 字段支持？ | 落 `0.02` + `skillListingMaxDescChars: 200` | 跳过 SE4，转 SC6 SKILL.md `paths:` 路径作用域 + 手动裁剪 closed-loop SKILL.md |
-| **D8 FB1 pre-commit** (新 2026-05-26) | DNF Stage 1 期间能接受每次 commit 跑 30s typecheck？ | A — 补 pre-commit 跑 typecheck + static:test | B — 仅扩 pre-push（接受 commit 不验）/ C — 不补任何 |
+| **D8 FB1 pre-commit** (新 2026-05-26) | DNF Stage 1 期间能接受每次 commit 跑 30s typecheck？ | **A ✅ 已拍板（2026-05-26 S2 后）** — 补 pre-commit 跑 typecheck + static:test | ~~B — 仅扩 pre-push~~ / ~~C — 不补~~ |
 | **D9 VA1 verify-all** (新 2026-05-26) | Claude 是否已经多次误信 verify-all = CI？ | A — 扩 verify-all 跑全 8 gate analyze | B — 仅改 description 标"快速预检 ≠ CI"（推荐默认） |
 
 ### 13.4 闭环反向边（§7 22 项验证失败 → 回到哪一阶段）

@@ -1,5 +1,7 @@
 ---
 name: dnf-physics-extraction
+allowed-tools: Bash, Read, Grep, Glob, Edit, Write
+model: sonnet
 description: "从 DNF 客户端 PVF 提取战斗物理真值（重力/跳跃/launch/knockback/...），按三级置信度铁律落档"
 ---
 
