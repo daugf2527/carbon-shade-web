@@ -638,4 +638,121 @@ P0 全部完成后 `git add -A && git commit -m "chore(harness): S2 — P0 5 项
 
 ---
 
-> **End of plan**. 总长约 480 行，符合 harness-fusion-design.md 的 ≤651 行参照值；P0 5 项 + P1 13 项 + P2 8 项 + 故意不做 15 项 = 41 项决策点全列出，无 "TBD" 占位。
+## 13. DAG + 回退矩阵 + 分支节点（carbon 视图）
+
+> 与 harmony fusion-design.md 附录 P 配套。本节仅列 **carbon 侧 19 项**的内部依赖、局部回退、决策分支。
+
+### 13.1 carbon S2-S6 阶段内依赖 DAG
+
+```mermaid
+graph LR
+  subgraph S2["S2 P0 (config-only, 全部独立)"]
+    C1[C1 deny]
+    C2[C2 acceptEdits]
+    B1[B1.carbon disable-model-invocation]
+    CT2[CT2 .claudeignore]
+    WIN1[WIN1.carbon Windows 速查]
+  end
+  subgraph S3["S3 P1 frontmatter"]
+    SC1[SC1 allowed-tools]
+    SC2[SC2 model: sonnet]
+    SE1[SE1 项目级 model]
+    AG1[AG1 combat-kernel-reviewer frontmatter]
+  end
+  subgraph S4["S4 P1 反馈塔"]
+    C3[C3 Stop hook<br/>产出 .last-analyze.txt + .last-activity-ts]
+    CB2[CB2 idle 检测<br/>读 .last-activity-ts]
+    FB1[FB1 pre-commit]
+    NT1[NT1 通知]
+  end
+  subgraph S5["S5 P1 上下文 + statusline"]
+    H3[H3.carbon SessionStart<br/>读 .last-analyze.txt]
+    OS1[OS1.carbon statusline<br/>读 .last-analyze.txt + .last-activity-ts]
+    PM["PM1+PM2 plan mode 文档"]
+  end
+  subgraph S6["S6 P1 高阶 + 收尾"]
+    CB1[CB1 移植 auto-commit-cicd]
+    B2[B2 6 skill learnings.md]
+    CT5[CT5 combat-reviewer memory]
+    PG1[PG1 marketplace audit]
+  end
+
+  C3 --> CB2
+  C3 --> H3
+  C3 --> OS1
+  OS1 -.->|validate| SC2
+  B1 --> CB1
+  SC1 --> CB1
+  SC2 --> CB1
+  AG1 --> CT5
+```
+
+**关键节点**：
+- **C3 是 S4 的拓扑根**——它产出 `.last-analyze.txt` 和 `.last-activity-ts`，S4 的 CB2 + S5 的 H3/OS1 都依赖这两个文件存在。
+- **OS1 是 SC2 的验证 enabler**——不通过 OS1 看不出 statusline 的 model 字段是否生效。
+- **S2 五项完全独立**——P0 内可乱序，但 S3 以后必须按 DAG 走。
+
+### 13.2 局部回退矩阵（不动 commit）
+
+| ID | 失败现象 | 局部回退 |
+|---|---|---|
+| C1 | `Bash(rm -rf <legitimate>)` 也被拒 | settings.json `deny` 删那条 pattern |
+| C2 | 误改文件没拦住 | settings.json 删 `defaultMode` 行 |
+| B1 | `/closed-loop` `/audit` 触发不了 | SKILL.md frontmatter 删 `disable-model-invocation:` |
+| CT2 | 需要的 dir 被屏蔽 | .claudeignore 删那行 |
+| WIN1 | 无（文档段） | 段删除 |
+| SC1 allowed-tools | skill 跑炸说工具被拒 | SKILL.md 加回需要的工具或删 `allowed-tools` 行 |
+| SC2 model: sonnet | 错位（如 opus 任务被强降） | SKILL.md 删 `model:` 行（SE1 兜底） |
+| SE1 项目级 model | `claude doctor` 报字段不识别 | settings.json 删 `model` 行（SC2 兜底） |
+| AG1 combat-reviewer frontmatter | 自动派 agent 频繁误触发 | description 改严"NOT for ..." |
+| C3 Stop hook | `npm run analyze` 太慢拖 stop | stop-hook.mjs 改成只写时间戳，不跑 analyze |
+| CB2 idle | 注入文案频繁 | reset-status.mjs idle 段注释；或调高 `CLAUDE_DEBRIEF_IDLE_MIN` 环境变量 |
+| FB1.carbon pre-commit | 阻 commit 过严 | `chmod -x .git/hooks/pre-commit` 或 `git commit --no-verify` |
+| NT1.carbon | BurntToast 错 / 通知狂轰 | settings.json `Notification` hook 段删 |
+| H3.carbon | 开场 token 爆 | reset-status.mjs 末尾的 echo 段注释 |
+| OS1.carbon | statusline 乱码 | settings.json `statusLine` 字段删 |
+| PM1+PM2 | 无（文档段） | 段删除 |
+| CB1 | CI 跑炸 / merge 错 | 删 `.claude/skills/auto-commit-cicd/` 目录 |
+| B2 learnings | session-debrief append 写错文件 | 删错误的 learnings.md 重建 |
+| CT5 | review 引用错误 invariants | 删 `combat-kernel-reviewer.memory.md` |
+| PG1 | 无（audit 决策） | 决策行回滚 |
+
+每项也独立 commit → 实在不行 `git revert <sha>`。
+
+### 13.3 carbon 实施时的 if-then 分支节点
+
+实施时这些岔路口必须 stop and decide（与 harmony 附录 P.3 D1-D6 共享，重列 carbon 相关 4 个）：
+
+| 决策点 | 判断 | 主路径 | 分支路径 |
+|---|---|---|---|
+| **D1 SE1** | `claude doctor` `model` 字段支持？ | 落 `"model": "sonnet"` | 删 SE1，仅 SC2 + 用户级 default 兜底 |
+| **D2 BurntToast** | `Get-Module -ListAvailable BurntToast` 有结果？ | `New-BurntToastNotification` | `msg "%USERNAME%"` fallback（阻塞 message box 但能用） |
+| **D3 CT1 拆 CLAUDE.md** | 350 行有明确模块边界？ | S4.5 拆 + CT3 @import | CT1 标 P2，不拆 |
+| **D4 CB1 移植** | S2-S5 跑完后手动 `git push + gh pr create` 体感够用？ | S6 移植 CB1 | CB1 降级 P2，S6 只做 B2/CT5/PG1 |
+| **D5 PG1** | marketplace 有能替代自维护件的 plugin？ | install + 删对应自维护件 | 继续自维护（与 harmony 同走此路） |
+| **D6 cwd** | `pwd \| grep carbon-shade-web` 匹配？ | 继续 | 立刻 cd carbon + `git diff` 验证改动没落错仓库 |
+
+### 13.4 闭环反向边（§7 19 项验证失败 → 回到哪一阶段）
+
+| 验证项 | 失败 | 反向流转 |
+|---|---|---|
+| #1 C1 deny | 拒错 | S2 改 settings.json deny 模式 |
+| #6 C3 Stop hook | `.last-activity-ts` 没更新 | S4 改 stop-hook.mjs 写文件逻辑 |
+| #7 CB2 idle | sentinel 不输出 | S4 改 reset-status.mjs idle 段（gap 计算 / 阈值） |
+| #8 FB1 | commit 没被拒 | S4 重新 chmod +x `.git/hooks/pre-commit` |
+| #9 NT1 | 桌面无通知 | 走 D2 分支（msg fallback） |
+| #10 H3 | 开场无摘要 | S5 改 reset-status.mjs 末尾 echo；或检查 `.last-analyze.txt` 是否存在（C3 前置） |
+| #11 OS1 | statusline 不显 | S5 改 statusline.mjs；字段不支持回 P.2 局部禁用 |
+| #12 SC1+SC2 | statusline 看不出 sonnet | 等 OS1 先通过；OS1 通过仍看不出 = 字段不识别，走 D1 |
+| #13 SE1 | 字段不识别 | 走 D1（SC2 兜底） |
+| #14 AG1 | 不自动派 agent | S3 改 description "Use when ... NOT for ..." 措辞 |
+| #15 CB1 | `/auto-commit-cicd` CI 跑炸 | 走 D4（降级 P2） |
+| #16 B2 | learnings 没 Append | 检查 session-debrief skill 路径配置 |
+| #17 CT5 | review 没引用 memory | 检查 AG1 先通过；通过仍没引用 = 等 Claude Code v2.1.33+ |
+| #19 PG1 | 决策行没写 | S6 补写 audit 结论行 |
+
+**与 harmony fusion-design.md 附录 P 互引**：harmony 侧已完成 19 项的 DAG / 回退 / 分支节点在那边；carbon 侧 pending 19 项的同口径表本节给出；两侧合起来才是"完美闭环 + DAG + 可回退 + 分支主干"的全图。
+
+---
+
+> **End of plan v2** (加 §13 后约 540 行)。完整决策点 = P0 5 + P1 13 + P2 8 + 故意不做 15 + 分支决策 6 = 47 项，无 "TBD" 占位。
