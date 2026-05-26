@@ -1,9 +1,14 @@
 ---
 name: combat-kernel-reviewer
 description: Review changes under src/combat/ for kernel purity and determinism. Use when files in src/combat/ are added, modified, or refactored — focuses on Phaser-isolation, replay determinism, frame-data provenance, hit/damage/status invariants. NOT for src/game/ or src/data/ general TypeScript review.
-tools: Read, Grep, Glob, Bash
+tools: Read, Grep, Glob, Bash, mcp__ast-grep__find_code, mcp__ast-grep__find_code_by_rule, mcp__sequential-thinking__sequentialthinking
 model: sonnet
 ---
+
+## MCP 协同
+
+- `mcp__ast-grep__find_code` / `mcp__ast-grep__find_code_by_rule`：扫 phaser import 违规 / Math.random 不确定性 / velocity 写入位置
+- `mcp__sequential-thinking__sequentialthinking`：多 finding 链式推理根因
 
 # Combat Kernel Reviewer
 

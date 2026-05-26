@@ -144,15 +144,34 @@ Never commit `NEOPLE_API_KEY`.
 
 The split: `analyze` = static gates, `completion` = presence, `audit` = semantic depth.
 
-## LSP tools — prefer over Grep/Read
+## MCP / Skill 工具决策树
+
+### LSP tools — prefer over Grep/Read
 
 | Scenario | Use | Instead of |
 |----------|-----|------------|
-| "Where is X defined?" | `goToDefinition` | Grep + Read |
-| "What calls this function?" | `findReferences` | Grep |
-| "What's this type/interface?" | `hover` | Read whole file |
-| "What's in this file?" | `documentSymbol` | Read full file |
-| "Call chain?" | `incomingCalls` / `outgoingCalls` | Manual trace |
+| "Where is X defined?" | `goToDefinition` (内置) | Grep + Read |
+| "What calls this function?" | `findReferences` (内置) | Grep |
+| "What's this type/interface?" | `hover` (内置) | Read whole file |
+| "What's in this file?" | `documentSymbol` (内置) | Read full file |
+| "Call chain?" | `incomingCalls` / `outgoingCalls` (内置) | Manual trace |
+
+> ECP0=D: 当前无 LSP MCP server — 上表用内置 LSP 能力，非 `mcp__cclsp__*`。
+
+### ast-grep — pattern 搜索（当前唯一 MCP）
+
+| Scenario | Tool |
+|----------|------|
+| 扫所有 `phaser` import 违规 | `mcp__ast-grep__find_code` |
+| `Math.random()` 不确定性全局排查 | `mcp__ast-grep__find_code` |
+| `velocity.x =` 写入位置 | `mcp__ast-grep__find_code` |
+| 复杂跨文件 YAML 规则（inside/has） | `mcp__ast-grep__find_code_by_rule` |
+
+**何时选 ast-grep 而非 Grep**：pattern 含 AST 结构（`$NAME`/`$_`/`$$$`）或需 inside/has 关系时；单纯字面量用 Grep 更快。
+
+### sequential-thinking — 推理链
+
+发现多个互相牵连的 finding → `mcp__sequential-thinking__sequentialthinking` 推理根因，而不是线性堆结论。
 
 Before editing a function, run `findReferences`. Before reading a new file, run `documentSymbol`.
 

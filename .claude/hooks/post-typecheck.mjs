@@ -12,4 +12,5 @@ if (p.endsWith('.ts') && !p.startsWith('.tmp')) {
     process.stdout.write('⚠️ TypeCheck 失败:\n' + (r.stdout || '').slice(0, 800));
     process.exit(1);
   }
+  // pattern 合规验证可用 ast-grep: mcp__ast-grep__find_code / mcp__ast-grep__find_code_by_rule
 }

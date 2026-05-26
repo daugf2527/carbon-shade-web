@@ -894,6 +894,8 @@ carbon `mcpServers: []`，root CLAUDE.md "LSP tools" 段用通用名**实际没 
 
 **倾向 D** — 没真用过 LSP 前不知 carbon TS 项目哪个 MCP 合适（按 `feedback_completeness_is_scenario_not_form` — 不要"为完整而绑"）。
 
+**决策 D — 2026-05-26**：暂不绑 LSP MCP server，仅 ast-grep（user 级已配）；后续若实际会话中 LSP 需求频繁再升选项 A/B。
+
 ### 14.3 ECP1-carbon — root CLAUDE.md "LSP tools" 段升级
 
 - **harmony 对照**：root CLAUDE.md 加全新 "MCP / Skill 工具决策树"段（43 行）
