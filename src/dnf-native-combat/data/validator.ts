@@ -191,9 +191,11 @@ const PvfFactBaseFields = {
   requiresManualVerification: z.boolean().optional(),
 };
 
-/** PvfFact<number>. */
+/** PvfFact<number>. Audit P0-5 (2026-05-26): .finite() rejects NaN/Infinity
+ *  at validate-time so downstream consumers (importer JSON / runtime shards
+ *  / SQLite views) never see numeric pollution. */
 const PvfFactNumberSchema = z.object({
-  value: z.number(),
+  value: z.number().finite(),
   ...PvfFactBaseFields,
 });
 
@@ -204,9 +206,10 @@ const PvfStringFactSchema = z.object({
   ...PvfFactBaseFields,
 });
 
-/** PvfVectorFact (values is number[]; no `value` field). */
+/** PvfVectorFact (values is number[]; no `value` field). Audit P0-5:
+ *  every element .finite(); array capped at 10000 (audit P0-6). */
 const PvfVectorFactSchema = z.object({
-  values: z.array(z.number()),
+  values: z.array(z.number().finite()).max(10000),
   ...PvfFactBaseFields,
 });
 
@@ -227,17 +230,18 @@ const PvfAttributeSchema = z.object({ t: z.string() }).passthrough();
 /** PvfSection — { name, attributes: PvfAttribute[] }. */
 const PvfSectionSchema = z.object({
   name: z.string(),
-  attributes: z.array(PvfAttributeSchema),
+  attributes: z.array(PvfAttributeSchema).max(10000),
 });
 
 // ChrWeaponHitInfoRow — 6 fields, all primitives. Per types/ChrDef.ts.
+// Audit P0-5: all numeric fields .finite() — physics/damage params reject NaN.
 const ChrWeaponHitInfoRowSchema = z.object({
   hitTag: z.string(),
   bloodTag: z.string(),
-  damageScalePct: z.number(),
-  critOrSimilar: z.number(),
-  pushBack: z.number(),
-  launch: z.number(),
+  damageScalePct: z.number().finite(),
+  critOrSimilar: z.number().finite(),
+  pushBack: z.number().finite(),
+  launch: z.number().finite(),
 });
 
 // ChrWeaponWavRow — discriminated union by `format` (stereo / mono / matrix).
@@ -257,7 +261,7 @@ const ChrWeaponWavRowSchema = z.discriminatedUnion("format", [
   }),
   z.object({
     format: z.literal("matrix"),
-    entries: z.array(z.object({ swing: z.string(), hit: z.string() })),
+    entries: z.array(z.object({ swing: z.string(), hit: z.string() })).max(10000),
   }),
 ]);
 
@@ -281,8 +285,8 @@ const ChrGrowthSchema = z.object({
 });
 
 const ChrAttackInfoSchema = z.object({
-  attackBase: z.array(PvfRefSchema),
-  etc: z.array(PvfRefSchema),
+  attackBase: z.array(PvfRefSchema).max(10000),
+  etc: z.array(PvfRefSchema).max(10000),
   jumpAttack: z.nullable(PvfRefSchema),
   dashAttack: z.nullable(PvfRefSchema),
 });
@@ -291,7 +295,7 @@ const ChrSchema = z.object({
   kind: z.literal("chr"),
   path: z.string(),
   provenance: ExtractedDocumentProvenanceSchema,
-  sections: z.array(PvfSectionSchema),
+  sections: z.array(PvfSectionSchema).max(10000),
   job: PvfStringFactSchema,
   bodyImagePath: z.nullable(PvfStringFactSchema),
   jumpPower: PvfFactNumberSchema,
@@ -302,37 +306,37 @@ const ChrSchema = z.object({
   weight: PvfFactNumberSchema,
   lightResistance: z.nullable(PvfFactNumberSchema),
   darkResistance: z.nullable(PvfFactNumberSchema),
-  widthBox: z.array(z.number()),
+  widthBox: z.array(z.number().finite()).max(10000),
   growth: ChrGrowthSchema,
-  moduleDamageRate: z.nullable(z.array(z.array(z.number()))),
+  moduleDamageRate: z.nullable(z.array(z.array(z.number().finite()).max(10000)).max(10000)),
   // Audit F12 (ts-parser-truth, 2026-05-24): was z.array(z.unknown()) — now
   // typed against ChrWeaponHitInfoRow / ChrWeaponWavRow per types/ChrDef.ts.
-  weaponHitInfo: z.array(ChrWeaponHitInfoRowSchema),
-  weaponWav: z.array(z.nullable(ChrWeaponWavRowSchema)),
-  weaponSkillInfo: z.array(z.number()),
-  weaponDurabilityDecreaseRate: z.array(z.number()),
-  upgradeWeaponAttackPowerRate: z.array(z.number()),
+  weaponHitInfo: z.array(ChrWeaponHitInfoRowSchema).max(10000),
+  weaponWav: z.array(z.nullable(ChrWeaponWavRowSchema)).max(10000),
+  weaponSkillInfo: z.array(z.number().finite()).max(10000),
+  weaponDurabilityDecreaseRate: z.array(z.number().finite()).max(10000),
+  upgradeWeaponAttackPowerRate: z.array(z.number().finite()).max(10000),
   attackInfo: ChrAttackInfoSchema,
-  motionRefs: z.record(z.string(), z.array(PvfRefSchema)),
+  motionRefs: z.record(z.string(), z.array(PvfRefSchema).max(10000)),
   // raw is a full PvfDocument; we only enforce object-shape here (loose).
   raw: PlainObjectSchema,
-});
+}).strict();
 
 const MobSchema = z.object({
   kind: z.literal("mob"),
   path: z.string(),
   provenance: ExtractedDocumentProvenanceSchema,
-  sections: z.array(PvfSectionSchema),
+  sections: z.array(PvfSectionSchema).max(10000),
   name: z.nullable(PvfStringFactSchema),
   warlike: z.nullable(PvfFactNumberSchema),
   sight: z.nullable(PvfFactNumberSchema),
   weight: z.nullable(PvfFactNumberSchema),
   hpMax: z.nullable(PvfVectorFactSchema),
-  attackInfo: z.array(PvfRefSchema),
-  animationRefs: z.array(PvfRefSchema),
-  category: z.array(z.string()),
+  attackInfo: z.array(PvfRefSchema).max(10000),
+  animationRefs: z.array(PvfRefSchema).max(10000),
+  category: z.array(z.string()).max(10000),
   raw: PlainObjectSchema,
-});
+}).strict();
 
 const AtkAttackKindSchema = z.union([z.literal("physic"), z.literal("magic"), z.null()]);
 const AtkHitReactionSchema = z.union([
@@ -353,7 +357,7 @@ const AtkSchema = z.object({
   kind: z.literal("atk"),
   path: z.string(),
   provenance: ExtractedDocumentProvenanceSchema,
-  sections: z.array(PvfSectionSchema),
+  sections: z.array(PvfSectionSchema).max(10000),
   liftUp: z.nullable(PvfFactNumberSchema),
   pushAside: z.nullable(PvfFactNumberSchema),
   damageBonus: z.nullable(PvfFactNumberSchema),
@@ -372,7 +376,7 @@ const AtkSchema = z.object({
   hitWav: z.nullable(PvfStringFactSchema),
   knuckBack: z.nullable(PvfFactNumberSchema),
   raw: PlainObjectSchema,
-});
+}).strict();
 
 const SklSkillTypeSchema = z.union([
   z.literal("active"),
@@ -386,18 +390,18 @@ const SklWeaponEffectTypeSchema = z.union([
 ]);
 
 const SklCancelWindowSchema = z.object({
-  cancelWindowStart: z.number(),
-  cancelWindowDuration: z.number(),
-  cancelGroup: z.number(),
-  cancelWeaponMask: z.array(z.number()),
-  cancelTargetSlots: z.array(z.number()),
+  cancelWindowStart: z.number().finite(),
+  cancelWindowDuration: z.number().finite(),
+  cancelGroup: z.number().finite(),
+  cancelWeaponMask: z.array(z.number().finite()).max(10000),
+  cancelTargetSlots: z.array(z.number().finite()).max(10000),
 });
 
 const SklSchema = z.object({
   kind: z.literal("skl"),
   path: z.string(),
   provenance: ExtractedDocumentProvenanceSchema,
-  sections: z.array(PvfSectionSchema),
+  sections: z.array(PvfSectionSchema).max(10000),
   name: z.nullable(PvfStringFactSchema),
   skillType: SklSkillTypeSchema,
   weaponEffectType: SklWeaponEffectTypeSchema,
@@ -407,8 +411,8 @@ const SklSchema = z.object({
   requiredLevelRange: z.nullable(PvfFactNumberSchema),
   maximumLevel: z.nullable(PvfFactNumberSchema),
   durabilityDecreaseRate: z.nullable(PvfFactNumberSchema),
-  growtypeMaximumLevel: z.nullable(z.array(z.number())),
-  skillFitnessGrowtype: z.nullable(z.array(z.number())),
+  growtypeMaximumLevel: z.nullable(z.array(z.number().finite()).max(10000)),
+  skillFitnessGrowtype: z.nullable(z.array(z.number().finite()).max(10000)),
   hasPvp: z.boolean(),
   hasDungeon: z.boolean(),
   hasWarroom: z.boolean(),
@@ -416,86 +420,89 @@ const SklSchema = z.object({
   autoCoolTimeApply: z.boolean(),
   cancelWindow: z.nullable(SklCancelWindowSchema),
   raw: PlainObjectSchema,
-});
+}).strict();
 
 const DgnSchema = z.object({
   kind: z.literal("dgn"),
   path: z.string(),
   provenance: ExtractedDocumentProvenanceSchema,
-  sections: z.array(PvfSectionSchema),
+  sections: z.array(PvfSectionSchema).max(10000),
   name: z.nullable(PvfStringFactSchema),
   explain: z.nullable(PvfStringFactSchema),
   basisLevel: z.nullable(PvfFactNumberSchema),
   minimumRequiredLevel: z.nullable(PvfFactNumberSchema),
   experienceIncreasingPoint: z.nullable(PvfFactNumberSchema),
   backgroundPos: z.nullable(PvfFactNumberSchema),
-  startMap: z.nullable(z.array(z.number())),
-  bossMap: z.nullable(z.array(z.number())),
-  size: z.nullable(z.object({ width: z.number(), height: z.number() })),
+  startMap: z.nullable(z.array(z.number().finite()).max(10000)),
+  bossMap: z.nullable(z.array(z.number().finite()).max(10000)),
+  size: z.nullable(z.object({ width: z.number().finite(), height: z.number().finite() })),
   mapSpecification: z.nullable(z.object({
-    rows: z.number(),
-    cols: z.number(),
-    items: z.array(z.array(z.number())),
+    rows: z.number().finite(),
+    cols: z.number().finite(),
+    items: z.array(z.array(z.number().finite()).max(10000)).max(10000),
   })),
-  enteringTitleRefs: z.array(PvfRefSchema),
+  enteringTitleRefs: z.array(PvfRefSchema).max(10000),
   imageRefs: z.array(z.object({
     section: z.string(),
     path: z.string(),
     resolved: z.boolean(),
-  })),
-  championLevels: z.nullable(z.array(z.number())),
-  pathgateObjects: z.nullable(z.array(z.number())),
-  eventMonsters: z.nullable(z.array(z.number())),
+  })).max(10000),
+  championLevels: z.nullable(z.array(z.number().finite()).max(10000)),
+  pathgateObjects: z.nullable(z.array(z.number().finite()).max(10000)),
+  eventMonsters: z.nullable(z.array(z.number().finite()).max(10000)),
   greedLayout: z.nullable(z.string()),
-  worldmapPatternInfo: z.nullable(z.array(z.unknown())),
+  // Audit P0-7 (2026-05-26): was z.array(z.unknown()) — now PvfAttribute[]
+  // (every attribute must carry a string `t` discriminator), matching the
+  // monsterSpawns / passiveObjects pattern used by MapDef.
+  worldmapPatternInfo: z.nullable(z.array(PvfAttributeSchema).max(10000)),
   raw: PlainObjectSchema,
-});
+}).strict();
 
 const EtcKeyValueEntrySchema = z.object({
   key: z.string(),
-  values: z.array(z.number()),
-  indexedValues: z.nullable(z.record(z.string(), z.number())),
+  values: z.array(z.number().finite()).max(10000),
+  indexedValues: z.nullable(z.record(z.string(), z.number().finite())),
 });
 
 const EtcSchema = z.object({
   kind: z.literal("etc"),
   path: z.string(),
   provenance: ExtractedDocumentProvenanceSchema,
-  sections: z.array(PvfSectionSchema),
-  entries: z.array(EtcKeyValueEntrySchema),
+  sections: z.array(PvfSectionSchema).max(10000),
+  entries: z.array(EtcKeyValueEntrySchema).max(10000),
   byKey: z.record(z.string(), EtcKeyValueEntrySchema),
   raw: PlainObjectSchema,
-});
+}).strict();
 
 const MapSchema = z.object({
   kind: z.literal("map"),
   path: z.string(),
   provenance: ExtractedDocumentProvenanceSchema,
-  sections: z.array(PvfSectionSchema),
+  sections: z.array(PvfSectionSchema).max(10000),
   name: z.nullable(PvfStringFactSchema),
   mapType: z.nullable(PvfStringFactSchema),
   dungeonId: z.nullable(PvfFactNumberSchema),
   nearSightScroll: z.nullable(PvfFactNumberSchema),
   middleSightScroll: z.nullable(PvfFactNumberSchema),
   farSightScroll: z.nullable(PvfFactNumberSchema),
-  tiles: z.array(z.string()),
-  playerNumber: z.array(z.number()),
-  sounds: z.array(z.string()),
-  monsterAiHints: z.array(z.string()),
-  eventMonsterPositions: z.array(z.number()),
-  pathgatePos: z.array(z.number()),
-  pvpStartArea: z.array(z.number()),
+  tiles: z.array(z.string()).max(10000),
+  playerNumber: z.array(z.number().finite()).max(10000),
+  sounds: z.array(z.string()).max(10000),
+  monsterAiHints: z.array(z.string()).max(10000),
+  eventMonsterPositions: z.array(z.number().finite()).max(10000),
+  pathgatePos: z.array(z.number().finite()).max(10000),
+  pvpStartArea: z.array(z.number().finite()).max(10000),
   // Audit F13 (ts-parser-truth, 2026-05-24): was z.array(z.unknown()) — now
   // PvfAttribute[] per types/MapDef.ts. Section attributes preserve their
   // typed `t` discriminator, so silent coercion at parser boundary surfaces.
-  monsterSpawns: z.array(PvfAttributeSchema),
-  passiveObjects: z.array(PvfAttributeSchema),
-  specialPassiveObjects: z.array(PvfAttributeSchema),
-  animationRefs: z.array(PvfRefSchema),
-  backgroundAnimation: z.array(PvfRefSchema),
+  monsterSpawns: z.array(PvfAttributeSchema).max(10000),
+  passiveObjects: z.array(PvfAttributeSchema).max(10000),
+  specialPassiveObjects: z.array(PvfAttributeSchema).max(10000),
+  animationRefs: z.array(PvfRefSchema).max(10000),
+  backgroundAnimation: z.array(PvfRefSchema).max(10000),
   greed: z.nullable(PvfStringFactSchema),
   raw: PlainObjectSchema,
-});
+}).strict();
 
 // ─── Issue translation: Zod issue → ValidationIssue code ────────────────────
 //
