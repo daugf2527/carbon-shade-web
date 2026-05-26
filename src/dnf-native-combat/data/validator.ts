@@ -291,6 +291,17 @@ const ChrAttackInfoSchema = z.object({
   dashAttack: z.nullable(PvfRefSchema),
 });
 
+// 2026-05-26 verification gap-fix (completeness-verifier-1): raw .chr contains
+// 4 awakening section names that parser previously dropped. Schema preserves
+// data verbatim; semantics (sub-job dimension, slot meaning) deferred to
+// Stage 1.5 awakening-specific audit. See ChrParser.parseAwakening.
+const ChrAwakeningSchema = z.object({
+  skillSlots: z.array(z.array(z.number().finite()).max(1000)).max(100),
+  names: z.nullable(z.array(z.array(z.string()).max(100)).max(100)),
+  tier1SlotCounts: z.array(z.number().finite()).max(100),
+  tier2SlotCounts: z.array(z.number().finite()).max(100),
+});
+
 const ChrSchema = z.object({
   kind: z.literal("chr"),
   path: z.string(),
@@ -318,6 +329,7 @@ const ChrSchema = z.object({
   upgradeWeaponAttackPowerRate: z.array(z.number().finite()).max(10000),
   attackInfo: ChrAttackInfoSchema,
   motionRefs: z.record(z.string(), z.array(PvfRefSchema).max(10000)),
+  awakening: ChrAwakeningSchema,
   // raw is a full PvfDocument; we only enforce object-shape here (loose).
   raw: PlainObjectSchema,
 }).strict();

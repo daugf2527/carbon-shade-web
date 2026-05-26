@@ -118,8 +118,40 @@ export function parseChrDocument(document: PvfDocument): ChrDef {
       dashAttack: refAttributes(firstSection(document, "dashattack info"))[0] ?? null,
     },
     motionRefs: parseMotionRefs(document),
+    awakening: parseAwakening(document),
     raw: Object.freeze(document),
   };
+}
+
+// 2026-05-26 verification gap-fix (completeness-verifier-1): raw .chr contains
+// 4 awakening section names that the parser previously dropped. Real-PVF
+// observed (swordman.chr): "awakening skill" ×10 (5 sub-jobs × 2 slots? —
+// non-empty entries [91,1] [89,1] [90,1] [92,1]); "awakening name" ×1 as 5×2
+// link matrix (all link("") in 70-cap data); "awakening 1" ×5 + "awakening 2"
+// ×5, all observed empty. Preserve data verbatim without imposing sub-job
+// dimension semantics — that requires cross-job audit deferred to Stage 1.5.
+function parseAwakening(document: PvfDocument) {
+  const skillSlots = sectionsByName(document, "awakening skill").map(section =>
+    section.attributes
+      .map(attr => (attr.t === "int" ? (attr as { t: "int"; v: number }).v : null))
+      .filter((v): v is number => v !== null),
+  );
+
+  const nameSection = firstSection(document, "awakening name");
+  let names: string[][] | null = null;
+  const nameAttr = nameSection?.attributes[0];
+  if (nameAttr?.t === "mat" && Array.isArray(nameAttr.items)) {
+    names = nameAttr.items.map(row =>
+      Array.isArray(row)
+        ? row.map(cell => (extractLeafString(cell) ?? ""))
+        : [],
+    );
+  }
+
+  const tier1SlotCounts = sectionsByName(document, "awakening 1").map(s => s.attributes.length);
+  const tier2SlotCounts = sectionsByName(document, "awakening 2").map(s => s.attributes.length);
+
+  return { skillSlots, names, tier1SlotCounts, tier2SlotCounts };
 }
 
 function parseNumberMatrix(document: PvfDocument, sectionName: string): number[][] | null {

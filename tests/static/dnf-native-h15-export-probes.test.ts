@@ -64,7 +64,9 @@ function chrFixture(path: string, job: string): ChrDef {
     moduleDamageRate: null, weaponHitInfo: [], weaponWav: [], weaponSkillInfo: [],
     weaponDurabilityDecreaseRate: [], upgradeWeaponAttackPowerRate: [],
     attackInfo: { attackBase: [], etc: [], jumpAttack: null, dashAttack: null },
-    motionRefs: {}, raw: FAKE_DOC(path),
+    motionRefs: {},
+    awakening: { skillSlots: [], names: null, tier1SlotCounts: [], tier2SlotCounts: [] },
+    raw: FAKE_DOC(path),
   };
 }
 
