@@ -861,4 +861,121 @@ graph LR
 
 ---
 
-> **End of plan v3** (2026-05-26 Explore agent 调查修订)。完整决策点 = P0 5 + P1 14 + P2 8 + 故意不做 15 + 分支决策 9 (D1-D9，D3 作废) + 作废 2 (CT1/CT3) = **53 项**，无 "TBD" 占位。
+## 14. ECP 生态链路补强（2026-05-26 harmony 经验反向移植）
+
+> 本节是 plan v3 → v3.1 增补。harmony 同期完成 ECP1-4（commit `95a7bd4`，协同度 74%→92%）。
+> carbon **不能 1:1 照抄 harmony ECP** — 经实地查（按 harmony memory `feedback_design_must_investigate_first`）发现 8 处关键差异。
+
+### 14.1 carbon vs harmony ECP 起点对比（实地查 2026-05-26）
+
+| 维度 | harmony 改前 | carbon 现状 | 影响 |
+|---|---|---|---|
+| 项目级 MCP servers | cclsp + serena 已绑 | **`mcpServers: []`**（`~/.claude.json` 内 carbon project block 实测） | **carbon 无 cclsp/serena** |
+| 可用 MCP | 5 个 | **仅 3 个 user 级**（ast-grep / firecrawl / sequential-thinking） | carbon ECP 不能写 `mcp__cclsp__*` / `mcp__serena__*` |
+| root CLAUDE.md "LSP tools" 段 | 完全没有 | **已有 L147-157 但用通用名**（goToDefinition / findReferences / documentSymbol），无 MCP 对应 | carbon ECP1 是**升级**而非新增 |
+| reviewer agent frontmatter | napi-reviewer 无 frontmatter | combat-kernel-reviewer **已有完整 frontmatter**（AG1 已做）但 `tools: Read,Grep,Glob,Bash` 无 MCP | carbon ECP3 只补 tools + body，frontmatter 不动 |
+| AGENTS.md（Codex Bot 规范） | 449 行游离 | **不存在**（Glob 0 hit） | carbon ECP4 #1 **N/A** |
+| Serena memory 子系统 | 项目级 serena 可写 | **N/A**（carbon 无 serena） | carbon ECP4 #4 **N/A** |
+| SessionStart hook | session-start.sh 已注入 git+skill | reset-status.mjs **只写 status.json 不 echo** | carbon H3.carbon 仍 pending（plan v3 §4 S5 内） |
+| PostToolUse hook | post-edit-cpp.sh（codelinter） | post-typecheck.mjs（tsc，15 行简单） | 都可加 MCP tip，carbon 改动小 |
+
+**结论**：carbon ECP 方案 ≠ harmony ECP1-4 1:1 移植；必须**先做 ECP0 前置决策**，且 ECP4 #1 / #4 两子项 N/A。
+
+### 14.2 ECP0-carbon — LSP MCP 绑定决策（前置 4 选 1）
+
+carbon `mcpServers: []`，root CLAUDE.md "LSP tools" 段用通用名**实际没 MCP 工具支撑**（goToDefinition / findReferences 是 LSP 概念名，无对应 server）。4 选 1：
+
+| 选项 | 内容 | 工作量 | 后续 ECP 可用工具 |
+|---|---|---|---|
+| **A. 绑 cclsp 项目级** | 新建 `.claude/cclsp.json` 配置 `typescript-language-server` | ~30 min | `mcp__cclsp__*` 全套（12 工具）+ ast-grep |
+| **B. 绑 serena 项目级** | `~/.claude.json` carbon block 加 serena mcpServers | ~15 min | `mcp__serena__*` 全套（21 工具）+ ast-grep |
+| **C. 不绑 LSP MCP** | 靠 Claude Code 内置 LSP 集成 + ast-grep + Grep | 0 min | 仅 ast-grep + 内置 |
+| **D. 暂不决策**（推荐）| 跑 1-2 个会话观察 main Claude 实际 LSP 需求再决 | 0 min | 仅 ast-grep；按需升级 |
+
+**倾向 D** — 没真用过 LSP 前不知 carbon TS 项目哪个 MCP 合适（按 `feedback_completeness_is_scenario_not_form` — 不要"为完整而绑"）。
+
+### 14.3 ECP1-carbon — root CLAUDE.md "LSP tools" 段升级
+
+- **harmony 对照**：root CLAUDE.md 加全新 "MCP / Skill 工具决策树"段（43 行）
+- **carbon 落地**：升级 root CLAUDE.md 现有 L147-157 "LSP tools — prefer over Grep/Read"段为 "MCP / Skill 工具决策树"：
+  - 现有 5 场景表（goToDefinition / findReferences / hover / documentSymbol / call chain）— 改用具体可用 MCP 工具名（取决于 ECP0 决策）
+  - 加 ast-grep `find_code` / `find_code_by_rule` 场景（譬如找所有 `from 'phaser'` import 违规 / `Math.random()` 不确定性 / `velocity.x =` 写入位置）
+  - 加 sequential-thinking 罕见 finding 推理
+  - 加"何时必须用 MCP vs 何时退 Read/Grep"场景边界
+- **工作量**：~20 min（升级 vs harmony 新增 ~30 min）
+
+### 14.4 ECP2-carbon — 6 skill 钩入 MCP（按需 3-4 个，不强求 6）
+
+- **harmony 对照**：closed-loop + auto-commit-cicd 2 skill 钩入
+- **carbon 落地**（按 `feedback_completeness_is_scenario_not_form` 挑真用得到的）：
+  - **closed-loop** Step 2 audit-verify.mjs 后加 `ast-grep find_code` 复核 pattern 泛存性 + Step 3 LSP 协同（如 ECP0=A/B）
+  - **audit** agent prompt 加 "可用 `ast-grep find_code` 找 pattern 泛存性 / `sequentialthinking` 罕见 finding"
+  - **verify-all**（与 plan v3 VA1 一致；description 配合 `ast-grep` tip）
+  - **dnf-physics-extraction**（业务专属，PVF 字段定义模式扫）— 加 `ast-grep find_code`
+  - **add-action / gen-test**：按需，不强加
+- **工作量**：~40 min
+
+### 14.5 ECP3-carbon — combat-kernel-reviewer 加 MCP 协同
+
+- **harmony 对照**：napi-boundary-reviewer frontmatter tools 4→18 + body 加 "How to investigate (MCP 协同)" 段
+- **carbon 落地**：combat-kernel-reviewer.md（已有 frontmatter，AG1 已做）：
+  - **frontmatter `tools:`** 当前 `Read, Grep, Glob, Bash` → 加 `mcp__ast-grep__find_code, mcp__ast-grep__find_code_by_rule, mcp__sequential-thinking__sequentialthinking`（4→7）；若 ECP0=A/B 再加 cclsp/serena 工具
+  - **body** 加 "How to investigate (MCP 协同)" 段，按 combat-reviewer 5 review 维度特化：
+    - **Phaser 隔离边界** → `ast-grep find_code "from 'phaser'"` 跨文件扫 import 违规
+    - **Velocity 写入位置** → `ast-grep find_code_by_rule` 写 yaml 规则扫 `*.velocity.x = ...` 模式 + 配对检查白名单 4 文件（ActorFactory / CombatKernel / ReactionResolver / EnemyAI）
+    - **确定性保证** → `ast-grep find_code` 全扫 `Math.random()` / `Date.now()` / `performance.now()` / `setTimeout` / `setInterval`
+    - **Provenance 完整性** → `ast-grep find_code` 找所有 `FrameDataAction` 定义 + `sourcePolicy` / `fieldProvenance` 字段配对检查
+    - **类型安全** → `ast-grep find_code ": any"` + `sequentialthinking` 复杂类型推理
+- **工作量**：~30 min
+
+### 14.6 ECP4-carbon — 4 盲区按 carbon 实物筛
+
+| harmony ECP4 子项 | carbon 是否适用 | 落地 |
+|---|---|---|
+| #1 AGENTS.md @import | **N/A** — carbon 无 AGENTS.md（Glob 实测 0 hit） | 跳过 |
+| #2 PostToolUse 失败提 MCP | ✅ carbon `post-typecheck.mjs` 15 行简单，在 "TypeCheck 失败" stdout 后加 tip："建议用 `mcp__ast-grep__find_code` 找类似 pattern；类型推理拿不准用 `sequentialthinking`" | 5 min |
+| #3 SessionStart MCP 清单 + statusline mcp 字段 | ✅ 但**与 plan v3 §4 S5 的 H3.carbon + OS1.carbon 协同做**——这是已规划项的 ECP 增强，不单独阶段 | 与 S5 协同 |
+| #4 Serena memory write | **N/A** — carbon 无 serena（除非 ECP0=B 反转） | 跳过 |
+
+**实际 ECP4-carbon = 仅 #2 独立做**（5 min）+ #3 与 S5 协同；#1/#4 N/A。
+
+### 14.7 总工作量 + 阶段安排
+
+| ECP 子项 | 工作量 | 实施会话 |
+|---|---|---|
+| ECP0 决策（A/B/C/D） | ≤10 min | 任一会话开场 |
+| ECP1 升级 LSP tools 段 | ~20 min | S3 或独立 |
+| ECP2 skill 钩入（3-4 skill） | ~40 min | S3-S6 分摊 |
+| ECP3 combat-reviewer MCP | ~30 min | S6（与 CT5 一起） |
+| ECP4 #2 PostToolUse tip | 5 min | S4（与 C3 一起） |
+| ECP4 #3 SessionStart + statusline | 与 S5 H3.carbon / OS1.carbon 协同 | S5 |
+| **总计** | **~100-110 min**（≈1.5-2h，跨 2-3 会话） | — |
+
+**比 harmony ECP1-4 短**：N/A 子项跳过（AGENTS.md / Serena memory）+ skill 按需 + 与 S5 协同复用。
+
+### 14.8 ECP-carbon 验证清单（plan v3 §7 增补 #23-#27）
+
+| # | 验什么 | 怎么验 | 期望 |
+|---|---|---|---|
+| 23 | ECP0 决策 | 本文件 §14.2 是否有"决策 A/B/C/D YYYY-MM-DD"行 | 有明确决策行 |
+| 24 | ECP1 升级 | `grep -E "ast-grep\|mcp__\|工具决策树" CLAUDE.md` | ≥ 5 行 |
+| 25 | ECP2 skill 钩入 | `grep -l "mcp__\|find_code\|sequentialthinking" .claude/skills/**/SKILL.md` | ≥ 3 个 skill |
+| 26 | ECP3 combat-reviewer | `head -10 .claude/agents/combat-kernel-reviewer.md \| grep -c "mcp__"` | tools 含 ≥ 3 个 mcp__ |
+| 27 | ECP4 #2 PostToolUse | `grep -E "ast-grep\|sequentialthinking" .claude/hooks/post-typecheck.mjs` | ≥ 1 行 |
+
+### 14.9 harmony 反学的方法论（4 条 memory 沉淀）
+
+| harmony 经验 | carbon 应用 | memory |
+|---|---|---|
+| 凭印象推方案 → 撤回循环 → 必须先实地查 | ECP0 前查 `~/.claude.json` mcpServers；不照抄 harmony；本 §14 各子项 carbon 适用性已实地验证 | `feedback_design_must_investigate_first` |
+| "完整 / 跑得透彻" ≠ 形式美 = 实际场景驱动 | ECP-carbon 6 skill 按"真用得到"挑（3-4 个）；ECP4 N/A 项跳过；不强求 1:1 移植 harmony | `feedback_completeness_is_scenario_not_form` |
+| Lifecycle 5 阶段视角扫盲区 | ECP4 按 carbon 5 阶段筛子项（#1 AGENTS.md / #4 Serena 都 N/A 跳） | `feedback_use_lifecycle_view_for_ecosystem_audit` |
+| firecrawl LLM 对中文短文不可信 | 实施 ECP 时如查中文资料用 firecrawl，必须基于 og:description / keyPoints metadata 重判 | `feedback_firecrawl_llm_extract_unreliable` |
+
+---
+
+> **ECP-carbon 与 plan v3 主体的关系**：本 §14 是 plan v3 → v3.1 的增补章节。ECP0/1/2/3/4 与 §4 P1 实施清单**并行穿插**（不是替代）—— ECP4 #3 与 S5 协同；其他 ECP 子项可在 S3-S6 任一会话穿插。不阻塞 P1 主路径。
+
+---
+
+> **End of plan v3.1** (2026-05-26 Explore 调查 + 同日 ECP 反向移植)。完整决策点 = P0 5 + P1 14 + P2 8 + 故意不做 15 + 分支决策 9 (D1-D9，D3 作废) + 作废 2 (CT1/CT3) + **ECP 5 子项**（ECP0/1/2/3/4，含 #1/#4 N/A 跳过 = 实做 3 子项）= **58 项**，无 "TBD" 占位。
