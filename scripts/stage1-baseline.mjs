@@ -68,6 +68,24 @@ const CURATED_FILES = [
   "dungeon/act3/jungle.dgn",
   // Map sample
   "map/test_lorien/4.map",
+  // Phase 4 P0-4 (2026-05-26, stage1.5-revised-plan §二.P0-4): swordman
+  // core motion .ani inlined into player shard so Stage 2 system 5
+  // (Animation playback) has per-frame hitbox data on Day 1. Without these,
+  // RuntimeExporter.playerAnims stays {} and runtime can't read attack/dmg
+  // boxes. .ani files are routed via a separate extract+parse path (main
+  // pipeline filters type:"animation" out per parseStage NOTE).
+  "character/swordman/animation/stand.ani",
+  "character/swordman/animation/walk.ani",
+  "character/swordman/animation/dash.ani",
+  "character/swordman/animation/jump.ani",
+  "character/swordman/animation/attack1.ani",
+  "character/swordman/animation/attack2.ani",
+  "character/swordman/animation/attack3.ani",
+  "character/swordman/animation/hardattack.ani",
+  "character/swordman/animation/jumpattack.ani",
+  "character/swordman/animation/dashattack.ani",
+  "character/swordman/animation/damage1.ani",
+  "character/swordman/animation/down.ani",
 ];
 
 // PVE Phase 2A filter (2026-05-24): expand to all character/* + skill/* files.
@@ -149,10 +167,50 @@ const physicsUrl = pathToFileURL(path.join(
 const enumsUrl = pathToFileURL(path.join(
   ROOT, ".tmp", "test-js", "src", "data", "official", "dnfEnumTables.js",
 )).href;
+// Phase 4 P0-4: AniParser is intentionally outside the main pipeline dispatch
+// (parseStage filters to type:"document"). We import it directly and feed
+// AniDef[] via the `aniDefs` option on runExtractParsePipeline.
+const aniParserUrl = pathToFileURL(path.join(
+  ROOT, ".tmp", "test-js", "src", "dnf-native-combat", "data", "parsers", "AniParser.js",
+)).href;
 
 const { runExtractParsePipeline } = await import(runnerUrl);
 const physicsMod = await import(physicsUrl);
 const enumsMod = await import(enumsUrl);
+const { parseAniDocument } = await import(aniParserUrl);
+
+// Phase 4 P0-4 (2026-05-26): extract+parse a batch of .ani paths via
+// dnf-extract, returning AniDef[]. .ani is JSON type:"animation", routed
+// outside the main pipeline (which only handles type:"document"). Errors
+// per-file are logged but do not abort the baseline run.
+async function extractAndParseAnis(aniPaths) {
+  if (aniPaths.length === 0) return [];
+  const proc = spawnSync(EXTRACT, ["--pvf", pvfPath, "--batch", ...aniPaths], {
+    encoding: "utf8",
+    maxBuffer: 512 * 1024 * 1024,
+  });
+  if (proc.status !== 0) {
+    console.warn(`[baseline] ani --batch non-zero exit ${proc.status}; stderr tail: ${(proc.stderr ?? "").slice(-400)}`);
+  }
+  const parts = (proc.stdout ?? "").split(/\n?---\n?/).filter(s => s.trim());
+  const aniDefs = [];
+  let parseFailCount = 0;
+  for (const part of parts) {
+    let doc;
+    try { doc = JSON.parse(part.trim()); }
+    catch (e) { parseFailCount++; continue; }
+    if (doc.type !== "animation") continue;
+    try { aniDefs.push(parseAniDocument(doc)); }
+    catch (e) {
+      parseFailCount++;
+      console.warn(`[baseline] AniParser failed for ${doc.path}: ${e.message}`);
+    }
+  }
+  if (parseFailCount > 0) {
+    console.warn(`[baseline] ${parseFailCount} ani docs failed JSON.parse or AniParser`);
+  }
+  return aniDefs;
+}
 
 const stringifyKeys = (obj) => {
   const out = {};
@@ -180,9 +238,19 @@ const runId = "stage1-baseline";  // fixed runId so report filenames are stable
 const startMs = Date.now();
 console.log(`[baseline] starting on ${targetFiles.length} ${PVE_FULL ? "PVE-full" : "curated"} files…`);
 
+// Phase 4 P0-4: partition .ani out of main pipeline target list. Main
+// pipeline (PvfDocumentLoader) drops type:"animation" with only a warn —
+// AniParser instead runs in extractAndParseAnis() and feeds aniDefs.
+const aniTargets = targetFiles.filter(p => p.toLowerCase().endsWith(".ani"));
+const nonAniTargets = targetFiles.filter(p => !p.toLowerCase().endsWith(".ani"));
+console.log(`[baseline] ani routing: ${aniTargets.length} .ani → AniParser; ${nonAniTargets.length} → main pipeline`);
+
+const aniDefs = await extractAndParseAnis(aniTargets);
+console.log(`[baseline] parsed ${aniDefs.length} AniDef from ${aniTargets.length} .ani requests`);
+
 const result = await runExtractParsePipeline({
   pvfPath,
-  files: targetFiles,
+  files: nonAniTargets,
   debugOut,
   executablePath: EXTRACT,
   runId,
@@ -190,6 +258,7 @@ const result = await runExtractParsePipeline({
   sqliteDbPath,
   sqliteMode: "full",
   exportOutDir: exportOut,
+  aniDefs,
   sharedPhysics: physicsMod.DNF_PHYSICS_CONSTANTS,
   sharedEnums: {
     tables: {
