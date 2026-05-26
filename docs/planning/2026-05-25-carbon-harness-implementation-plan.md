@@ -639,7 +639,7 @@ P0 全部完成后 `git add -A && git commit -m "chore(harness): S2 — P0 5 项
 | **S2** | **carbon** | ≤2h | P0 5 项（C1/C2/B1.carbon/CT2/WIN1.carbon） | 7. 验证清单 #1-#5 通过 | ✅ 2026-05-26 |
 | **S3** | carbon | ≤2h | P1 frontmatter 标准化（SC1/SC2/SE1/AG1）+ VA1 顺手 + plan v3.1 回写 | 验证清单 #12-#14 + #21 通过 | ✅ 2026-05-26 |
 | **S4** | carbon | ≤2.5h | P1 反馈塔（C3/CB2/FB1.carbon/NT1.carbon）+ **调查修订（SE4/VA1/HK1）** + H3 顺手 | 验证清单 #6-#9 + #20-#22 通过 | ✅ 2026-05-26 |
-| **S5** | carbon | ≤2h | P1 上下文 + statusline（H3.carbon/OS1.carbon/PM1+PM2） | 验证清单 #10-#11、#18 通过 | ⏳ pending |
+| **S5** | carbon | ≤2h | P1 上下文 + statusline（H3.carbon/OS1.carbon/PM1+PM2）— H3 已在 S4 顺手 | 验证清单 #10-#11、#18 通过 | ✅ 2026-05-26 |
 | **S6** | carbon | ≤1.5h | 高阶（CB1/B2/CT5/PG1.carbon） | 验证清单 #15-#17、#19 通过 | ⏳ pending |
 | ~~**S4.5（可选）**~~ | — | — | ~~CT1 评估~~ **作废 2026-05-26**（CLAUDE.md 194 行不需要拆） | — | ✗ 作废 |
 | **S7+** | 视情况 | - | P2 探索 8 项（SE2/SC3-5/WT2/OS2/NT2/WIN3/CB3） | 各自条件触发后 | ⏳ 观察期 |

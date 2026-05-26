@@ -1,5 +1,9 @@
 {
   "model": "sonnet",
+  "statusLine": {
+    "type": "command",
+    "command": "node .claude/statusline.mjs"
+  },
   "permissions": {
     "defaultMode": "acceptEdits",
     "allow": [

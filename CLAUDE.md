@@ -205,3 +205,14 @@ Weapons at `equipment/character/<job>/weapon/<type>/<id>/<action>.ani`.
 | W6 | Plan mode Shift+Tab 某些终端 skip | 改按 **Alt+M** 进入 plan mode |
 | W7 | MCP server OAuth 后启动超时 | 启动前 `$env:MCP_TIMEOUT=10000` |
 | W9 | 不知 Claude Code 健康状态 | `/doctor` 或 `claude doctor` |
+
+## When to use plan mode
+
+复杂任务**先 /plan**，触发条件：
+- 跨 ≥3 文件改动 / schema 变更 / src/combat/ 或 src/dnf-native-combat/ 内核改动 / replay 哈希影响
+- 重构、重命名跨模块导出
+- security-sensitive（npm scripts / Phaser asset 加载链 / dnf-extract 二进制更新）
+
+不需要 /plan：单文件修复 / typo / 单个 frame data 条目调整。
+
+**Windows 用户**：Shift+Tab 在部分终端 skip plan mode，改用 **Alt+M**（与 WIN1 速查表 W6 一致）。
