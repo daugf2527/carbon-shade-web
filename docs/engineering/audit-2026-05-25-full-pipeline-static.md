@@ -4,7 +4,9 @@
 **分支**: `dnf-native`  
 **审计范围**: C++ dnf-extract (~2600 行) + TypeScript 管线 (~4900 行)  
 **审计方法**: 静态代码审查（6 Agent 并行），未经动态 PVF 运行验证  
-**状态**: ⚠️ 待动态验证 — 所有发现均基于静态分析，需在 Windows 上用真实 Script.pvf 跑一遍确认
+**状态**: ✅ 已动态验证（2026-05-26） — 见 [audit-2026-05-25-verification-2026-05-26.md](audit-2026-05-25-verification-2026-05-26.md)
+
+> **验证结果速读**: 48 findings → 37 CONFIRMED · 9 CITATION_DRIFT · 2 PARTIAL · 6 REFUTED（已被历史 Audit Fix 修复）。详见末尾"## 2026-05-26 验证后修正"段。
 
 ---
 
@@ -239,3 +241,48 @@ C++ 端 20 个 `Audit F1-F20` 标记全部验证通过，无回退：
 ---
 
 *本报告由 6 个并行 Agent 静态代码审查生成，未经动态运行验证。明天在 Windows 上跑完真实 PVF 数据后，逐项标注"已确认"/"误报"/"不适用"。*
+
+---
+
+## 2026-05-26 验证后修正
+
+**验证方法**: 4 个 Opus agent 并行 + 真实 PVF 提取（crc32 c0779278, 205MB） + grep 统计 + NPK 截断回归。完整结论见 [audit-2026-05-25-verification-2026-05-26.md](audit-2026-05-25-verification-2026-05-26.md)。
+
+### REFUTED — 已被历史 Audit Fix 修复（无需再处理）
+
+| ID | 原描述 | 已修复在 | 证据 |
+|----|--------|----------|------|
+| P1-9 | fread header 不检查 | Audit A7 | PvfReader.cpp:148/165 已加 `fread(...) != 1 → return` |
+| P1-12 | NPK loadAll 运算符优先级 | Audit A5 | NpkFile.cpp:107-115 已带括号修复（原引用 :74-78 是无关代码） |
+| P1-25 | SourceConfidenceTier 不一致 | D2 fix (2026-05-24) | 两侧均为 3-value enum `tier1/tier2/tier3` |
+| P2-31 | dfsCreateNode 无深度限制 | Audit A6 | PvfReader.cpp:294-298 已加 `if (deep > 64) return;` |
+| P2-35 | printBinaryJson 缺 provenance | Audit B1 | main.cpp:538-550 已带完整 provenance |
+
+### CITATION_DRIFT — 问题真实但行号已漂移（fix 时按新位置）
+
+| ID | 原行号 | 新行号 |
+|----|--------|--------|
+| P0-1 stringtable +4 | PvfReader.cpp:323 | PvfReader.cpp:**385** |
+| P0-7 worldmapPatternInfo | validator.ts:444 | validator.ts:**450** |
+| P1-19 finishedAt 过早 | pipelineRunner.ts:126 | pipelineRunner.ts:**135** |
+| P1-20 子进程无超时 | PvfDocumentLoader.ts:109 | PvfDocumentLoader.ts:**197/237/281** (三处) |
+| P1-24 manifest 非原子写入 | RuntimeExporter.ts:331 | RuntimeExporter.ts:**354-356** |
+| P1-26 PvfAttributeSchema passthrough | validator.ts:219 | validator.ts:**225** |
+| P1-28 --no-verification 名字误导 | pipeline.mjs:148-150 | pipeline.mjs:**61-63, 195-197** |
+| P2-29 stringtable endPos | PvfReader.cpp:310-311 | PvfReader.cpp:**373** |
+| P2-30 fileVersion 未校验 | PvfReader.cpp:197 | PvfReader.cpp:**148-152** |
+| P2-33 NpkFile move 后未重置 | NpkFile.cpp:32-40 | NpkFile.cpp:**47-61** |
+| P2-34 ftell uint32_t 截断 | NpkFile.cpp:63 | NpkFile.cpp:**96** |
+| P2-39 stdin write 无 backpressure | PvfDocumentLoader.ts:121 | PvfDocumentLoader.ts:**209-211/249-251/293-295** |
+
+### 重要 PARTIAL
+
+- **P1-11 expand() 不检查 nullptr**：改判 REFUTED → **PARTIAL**。`unpackStringTable` 已加 nullptr guard，但 PvfNode::unpack 三分支没加，仍需修。
+- **P1-21 非 document 类型静默丢弃**：strict 变体仅 console.warn，但对偶 `parseDnfExtractPipeOutputWithErrors` 已返回 `skippedTypes`。**调用者可选用 WithErrors 变体获得程序化感知。**
+- **P0-3 .ani per-frame unknown type**：attack1.ani 实测 10 帧正常，未触发；但代码风险真实，其它 .ani 可能爆。
+
+### 动态实证（新增）
+
+- **P0-4 NPK 截断实验**：复制副本截断末尾 200B / 20KB → 多条 `[ERROR]` 但 **exit 0**。CI 端无法区分"成功"与"半截 NPK 静默放过"。
+- **P0-2 UB**：MinGW/GCC + x64 静默通过（无 sanitizer 重编）；代码层 UB 真实存在。
+- **测试盲区**：`npm run static:test` 72/72 全绿，但 0 测试覆盖 P0-8/P1-23/P1-24/P0-5/6/7。"验证通过 ≠ 没问题"。

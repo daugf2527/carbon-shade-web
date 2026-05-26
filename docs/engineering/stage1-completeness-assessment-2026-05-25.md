@@ -4,6 +4,15 @@
 **分支**: `dnf-native`
 **用途**: 明天 Windows AI 的行动指南 — 验证静态审计 P0 + 执行 Stage 1.5 补件
 **前置依赖**: Windows 上有 `Script.pvf` + `ImagePacks2/` + `tools/dnf-extract.exe`
+**验证状态**: ✅ 已动态验证（2026-05-26） — 见 [stage1-completeness-verification-2026-05-26.md](stage1-completeness-verification-2026-05-26.md)
+
+> **关键修正速读**（详见末尾 "## 2026-05-26 验证后修正" 段）：
+> - **`.act` 实测在 PVF 中是空容器**（startup/active/recovery 假设推翻）
+> - **MobDef.hpMax 字段在但永远 null**（HP 实际由 ability category 缩放生成）
+> - 完备度数字勘误：角色 70%→80.6% / 技能 14%→file 99.5%+field 20%
+> - `.eqp` → `.equ`（扩展名错）
+> - "cancel decoder 被删需恢复" → 已迁移至 SklParser.ts:81-257
+> - "goblin move speed=300" → 实为 `sight=300`，move speed=[400,400]
 
 ---
 
@@ -71,6 +80,8 @@ C++ dnf-extract 按扩展名分流为 4 种输出 type：
 | `.exe/.dat/.bin/.ogg/.wav/.png/.jpg` | ❌ 不解析（资源文件） |
 
 ### 1.2 最大的单个缺口：`.act` 文件
+
+> **❌ 2026-05-26 实测推翻**：抽样 3 个 .act 文件（`creature/ignis/animation/ignis_skill2_teleportstart.act` / `ui/skill/animation/new_notice_effect/skill_new_notice.act` / `worldmap/ui/action/worldmap_balloon.act`）全部只有 `{"name":"motion","attributes":[]}` 一个空 section 或 0 sections。**.act 在 PVF 里就是空容器**。且 `character/swordman/action/attack1.act` **根本不存在**于 PVF。startup/active/recovery 数据**不在 .act 文件中** — 跟 hitstun 表一样硬编码在 DNF.exe 引擎二进制里。本节描述应作废，Stage 1.5 第 8 项废除。
 
 `.act` = 动作帧事件时间线。定义每个动作的 startup/active/recovery 帧阶段、hitstop、super armor 帧区间、音效/特效触发帧。
 
@@ -413,8 +424,6 @@ dnf-extract --pvf Script.pvf --batch \
 
 ---
 
-## 附录：各 Agent 原始报告摘要
-
 ### A. 角色系统审计
 - 9✅ / 4⚠️ / 6❌ 基础属性
 - 28 个 motion section → ~22 个映射到显式状态
@@ -458,4 +467,42 @@ dnf-extract --pvf Script.pvf --batch \
 
 ---
 
-*本报告整合了 2026-05-25 的广度扫描和 6 Agent 游戏设计并行审计。明日 Windows AI 请按第五部分的执行顺序操作。*
+## 2026-05-26 验证后修正
+
+**验证方法**: 3 个 Opus agent 完成（角色/技能/怪物）+ 主对话亲手补完战斗链 + 副本 + 物理常数。完整结论见 [stage1-completeness-verification-2026-05-26.md](stage1-completeness-verification-2026-05-26.md)。
+
+### 关键勘误（按系统）
+
+| 系统 | 原报告 | 验证实测 | 行动 |
+|------|--------|----------|------|
+| **2.1 角色 ChrDef** | 完备度 70% / 12 scalar / 27 motion | **80.6% (54/67 sections)** / 11 scalar / swordman 24 motion (parser 支持 28) | 觉醒槽位是 parser 丢非 PVF 缺，可修 |
+| **2.2 技能 SkillDef** | 14% (30/210) / 缺 `.eqp` parser | **file 99.5% (205/206)** + field 20% / 真实扩展名 `.equ` (67777 个) | cancel decoder 已迁移到 SklParser.ts:81-257，不需"恢复" |
+| **2.3 战斗链** | attack1/attack2/hardattack 无 atk hitbox（疑点） | **实测完全证实**：attack1.ani 10 帧全无 atk[]；attack3.ani i=2,3 有 atk；jumpattack i=2 有 atk | 普通攻击判定不在 .ani，须靠 .atk 反推 |
+| **2.4 怪物 MobDef** | 23% (7/30) / hpMax 已有 / goblin move speed=300 | **15-20% per-mob** / **hpMax 字段在但 8/8 mob 都无 hp max section 永远 null** / 实为 sight=300, move speed=[400,400] | **hpMax 失效是隐藏致命缺陷**：HP 实际由 `ability category` `[hp max] * 80%` 缩放生成，parser 没读 → runtime 算不出怪物 HP |
+| **2.5 副本** | 路径示例 `dungeon/lorien.dgn` | **不存在**；真实路径 `dungeon/act3/jungle.dgn` 等 | DgnDef 实测 90% (18/20 sections) |
+| **2.6 物理常数** | 9 项 Tier-1 真值 | **100% 与代码匹配** | 无需修正 |
+
+### Stage 1.5 P0 补件优先级重排
+
+| 原优先级 | 项目 | 验证后状态 |
+|---------|------|-----------|
+| 1 | AniDef inline 进 EXPORT | ✅ API 已就绪 (RuntimeExporter aniDefs 可选参数)，只差喂数据 |
+| 2 | .skl raw section 结构化 | ✅ 12 项 raw section 全部 confirmed 存在，可执行 |
+| 3 | .mob raw section 结构化 | ⚠️ **应升级为第 0 优先**：先补 ability category 解决 hpMax 失效 |
+| 4 | 全量 swordman .skl batch | ✅ **已 99.5% 完成**，任务应改写为"提升 typed field 覆盖率从 20% 到 80%" |
+| 8 | .act 文件抽样验证 | ❌ **废除**：实测 .act 是空容器 |
+
+### 新增 P0（验证暴露的）
+
+- **MobParser 加 ability category 解析**：5/5 goblin 已验证 raw 有，blocking Stage 2 怪物 HP
+- **ChrParser 加 4 个 awakening section**：raw 已有但 parser 丢
+- **MobParser fix weight 双维**：当前 firstNumberFact 只取第一维
+- **撤销 .act 假设**：Stage 1.5 第 8 项 + 1.2 节描述均需作废
+
+### 完备度数字口径调整建议
+
+把"完备度 X%"拆为两个数：
+1. **PVF section 覆盖率** = parser 已映射 section / .X raw 实际出现的 section 总数
+2. **战斗系统语义覆盖率** = 战斗需要的字段 / 战斗需要的总字段（含 PVF 之外的引擎硬编码项）
+
+不要把两者混用，否则"角色 70%"这种数字会同时让"PVF 数据缺"和"parser 丢"两个性质不同的问题被混淆。
