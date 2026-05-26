@@ -525,6 +525,18 @@ P0 全部完成后 `git add -A && git commit -m "chore(harness): S2 — P0 5 项
 - **决策记录**：写到本文件 PG1 段下"Status 2026-MM-DD: ..."（参考 harness-fusion-design.md PG1 status 行）
 - **验收**: 计划文档多 1 段 audit 结论 + 决策（装 / 不装 / 部分用）。
 
+**Status 2026-05-26**: **全部不装，继续自维护**（与 harmony 同决策）。
+
+理由：
+1. carbon 自维护件已闭环（S6 完工后 7 个 skill：closed-loop / audit / verify-all / add-action / gen-test / dnf-physics-extraction / auto-commit-cicd + 1 个 agent：combat-kernel-reviewer）
+2. plan §6 "明确不做" 已含"第三方 marketplace plugin"（安全风险 Snyk ToxicSkills 36%）
+3. 个人项目无团队回路，第三方 plugin 引入的更新管理 / 信任评估成本高于自维护
+4. 若未来发现自维护盲点（如 commit-commands 的某子功能比 auto-commit-cicd 优秀），按"局部替换"评估，不批量切换
+
+未来触发重审：
+- 自维护 skill 出现"反复手工维护成本 > 第三方 plugin 学习成本"的明显信号
+- Anthropic 官方推出"verified internal plugin"（高于 36% 安全基线）
+
 **S6 commit message**: `chore(harness): S6 — P1 收尾 (CB1/B2/CT5/PG1)`
 
 ---
@@ -640,7 +652,7 @@ P0 全部完成后 `git add -A && git commit -m "chore(harness): S2 — P0 5 项
 | **S3** | carbon | ≤2h | P1 frontmatter 标准化（SC1/SC2/SE1/AG1）+ VA1 顺手 + plan v3.1 回写 | 验证清单 #12-#14 + #21 通过 | ✅ 2026-05-26 |
 | **S4** | carbon | ≤2.5h | P1 反馈塔（C3/CB2/FB1.carbon/NT1.carbon）+ **调查修订（SE4/VA1/HK1）** + H3 顺手 | 验证清单 #6-#9 + #20-#22 通过 | ✅ 2026-05-26 |
 | **S5** | carbon | ≤2h | P1 上下文 + statusline（H3.carbon/OS1.carbon/PM1+PM2）— H3 已在 S4 顺手 | 验证清单 #10-#11、#18 通过 | ✅ 2026-05-26 |
-| **S6** | carbon | ≤1.5h | 高阶（CB1/B2/CT5/PG1.carbon） | 验证清单 #15-#17、#19 通过 | ⏳ pending |
+| **S6** | carbon | ≤1.5h | 高阶（CB1/B2/CT5/PG1.carbon） | 验证清单 #15-#17、#19 通过 | ✅ 2026-05-26 |
 | ~~**S4.5（可选）**~~ | — | — | ~~CT1 评估~~ **作废 2026-05-26**（CLAUDE.md 194 行不需要拆） | — | ✗ 作废 |
 | **S7+** | 视情况 | - | P2 探索 8 项（SE2/SC3-5/WT2/OS2/NT2/WIN3/CB3） | 各自条件触发后 | ⏳ 观察期 |
 
