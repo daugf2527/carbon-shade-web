@@ -3,7 +3,7 @@
 **日期**: 2026-05-27  
 **状态**: Stage 1 / 1.5 完成，Stage 2 开工  
 **参考文档**: game-engine-architecture / task-breakdown / stage1.5-revised-plan / resolved-decisions / audit-2026-05-27  
-**决策前提**: Q1(B) 13-system 当工作假设 / Q2(C) 先扩数据再做 schema / Q4(A) 剑魂起步 / Q21(B) .nut 反推 tick 顺序 / Q31(B) 最小闭环 = 命中→伤害→受击→HP
+**决策前提**: Q1(B) 22-system 已验证（classify-v4: 22 classified + 1 unclassified bucket）/ Q2(C) 先扩数据再做 schema / Q4(A) 剑魂起步 / Q21(B) .nut 反推事件回调时序 / Q31(B) 最小闭环 = 命中→伤害→受击→HP
 
 ---
 
@@ -26,7 +26,7 @@
 
 | # | 难点 | 为什么难 | 影响范围 | 优先级 |
 |---|------|---------|---------|--------|
-| **G1** | **13-system tick 顺序** | DNF 引擎 C++ 源码不可达，.nut 只能反推事件 lifecycle，47% API 未分类。顺序错 → 状态机竞争 → 行为诡异 | 全部战斗逻辑 | P0 |
+| **G1** | **22-system 引擎→脚本回调时序** | DNF C++ tick 顺序不可达，.nut 只能反推事件 lifecycle。47% 调用点未分类。顺序错 → 状态机竞争 → 行为诡异 | 全部战斗逻辑 | P0 |
 | **G2** | **Fixed Timestep Accumulator** | 浏览器 RAF 不稳定（~16.67ms 但抖动大），需要 Gaffer on Games 累加器模式 + 渲染插值。做错 → 物理漂移 / 快慢不一致 | Simulation Core | P0 |
 | **G3** | **逐帧碰撞事件时间线** | .ani 每帧有独立 atk[]/dmg[] box，要在帧边界精确发射/关闭碰撞事件。普通 .atk 没有 atk box → 需从攻击属性反推 | Hit Detection | P0 |
 | **G4** | **Hitstun 硬编码缺失** | DNF 真实 hitstun/recoil/launch 曲线在 C++ 二进制里，PVF 拿不到。全部标 `local_baseline` + 手动调参 | Reaction System | P1 |
@@ -79,13 +79,13 @@ Phase 5: 打磨交付 (3d)
 
 ## Phase 1：Runtime Schema Design（3-4 天） ★ 最关键
 
-**目标**: 把 "13 system" 从文档假设变成精确的字段清单 + .fbs schema
+**目标**: 基于 classify-v4 的 22 system buckets，把每个系统从"聚类标签"变成精确的字段清单 + .fbs schema
 
 ### Phase 1a — 字段盘点（1 天）
 
 | 任务 | 内容 | 验收 | 估时 |
 |------|------|------|------|
-| **T1.1** 13 system × 字段矩阵 | 把 task-breakdown 中 T3.1-T3.13 每个 system 的每帧 tick 需要读哪些字段、写哪些字段，列成表格 | 一张包含 13 行 × N 列的字段需求矩阵，含来源（chr/skl/atk/mob/ani） | 3h |
+| **T1.1** 22 system × 字段矩阵 | 把 classify-v4 的 22 个 bucket 每个的每帧 tick 需要读/写哪些字段列成表格 | 一张包含 22 行 × N 列的字段需求矩阵，含来源（chr/skl/atk/mob/ani） | 3h |
 | **T1.2** 字段引用链建模 | 画 skl→atk→ani→img 和 chr→motion→ani→img 两条引用链的精确路径 | DAG 图 + JSON Pointer 路径表 | 2h |
 | **T1.3** HOT/WARM/COLD 分层 | 按 game-engine-architecture.md 的分层标准，给每个字段标注层级 | 每个 .fbs table 的字段带层级注释 | 1h |
 
@@ -243,7 +243,7 @@ Phase 5 (3d)
 这 3 件事不依赖任何阻塞，现在就可以做：
 
 1. **T0.4 GameLoop 骨架**（2h）— 固定步长累加器 + 空 tick 循环。验证 60Hz 在浏览器里的稳定性
-2. **T1.1 13 system × 字段矩阵**（3h）— 把 task-breakdown 的 T3.1-T3.13 翻译成精确的字段清单。这是所有后续 .fbs 设计的前提
+2. **T1.1 22 system × 字段矩阵**（3h）— 把 classify-v4 的 22 个 bucket 翻译成精确的字段清单。这是所有后续 .fbs 设计的前提
 3. **T0.1 flatc CLI**（30min 如果能下载）— 解决网络问题安装 flatc。如果仍然阻塞，Phase 2+3 的 ShardLoader 先走 JSON fallback 不卡进度
 
 ---
@@ -253,7 +253,7 @@ Phase 5 (3d)
 | 风险 | 概率 | 缓解 |
 |------|------|------|
 | flatc 无法安装 | 中 | T0.3 ShardLoader 先走 JSON fallback，Phase 2 不需要 flatc 也能跑最小闭环 |
-| 13-system tick 顺序 .nut 推导不够 | 中 | Phase 3 先用 GGPO 风格的通用顺序（input→physics→hit→damage→reaction→resource→ai），Phase 4 再根据测试调整 |
+| 22-system 回调时序 .nut 推导不够（47% unclassified） | 中 | Phase 3 先用游戏引擎通用顺序（input→animation→hit→damage→reaction→resource→ai→status），Phase 4 再根据测试调整 |
 | hitstun local_baseline 体验差 | 高 | 预留 Phase 4.5 调参窗口（1-2 天），对比 DFO 视频逐帧校准 |
 | Termux 环境缺少 LSP/ast-grep | 中 | grep + node 手动验证可替代，但影响迭代速度。Windows 上做重活，Termux 做轻量编辑 |
 | 多 agent 并行产出又出数字漂移 | 中 | 审计报告 P2-1~P2-3 → 建议以后数字要求标注测量方法 |

@@ -8,10 +8,10 @@
 
 | # | 问题 | 用户选 | 含义 |
 |---|------|--------|------|
-| **Q1** | 13-system 框架用还是不用 | **B** | 等 Windows 验证再用 — 不当真理但作为工作假设 |
+| **Q1** | 13-system（后证实为 22-system）框架用还是不用 | **B** | ✅ 已 Windows 验证 — classify-v4 输出 22 个 classified bucket + 1 unclassified。13→22 是粒度细化，不是推翻。当工作假设 |
 | **Q2** | Runtime Schema Design 何时做 | **C** | 先扩数据再做 — swordman 数据补全后再定 .fbs schema |
 | **Q4** | 参考角色 | **A** | swordman — 10 motion + 3 atk + 2 skl 已 inline，零工作量起步 |
-| **Q21** | 13 个 system 的 tick 执行顺序怎么定 | **B** | 从 .nut 反推 — 不拍脑袋，不抄 GGPO/MUGEN |
+| **Q21** | 22 个 system 的 tick 执行顺序怎么定 | **B** | 从 .nut 反推 — .nut 不含 C++ tick 顺序，但能反推引擎→脚本回调时序。Phase 2 先对齐 .nut hook 顺序 |
 | **Q31** | "最小闭环"精确定义 | **B** | 命中 → 伤害 → 受击 → HP 扣减（4-5 system 范围） |
 
 ---
