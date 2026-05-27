@@ -1,8 +1,8 @@
 {
   "meta": {
     "runId": "stage1-baseline",
-    "startedAt": "2026-05-26T05:49:45.370Z",
-    "finishedAt": "2026-05-26T05:49:49.678Z",
+    "startedAt": "2026-05-27T02:05:25.404Z",
+    "finishedAt": "2026-05-27T02:05:29.910Z",
     "pvfHash": "crc32-head:c0779278|size:205695984",
     "extractorVersion": "v2.0.0"
   },

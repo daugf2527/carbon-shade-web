@@ -211,6 +211,7 @@ Weapons at `equipment/character/<job>/weapon/<type>/<id>/<action>.ani`.
 - dnf-extract `--pipe` mode requires `quit` sentinel on stdin; missing it causes hang
 - Pipeline smoke tests require `DNF_PVF_PATH` env — absent on Termux/Android
 - `tools/dnf-extract.exe` is the only binary checked into the repo (Windows). Linux/aarch64 ELF is built by CI but NOT committed
+- **DNF motion 命名约定（韩语习惯）**：idle 叫 `stay` 不是 `stand`；walk 叫 `move` 不是 `walk`；rest 是 `rest`/`simple_rest`；damage 有 `damage1`/`damage2`；down 有 `down`/`overturn`。其他常见：`getitem`/`throw1`/`throw2`/`guard`/`sit`/`ghost`。引用 .ani 前先 `dnf-extract --list --filter "<job>/animation"` 核名，别用英文意译
 
 ## Windows 注意事项速查
 

@@ -171,8 +171,9 @@
 
 ## Phase 2：运行时仿真循环
 
-> ⚠️ **2026-05-27 audit 警告 — Phase 2 整套 13 个 system 拆解 (T3.1-T3.13) 基于未验证的推导链**
-> "13 system" 来自 `kernel-design.md` 一行结论，但原始 agent 输出（478 sq_* API 频次/聚类依据）丢失，baseline 中 .nut 提取次数为 0（从未真正解析过 .nut）。Windows 上 `dnf-extract --filter ".nut"` 验证后再正式落地 T3.x 任务。详见 [game-engine-architecture.md](2026-05-26-game-engine-architecture.md) 顶部 banner。
+> ⚠️ **2026-05-27 audit 警告 — Phase 2 T3.1-T3.13 任务拆解：计数验证通过，聚类待深推导**
+> "13 system" 计数级证据已在 2026-05-27 用 dnf-extract --filter ".nut" 重做验证：193 .nut + 483 sq_\* API + 7370 调用点全部真实可复现（[验证报告](../engineering/nut-validation-2026-05-27.md)）。但 T3.1-T3.13 各自需要消费的具体 API 子集**尚未明确**——启发式分类 47% unclassified，每个 T 落地前要先补"该 system 包含哪些 sq_\* + 顺序"。
+> 上一版警告（"推导链未验证"）已 reframed：**数字 OK，聚类待补**。详见 [game-engine-architecture.md](2026-05-26-game-engine-architecture.md) 顶部 banner。
 
 > 所有 combat 代码在 Web Worker 里跑。主线程只处理 Input + requestAnimationFrame + UI 渲染。
 
@@ -287,12 +288,12 @@
 
 ## Phase 1d 补件：P1 数据补全（与 Phase 2 并行）
 
-### T4.0 — RuntimeExporter stand/walk inline 修复（先做）
+### T4.0 — ~~RuntimeExporter stand/walk inline 修复~~ ✅ **已修复 2026-05-27**
 
-- **目的**：CURATED_FILES 提取了 swordman 的 12 个 .ani（含 `stand.ani`、`walk.ani`），但 exporter 只把 10 个写进 player shard 的 `animations` key——`stand` 和 `walk` 缺失。Stage 2 系统 5 (T3.3 Animation Playback) 想做 idle/walk 动画时会直接撞空。
-- **改动**：定位 `src/dnf-native-combat/data/exporter/RuntimeExporter.ts` 里 player shard 的 animations inline 逻辑，找出 stand/walk 被过滤的原因（白名单遗漏？name pattern mismatch？exporter 只接受 AtkDef 关联的 .ani？），修掉过滤
-- **验收**：重跑 `npm run baseline`，`verification/baseline-shards/players/swordman.json` 的 `animations` key 包含 12 个 motion（含 stand/walk）
-- **优先级**：T3.3 Animation Playback 启动之前必须修，否则 idle/walk 没数据
+- **真实根因**（2026-05-27 audit）：不是 exporter 黑洞，是 CURATED_FILES 把 idle/walk 用了**英文意译命名**（stand.ani/walk.ani），但 **DNF PVF 实际用韩语习惯命名**——idle 叫 `stay`、walk 叫 `move`。dnf-extract 返回 `type:"error"/"not_found"`，被 `extractAndParseAnis` 静默跳过，最终只剩 10 个 .ani 进 shard。
+- **修复**：[`scripts/stage1-baseline.mjs:77-82`](../../scripts/stage1-baseline.mjs) — `stand.ani` → `stay.ani`，`walk.ani` → `move.ani`
+- **验收结果**：重跑 baseline 后 `swordman.json.animations` 有 12 个 key（含 stay / move）✅
+- **附加产出**：CLAUDE.md "Known pitfalls" 段加 DNF motion 命名约定（避免其他职业重蹈覆辙）
 
 ### T4.1 — .equ parser
 - 装备属性：武器基础攻击力/防具防御力/属性加成

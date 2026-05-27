@@ -119,7 +119,7 @@ animations, attacks, chr, etc, job, parentJob, shape_version, skills
 
 每帧结构：`{index, anchor{x,y}, delay(ms), sprite(path)}`，有 attackBoxes/damageBoxes 时附加上。
 
-> ⚠️ **stand/walk inline 黑洞**（2026-05-27 audit）：CURATED_FILES 提取了 12 个 swordman .ani（含 `stand.ani`/`walk.ani`），但 RuntimeExporter 只把 10 个 motion 写进 shard 的 `animations` key——`stand` 和 `walk` 缺失。Stage 2 系统 5 (Animation Playback) 想做 idle/walk 动画时会直接撞上空。修复在 [p1-p2-backlog.md](2026-05-26-p1-p2-backlog.md)。
+> ✅ **stand/walk inline 黑洞已修复**（2026-05-27 audit + fix）：根因不是 exporter，是 CURATED_FILES 用了**英文意译**命名（stand.ani / walk.ani），但 DNF PVF 实际叫 `stay.ani` / `move.ani`（韩语习惯）。dnf-extract 返回 `type:"error"/"not_found"`，被 `extractAndParseAnis` 静默跳过。修复在 [`scripts/stage1-baseline.mjs:77-82`](../../scripts/stage1-baseline.mjs)，重跑 baseline 后 `swordman.json.animations` 已含 12 个 key（attack1-3 / damage1 / dash / dashattack / down / hardattack / jump / jumpattack / **move** / **stay**）。
 
 #### 3.3 attacks（3 atk）
 

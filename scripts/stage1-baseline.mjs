@@ -74,8 +74,12 @@ const CURATED_FILES = [
   // RuntimeExporter.playerAnims stays {} and runtime can't read attack/dmg
   // boxes. .ani files are routed via a separate extract+parse path (main
   // pipeline filters type:"animation" out per parseStage NOTE).
-  "character/swordman/animation/stand.ani",
-  "character/swordman/animation/walk.ani",
+  // DNF 命名约定（2026-05-27 audit 修正）：idle 叫 "stay" 不是 "stand"，
+  // walk 叫 "move" 不是 "walk"。前一版 CURATED 用英文意译导致 dnf-extract
+  // 返回 type:"error" / "not_found"，被 extractAndParseAnis 静默跳过，
+  // 最终 swordman shard.animations 只有 10 个 key 而不是 12 个。
+  "character/swordman/animation/stay.ani",
+  "character/swordman/animation/move.ani",
   "character/swordman/animation/dash.ani",
   "character/swordman/animation/jump.ani",
   "character/swordman/animation/attack1.ani",
