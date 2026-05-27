@@ -33,6 +33,9 @@ Thumbs.db
 # C++ tool build artifacts
 tools/dnf-porting-src/build/
 
+# FlatBuffers compiled schema outputs (derived from .fbs by flatc)
+src/engine/schema/*_generated.ts
+
 # Local scratch files
 .tmp-*
 *.stackdump

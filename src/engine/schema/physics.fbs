@@ -1,0 +1,54 @@
+// physics.fbs — DNF 物理常数 runtime schema (Phase 2 Day 1)
+//
+// 数据来源：character/swordman.json shared/physics.json (12 个常数实测)
+// 设计原则：HOT 数据（每 tick 多次读取）— flat layout，no nested struct。
+// 2026-05-27 创建（用户决策 Q3 FlatBuffers Day 1）。
+//
+// schema_version: bumped when field added/removed. RuntimeManifest 启动时
+// 检查这个 vs engine 期望，不一致 → fail-fast。
+
+namespace CarbonShade.Engine.Schema;
+
+table DownParamType {
+  value: int32;        // 0
+  force: int32;        // 1
+  bounce_value: int32; // 2
+  bounce_force: int32; // 3
+  bounce: int32;       // 4
+}
+
+table KnockBackType {
+  normal: int32;  // 0
+  strong: int32;  // 1
+  weak: int32;    // 2
+  none: int32;    // 3
+  custom: int32;  // 4
+}
+
+table ZAccelType {
+  gravity_world: int32;          // 0
+  gravity_object: int32;         // 1
+  anti_gravity_object: int32;    // 2
+}
+
+// Physics constants — all read every combat tick.
+// Match verification/baseline-shards/shared/physics.json field-for-field.
+table PhysicsConstants {
+  schema_version: uint16 = 1;
+
+  default_gravity_accel: float32;       // -1500  px/s^2
+  force_to_velocity_const: float32;     // 4000   force→velocity scalar
+  x_normal_move_velocity: float32;      // 143    x-axis baseline
+  y_normal_move_velocity: float32;      // 114    y-axis baseline
+  speed_value_default: float32;         // 1000   speed normalization base
+  light_object_max_weight: float32;     // 60000  weight threshold (light)
+  middle_object_max_weight: float32;    // 100000 weight threshold (middle)
+  hit_recovery_status_type: int32;      // 34     status id for hit recovery
+  melee_hit_delay_status_type: int32;   // 35     status id for melee delay
+  down_param_type: DownParamType;
+  knock_back_type: KnockBackType;
+  z_accel_type: ZAccelType;
+}
+
+root_type PhysicsConstants;
+file_identifier "PHYS";  // 4-byte magic prefix
