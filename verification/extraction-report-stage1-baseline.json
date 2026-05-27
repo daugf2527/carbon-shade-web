@@ -1,14 +1,14 @@
 {
   "meta": {
     "runId": "stage1-baseline",
-    "startedAt": "2026-05-27T03:19:16.606Z",
-    "finishedAt": "2026-05-27T03:19:21.412Z",
+    "startedAt": "2026-05-27T03:45:16.337Z",
+    "finishedAt": "2026-05-27T03:45:21.006Z",
     "pvfHash": "crc32-head:c0779278|size:205695984",
     "extractorVersion": "v2.0.0"
   },
   "stats": {
-    "filesTotal": 23,
-    "filesParsed": 23,
+    "filesTotal": 410,
+    "filesParsed": 410,
     "filesFailed": 0,
     "errors": 0,
     "warnings": 0,
@@ -19,13 +19,1069 @@
   "infos": [],
   "tier3Fields": [
     {
-      "pvfPath": "character/swordman/swordman.chr",
-      "field": "jump power",
+      "pvfPath": "character/swordman/dsattackinfo/grabblastbloodex.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/grabblastbloodex.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/illusionslashupper.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/illusionslashupper.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/vaneslashsmash.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/vaneslashsmash.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/spiritattack3.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/spiritattack3.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/bloodyrave.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/bloodyrave.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/kallafinish2.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/kallafinish2.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/moonlightslashfull.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/moonlightslashfull.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/attack1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/attack1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/hundredswordfinish.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/hundredswordfinish.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/waveeyeattack3.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/waveeyeattack3.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/waveeyeattack3.atk",
+      "field": "knuck back",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboheavy2.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboheavy2.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/chargecrashexshoulder.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/chargecrashexshoulder.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcombolight3.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcombolight3.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/ghoststepslash.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/ghoststepslash.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/flowmindtwoattack3.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/momentaryslashex.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/momentaryslashex.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/shockwavearea.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/shockwavearea.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/shockwavearea.atk",
+      "field": "knuck back",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/chargecrashdash.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/chargecrashdash.atk",
+      "field": "knuck back",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/triplestabfinish.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/triplestabfinish.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/triplestabfinish.atk",
+      "field": "knuck back",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/waveeyeattack2.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/waveeyeattack2.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboheavy1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboheavy1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/chargecrashfinish.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/chargecrashfinish.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/tripleslash5.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/tripleslash5.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/outragebreak.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/outragebreak.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/rapidmoveslash2.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/rapidmoveslash2.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboblade4.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboblade4.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/tripleslash1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/tripleslash1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcombolight2.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcombolight2.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/spiritattack2.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/spiritattack2.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/tripleslash4.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/tripleslash4.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/kallafinish3.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/kallafinish3.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/waveeyewing.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/waveeyewing.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/waveeyewing.atk",
+      "field": "knuck back",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/hopsmash.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/hopsmash.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/spiritattack1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/spiritattack1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/tripleslash2.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/tripleslash2.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/hardattack.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/hardattack.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/ghostsidewind.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/ghostsidewind.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/grab.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/grab.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/vaneslashupper.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/vaneslashupper.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/spiritattack4.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/spiritattack4.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/attack3.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/attack3.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/dashattackmultihit.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/dashattackmultihit.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/dashattackmultihit.atk",
+      "field": "knuck back",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/momentaryslash.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/momentaryslash.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboblade3.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboblade3.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/dashattack.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/dashattack.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/illusionslashsmash.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/illusionslashsmash.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/triplestab.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/triplestab.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/triplestab.atk",
+      "field": "knuck back",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboshort1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboshort1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboblade2.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboblade2.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/frenzy3.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/frenzy3.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/hitback.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/hitback.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/spiritdashattack.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/spiritdashattack.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/hardattackchargeafter.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/hardattackchargeafter.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/moonlightslash2.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/hellbenterfinish.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/hellbenterfinish.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/hellbenterfinish.atk",
+      "field": "knuck back",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/tripleslash3.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/tripleslash3.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboblade1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboblade1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/ashenfork.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/ashenfork.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcombolight1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcombolight1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/waveeyeattack1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/waveeyeattack1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboshort3.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboshort3.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/gorecross2.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/gorecross2.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/tripleslash3down.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/tripleslash3down.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/kallafinish1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/kallafinish1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/vaneslashtry.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/vaneslashtry.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/chargecrashupper.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/darkwave.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/darkwave.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/rapidmoveslash1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/rapidmoveslash1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboblunt2.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboblunt2.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/chargecrashexupper.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/chargecrashexupper.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboshort2.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboshort2.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboblunt1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboblunt1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/flowmindtwoattack2.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/flowmindtwoattack2.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/moonlightslash1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/bloodsword.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/bloodsword.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/standalonewave.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/standalonewave.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/jumpattack.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/jumpattack.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/attack2.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/attack2.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboblunt3.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboblunt3.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/weaponcomboblunt3.atk",
+      "field": "knuck back",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/hopsmashfinal.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/hopsmashfinal.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/frenzy1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/frenzy1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/frenzy2.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/frenzy2.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/frenzy4.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/frenzy4.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/flowmindtwoattack1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/flowmindtwoattack1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/grabblastblood.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/grabblastblood.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/gorecross1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/gorecross1.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
       "pvfPath": "character/swordman/swordman.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/swordman.chr",
       "field": "jump speed",
       "sourceType": "tier3",
       "requiresManualVerification": true
@@ -61,422 +1117,956 @@
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/swordman/demonicswordman.chr",
-      "field": "jump power",
+      "pvfPath": "character/swordman/attackinfo/weaponcomboshort3.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/swordman/demonicswordman.chr",
-      "field": "jump speed",
+      "pvfPath": "character/swordman/attackinfo/weaponcomboshort3.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/swordman/demonicswordman.chr",
-      "field": "move speed",
+      "pvfPath": "character/swordman/attackinfo/waveeyeattack1.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/swordman/demonicswordman.chr",
-      "field": "attack speed",
+      "pvfPath": "character/swordman/attackinfo/waveeyeattack1.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/swordman/demonicswordman.chr",
-      "field": "cast speed",
+      "pvfPath": "character/swordman/attackinfo/gorecross2.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/swordman/demonicswordman.chr",
-      "field": "weight",
+      "pvfPath": "character/swordman/attackinfo/gorecross2.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/swordman/demonicswordman.chr",
-      "field": "hit recovery",
+      "pvfPath": "character/swordman/attackinfo/weaponcomboshort1.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/gunner/gunner.chr",
-      "field": "jump power",
+      "pvfPath": "character/swordman/attackinfo/weaponcomboshort1.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/gunner/gunner.chr",
-      "field": "jump speed",
+      "pvfPath": "character/swordman/attackinfo/triplestab.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/gunner/gunner.chr",
-      "field": "move speed",
+      "pvfPath": "character/swordman/attackinfo/triplestab.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/gunner/gunner.chr",
-      "field": "attack speed",
+      "pvfPath": "character/swordman/attackinfo/triplestab.atk",
+      "field": "knuck back",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/gunner/gunner.chr",
-      "field": "cast speed",
+      "pvfPath": "character/swordman/attackinfo/outragebreak.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/gunner/gunner.chr",
-      "field": "weight",
+      "pvfPath": "character/swordman/attackinfo/outragebreak.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/gunner/gunner.chr",
-      "field": "hit recovery",
+      "pvfPath": "character/swordman/attackinfo/rapidmoveslash2.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/gunner/atgunner.chr",
-      "field": "jump power",
+      "pvfPath": "character/swordman/attackinfo/rapidmoveslash2.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/gunner/atgunner.chr",
-      "field": "jump speed",
+      "pvfPath": "character/swordman/attackinfo/weaponcomboblade4.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/gunner/atgunner.chr",
-      "field": "move speed",
+      "pvfPath": "character/swordman/attackinfo/weaponcomboblade4.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/gunner/atgunner.chr",
-      "field": "attack speed",
+      "pvfPath": "character/swordman/attackinfo/waveeyeattack2.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/gunner/atgunner.chr",
-      "field": "cast speed",
+      "pvfPath": "character/swordman/attackinfo/waveeyeattack2.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/gunner/atgunner.chr",
-      "field": "weight",
+      "pvfPath": "character/swordman/attackinfo/triplestabfinish.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/gunner/atgunner.chr",
-      "field": "hit recovery",
+      "pvfPath": "character/swordman/attackinfo/triplestabfinish.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/priest/priest.chr",
-      "field": "jump power",
+      "pvfPath": "character/swordman/attackinfo/triplestabfinish.atk",
+      "field": "knuck back",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/priest/priest.chr",
-      "field": "jump speed",
+      "pvfPath": "character/swordman/attackinfo/tripleslash1.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/priest/priest.chr",
-      "field": "move speed",
+      "pvfPath": "character/swordman/attackinfo/tripleslash1.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/priest/priest.chr",
-      "field": "attack speed",
+      "pvfPath": "character/swordman/attackinfo/weaponcomboblunt2.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/priest/priest.chr",
-      "field": "cast speed",
+      "pvfPath": "character/swordman/attackinfo/weaponcomboblunt2.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/priest/priest.chr",
-      "field": "weight",
+      "pvfPath": "character/swordman/attackinfo/chargecrashexupper.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/priest/priest.chr",
-      "field": "hit recovery",
+      "pvfPath": "character/swordman/attackinfo/chargecrashexupper.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/fighter/fighter.chr",
-      "field": "jump power",
+      "pvfPath": "character/swordman/attackinfo/hundredswordfinish.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/fighter/fighter.chr",
-      "field": "jump speed",
+      "pvfPath": "character/swordman/attackinfo/hundredswordfinish.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/fighter/fighter.chr",
-      "field": "move speed",
+      "pvfPath": "character/swordman/attackinfo/weaponcomboheavy2.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/fighter/fighter.chr",
-      "field": "attack speed",
+      "pvfPath": "character/swordman/attackinfo/weaponcomboheavy2.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/fighter/fighter.chr",
-      "field": "cast speed",
+      "pvfPath": "character/swordman/attackinfo/chargecrashexshoulder.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/fighter/fighter.chr",
-      "field": "weight",
+      "pvfPath": "character/swordman/attackinfo/chargecrashexshoulder.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/fighter/fighter.chr",
-      "field": "hit recovery",
+      "pvfPath": "character/swordman/attackinfo/waveeyeattack3.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/fighter/atfighter.chr",
-      "field": "jump power",
+      "pvfPath": "character/swordman/attackinfo/waveeyeattack3.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/fighter/atfighter.chr",
-      "field": "jump speed",
+      "pvfPath": "character/swordman/attackinfo/waveeyeattack3.atk",
+      "field": "knuck back",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/fighter/atfighter.chr",
-      "field": "move speed",
+      "pvfPath": "character/swordman/attackinfo/frenzy2.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/fighter/atfighter.chr",
-      "field": "attack speed",
+      "pvfPath": "character/swordman/attackinfo/frenzy2.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/fighter/atfighter.chr",
-      "field": "cast speed",
+      "pvfPath": "character/swordman/attackinfo/weaponcomboheavy1.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/fighter/atfighter.chr",
-      "field": "weight",
+      "pvfPath": "character/swordman/attackinfo/weaponcomboheavy1.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/fighter/atfighter.chr",
-      "field": "hit recovery",
+      "pvfPath": "character/swordman/attackinfo/tripleslash2.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/mage/mage.chr",
-      "field": "jump power",
+      "pvfPath": "character/swordman/attackinfo/tripleslash2.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/mage/mage.chr",
-      "field": "jump speed",
+      "pvfPath": "character/swordman/attackinfo/spiritattack1.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/mage/mage.chr",
-      "field": "move speed",
+      "pvfPath": "character/swordman/attackinfo/spiritattack1.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/mage/mage.chr",
-      "field": "attack speed",
+      "pvfPath": "character/swordman/attackinfo/flowmindtwoattack2.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/mage/mage.chr",
-      "field": "cast speed",
+      "pvfPath": "character/swordman/attackinfo/flowmindtwoattack2.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/mage/mage.chr",
-      "field": "weight",
+      "pvfPath": "character/swordman/attackinfo/weaponcomboshort2.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/mage/mage.chr",
-      "field": "hit recovery",
+      "pvfPath": "character/swordman/attackinfo/weaponcomboshort2.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/mage/atmage.chr",
-      "field": "jump power",
+      "pvfPath": "character/swordman/attackinfo/weaponcomboblunt1.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/mage/atmage.chr",
-      "field": "jump speed",
+      "pvfPath": "character/swordman/attackinfo/weaponcomboblunt1.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/mage/atmage.chr",
-      "field": "move speed",
+      "pvfPath": "character/swordman/attackinfo/momentaryslash.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/mage/atmage.chr",
-      "field": "attack speed",
+      "pvfPath": "character/swordman/attackinfo/momentaryslash.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/mage/atmage.chr",
-      "field": "cast speed",
+      "pvfPath": "character/swordman/attackinfo/dashattackmultihit.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/mage/atmage.chr",
-      "field": "weight",
+      "pvfPath": "character/swordman/attackinfo/dashattackmultihit.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/mage/atmage.chr",
-      "field": "hit recovery",
+      "pvfPath": "character/swordman/attackinfo/dashattackmultihit.atk",
+      "field": "knuck back",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/mage/creatormage.chr",
-      "field": "jump power",
+      "pvfPath": "character/swordman/attackinfo/tripleslash5.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/mage/creatormage.chr",
-      "field": "jump speed",
+      "pvfPath": "character/swordman/attackinfo/tripleslash5.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/mage/creatormage.chr",
-      "field": "move speed",
+      "pvfPath": "character/swordman/attackinfo/chargecrashfinish.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/mage/creatormage.chr",
-      "field": "attack speed",
+      "pvfPath": "character/swordman/attackinfo/chargecrashfinish.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/mage/creatormage.chr",
-      "field": "cast speed",
+      "pvfPath": "character/swordman/attackinfo/weaponcomboblunt3.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/mage/creatormage.chr",
-      "field": "weight",
+      "pvfPath": "character/swordman/attackinfo/weaponcomboblunt3.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/mage/creatormage.chr",
-      "field": "hit recovery",
+      "pvfPath": "character/swordman/attackinfo/weaponcomboblunt3.atk",
+      "field": "knuck back",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/thief/thief.chr",
-      "field": "jump power",
+      "pvfPath": "character/swordman/attackinfo/hopsmashfinal.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/thief/thief.chr",
-      "field": "jump speed",
+      "pvfPath": "character/swordman/attackinfo/hopsmashfinal.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/thief/thief.chr",
-      "field": "move speed",
+      "pvfPath": "character/swordman/attackinfo/hardattackchargeafter.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/thief/thief.chr",
-      "field": "attack speed",
+      "pvfPath": "character/swordman/attackinfo/hardattackchargeafter.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/thief/thief.chr",
-      "field": "cast speed",
+      "pvfPath": "character/swordman/attackinfo/moonlightslash2.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/thief/thief.chr",
-      "field": "weight",
+      "pvfPath": "character/swordman/attackinfo/tripleslash3down.atk",
+      "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/thief/thief.chr",
-      "field": "hit recovery",
+      "pvfPath": "character/swordman/attackinfo/tripleslash3down.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/weaponcombolight1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/weaponcombolight1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/weaponcomboblade2.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/weaponcomboblade2.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/frenzy3.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/frenzy3.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/grabblastbloodex.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/grabblastbloodex.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/illusionslashupper.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/illusionslashupper.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/chargecrashdash.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/chargecrashdash.atk",
+      "field": "knuck back",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/shockwavearea.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/shockwavearea.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/shockwavearea.atk",
+      "field": "knuck back",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/vaneslashupper.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/vaneslashupper.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/spiritattack3.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/spiritattack3.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/bloodyrave.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/bloodyrave.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/hitback.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/hitback.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/spiritdashattack.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/spiritdashattack.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/frenzy4.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/frenzy4.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/grab.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/grab.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/hardattack.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/hardattack.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/ghostsidewind.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/ghostsidewind.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/flowmindtwoattack1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/flowmindtwoattack1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/waveeyewing.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/waveeyewing.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/waveeyewing.atk",
+      "field": "knuck back",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/ashenfork.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/ashenfork.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/frenzy1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/frenzy1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/rapidmoveslash1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/rapidmoveslash1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/spiritattack2.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/spiritattack2.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/tripleslash3.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/tripleslash3.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/weaponcomboblade1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/weaponcomboblade1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/gorecross1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/gorecross1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/momentaryslashex.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/momentaryslashex.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/vaneslashsmash.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/vaneslashsmash.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/chargecrashupper.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/vaneslashtry.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/vaneslashtry.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/moonlightslash1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/tripleslash4.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/tripleslash4.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/attack2.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/attack2.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/flowmindtwoattack3.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/ghoststepslash.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/ghoststepslash.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/weaponcombolight3.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/weaponcombolight3.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/grabblastblood.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/grabblastblood.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/dashattack.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/dashattack.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/illusionslashsmash.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/illusionslashsmash.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/weaponcomboblade3.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/weaponcomboblade3.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/hopsmash.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/hopsmash.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/weaponcombolight2.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/weaponcombolight2.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/kallafinish3.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/kallafinish3.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/jumpattack.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/jumpattack.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/kallafinish1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/kallafinish1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/moonlightslashfull.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/moonlightslashfull.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
@@ -488,6 +2078,18 @@
     },
     {
       "pvfPath": "character/swordman/attackinfo/attack1.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/standalonewave.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/standalonewave.atk",
       "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
@@ -505,14 +2107,476 @@
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/swordman/attackinfo/dashattack.atk",
+      "pvfPath": "character/swordman/attackinfo/spiritattack4.atk",
       "field": "lift up",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
     {
-      "pvfPath": "character/swordman/attackinfo/dashattack.atk",
+      "pvfPath": "character/swordman/attackinfo/spiritattack4.atk",
       "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/bloodsword.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/bloodsword.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/kallafinish2.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/kallafinish2.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/hellbenterfinish.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/hellbenterfinish.atk",
+      "field": "push aside",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/hellbenterfinish.atk",
+      "field": "knuck back",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/demonicswordman.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/demonicswordman.chr",
+      "field": "jump speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/demonicswordman.chr",
+      "field": "move speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/demonicswordman.chr",
+      "field": "attack speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/demonicswordman.chr",
+      "field": "cast speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/demonicswordman.chr",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/swordman/demonicswordman.chr",
+      "field": "hit recovery",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/gunner.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/gunner.chr",
+      "field": "jump speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/gunner.chr",
+      "field": "move speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/gunner.chr",
+      "field": "attack speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/gunner.chr",
+      "field": "cast speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/gunner.chr",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/gunner.chr",
+      "field": "hit recovery",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/atgunner.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/atgunner.chr",
+      "field": "jump speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/atgunner.chr",
+      "field": "move speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/atgunner.chr",
+      "field": "attack speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/atgunner.chr",
+      "field": "cast speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/atgunner.chr",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/gunner/atgunner.chr",
+      "field": "hit recovery",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/priest/priest.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/priest/priest.chr",
+      "field": "jump speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/priest/priest.chr",
+      "field": "move speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/priest/priest.chr",
+      "field": "attack speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/priest/priest.chr",
+      "field": "cast speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/priest/priest.chr",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/priest/priest.chr",
+      "field": "hit recovery",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/fighter.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/fighter.chr",
+      "field": "jump speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/fighter.chr",
+      "field": "move speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/fighter.chr",
+      "field": "attack speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/fighter.chr",
+      "field": "cast speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/fighter.chr",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/fighter.chr",
+      "field": "hit recovery",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/atfighter.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/atfighter.chr",
+      "field": "jump speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/atfighter.chr",
+      "field": "move speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/atfighter.chr",
+      "field": "attack speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/atfighter.chr",
+      "field": "cast speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/atfighter.chr",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/fighter/atfighter.chr",
+      "field": "hit recovery",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/mage.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/mage.chr",
+      "field": "jump speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/mage.chr",
+      "field": "move speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/mage.chr",
+      "field": "attack speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/mage.chr",
+      "field": "cast speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/mage.chr",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/mage.chr",
+      "field": "hit recovery",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/atmage.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/atmage.chr",
+      "field": "jump speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/atmage.chr",
+      "field": "move speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/atmage.chr",
+      "field": "attack speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/atmage.chr",
+      "field": "cast speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/atmage.chr",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/atmage.chr",
+      "field": "hit recovery",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/creatormage.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/creatormage.chr",
+      "field": "jump speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/creatormage.chr",
+      "field": "move speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/creatormage.chr",
+      "field": "attack speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/creatormage.chr",
+      "field": "cast speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/creatormage.chr",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/mage/creatormage.chr",
+      "field": "hit recovery",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/thief/thief.chr",
+      "field": "jump power",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/thief/thief.chr",
+      "field": "jump speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/thief/thief.chr",
+      "field": "move speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/thief/thief.chr",
+      "field": "attack speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/thief/thief.chr",
+      "field": "cast speed",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/thief/thief.chr",
+      "field": "weight",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "character/thief/thief.chr",
+      "field": "hit recovery",
       "sourceType": "tier3",
       "requiresManualVerification": true
     },
@@ -591,13 +2655,1057 @@
   ],
   "pvpFields": [
     {
+      "pvfPath": "character/swordman/dsattackinfo/spiritattack3.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/outragebreak.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/spiritattack2.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/spiritattack1.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/spiritattack4.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/frenzy3.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/spiritdashattack.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/frenzy1.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/frenzy2.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "character/swordman/dsattackinfo/frenzy4.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/outragebreak.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/frenzy2.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/spiritattack1.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/hopsmashfinal.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/frenzy3.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/spiritattack3.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/spiritdashattack.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/frenzy4.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/frenzy1.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/spiritattack2.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/spiritattack4.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "character/swordman/attackinfo/bloodsword.atk",
+      "parser": "atk",
+      "field": "pvpOnly",
+      "reason": "AtkDef.pvpOnly=true — attack restricted to PvP mode"
+    },
+    {
+      "pvfPath": "skill/swordman/icewave.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/elementtoleranceallupex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/khazanex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/dashattackmultihit.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/hellbenter.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/icewaveex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/moonlightslash.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/bremen.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/vaneslashex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/stuckuponcounter.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/tripleslashex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/firewave.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/gorecross.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/standalonewaveex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/hopsmash.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/flowmindpowerup.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/overdrive.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/bloodsword.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/flowmindthreeex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/shockwavearea.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/flowmindtwo.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/hardattackcharge.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/pinchpowerupex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/basicattackupex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/standalonewave.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/ashenfork.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/bremenex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/grabblastbloodexp.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/ghoststepslashex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/physicaldefenceupex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/magicalattackup.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/flowmindtwoex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/bloodyrave.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/recklessex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/dotarea.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/flowmindone.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/flowmind.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/wavemarkex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/wavespinarea.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/tombstonerain.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/moonlightslashex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/hardattack.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/elementattackallupex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/ghostsidewindex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/darkaura.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/defensedownoncritical.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/bluntmastery.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/illusionslash.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/autoguard.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/bloodblast.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/mindflash.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/firewaveexp.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/rapidmoveslashex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/senseviolenttemper.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/firewaveex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/wavespinareaex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/tombstonerainexp.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/tombstonerainex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/pinchpowerup.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/grabblastbloodex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/backstepcutter.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/hopsmashex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/flowmindoneex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/grandwaveex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/stuckupex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/releasewave.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/upperslashex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/grandwavecharge.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/momentaryslash.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/jumpattackmulti.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/shortswordmastery.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/momentaryslashex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/reflectguardexp.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/guard.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/weaponcombo.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/basicattackup.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/hardattackex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/outragebreak.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/waveeye.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/icewaveexp.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
       "pvfPath": "skill/swordman/upperslash.skl",
       "parser": "skl",
       "field": "hasPvp",
       "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
     },
     {
-      "pvfPath": "skill/swordman/icewave.skl",
+      "pvfPath": "skill/swordman/chargecrashexp.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/bloodyraveex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/armormasteryheavybk.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/armormasterycloth.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/hpregenrateupex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/frenzy.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/grandwave.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/ghoststepex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/dotareaex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/ashenforkex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/triplestab.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/tripleslash.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/ghoststepslash.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/sacrifice.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/kalla.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/diehardex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/hitbackex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/keiga.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/reflectguardex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/armormasteryheavy.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/releasewaveex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/magicalattackupex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/quickstanding.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/reflectguard.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/chargecrashex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/activepropertystuckupex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/heavyswordmastery.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/armormasteryleather.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/sayaexp.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/autoguardex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/triplestabex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/bloodswordex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/epidemicrasa.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/epidemicrasaex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/ghoststep.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/momentaryslashexp.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/conversion.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/normalwave.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/jumppowerup.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/physicalattackupex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/hundredsword.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/flowmindthree.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/gorecrossex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/guardex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/wavemark.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/bloodblastexp.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/outragebreakex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/bloodblastex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/blademastery.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/reckless.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/normalwaveex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/diehard.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/chargecrash.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/illusionslashexp.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/saya.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/mpregenrateupex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/magicaldefenceupex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/dashattackmultihitex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/bleedingmastery.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/kallaex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/vaneslash.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/khazan.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/burster.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/darktoleranceup.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/lightswordmastery.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/ghostsidewind.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/armormasteryplate.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/blache.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/rapidmoveslash.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/sayaex.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/grabblastblood.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/superarmoroncast.skl",
+      "parser": "skl",
+      "field": "hasPvp",
+      "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
+    },
+    {
+      "pvfPath": "skill/swordman/hitback.skl",
       "parser": "skl",
       "field": "hasPvp",
       "reason": "SkillDef.hasPvp=true — skill has a `pvp` section block"
@@ -616,7 +3724,7 @@
       "fromField": "attackInfo.attackBase[1]",
       "toPath": "character/swordman/attackinfo/attack2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
@@ -630,616 +3738,616 @@
       "fromField": "attackInfo.etc[0]",
       "toPath": "character/swordman/attackinfo/hardattack.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[1]",
       "toPath": "character/swordman/attackinfo/hitback.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[2]",
       "toPath": "character/swordman/attackinfo/tripleslash1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[3]",
       "toPath": "character/swordman/attackinfo/tripleslash2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[4]",
       "toPath": "character/swordman/attackinfo/tripleslash3.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[5]",
       "toPath": "character/swordman/attackinfo/tripleslash4.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[6]",
       "toPath": "character/swordman/attackinfo/tripleslash5.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[7]",
       "toPath": "character/swordman/attackinfo/tripleslash3down.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[8]",
       "toPath": "character/swordman/attackinfo/momentaryslash.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[9]",
       "toPath": "character/swordman/attackinfo/giveblood.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[10]",
       "toPath": "character/swordman/attackinfo/ashenfork.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[11]",
       "toPath": "character/swordman/attackinfo/upperslash.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[12]",
       "toPath": "character/swordman/attackinfo/grab.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[13]",
       "toPath": "character/swordman/attackinfo/grabblastblood.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[14]",
       "toPath": "character/swordman/attackinfo/dashattackmultihit.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[15]",
       "toPath": "character/swordman/attackinfo/shockwavearea.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[16]",
       "toPath": "character/swordman/attackinfo/vaneslashtry.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[17]",
       "toPath": "character/swordman/attackinfo/vaneslashupper.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[18]",
       "toPath": "character/swordman/attackinfo/vaneslashsmash.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[19]",
       "toPath": "character/swordman/attackinfo/upperslashafter.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[20]",
       "toPath": "character/swordman/attackinfo/hardattackchargeafter.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[21]",
       "toPath": "character/swordman/attackinfo/ghoststepslash.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[22]",
       "toPath": "character/swordman/attackinfo/standalonewave.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[23]",
       "toPath": "character/swordman/attackinfo/gorecross1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[24]",
       "toPath": "character/swordman/attackinfo/gorecross2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[25]",
       "toPath": "character/swordman/attackinfo/hopsmash.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[26]",
       "toPath": "character/swordman/attackinfo/hopsmashfinal.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[27]",
       "toPath": "character/swordman/attackinfo/weaponcomboshort1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[28]",
       "toPath": "character/swordman/attackinfo/weaponcomboshort2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[29]",
       "toPath": "character/swordman/attackinfo/weaponcomboshort3.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[30]",
       "toPath": "character/swordman/attackinfo/weaponcomboblade1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[31]",
       "toPath": "character/swordman/attackinfo/weaponcomboblade2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[32]",
       "toPath": "character/swordman/attackinfo/weaponcomboblade3.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[33]",
       "toPath": "character/swordman/attackinfo/weaponcomboblade4.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[34]",
       "toPath": "character/swordman/attackinfo/weaponcomboblunt1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[35]",
       "toPath": "character/swordman/attackinfo/weaponcomboblunt2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[36]",
       "toPath": "character/swordman/attackinfo/weaponcomboblunt3.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[37]",
       "toPath": "character/swordman/attackinfo/weaponcomboheavy1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[38]",
       "toPath": "character/swordman/attackinfo/weaponcomboheavy2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[39]",
       "toPath": "character/swordman/attackinfo/weaponcombolight1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[40]",
       "toPath": "character/swordman/attackinfo/weaponcombolight2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[41]",
       "toPath": "character/swordman/attackinfo/weaponcombolight3.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[42]",
       "toPath": "character/swordman/attackinfo/chargecrashdash.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[43]",
       "toPath": "character/swordman/attackinfo/chargecrashupper.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[44]",
       "toPath": "character/swordman/attackinfo/chargecrashfinish.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[45]",
       "toPath": "character/swordman/attackinfo/rapidmoveslash1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[46]",
       "toPath": "character/swordman/attackinfo/rapidmoveslash2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[47]",
       "toPath": "character/swordman/attackinfo/illusionslashupper.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[48]",
       "toPath": "character/swordman/attackinfo/illusionslashsmash.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[49]",
       "toPath": "character/swordman/attackinfo/frenzy1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[50]",
       "toPath": "character/swordman/attackinfo/frenzy2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[51]",
       "toPath": "character/swordman/attackinfo/frenzy3.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[52]",
       "toPath": "character/swordman/attackinfo/frenzy4.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[53]",
       "toPath": "character/swordman/attackinfo/bloodyrave.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[54]",
       "toPath": "character/swordman/attackinfo/moonlightslash1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[55]",
       "toPath": "character/swordman/attackinfo/moonlightslash2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[56]",
       "toPath": "character/swordman/attackinfo/moonlightslashfull.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[57]",
       "toPath": "character/swordman/attackinfo/outragebreak.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[58]",
       "toPath": "character/swordman/attackinfo/kallafinish1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[59]",
       "toPath": "character/swordman/attackinfo/kallafinish2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[60]",
       "toPath": "character/swordman/attackinfo/kallafinish3.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[61]",
       "toPath": "character/swordman/attackinfo/hellbenterfinish.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[62]",
       "toPath": "character/swordman/attackinfo/hundredswordfinish.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[63]",
       "toPath": "character/swordman/attackinfo/waveeyeattack1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[64]",
       "toPath": "character/swordman/attackinfo/waveeyeattack2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[65]",
       "toPath": "character/swordman/attackinfo/waveeyeattack3.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[66]",
       "toPath": "character/swordman/attackinfo/waveeyewing.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[67]",
       "toPath": "character/swordman/attackinfo/momentaryslashex.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[68]",
       "toPath": "character/swordman/attackinfo/chargecrashexshoulder.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[69]",
       "toPath": "character/swordman/attackinfo/chargecrashexpick.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[70]",
       "toPath": "character/swordman/attackinfo/chargecrashexupper.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[71]",
       "toPath": "character/swordman/attackinfo/grabblastbloodex.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[72]",
       "toPath": "character/swordman/attackinfo/bloodsword.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[73]",
       "toPath": "character/swordman/attackinfo/flowmindone.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[74]",
       "toPath": "character/swordman/attackinfo/flowmindoneadd.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[75]",
       "toPath": "character/swordman/attackinfo/flowmindtwoattack1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[76]",
       "toPath": "character/swordman/attackinfo/flowmindtwoattack2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[77]",
       "toPath": "character/swordman/attackinfo/flowmindtwoattack3.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[78]",
       "toPath": "character/swordman/attackinfo/flowmindthreeattack.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[79]",
       "toPath": "character/swordman/attackinfo/spiritattack1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[80]",
       "toPath": "character/swordman/attackinfo/spiritattack2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[81]",
       "toPath": "character/swordman/attackinfo/spiritattack3.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[82]",
       "toPath": "character/swordman/attackinfo/spiritattack4.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[83]",
       "toPath": "character/swordman/attackinfo/spiritdashattack.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[84]",
       "toPath": "character/swordman/attackinfo/ghostsidewind.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[85]",
       "toPath": "character/swordman/attackinfo/triplestab.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.etc[86]",
       "toPath": "character/swordman/attackinfo/triplestabfinish.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
       "fromField": "attackInfo.jumpAttack",
       "toPath": "character/swordman/attackinfo/jumpattack.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/swordman.chr",
@@ -2289,651 +5397,651 @@
       "fromField": "attackInfo.attackBase[0]",
       "toPath": "character/swordman/dsattackinfo/attack1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.attackBase[1]",
       "toPath": "character/swordman/dsattackinfo/attack2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.attackBase[2]",
       "toPath": "character/swordman/dsattackinfo/attack3.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[0]",
       "toPath": "character/swordman/dsattackinfo/hardattack.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[1]",
       "toPath": "character/swordman/dsattackinfo/hitback.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[2]",
       "toPath": "character/swordman/dsattackinfo/tripleslash1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[3]",
       "toPath": "character/swordman/dsattackinfo/tripleslash2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[4]",
       "toPath": "character/swordman/dsattackinfo/tripleslash3.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[5]",
       "toPath": "character/swordman/dsattackinfo/tripleslash4.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[6]",
       "toPath": "character/swordman/dsattackinfo/tripleslash5.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[7]",
       "toPath": "character/swordman/dsattackinfo/tripleslash3down.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[8]",
       "toPath": "character/swordman/dsattackinfo/momentaryslash.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[9]",
       "toPath": "character/swordman/dsattackinfo/giveblood.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[10]",
       "toPath": "character/swordman/dsattackinfo/ashenfork.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[11]",
       "toPath": "character/swordman/dsattackinfo/upperslash.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[12]",
       "toPath": "character/swordman/dsattackinfo/grab.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[13]",
       "toPath": "character/swordman/dsattackinfo/grabblastblood.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[14]",
       "toPath": "character/swordman/dsattackinfo/dashattackmultihit.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[15]",
       "toPath": "character/swordman/dsattackinfo/shockwavearea.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[16]",
       "toPath": "character/swordman/dsattackinfo/vaneslashtry.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[17]",
       "toPath": "character/swordman/dsattackinfo/vaneslashupper.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[18]",
       "toPath": "character/swordman/dsattackinfo/vaneslashsmash.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[19]",
       "toPath": "character/swordman/dsattackinfo/upperslashafter.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[20]",
       "toPath": "character/swordman/dsattackinfo/hardattackchargeafter.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[21]",
       "toPath": "character/swordman/dsattackinfo/ghoststepslash.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[22]",
       "toPath": "character/swordman/dsattackinfo/standalonewave.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[23]",
       "toPath": "character/swordman/dsattackinfo/gorecross1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[24]",
       "toPath": "character/swordman/dsattackinfo/gorecross2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[25]",
       "toPath": "character/swordman/dsattackinfo/hopsmash.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[26]",
       "toPath": "character/swordman/dsattackinfo/hopsmashfinal.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[27]",
       "toPath": "character/swordman/dsattackinfo/weaponcomboshort1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[28]",
       "toPath": "character/swordman/dsattackinfo/weaponcomboshort2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[29]",
       "toPath": "character/swordman/dsattackinfo/weaponcomboshort3.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[30]",
       "toPath": "character/swordman/dsattackinfo/weaponcomboblade1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[31]",
       "toPath": "character/swordman/dsattackinfo/weaponcomboblade2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[32]",
       "toPath": "character/swordman/dsattackinfo/weaponcomboblade3.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[33]",
       "toPath": "character/swordman/dsattackinfo/weaponcomboblade4.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[34]",
       "toPath": "character/swordman/dsattackinfo/weaponcomboblunt1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[35]",
       "toPath": "character/swordman/dsattackinfo/weaponcomboblunt2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[36]",
       "toPath": "character/swordman/dsattackinfo/weaponcomboblunt3.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[37]",
       "toPath": "character/swordman/dsattackinfo/weaponcomboheavy1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[38]",
       "toPath": "character/swordman/dsattackinfo/weaponcomboheavy2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[39]",
       "toPath": "character/swordman/dsattackinfo/weaponcombolight1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[40]",
       "toPath": "character/swordman/dsattackinfo/weaponcombolight2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[41]",
       "toPath": "character/swordman/dsattackinfo/weaponcombolight3.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[42]",
       "toPath": "character/swordman/dsattackinfo/chargecrashdash.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[43]",
       "toPath": "character/swordman/dsattackinfo/chargecrashupper.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[44]",
       "toPath": "character/swordman/dsattackinfo/chargecrashfinish.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[45]",
       "toPath": "character/swordman/dsattackinfo/rapidmoveslash1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[46]",
       "toPath": "character/swordman/dsattackinfo/rapidmoveslash2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[47]",
       "toPath": "character/swordman/dsattackinfo/illusionslashupper.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[48]",
       "toPath": "character/swordman/dsattackinfo/illusionslashsmash.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[49]",
       "toPath": "character/swordman/dsattackinfo/frenzy1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[50]",
       "toPath": "character/swordman/dsattackinfo/frenzy2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[51]",
       "toPath": "character/swordman/dsattackinfo/frenzy3.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[52]",
       "toPath": "character/swordman/dsattackinfo/frenzy4.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[53]",
       "toPath": "character/swordman/dsattackinfo/bloodyrave.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[54]",
       "toPath": "character/swordman/dsattackinfo/moonlightslash1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[55]",
       "toPath": "character/swordman/dsattackinfo/moonlightslash2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[56]",
       "toPath": "character/swordman/dsattackinfo/moonlightslashfull.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[57]",
       "toPath": "character/swordman/dsattackinfo/outragebreak.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[58]",
       "toPath": "character/swordman/dsattackinfo/kallafinish1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[59]",
       "toPath": "character/swordman/dsattackinfo/kallafinish2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[60]",
       "toPath": "character/swordman/dsattackinfo/kallafinish3.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[61]",
       "toPath": "character/swordman/dsattackinfo/hellbenterfinish.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[62]",
       "toPath": "character/swordman/dsattackinfo/hundredswordfinish.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[63]",
       "toPath": "character/swordman/dsattackinfo/waveeyeattack1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[64]",
       "toPath": "character/swordman/dsattackinfo/waveeyeattack2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[65]",
       "toPath": "character/swordman/dsattackinfo/waveeyeattack3.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[66]",
       "toPath": "character/swordman/dsattackinfo/waveeyewing.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[67]",
       "toPath": "character/swordman/dsattackinfo/momentaryslashex.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[68]",
       "toPath": "character/swordman/dsattackinfo/chargecrashexshoulder.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[69]",
       "toPath": "character/swordman/dsattackinfo/chargecrashexpick.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[70]",
       "toPath": "character/swordman/dsattackinfo/chargecrashexupper.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[71]",
       "toPath": "character/swordman/dsattackinfo/grabblastbloodex.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[72]",
       "toPath": "character/swordman/dsattackinfo/bloodsword.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[73]",
       "toPath": "character/swordman/dsattackinfo/flowmindone.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[74]",
       "toPath": "character/swordman/dsattackinfo/flowmindoneadd.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[75]",
       "toPath": "character/swordman/dsattackinfo/flowmindtwoattack1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[76]",
       "toPath": "character/swordman/dsattackinfo/flowmindtwoattack2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[77]",
       "toPath": "character/swordman/dsattackinfo/flowmindtwoattack3.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[78]",
       "toPath": "character/swordman/dsattackinfo/flowmindthreeattack.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[79]",
       "toPath": "character/swordman/dsattackinfo/spiritattack1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[80]",
       "toPath": "character/swordman/dsattackinfo/spiritattack2.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[81]",
       "toPath": "character/swordman/dsattackinfo/spiritattack3.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[82]",
       "toPath": "character/swordman/dsattackinfo/spiritattack4.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[83]",
       "toPath": "character/swordman/dsattackinfo/spiritdashattack.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[84]",
       "toPath": "character/swordman/dsattackinfo/ghostsidewind.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[85]",
       "toPath": "character/swordman/dsattackinfo/triplestab.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[86]",
       "toPath": "character/swordman/dsattackinfo/triplestabfinish.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.etc[87]",
       "toPath": "character/swordman/dsattackinfo/darkwave.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.jumpAttack",
       "toPath": "character/swordman/dsattackinfo/jumpattack.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",
       "fromField": "attackInfo.dashAttack",
       "toPath": "character/swordman/dsattackinfo/dashattack.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "character/swordman/demonicswordman.chr",

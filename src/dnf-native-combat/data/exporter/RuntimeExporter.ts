@@ -342,6 +342,40 @@ export async function exportRuntimeShards(options: ExportOptions): Promise<Expor
       .filter(m => m.path.startsWith(`map/${id}/`))
       .map(m => sanitizeMapForRuntime(m));
 
+    // 2026-05-27 stale mapId detection: dgn.mapSpecification.items[*][2] is
+    // a logical mapId integer (e.g. jungle declares 3204/3205/3206/3216/...).
+    // Real PVF map files include the id in their path (e.g. e3204(1,2).map).
+    // When dgn references a mapId that no .map file in PVF backs, the design
+    // data is stale (PVF cleaned up but dgn metadata kept the id). Detect by
+    // extracting numeric id from each loaded map path and comparing.
+    const mapSpec = (dgn as { mapSpecification?: { items?: unknown } }).mapSpecification;
+    const referencedMapIds = new Set<number>();
+    if (mapSpec && Array.isArray(mapSpec.items)) {
+      for (const row of mapSpec.items as unknown[]) {
+        if (Array.isArray(row) && row.length >= 3 && typeof row[2] === "number") {
+          referencedMapIds.add(row[2] as number);
+        }
+      }
+    }
+    const loadedMapIds = new Set<number>();
+    for (const m of dungeonMaps) {
+      // mapId is the first 3+ digit run in the basename. Path forms like
+      // `map/jungle/e3204(1,2).map` prefix the id with a letter, so a
+      // \b word-boundary BEFORE the digits fails (e and 3 are both word
+      // chars). Match the first 3+ digit run without leading boundary.
+      const match = m.path?.match(/(\d{3,})/);
+      if (match) loadedMapIds.add(Number(match[1]));
+    }
+    const staleMapIds: number[] = [];
+    for (const refId of referencedMapIds) {
+      if (!loadedMapIds.has(refId)) staleMapIds.push(refId);
+    }
+    if (staleMapIds.length > 0) {
+      console.warn(
+        `[exporter] dgn "${id}": ${staleMapIds.length}/${referencedMapIds.size} mapIds referenced by mapSpecification but no matching .map file in PVF: [${staleMapIds.sort((a, b) => a - b).join(', ')}]. See docs/engineering/dgn-stale-mapids-2026-05-27.md`
+      );
+    }
+
     // monsterRefs: extract distinct mob ids that any loaded mob's id matches.
     // Until .map spawn parsing is wired, this is "all loaded mobs visible to
     // this dungeon" — a superset that downstream consumers can intersect.
