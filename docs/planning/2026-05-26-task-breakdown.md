@@ -23,8 +23,14 @@
 ```
 
 ```
-❌ LFS 二进制未上传            — Script.pvf + stage1-baseline.db 404
-❌ .gitignore memory 未白名单  — 多层记忆系统无法同步
+✅ stand/walk inline 黑洞      — 已修复（DNF 韩语命名 stay/move，commit 045d451）
+✅ Runtime Schema 部分          — vite worker 配置 + physics/chr/skl/atk 4 个 .fbs 已写（commit 2c4d016 + 后续）
+✅ Web Worker 骨架              — sim-worker + host skeleton 已就位（commit 2c4d016）
+✅ FlatBuffers npm              — flatbuffers 包已装；scripts/compile-schema.mjs 已写（commit 2c4d016）
+✅ Q9 swordman 全量             — 81 atk + 205 skl + 161 ani（commit 33192d9）
+✅ goblin/jungle 数据完备       — goblin 0→1 atk / 0→8 ani; jungle 0→3 maps / 0→1 monsterRef（commit 4796ed0）
+✅ dgn stale mapId 检测         — RuntimeExporter warn + 全副本扫描脚本（49.8% 双峰分布）
+❌ LFS 二进制未上传            — Script.pvf + stage1-baseline.db 仅本地有，未 push origin
 ❌ notify.mjs Windows-only    — Termux termux-notification 未对接
 ❌ .equ parser                — 67777 文件，装备系统基础数据
 ❌ .stk parser                — 10402 文件，技能树基础数据
@@ -32,9 +38,9 @@
 ❌ 3-5 怪物全量               — 只有 goblin
 ❌ P1 审计修复 (14项)          — spawn timeout/原子写/finishedAt/N+1 SELECT/...
 ❌ P2 审计修复 (16项)          — C++ 边界/TS 窄化
-❌ Runtime Schema 设计         — 从 13 system 反推字段，定义 .fbs
-❌ 离线编译器                  — JSON → FlatBuffers .bin
-❌ stand/walk inline 黑洞      — CURATED 提了 .ani 但 shard 缺，Stage 2 idle/walk 直接撞空
+❌ 离线编译器                  — JSON → FlatBuffers .bin 仍未写（需 flatc CLI 装好）
+❌ flatc CLI                  — github release 下载，本地网络问题待恢复
+❌ mob/ani/dgn/manifest .fbs   — 剩余 4 个 schema（physics/chr/skl/atk 已写）
 ```
 
 ---
@@ -59,17 +65,17 @@
 - **命令**：`git lfs push origin --all`
 - **验收**：Termux 侧 `git lfs pull` 成功，`data/Script.pvf` 从 134 字节变成 206MB
 
-### T0.4 — FlatBuffers 工具链
+### T0.4 — ~~FlatBuffers 工具链~~ ✅ **部分完成（2026-05-27 commit 2c4d016）**
 
 - **目的**：安装 `flatc` 编译器，建立 `.fbs` → `.ts` + `.bin` 的编译链
-- **改动**：`npm install flatbuffers`，配置 `scripts/compile-schema.mjs`
-- **验收**：手写一个测试 `.fbs`，跑编译输出 `.bin`，浏览器端能零拷贝读取
+- **已落地**：✅ flatbuffers npm 包已装；✅ scripts/compile-schema.mjs 已写（含 flatc 检测器 + Windows 安装步骤提示）
+- **仍待**：❌ flatc CLI 安装（需 github release 下载，本地网络问题待恢复）
 
-### T0.5 — Web Worker 构建配置
+### T0.5 — ~~Web Worker 构建配置~~ ✅ **已完成（2026-05-27 commit 2c4d016）**
 
 - **目的**：Vite 支持 Web Worker 打包，Logic Worker 和 Render Worker 独立 bundle
-- **改动**：`vite.config.ts` 加 worker 配置，建 `src/engine/workers/` 目录骨架
-- **验收**：主线程 postMessage → Worker 收到 → Worker postMessage → 主线程收到
+- **已落地**：✅ vite.config.ts 加 `worker: { format: "es" }`；✅ src/engine/workers/{sim-worker.ts, sim-worker-host.ts, README.md} 骨架；✅ TypeScript lib reference directive 精确启 DOM/WebWorker 不污染全局
+- **仍待**：❌ Browser smoke test 验证 worker round-trip（等 Stage 2 真用时补）
 
 ---
 
@@ -106,23 +112,23 @@
 - **COLD** (<1次/帧)：skill.icon, chr.awakening, dgn.roomGraph, equipment → IndexedDB lazy
 - **验收**：HOT 数据完全在 Worker 内存内，COLD 数据不进热路径
 
-### T1.4 — FlatBuffers .fbs schema 编写
+### T1.4 — FlatBuffers .fbs schema 编写 ⏳ **半完成（2026-05-27，4/8）**
 
 - **目的**：把 T1.1-T1.3 的结论编译成 `.fbs` schema 文件
-- **输出**：
+- **输出 + 状态**：
   ```
   src/engine/schema/
-  ├── chr.fbs        (角色运行时参数)
-  ├── skl.fbs        (技能运行时参数)
-  ├── atk.fbs        (攻击运行时参数)
-  ├── mob.fbs        (怪物运行时参数)
-  ├── ani.fbs        (逐帧数据)
-  ├── dgn.fbs        (副本结构)
-  ├── physics.fbs    (物理常数)
-  └── manifest.fbs   (内容索引)
+  ├── chr.fbs        ✅ 已写（含 GrowthRow / Awakening / WeaponHitInfoRow / WidthBox struct / PvfRef）
+  ├── skl.fbs        ✅ 已写（含 CoolTime / ConsumeMp / CastingTime / CancelWindow dual-semantics / SkillIcon）
+  ├── atk.fbs        ✅ 已写（22 字段含 liftUp/pushAside/knuckBack Tier-3 + element/hitReaction + 5 个 causes* bool）
+  ├── mob.fbs        ❌ 待写（参照 goblin.json 反推）
+  ├── ani.fbs        ❌ 待写（帧序列 + atk/dmg box）
+  ├── dgn.fbs        ❌ 待写（**关键**：含 staleMapIds 字段处理 49.8% stale）
+  ├── physics.fbs    ✅ 已写（12 常数 + DownParamType + KnockBackType + ZAccelType）
+  └── manifest.fbs   ❌ 待写（path + sha256 + version 索引）
   ```
 - **依赖**：T1.1, T1.2, T1.3
-- **验收**：`flatc --ts *.fbs` 生成 TypeScript 类型，`flatc --binary` 生成空 `.bin` 骨架
+- **验收**：`flatc --ts *.fbs` 生成 TypeScript 类型，`flatc --binary` 生成空 `.bin` 骨架（等 flatc CLI 装好做）
 
 ### T1.5 — Schema 版本化机制
 
@@ -171,9 +177,10 @@
 
 ## Phase 2：运行时仿真循环
 
-> ⚠️ **2026-05-27 audit 警告 — Phase 2 T3.1-T3.13 任务拆解：计数验证通过，聚类待深推导**
-> "13 system" 计数级证据已在 2026-05-27 用 dnf-extract --filter ".nut" 重做验证：193 .nut + 483 sq_\* API + 7370 调用点全部真实可复现（[验证报告](../engineering/nut-validation-2026-05-27.md)）。但 T3.1-T3.13 各自需要消费的具体 API 子集**尚未明确**——启发式分类 47% unclassified，每个 T 落地前要先补"该 system 包含哪些 sq_\* + 顺序"。
-> 上一版警告（"推导链未验证"）已 reframed：**数字 OK，聚类待补**。详见 [game-engine-architecture.md](2026-05-26-game-engine-architecture.md) 顶部 banner。
+> ⚠️ **2026-05-27 audit 警告 — Phase 2 T3.1-T3.13 任务拆解：计数精确匹配 md，聚类粒度差异**
+> "13 system" 在 2026-05-27 用 dnf-extract --filter ".nut" + v4 noun classifier 验证：193 .nut + **478 case-sensitive 引擎 API（剔除 5 个 user-defined function 后精确匹配 md 478）+ 443 case-normalized + 7,101 调用点**（[验证报告](../engineering/nut-validation-2026-05-27.md)）。v4 启发式分类划出 **22 个 system buckets**（vs md 13，是粒度差异，量级相符；28% unclassified 但 **call share 仅 2.9%**——剩余全是 long-tail）。
+> Q21 决策修正：.nut **不能**反推 C++ tick 顺序（DNF.exe 黑盒），但**能反推**引擎→脚本 12 步事件 lifecycle graph。Phase 2 JS/TS 实现先对齐 hook 顺序。
+> T3.1-T3.13 各 system 包含的具体 API 子集见 [verification report §十](../engineering/nut-validation-2026-05-27.md)。
 
 > 所有 combat 代码在 Web Worker 里跑。主线程只处理 Input + requestAnimationFrame + UI 渲染。
 
@@ -310,6 +317,20 @@
 ### T4.4 — 3-5 怪物全量数据
 - goblin/投掷哥布林/牛头兵/1 boss/1 精英
 - 为 T3.9 MonsterAI 跨 archetype 验证提供数据
+
+### T4.5 — dgn shape 加 staleMapIds 字段 + Stage 2 副本系统优先 0% stale dgn ⚠️ **新增（2026-05-27）**
+
+- **背景**：2026-05-27 全副本 stale mapId 扫描发现 338 dgn / 89 有 mapSpec / **49.8% 全局 stale rate**，且**双峰分布**——37 dgn 完全 OK / 42 dgn 81-100% stale（deprecated dungeon）。详见 [dgn-stale-mapids-2026-05-27.md](../engineering/dgn-stale-mapids-2026-05-27.md)。
+- **修复 1**：exporter 已加 console.warn 检测（commit 33192d9）+ 全副本扫描脚本 `scripts/scan-dgn-stale-mapids.mjs`
+- **修复 2（待做）**：在 DungeonRuntimeShape 加 `staleMapIds: number[]` 字段，让 Stage 2 引擎能感知
+- **Stage 2 副本系统决策**：**不要用 jungle 作首选副本**（75% stale），优先用 0% stale 的核心副本：
+  - dungeon/act3/goddesstemple.dgn (10 refs)
+  - dungeon/act3/bloodhell.dgn (7 refs)
+  - dungeon/act3/breeding.dgn (9 refs)
+  - dungeon/act7/gentdefence.dgn (20 refs)
+  - dungeon/act6/danceingbutterfly.dgn (77 refs)
+- **验收**：dgn shape 含 staleMapIds 字段；Stage 2 task breakdown 副本选择以 0% stale 为白名单
+- **优先级**：Stage 2 副本系统启动前必须解决（否则 jungle 之类的副本数据会半残）
 
 ---
 

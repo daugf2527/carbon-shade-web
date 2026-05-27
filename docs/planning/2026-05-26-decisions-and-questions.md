@@ -2,6 +2,8 @@
 
 > 今天全天讨论的产出。分为两部分：已达成共识需落盘的，和讨论过但未决定的。
 
+> ✅ **2026-05-27 更新**：本文件 32 个 Q 中已有 **8 个被决策**（Q1/Q2/Q3/Q4/Q7/Q9/Q21/Q31），见 [`2026-05-27-resolved-decisions.md`](2026-05-27-resolved-decisions.md) 落档记录。本文件保留作为完整问题池，下面各 Q 段顶部已加 ✅ 标记 + 决策结果。剩余 24 个 Q 仍待决（多数不阻塞 Phase 2 启动）。
+
 ---
 
 ## 一、已定论，需落盘
@@ -46,7 +48,9 @@
 
 ### Q1. 13-system 框架：用还是不用？
 
-**现状**：源头 agent 原始报告丢失，"478 sq_* API → 13 system"结论无法验证。标注为 `agent_claim_unverified`。
+> ✅ **2026-05-27 已决：选 B（等 Windows 验证再用）→ 已升级为 `counts_verified_clustering_inferred`**：跑 dnf-extract --filter ".nut" 实测 193 .nut + **478 case-sensitive 引擎 API 精确匹配 md 数字**（剔除 5 个 user-defined function 后），443 case-normalized + 7,101 调用点全部 reproducible。v4 noun classifier 划出 22 system buckets（vs md 13，是粒度差异）。详见 [verification report](../engineering/nut-validation-2026-05-27.md)。
+
+**现状**（已过时，保留作为决策前快照）：源头 agent 原始报告丢失，"478 sq_* API → 13 system"结论无法验证。标注为 `agent_claim_unverified`。
 
 **选项**：
 - A：当工作假设用——13 system 作为 Phase 2 的组织框架，但不当真理
@@ -54,6 +58,8 @@
 - C：自底向上重推导——从 swordman.json + goblin.json 的字段聚类重新分组
 
 ### Q2. Runtime Schema Design 什么时候做？
+
+> ✅ **2026-05-27 已决：选 C（先扩数据再做）**。Q9 已落地 BASELINE_JOB=swordman 模式 → swordman.json 现含 81 atk / 205 skl / 161 ani / 2.2MB。数据扩到这个量级后才更有意义地做 Runtime Schema（已开 4 个 .fbs schema: physics/chr/skl/atk，见 commit 2c4d016 + 后续）。
 
 **现状**：task-breakdown.md 列 T1.1-T1.5 为最优先。但今天盘点完数据后，发现 swordman.json 已经够跑最小闭环。
 
@@ -64,6 +70,8 @@
 
 ### Q3. FlatBuffers 什么时候切？
 
+> ✅ **2026-05-27 已决：选 A（Phase 2 Day 1 就用）**。flatbuffers npm 包已装（commit 2c4d016）；scripts/compile-schema.mjs flatc 检测器已写；physics.fbs 第一个 schema 已落地；chr/skl/atk .fbs schema 在后续 commit 写完（共 4 个 ~500 行 .fbs）。仍缺：flatc CLI 安装（需 github 下载，本地网络问题待恢复）+ mob/ani/dgn/manifest .fbs。
+
 **现状**：决定了用 FlatBuffers 作为运行时格式，但 Phase 2 首批代码可以用 JSON 快速验证。
 
 **选项**：
@@ -72,6 +80,8 @@
 - C：JSON 一直用到性能瓶颈出现再切
 
 ### Q4. 参考角色：swordman 还是 berserker？
+
+> ✅ **2026-05-27 已决：选 A（swordman）+ 重大发现**：实测 berserker.chr 在 PVF 中**不存在**（dnf-extract --list 0 个）。狂战士是 swordman.chr.awakening 里的转职配置，**不是独立 class**。339 个 berserker-* 文件主要在 equipment/character/swordman/（292 个）+ monster (16) + quest (3) + etc/ultimateskillani (2)。Q9 落地后 swordman.json 含 81 atk + 205 skl + 161 ani，足够覆盖"鬼剑士优先狂战士"全部需求。
 
 **现状**：swordman 数据最全（10 motion inline + 3 attack + 2 skill），berserker 更接近当前 master 分支的 actions/default.json。
 
@@ -99,6 +109,8 @@
 
 ### Q7. Web Worker 架构：Day 1 就分？
 
+> ✅ **2026-05-27 已决：选 A（Day 1 就分）**。vite.config.ts 已加 `worker: { format: "es" }`（commit 2c4d016）；src/engine/workers/{sim-worker.ts, sim-worker-host.ts, README.md} 骨架已就位；TypeScript lib reference directive 精确启 DOM/WebWorker 不污染全局。skeleton 含 InputSnapshot/StateSnapshot/WorkerInbound/Outbound 类型 + lifecycle (init/input/shutdown) + pendingInputs queue。Stage 2 T3.1 填充真实 13 system tick。
+
 **现状**：game-engine-architecture.md 设计了 Logic Worker + Render Worker 分离。但实际开发可以先在一个线程里跑。
 
 **选项**：
@@ -116,6 +128,8 @@
 - C：Phase 2 做"软确定性"——PRNG seeded 但不强制 state hash 验证
 
 ### Q9. CURATED_FILES 扩多大？
+
+> ✅ **2026-05-27 已决：选"鬼剑士优先狂战士"模式（A+B 中间路线）**。新增 BASELINE_JOB=swordman 环境变量模式 (commit 33192d9)：扫 character/<job>/* + skill/<job>/* 排除 /equipment/* (~21k avatar/weapon ani)。实测 1414 文件 (2 chr + 187 atk + 205 skl + 996 ani + 24 CURATED 非 swordman fixtures)。baseline 时间 ~55s。swordman.json 跃迁 3/2/12 → 81/205/161（数据完备度 13-100x）。其他 10 职业可同样模式扩，但当前 Q4 决策 swordman 优先，其余职业延后。
 
 **现状**：当前 19 个文件。可以扩到全量（100K+）。
 
@@ -233,6 +247,8 @@
 
 ### Q21. 仿真循环中 13 个 system 的执行顺序？
 
+> ✅ **2026-05-27 已决：选 B（从 .nut 反推）→ 重大修正**：B 任务怀疑精神 audit 发现 .nut **不能**直接反推 C++ tick 顺序（那个在 DNF.exe 二进制硬编码，跟 launch/gravity 一类 Tier-3 黑盒）。但 .nut **能反推**"引擎→脚本回调时序"——9 .nut 跨类型抽样重建 **12 步事件 lifecycle graph**：输入(checkCommandEnable/checkExecutableSkill) → 状态机(onEndState/onSetState/onAfterSetState) → 每帧 tick callback(**onProc/procAppend/proc_appendage**) → 动画(onKeyFrameFlag/onEndCurrentAni) → 渲染(prepareDraw/drawAppend) → 销毁(onDestroyObject/onVaildTimeEnd/isEnd 谓词)。Phase 2 JS/TS 实现先对齐这个 hook 顺序。详见 [verification report §十一](../engineering/nut-validation-2026-05-27.md)。
+
 **现状**：game-engine-architecture.md 写了一个顺序（Input→StateMachine→Physics→HitDetect→Damage→Reaction→Resource→AI→Status→FrameEvent→Snapshot→Render），但这个顺序是拍脑袋的。DNF 有 STATE_PRIORITY 5 级仲裁，实际顺序可能不同。
 
 **选项**：
@@ -328,6 +344,8 @@
 
 ### Q31. "最小闭环"的精确定义？
 
+> ✅ **2026-05-27 已决：选 B（命中+受击+扣 HP）**。范围：Animation + HitDetection + DamageFormula + Reaction + 部分 Resource = 5 个 system。验收：swordman attack1 命中 goblin → 计算伤害 → goblin 进入 stagger reaction → goblin.hp 扣减 → 显示数字。**不在范围内**：MonsterAI（怪物追击）/ Physics 跳跃 / 完整 Status 体系 / Camera。
+
 **现状**：多次提到"swordman 出招打 goblin 的完整闭环"，但没有精确定义哪些 system 算"闭环完成"。
 
 **选项**：
@@ -346,4 +364,4 @@
 
 ---
 
-*2026-05-26 全天讨论，从 5 个视角逐条回忆。共 32 个待定问题。*
+*2026-05-26 全天讨论，从 5 个视角逐条回忆。共 32 个问题，其中 8 个已决（Q1/Q2/Q3/Q4/Q7/Q9/Q21/Q31）→ [2026-05-27-resolved-decisions.md](2026-05-27-resolved-decisions.md) 落档；剩余 24 个仍待决（多数不阻塞 Phase 2 启动）。*
