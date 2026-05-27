@@ -35,7 +35,7 @@ dungeons/
 └── jungle.json              6,485 ☆ 有 dgn 结构，maps/monsterRefs 为空
 
 shared/
-├── physics.json               510 ★ 10 个物理常数，0 个 Tier-3
+├── physics.json               510 ★ 12 个物理常数，0 个 Tier-3
 └── enums.json               2,663 ★ 6 张枚举表 110 条目，0 个 Tier-3
 ```
 
@@ -53,12 +53,14 @@ animations, attacks, chr, etc, job, parentJob, shape_version, skills
 
 ### 一、shared/physics.json
 
-10 个物理常数，**全部 Tier-1，无 local_baseline 标记**：
+12 个物理常数，**全部 Tier-1，无 local_baseline 标记**：
 
 | 常数 | 值 | 含义 |
 |------|-----|------|
 | defaultGravityAccel | -1500 | 重力加速度 |
 | forceToVelocityConst | 4000 | 力→速度转换常数 |
+| lightObjectMaxWeight | 60000 | 轻物体最大重量阈值 |
+| middleObjectMaxWeight | 100000 | 中物体最大重量阈值 |
 | speedValueDefault | 1000 | 默认速度基准值 |
 | xNormalMoveVelocity | 143 | X 轴移动速度 |
 | yNormalMoveVelocity | 114 | Y 轴移动速度 |
@@ -116,6 +118,8 @@ animations, attacks, chr, etc, job, parentJob, shape_version, skills
 | jumpattack | 6 | false | animation/jumpattack.ani |
 
 每帧结构：`{index, anchor{x,y}, delay(ms), sprite(path)}`，有 attackBoxes/damageBoxes 时附加上。
+
+> ⚠️ **stand/walk inline 黑洞**（2026-05-27 audit）：CURATED_FILES 提取了 12 个 swordman .ani（含 `stand.ani`/`walk.ani`），但 RuntimeExporter 只把 10 个 motion 写进 shard 的 `animations` key——`stand` 和 `walk` 缺失。Stage 2 系统 5 (Animation Playback) 想做 idle/walk 动画时会直接撞上空。修复在 [p1-p2-backlog.md](2026-05-26-p1-p2-backlog.md)。
 
 #### 3.3 attacks（3 atk）
 

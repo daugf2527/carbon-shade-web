@@ -16,7 +16,7 @@ Active branch: `dnf-native` (master frozen 2026-05-21).
 
 **Stage 1 管线**:
 ```
-PVF --pipe--> dnf-extract (C++) --> PvfDocument[] --> 9 parsers (TS) --> Zod validator
+PVF --pipe--> dnf-extract (C++) --> PvfDocument[] --> 10 parsers (TS) --> Zod validator
   --> SQLite (node:sqlite) --> JSON shards (dist/data/players/*.json etc.)
 ```
 **静态审计**: 2026-05-25 完成 6-Agent 全链路审计，48 个发现 (P0×8 / P1×20 / P2×20)，[报告](docs/engineering/audit-2026-05-25-full-pipeline-static.md)。待 Windows 动态验证。
@@ -37,7 +37,7 @@ PVF --pipe--> dnf-extract (C++) --> PvfDocument[] --> 9 parsers (TS) --> Zod val
 | `npm run audit:verify` | Re-check agent audit claims against cited file:line |
 | `npm run closed-loop:status` | Closed-loop workflow state machine status |
 | `npm run browser:smoke` | Playwright browser test (CI only, needs dev server + display) |
-| `npm run baseline` | Stage 1 sample baseline (19 curated files, ~4s) |
+| `npm run baseline` | Stage 1 sample baseline (31 curated files, ~4s) |
 | `npm run baseline:pve` | Stage 1 PVE-full baseline (8794 character + skill files, ~10min) |
 | `docker compose up --build` | Container on port 5173 |
 
@@ -55,8 +55,8 @@ The SQLite DB is intentionally not persisted. It is a Mirror table layer for cro
 
 ### dnf-extract (C++ CLI)
 
-Source: `tools/dnf-porting-src/`. Binary: `tools/dnf-extract` (Linux aarch64/Android) / `tools/dnf-extract.exe` (Windows).
-CI: `.github/workflows/build-dnf-extract.yml` builds all three platforms.
+Source: `tools/dnf-porting-src/`. Binary in repo: `tools/dnf-extract.exe` (Windows only).
+CI: `.github/workflows/build-dnf-extract.yml` builds Linux/aarch64/Windows — Linux/aarch64 ELF NOT committed to repo, fetch from CI artifact if needed.
 
 ```bash
 dnf-extract --pvf Script.pvf --file <internal-path>       # single file → JSON
@@ -79,7 +79,7 @@ DNF_PVF_PATH=/path/to/Script.pvf node scripts/pipeline.mjs --full
 node scripts/pipeline.mjs --pvf Script.pvf --file <path> [--file <path> ...] \
   [--stop-at extract|parse|validate|load|export] [--full|--incremental]
 
-# Stage 1 baseline (curated 18-file cross-section)
+# Stage 1 baseline (curated 31-file cross-section)
 DNF_PVF_PATH=... node scripts/stage1-baseline.mjs
 ```
 
@@ -88,14 +88,14 @@ DNF_PVF_PATH=... node scripts/stage1-baseline.mjs
 ```
 dnf-native branch (ACTIVE):
 src/dnf-native-combat/data/
-├── parsers/        Chr/Mob/Atk/Skl/Ani/Dgn/Etc/Map/Nut/Img (9 + 3 standalone)
+├── parsers/        Chr/Mob/Atk/Skl/Ani/Dgn/Etc/Map/Nut/Img (10 total: 7 via parseStage + 3 standalone Ani/Nut/Img)
 ├── types/          ChrDef/MobDef/AtkDef/SklDef/... + Provenance + PvfDocument
 ├── pipeline/       parseStage.ts + pipelineRunner.ts (EXTRACT→PARSE→VALIDATE→LOAD→EXPORT)
 ├── validator.ts    Zod schemas + provenance audit + ref integrity + PvP scope
 ├── importer/       SqliteImporter.ts (node:sqlite, mirror tables + 10 domain VIEWs)
 ├── exporter/       RuntimeExporter.ts (entity-centric JSON shards + manifest)
 src/data/official/  dnfPhysicsConstants.ts + dnfEnumTables.ts (shared shard sources)
-tools/dnf-porting-src/  C++ extractor (~2600 lines, 38 audit fixes applied)
+tools/dnf-porting-src/  C++ extractor (~3500 lines .cpp, 48 audit findings tracked)
 
 master branch (FROZEN):
 src/combat/         Pure TS combat kernel (FrameDataAction, HitResolver2D5, DamageFormula, ...)
@@ -210,7 +210,7 @@ Weapons at `equipment/character/<job>/weapon/<type>/<id>/<action>.ani`.
 - Replay frames must only store that frame's newly flushed events — never clone full archive
 - dnf-extract `--pipe` mode requires `quit` sentinel on stdin; missing it causes hang
 - Pipeline smoke tests require `DNF_PVF_PATH` env — absent on Termux/Android
-- `tools/dnf-extract` is aarch64 Android binary; `tools/dnf-extract.exe` is Windows
+- `tools/dnf-extract.exe` is the only binary checked into the repo (Windows). Linux/aarch64 ELF is built by CI but NOT committed
 
 ## Windows 注意事项速查
 

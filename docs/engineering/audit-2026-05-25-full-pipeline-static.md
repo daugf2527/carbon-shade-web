@@ -2,7 +2,7 @@
 
 **日期**: 2026-05-25  
 **分支**: `dnf-native`  
-**审计范围**: C++ dnf-extract (~2600 行) + TypeScript 管线 (~4900 行)  
+**审计范围**: C++ dnf-extract (~3500 行 .cpp / 4538 行 含 .h) + TypeScript 管线 (~5000 行)  
 **审计方法**: 静态代码审查（6 Agent 并行），未经动态 PVF 运行验证  
 **状态**: ✅ 已动态验证（2026-05-26） — 见 [audit-2026-05-25-verification-2026-05-26.md](audit-2026-05-25-verification-2026-05-26.md)
 
@@ -285,4 +285,4 @@ C++ 端 20 个 `Audit F1-F20` 标记全部验证通过，无回退：
 
 - **P0-4 NPK 截断实验**：复制副本截断末尾 200B / 20KB → 多条 `[ERROR]` 但 **exit 0**。CI 端无法区分"成功"与"半截 NPK 静默放过"。
 - **P0-2 UB**：MinGW/GCC + x64 静默通过（无 sanitizer 重编）；代码层 UB 真实存在。
-- **测试盲区**：`npm run static:test` 72/72 全绿，但 0 测试覆盖 P0-8/P1-23/P1-24/P0-5/6/7。"验证通过 ≠ 没问题"。
+- **测试盲区**：`npm run static:test` 67/67 全绿（实测 `ls tests/static/*.test.ts | wc -l` = 67），但 0 测试覆盖 P0-8/P1-23/P1-24/P0-5/6/7。"验证通过 ≠ 没问题"。

@@ -8,7 +8,7 @@
 ## 前置盘点：我们已经有什么
 
 ```
-✅ dnf-extract (C++)          — aarch64 + Windows 双平台，PVF→PvfDocument[]
+✅ dnf-extract (C++)          — Windows 仓库内（.exe）；Linux/aarch64 ELF 仅 CI 构建未落产物
 ✅ 9 TS parsers               — Chr/Mob/Atk/Skl/Ani/Dgn/Etc/Map/Img + 3 standalone
 ✅ Zod validator              — .finite()/.max()/.strict() 已加固
 ✅ SQLite Mirror + 10 VIEWs   — 写入 + 跨域查询
@@ -34,6 +34,7 @@
 ❌ P2 审计修复 (16项)          — C++ 边界/TS 窄化
 ❌ Runtime Schema 设计         — 从 13 system 反推字段，定义 .fbs
 ❌ 离线编译器                  — JSON → FlatBuffers .bin
+❌ stand/walk inline 黑洞      — CURATED 提了 .ani 但 shard 缺，Stage 2 idle/walk 直接撞空
 ```
 
 ---
@@ -170,6 +171,9 @@
 
 ## Phase 2：运行时仿真循环
 
+> ⚠️ **2026-05-27 audit 警告 — Phase 2 整套 13 个 system 拆解 (T3.1-T3.13) 基于未验证的推导链**
+> "13 system" 来自 `kernel-design.md` 一行结论，但原始 agent 输出（478 sq_* API 频次/聚类依据）丢失，baseline 中 .nut 提取次数为 0（从未真正解析过 .nut）。Windows 上 `dnf-extract --filter ".nut"` 验证后再正式落地 T3.x 任务。详见 [game-engine-architecture.md](2026-05-26-game-engine-architecture.md) 顶部 banner。
+
 > 所有 combat 代码在 Web Worker 里跑。主线程只处理 Input + requestAnimationFrame + UI 渲染。
 
 ### T3.1 — Simulation Core（最优先，所有 system 的架子）
@@ -282,6 +286,13 @@
 ---
 
 ## Phase 1d 补件：P1 数据补全（与 Phase 2 并行）
+
+### T4.0 — RuntimeExporter stand/walk inline 修复（先做）
+
+- **目的**：CURATED_FILES 提取了 swordman 的 12 个 .ani（含 `stand.ani`、`walk.ani`），但 exporter 只把 10 个写进 player shard 的 `animations` key——`stand` 和 `walk` 缺失。Stage 2 系统 5 (T3.3 Animation Playback) 想做 idle/walk 动画时会直接撞空。
+- **改动**：定位 `src/dnf-native-combat/data/exporter/RuntimeExporter.ts` 里 player shard 的 animations inline 逻辑，找出 stand/walk 被过滤的原因（白名单遗漏？name pattern mismatch？exporter 只接受 AtkDef 关联的 .ani？），修掉过滤
+- **验收**：重跑 `npm run baseline`，`verification/baseline-shards/players/swordman.json` 的 `animations` key 包含 12 个 motion（含 stand/walk）
+- **优先级**：T3.3 Animation Playback 启动之前必须修，否则 idle/walk 没数据
 
 ### T4.1 — .equ parser
 - 装备属性：武器基础攻击力/防具防御力/属性加成

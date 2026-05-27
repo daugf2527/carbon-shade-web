@@ -4,6 +4,12 @@
 > 核心结论：项目本质是两个系统——**离线资产构建管线**（Build Time）和**在线仿真循环**（Runtime, 60Hz）。
 > 前者给后者提供稳定数据支撑，后者在浏览器中以固定时间步长消费这些数据。
 
+> ⚠️ **2026-05-27 audit 警告 — 13-system 推导链未经验证**
+> 本文档 §一、§三 反复使用的"13 system"框架来自 `kernel-design.md` 一行结论："grep 193 个 .nut 实测，478 个 sq_* API，聚类为 13 system"。但原始 grep 输出/API 频次统计/聚类依据**未保存到仓库**（2026-05-21 / 2026-05-22 agent 会话原始数据丢失，baseline extraction report 中 .nut 引用 0 次——从未真正提取过 .nut 文件）。
+> **当前状态**：`sourceType: "agent_claim_unverified"` + `requiresManualVerification: true`
+> **解封条件**：Windows 上跑 `dnf-extract --pvf Script.pvf --filter ".nut"` + 抽样 grep 10-20 个 .nut + 复现 478 个 sq_* + 13 聚类合理性后，再撤本 banner。
+> **此前的工作假设**：用 13-system 框架推进，但每次落地前要标注哪些是被验证过的、哪些还是 agent_claim。
+
 ---
 
 ## 〇、核心思维转换
