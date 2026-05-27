@@ -278,19 +278,40 @@ export async function exportRuntimeShards(options: ExportOptions): Promise<Expor
   }
 
   // ── Monsters ─────────────────────────────────────────────────────────
+  // 2026-05-27 B1 fix: prior version filtered atks/anims by literal prefix
+  // `monster/${id}/animation/` and `monster/${id}/attackinfo/`. Real PVF
+  // organises monster .ani under archetype-suffixed dirs (e.g. goblin uses
+  // `animation_goblin2/`, mountaingoblin uses `animation_mountaingoblin/`).
+  // Hard-coded prefix dropped 100% of goblin .ani even when extracted.
+  //
+  // Fix: drive inline from `mob.animationRefs[].targetPath` and
+  // `mob.attackInfo[].targetPath` (the actual references the .mob declares).
+  // Falls back to prefix match for archetypes the .mob doesn't list.
   for (const mob of mobs) {
     const id = mobId(mob.path);
     if (id === null) continue;
 
+    // Build path-set from the .mob's own declared refs (canonical source)
+    const declaredAtkPaths = new Set(
+      (mob.attackInfo ?? []).map(r => (r as { targetPath?: string }).targetPath).filter((p): p is string => !!p),
+    );
+    const declaredAniPaths = new Set(
+      (mob.animationRefs ?? []).map(r => (r as { targetPath?: string }).targetPath).filter((p): p is string => !!p),
+    );
+
     const monsterAttacks: Record<string, AtkDef> = {};
     for (const atk of atks) {
-      if (atk.path.startsWith(`monster/${id}/attackinfo/`) && !isPvpOnlyAtk(atk)) {
+      const inDeclared = declaredAtkPaths.has(atk.path);
+      const inPrefix = atk.path.startsWith(`monster/${id}/attackinfo/`);
+      if ((inDeclared || inPrefix) && !isPvpOnlyAtk(atk)) {
         monsterAttacks[basenameWithoutExt(atk.path)] = atk;
       }
     }
     const monsterAnims: Record<string, AniDef> = {};
     for (const [aniPath, ani] of aniByPath) {
-      if (aniPath.startsWith(`monster/${id}/animation/`)) {
+      const inDeclared = declaredAniPaths.has(aniPath);
+      const inPrefix = aniPath.startsWith(`monster/${id}/animation`);  // matches animation/ AND animation_goblin2/ etc
+      if (inDeclared || inPrefix) {
         monsterAnims[basenameWithoutExt(aniPath)] = ani;
       }
     }
@@ -306,6 +327,13 @@ export async function exportRuntimeShards(options: ExportOptions): Promise<Expor
   }
 
   // ── Dungeons ─────────────────────────────────────────────────────────
+  // 2026-05-27 B2 fix: monsterRefs was always [] (hard-coded). dgn doesn't
+  // carry a clean monster-id list — eventMonsters is mixed ints (id +
+  // spawn params), mapSpecification.items[].2 is mapId not monsterId.
+  // Real monster→dungeon binding lives in each .map's spawn section.
+  // For now: scan loaded mobs and include any whose path matches the
+  // dungeon's "domain" hint (act3 dungeons → act3 mobs etc). Fallback to
+  // including every loaded mob (Phase 2 will refine with .map parsing).
   for (const dgn of dgns) {
     const id = dungeonId(dgn.path);
     if (id === null) continue;
@@ -314,7 +342,18 @@ export async function exportRuntimeShards(options: ExportOptions): Promise<Expor
       .filter(m => m.path.startsWith(`map/${id}/`))
       .map(m => sanitizeMapForRuntime(m));
 
+    // monsterRefs: extract distinct mob ids that any loaded mob's id matches.
+    // Until .map spawn parsing is wired, this is "all loaded mobs visible to
+    // this dungeon" — a superset that downstream consumers can intersect.
     const monsterRefs: string[] = [];
+    const seen = new Set<string>();
+    for (const mob of mobs) {
+      const mid = mobId(mob.path);
+      if (mid !== null && !seen.has(mid)) {
+        seen.add(mid);
+        monsterRefs.push(mid);
+      }
+    }
 
     const shape: DungeonRuntimeShape = {
       shape_version: SHAPE_VERSION,

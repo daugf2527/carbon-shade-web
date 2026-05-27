@@ -60,14 +60,31 @@ const CURATED_FILES = [
   // Skill samples
   "skill/swordman/upperslash.skl",
   "skill/swordman/icewave.skl",
-  // Monster sample
+  // Monster sample — 2026-05-27 B1: add goblin .atk + 8 .ani so goblin
+  // shard's attacks/animations are non-empty (was {} before). Paths come
+  // from goblin.mob's own attackInfo / animationRefs (canonical refs).
   "monster/goblin/goblin.mob",
+  "monster/goblin/attackinfo/attack1.atk",
+  "monster/goblin/animation_goblin2/damage1.ani",
+  "monster/goblin/animation_goblin2/stay.ani",
+  "monster/goblin/animation_goblin2/down.ani",
+  "monster/goblin/animation_goblin2/overturn.ani",
+  "monster/goblin/animation_goblin2/move.ani",
+  "monster/goblin/animation_goblin2/damage2.ani",
+  "monster/goblin/animation_goblin2/sit.ani",
+  "monster/goblin/animation_goblin2/attack1.ani",
   // Dungeon sample — P1-1 fix (2026-05-24, complete-stage1-review): without
   // a .dgn the baseline left dist/data/dungeons/ empty, leaving the Stage 2
   // DungeonRuntimeShape consumer surface with no fixture to compare against.
   "dungeon/act3/jungle.dgn",
-  // Map sample
+  // Map samples — 2026-05-27 B2: add jungle maps so dgn.maps is non-empty.
+  // jungle.dgn.mapSpecification references mapIds 3204/3206 — these exist
+  // as map/jungle/{e,h}3204(...).map and h3206(...).map. test_lorien kept
+  // as sanity fixture for non-jungle dgn path matching.
   "map/test_lorien/4.map",
+  "map/jungle/e3204(1,2).map",
+  "map/jungle/h3204(3,0).map",
+  "map/jungle/h3206(0,6).map",
   // Phase 4 P0-4 (2026-05-26, stage1.5-revised-plan §二.P0-4): swordman
   // core motion .ani inlined into player shard so Stage 2 system 5
   // (Animation playback) has per-frame hitbox data on Day 1. Without these,

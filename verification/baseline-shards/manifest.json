@@ -1,97 +1,97 @@
 {
   "manifest_version": "1.0.0",
-  "exported_at": "2026-05-27T02:05:29.910Z",
+  "exported_at": "2026-05-27T03:19:21.412Z",
   "pvf_hash": "crc32-head:c0779278|size:205695984",
   "extractor_version": "v2.0.0",
   "files": [
     {
       "path": "players/swordman.json",
-      "sha256": "2e0ef951fd2f158d460424984f915b50b064c548ec342fd6221fbb32fef12f96",
+      "sha256": "ca74062f6688073073a5cd51c14decf5d2cf563b64ff4cb02c1a1af74754f94a",
       "sizeBytes": 200862,
       "kind": "player",
       "shape_version": "1.0.0"
     },
     {
       "path": "players/demonicswordman.json",
-      "sha256": "0e4b0a70d859e9e1033e945d98c3c81459879cc66e00ba37d54e346998911d60",
+      "sha256": "d2a1bb0c53ca86e4e07864898f964207b5e4f20e1924ede39d7618138d625746",
       "sizeBytes": 206951,
       "kind": "player",
       "shape_version": "1.0.0"
     },
     {
       "path": "players/gunner.json",
-      "sha256": "0a3d8c9960da0cc7a4c7361be5ce9191d8049c16c40da5e563a8d6a65a55ec2f",
+      "sha256": "bfdaeb317aafb70613082ae49868518b274288aef8117959d3858d4795ced18a",
       "sizeBytes": 79876,
       "kind": "player",
       "shape_version": "1.0.0"
     },
     {
       "path": "players/atgunner.json",
-      "sha256": "ae09642aff8e9a102fff683dcd7173107a403fda24d6734142eb3de2dbf0d1ed",
+      "sha256": "8bd75bd62a50904af138703c673445ecb49f63d17f553f36be2c6eba7cb79ff3",
       "sizeBytes": 95676,
       "kind": "player",
       "shape_version": "1.0.0"
     },
     {
       "path": "players/priest.json",
-      "sha256": "1d906d3ecc579abddd99fa1fecbc5375502c9c38f7aedd2df1fbd57b166957c7",
+      "sha256": "8e78aa11689dd0afda4081202f5a76ee6dc32d102e4233c567317223b790e3ca",
       "sizeBytes": 130323,
       "kind": "player",
       "shape_version": "1.0.0"
     },
     {
       "path": "players/fighter.json",
-      "sha256": "ce4efea4f27d6d1b5a3d5c48ad5ff025a2ccc063da41e9812caab0998cebefe1",
+      "sha256": "275abac77235fd2d91fb6412de242ec58e681d81ccff75d839595226c03af7cc",
       "sizeBytes": 105417,
       "kind": "player",
       "shape_version": "1.0.0"
     },
     {
       "path": "players/atfighter.json",
-      "sha256": "d55c83f0328ff3a010fb4290a652e8e8c0a2d312f3b02d861f46d6e545ad82a5",
+      "sha256": "ae50567c67e72d6d6a8f6f51324f4cd8327c6932f43f9d6d5cea1969f68c0971",
       "sizeBytes": 126995,
       "kind": "player",
       "shape_version": "1.0.0"
     },
     {
       "path": "players/mage.json",
-      "sha256": "73e223f38a837a17853667dc1b5bce2737d2a5967b1726243f422becd9879251",
+      "sha256": "cf095c9ffe87d5852a46ce7c18a5d0d0e744e84e2bbd3c827e7bbdb60b131453",
       "sizeBytes": 87558,
       "kind": "player",
       "shape_version": "1.0.0"
     },
     {
       "path": "players/atmage.json",
-      "sha256": "6dcf3752479c52f51ba93e9cd43c6f8c8a0384013a10bbb4e0b62d4e9b7d0750",
+      "sha256": "cf9b87a97f2183578ad22a578096f6e51bd4aad36843f4454712e7e697c93391",
       "sizeBytes": 93311,
       "kind": "player",
       "shape_version": "1.0.0"
     },
     {
       "path": "players/creatormage.json",
-      "sha256": "8a103b84422f338978c7818afe6a4a2ff10bef63188b8082f9e6d10ab838b4b1",
+      "sha256": "7f9ad707a0a606644ba44afd21fbb9c9dcd3e04603739185c92d44e5a5b27e6e",
       "sizeBytes": 89875,
       "kind": "player",
       "shape_version": "1.0.0"
     },
     {
       "path": "players/thief.json",
-      "sha256": "6e8d4ab465c99c88634fc95b969e3fad174840263b8749b79f04528769474e39",
+      "sha256": "ab3e6941433137fea86df294000aaf7a1b5d81d6266ca0fdc361a9e48d56e4bd",
       "sizeBytes": 108893,
       "kind": "player",
       "shape_version": "1.0.0"
     },
     {
       "path": "monsters/goblin.json",
-      "sha256": "7b0cb27251eb94801286fa8038e940be15e941d430292ae62bdac2af60714541",
-      "sizeBytes": 15998,
+      "sha256": "44ca3a3df0c12459be8cf57aa015429869e70dad26c609384411524e1e596cac",
+      "sizeBytes": 26895,
       "kind": "monster",
       "shape_version": "1.0.0"
     },
     {
       "path": "dungeons/jungle.json",
-      "sha256": "e810e883bee3ac879ca1fedca52396a71e096094cb8f3d6a189732f7b6aa7734",
-      "sizeBytes": 6485,
+      "sha256": "aea4f6f169d13c9ce1bfe5c6967ab9b50847bb5a99aa56e1214b68ee95b44b29",
+      "sizeBytes": 64701,
       "kind": "dungeon",
       "shape_version": "1.0.0"
     },

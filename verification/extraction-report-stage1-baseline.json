@@ -1,14 +1,14 @@
 {
   "meta": {
     "runId": "stage1-baseline",
-    "startedAt": "2026-05-27T02:05:25.404Z",
-    "finishedAt": "2026-05-27T02:05:29.910Z",
+    "startedAt": "2026-05-27T03:19:16.606Z",
+    "finishedAt": "2026-05-27T03:19:21.412Z",
     "pvfHash": "crc32-head:c0779278|size:205695984",
     "extractorVersion": "v2.0.0"
   },
   "stats": {
-    "filesTotal": 19,
-    "filesParsed": 19,
+    "filesTotal": 23,
+    "filesParsed": 23,
     "filesFailed": 0,
     "errors": 0,
     "warnings": 0,
@@ -573,6 +573,18 @@
     {
       "pvfPath": "monster/goblin/goblin.mob",
       "field": "stuckbonus on damage",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "monster/goblin/attackinfo/attack1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "monster/goblin/attackinfo/attack1.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     }
@@ -15101,7 +15113,7 @@
       "fromField": "attackInfo[0]",
       "toPath": "monster/goblin/attackinfo/attack1.atk",
       "targetKind": "atk",
-      "status": "missing"
+      "status": "resolved"
     },
     {
       "fromPath": "monster/goblin/goblin.mob",
@@ -15219,6 +15231,69 @@
       "fromPath": "map/test_lorien/4.map",
       "fromField": "animationRefs[7]",
       "toPath": "map/test_lorien/animation/smalltree1.ani",
+      "targetKind": "ani",
+      "status": "missing"
+    },
+    {
+      "fromPath": "map/jungle/e3204(1,2).map",
+      "fromField": "animationRefs[0]",
+      "toPath": "map/jungle/animation/act3_vine.ani",
+      "targetKind": "ani",
+      "status": "missing"
+    },
+    {
+      "fromPath": "map/jungle/e3204(1,2).map",
+      "fromField": "animationRefs[1]",
+      "toPath": "map/jungle/animation/act3_vine.ani",
+      "targetKind": "ani",
+      "status": "missing"
+    },
+    {
+      "fromPath": "map/jungle/e3204(1,2).map",
+      "fromField": "animationRefs[2]",
+      "toPath": "map/jungle/animation/act3_vine.ani",
+      "targetKind": "ani",
+      "status": "missing"
+    },
+    {
+      "fromPath": "map/jungle/h3204(3,0).map",
+      "fromField": "animationRefs[0]",
+      "toPath": "map/jungle/animation/act3_vine.ani",
+      "targetKind": "ani",
+      "status": "missing"
+    },
+    {
+      "fromPath": "map/jungle/h3204(3,0).map",
+      "fromField": "animationRefs[1]",
+      "toPath": "map/jungle/animation/act3_vine.ani",
+      "targetKind": "ani",
+      "status": "missing"
+    },
+    {
+      "fromPath": "map/jungle/h3204(3,0).map",
+      "fromField": "animationRefs[2]",
+      "toPath": "map/jungle/animation/act3_vine.ani",
+      "targetKind": "ani",
+      "status": "missing"
+    },
+    {
+      "fromPath": "map/jungle/h3206(0,6).map",
+      "fromField": "animationRefs[0]",
+      "toPath": "map/jungle/animation/act3_vine.ani",
+      "targetKind": "ani",
+      "status": "missing"
+    },
+    {
+      "fromPath": "map/jungle/h3206(0,6).map",
+      "fromField": "animationRefs[1]",
+      "toPath": "map/jungle/animation/act3_vine.ani",
+      "targetKind": "ani",
+      "status": "missing"
+    },
+    {
+      "fromPath": "map/jungle/h3206(0,6).map",
+      "fromField": "animationRefs[2]",
+      "toPath": "map/jungle/animation/act3_vine.ani",
       "targetKind": "ani",
       "status": "missing"
     }

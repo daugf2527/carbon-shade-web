@@ -1,15 +1,15 @@
 {
   "meta": {
     "runId": "stage1-baseline",
-    "startedAt": "2026-05-27T02:05:25.404Z",
-    "finishedAt": "2026-05-27T02:05:29.910Z",
+    "startedAt": "2026-05-27T03:19:16.606Z",
+    "finishedAt": "2026-05-27T03:19:21.412Z",
     "pvfHash": "crc32-head:c0779278|size:205695984",
     "extractorVersion": "v2.0.0"
   },
   "summary": {
-    "tier3Count": 93,
-    "filesWithTier3": 15,
-    "requiresManualVerificationCount": 93
+    "tier3Count": 95,
+    "filesWithTier3": 16,
+    "requiresManualVerificationCount": 95
   },
   "tier3Fields": [
     {
@@ -567,6 +567,18 @@
     {
       "pvfPath": "monster/goblin/goblin.mob",
       "field": "stuckbonus on damage",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "monster/goblin/attackinfo/attack1.atk",
+      "field": "lift up",
+      "sourceType": "tier3",
+      "requiresManualVerification": true
+    },
+    {
+      "pvfPath": "monster/goblin/attackinfo/attack1.atk",
+      "field": "push aside",
       "sourceType": "tier3",
       "requiresManualVerification": true
     }
