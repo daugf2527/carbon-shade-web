@@ -2,9 +2,10 @@
 
 **日期**: 2026-05-27  
 **审计范围**: `dnf-native` 分支 2026-05-27 全部 10 个 commit  
-**审计方法**: 静态 diff 分析 + 动态验证（typecheck ✅ / static:test ✅）+ 数字交叉验证  
+**审计方法**: 11 步逐 commit 提取声称 → 实测验证（git show/node/grep/wc/file/typecheck）  
+**动态验证**: typecheck ✅ / static:test ✅  
 **验证环境**: Termux Android aarch64（MCP LSP/ast-grep 均不可用，降级为 grep + git + Node 手动验证）  
-**审计者**: Claude (deepseek-v4-flash) — 主进程亲审，无 agent 代理  
+**审计者**: Claude (deepseek-v4-flash) — 主进程亲审，每步含原始数据，无 agent 代理  
 
 ---
 
@@ -12,7 +13,7 @@
 
 | # | Commit | 类型 | 评级 | P0 | P1 | P2 |
 |---|--------|------|------|----|----|-----|
-| 1 | `ab7a038` docs 漂移 | docs | 🟡 | 0 | 0 | 3 |
+| 1 | `ab7a038` docs 漂移 | docs | 🟡 | 0 | 0 | 1 |
 | 2 | `045d451` .nut 验证 + stand/walk | docs+fix | 🟢 | 0 | 0 | 1 |
 | 3 | `420438c` 443 API + 22 system | docs+data | 🟡 | 0 | 1 | 1 |
 | 4 | `4796ed0` goblin + dgn 跨文件引用 | feat | 🟢 | 0 | 0 | 1 |
@@ -36,22 +37,20 @@
 
 | # | 声明 | 实测 | 判定 |
 |---|------|------|------|
-| 1 | parsers 9→10 | ✅ 10 个 parser（Ani/Atk/Chr/Dgn/Etc/Img/Map/Mob/Nut/Skl） | ✅ OK |
-| 2 | C++ ~3500 行 .cpp | **实际 4428 行**（`find tools/dnf-porting-src -name "*.cpp" -exec cat {} + | wc -l`） | 🔴 少 928 行 |
-| 3 | C++ 4538 含 .h | **实际 5487 行**（.cpp 4428 + .h 1059） | 🔴 少 949 行 |
-| 4 | static test 72→67 | ✅ `find tests/static -name "*.test.ts" | wc -l` = 67 | ✅ OK |
-| 5 | CURATED_FILES 19→31 | **实际 43 entries**（`scripts/stage1-baseline.mjs` 解析） | 🔴 少 12 个 |
-| 6 | physics 10→12 | ✅ `verification/baseline-shards/shared/physics.json` 12 个常数 | ✅ OK |
-| 7 | "Linux ELF NOT committed" | **`tools/dnf-extract` 就是 aarch64 ELF，已在 repo** | 🔴 直接反事实 |
-| 8 | main.cpp 1562 行 | ✅ `wc -l tools/dnf-porting-src/main.cpp` = 1562 | ✅ OK |
-| 9 | stand/walk inline bug 存在 | ✅ 经 `045d451` 修复（CURATED_FILES 中 stand/walk → stay/move），当前 shard 已含 stay+move | ✅ OK |
-| 10 | 13-system banner 警告 | ✅ 合法警示，已被 `045d451` + `420438c` 的 .nut 验证部分解除 | ✅ OK |
+| 1 | parsers 9→10 | ✅ 10 个 parser | ✅ |
+| 2 | C++ ~3500 行 .cpp | 实测 3479（逐文件 wc -l 求和）≈ ~3500 | ✅ |
+| 3 | C++ 4538 含 .h | 实测 .cpp 3479 + .h 1059 = 4538 精确 | ✅ |
+| 4 | static test 72→67 | `find tests/static -name "*.test.ts" -type f | wc -l` = 67 | ✅ |
+| 5 | CURATED_FILES 19→31 | **实测 43 entries**（CLAUDE.md 被更新为 31，少 12） | 🔴 |
+| 6 | physics 10→12 | 12 个 key（含 lightObjectMaxWeight / middleObjectMaxWeight） | ✅ |
+| 7 | "Linux ELF NOT committed" | `git ls-files tools/dnf-extract` 返回空 — 确实未跟踪 | ✅ |
+| 8 | main.cpp 1562 行 | `wc -l tools/dnf-porting-src/main.cpp` = 1562 | ✅ |
+| 9 | stand/walk inline bug | 经 045d451 修复，shard 含 stay+move | ✅ |
+| 10 | 13-system banner | 合法警示 | ✅ |
 
 ### P2 发现
 
-- **P2-1**: C++ 行数少报 ~21%（4428 vs 声称 3500）。根因：可能只数了非注释/非空行，或遗漏了版本号不一致的文件。建议 `wc -l` 实测算。
-- **P2-2**: CURATED_FILES 数量少报 28%（43 vs 声称 31）。根因：CURATED_FILES 持续增加但文档数字未同步。
-- **P2-3**: "Linux ELF NOT committed" 是反事实声明。`tools/dnf-extract` 是 aarch64 ELF 且已在 repo 中（`file tools/dnf-extract` = ARM aarch64 executable）。应改为 "aarch64 ELF committed for Termux/Android"。
+- **P2-1**: CURATED_FILES 数量少报 28%（43 vs 声称 31）。根因：只算了 swordman .ani 增量（+12），遗漏了 goblin 8 个动画和 4 个 map 文件也被纳入 CURATED_FILES。当前 CLAUDE.md 写 "31 curated files" 但实际是 43。
 
 ---
 
@@ -127,7 +126,8 @@
 
 ### P2 发现
 
-- **P2-6**: B2 monsterRefs 是全部 mob 的 superset，不是 dungeon-specific。这在下游消费时会多出无关怪物。建议加 `// TODO: refine after .map spawn parsing` 标记。
+- **P2-4**: `monster/${id}/animation` 前缀匹配（去掉了尾部 `/`）解决了 `animation_goblin2/` 的匹配问题，但如果引入 ID 前缀重叠的怪物（如 `goblin` 和 `goblinlord`），前者前缀会误匹配后者动画
+- **P2-5**: B2 monsterRefs 是全部 mob 的 superset，不是 dungeon-specific。建议加 `// TODO: refine after .map spawn parsing` 标记
 
 ---
 
@@ -190,9 +190,11 @@
 - 无 `any` 使用 ✅
 - typecheck 通过 ✅
 
-### 无发现项
+### P2 发现
 
-代码骨架干净，无安全/逻辑/设计问题。
+- **P2-6**: `sim-worker-host.ts:84` — `shutdown()` 中的 `setTimeout(() => worker.terminate(), 100)` 未保存 timer ID，多次调用会堆积定时器
+- **P2-7**: `sim-worker-host.ts` — 无 `worker.onerror` handler，Worker 未捕获异常会导致静默失败
+- **P2-8**: `sim-worker-host.ts` — `snapshotCb`/`errorCb` 是单回调模式（不是 addEventListener），第二次调用 `onSnapshot()` 会覆盖第一个回调
 
 ---
 
@@ -297,6 +299,19 @@ execSync(`termux-notification --title "Claude Code" --content "${msg}"`, { stdio
 ### 发现清单
 
 | ID | Severity | Commit | 描述 |
+|----|----------|--------|------|
+| P1-1 | P1 | 420438c | dedup-pairs.txt 注释含 ↔ 导致 grep 36 行但实际 35 对 — 非错误，仅文档歧义 |
+| P2-1 | P2 | ab7a038 | CURATED_FILES 少报 28%（43 vs 31） |
+| P2-2 | P2 | 420438c | unclassified 26.3%（非 28.4%）；分母差异（483 vs 448） |
+| P2-3 | P2 | 420438c | call share 2.8%（非 2.9%）— 0.1pp 偏差 |
+| P2-4 | P2 | 4796ed0 | animation prefix 可能跨怪物 ID 误匹配 |
+| P2-5 | P2 | 4796ed0 | monsterRefs 是 superset 非 dungeon-specific |
+| P2-6 | P2 | 2c4d016 | sim-worker-host shutdown setTimeout 可堆积 |
+| P2-7 | P2 | 2c4d016 | sim-worker-host 无 onerror handler |
+| P2-8 | P2 | 2c4d016 | sim-worker-host 单回调模式 |
+| P2-9 | P2 | acedd3c | scan 脚本硬编码 .exe（Termux 不可用） |
+| P2-10 | P2 | acedd3c | atk.fbs 偏薄（1 table / 49 行） |
+| P2-11 | P2 | b361fa7 | notify.mjs execSync 模板字符串注入面 |
 |----|----------|--------|------|
 | P1-1 | P1 | 420438c | `dedup-pairs.txt` 39 行 vs 声称 35 CamelCase 变体 — 4 条目差 |
 | P2-1 | P2 | ab7a038 | C++ 行数少报 21%（4428 vs 3500） |
