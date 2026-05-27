@@ -82,7 +82,18 @@ read_only: false
 # list of tool names to exclude.
 # This extends the existing exclusions (e.g. from the global configuration)
 # Find the list of tools here: https://oraios.github.io/serena/01-about/035_tools.html
-excluded_tools: []
+excluded_tools:
+- activate_project
+- check_onboarding_performed
+- create_text_file
+- execute_shell_command
+- find_file
+- get_current_config
+- initial_instructions
+- list_dir
+- read_file
+- replace_content
+- search_for_pattern
 
 # list of tools to include that would otherwise be disabled (particularly optional tools that are disabled by default).
 # This extends the existing inclusions (e.g. from the global configuration).
@@ -108,6 +119,7 @@ default_modes:
 # The full set of modes to be activated is base_modes (from global config) + default_modes + added_modes.
 # See https://oraios.github.io/serena/02-usage/050_configuration.html#modes
 added_modes:
+- no-memories
 
 # initial prompt for the project. It will always be given to the LLM upon activating the project
 # (contrary to the memories, which are loaded on demand).
