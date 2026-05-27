@@ -1,0 +1,27 @@
+- [Firecrawl MCP tool parameter format](firecrawl-mcp-tool-parameter-format.md) — sources must be array of objects, scrapeOptions.formats must be array
+- [Tool call error recovery](feedback-tool-call-error-recovery.md) — when InputValidationError fires, check tool schema instead of retrying
+- [Combat Lab 0.3 project state (2026-05-08)](combat-lab-0.3-state.md) — current phase, version freeze, completed systems, remaining gaps, lessons learned
+4	- [Session 2026-05-11: Extraction module + PVF parser tests](session-2026-05-11-extraction.md) — wrote pvf-parser.test.ts (13 tests), extract-assets.mjs CLI tool, fixed 4 pre-existing test failures, commit ea1251f
+- [DNF 客户端资源路径 (2026-05-11)](dnf-client-resource-paths-2026-05-11.md) — DNF client at BaiduNetdiskDownload, Script.pvf (196MB/370K files), ImagePacks2 (8.7G/4085 NPK), stringtable.bin confirmed inside PVF, extract-assets.mjs verified working
+- [Session 2026-05-12: Extraction Phase A-D](session-2026-05-12-extraction-phase-a-d.md) — TS 提取栈骨架（注: SklAnalyzer + cancel decoder 已在 2026-05-19 commit e1f3e0f 删除, 详见笔记顶部 stale 警告）
+- [Carbon Shade 架构速查](architecture-quick-ref.md) — 10层架构纵览, 核心数据流, 关键数字速查
+- [架构改进方案速查](architecture-improvement-plan.md) — 11项改进 (P0/P1/P2), 7并发agent研究成果, 完整实施路线图
+- [用中文交流](feedback-speak-chinese.md) — 用户偏好中文沟通
+- [Claude Code 自动化配置 (2026-05-19)](claude-code-automation-setup-2026-05-19.md) — 5个hooks(保护目录/Phaser边界/velocity位置/lock保护/自动typecheck), 3个skills(gen-test/verify-all/add-action), 1个subagent(combat-kernel-reviewer), 设计决策依据
+- [必须用 dnf-extract.exe](feedback-dnf-extract-mandatory.md) — src/extraction/ TS 栈已废弃, 提取必走 C++ 工具, 跑不起来就重编
+- [Session 2026-05-19: dnf-extract.exe 工具修复](session-2026-05-19-dnf-extract-fixes.md) — 静态链接/list/resolve/JSON 全修, commit 89f9e01, DNF 命名规则 (swordman vs berserker, equipment vs atequipment)
+- [验证再信任 (docs/help/memory)](feedback-verify-docs-help-memory-before-trust.md) — 文档声明 ≠ 实现, 路径/命令/能力使用前先实测
+- [agent 输出写报告前必须亲核](feedback-verify-agent-output-before-reporting.md) — agent 返回的文件:行号/数字/缺失项属于待核观察, 写"客观/犀利/审计"报告前要么亲核要么标 unverified
+- [issue-tracker / 清单文档要 git log 核](feedback-verify-issue-tracker-against-git-log.md) — known-issues / TODO / changelog 类清单是 snapshot, 断言"未修"前必须 git log -- 文件核 commit history
+- [Bash cwd 跨调用持久化](feedback-bash-cwd-persists-across-calls.md) — cd 进 subdir 后下一次相对路径会失败, 长链尾部要 cd 回根或用绝对路径
+- [commit 前看清 git state](feedback-check-git-state-before-staging.md) — 会话开始前的 M 文件默认不属于当前任务, 用显式文件名 stage 别 git add -A
+- [方向变了重启 brainstorming](feedback-restart-brainstorming-when-direction-pivots.md) — 用户改根本前提, 前面收集的决策要重评估, 不要埋头干前置工作
+- [dnf-extract 编译/运行陷阱](dnf-extract-build-pitfalls.md) — 静态链接 / cmake 硬编码 / stdout 污染 / help-stub 不匹配 / NPK 路径映射规则
+- [DNF 时装提取的真相 (2026-05-20)](dnf-costume-extraction-truth.md) — 路径在 equipment/character/<job>/avatar/ 下、走 .ani 不直抽 .img、500×500 画布对齐公式、stay 完美复刻
+- [DNF 数值置信度三级铁律](feedback-dnf-data-confidence-tiers.md) — dnf-extract 提取 > API/wiki > md/代码; 低优先级不能反向覆盖高优先级; 拿不到第一级必须标 local_baseline
+- [Combat Lab 项目方向 Pivot (2026-05-21)](combat-lab-dnf-alignment-pivot-2026-05-21.md) — 停止新功能, 全力对齐 DNF; Phase 1 完成; Phase 2-6 路线已定
+- [DNF 物理真值速查 (Phase 1)](dnf-physics-phase1-data-summary.md) — 重力 -1500 px/s²; sq_* API map; 11 职业 .chr; swordman .atk lift_up 表; jump_power 单位歧义 (H1 工作假设)
+- [Combat Lab PVE-only scope (2026-05-22)](feedback-dnf-pve-scope-only.md) — 1:1 还原仅适用 PVE 打怪战斗；PvP/城镇/非战斗副本环节 OOS；不接受工程简化压缩 13 system
+- [并行 agent 最低 Sonnet](feedback-parallel-agents-min-sonnet.md) — 多 agent 调度显式 model: sonnet，禁 Haiku 做实质代码 / 测试任务
+- [工作流闭环三件套 (2026-05-23)](workflow-closed-loop-2026-05-23.md) — analyze (表面 gate) + completion (presence) + /audit + audit-verify (语义 audit 必须复测)；解决"测试多但抓不到 bug"。后续扩展：`/closed-loop` skill 把 9 步流程整合成单一入口（audit → 核结论 → 修 → 修验 → gate → commit）
+- [Stage 1 完成 (2026-05-24)](stage1-complete-2026-05-24.md) — DNF data pipeline 5 stage 全 wired；30/31 gate 绿；smoke 4.2s；Stage 2 等用户 sign-off 才开始

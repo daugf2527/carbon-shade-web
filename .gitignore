@@ -19,6 +19,7 @@ test-results/
 !.claude/hooks/
 !.claude/stop-hook.mjs
 !.claude/statusline.mjs
+!.claude/memory/
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
 .claude/.last-*-ts

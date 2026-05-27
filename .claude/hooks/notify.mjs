@@ -1,5 +1,6 @@
-// Notification hook: BurntToast (Windows) → msg fallback.
+// Notification hook: BurntToast (Windows) → msg fallback / termux-notification (Android).
 // Reads JSON event from stdin, extracts message field.
+// 2026-05-27: added Termux/Android branch (process.platform === 'android').
 import { execSync } from 'node:child_process';
 
 let input = '';
@@ -16,6 +17,15 @@ process.stdin.on('end', () => {
   }
   msg = msg.slice(0, 100).replace(/'/g, '').replace(/"/g, '');
 
+  // Termux/Android: termux-notification (requires `pkg install termux-api`)
+  if (process.platform === 'android') {
+    try {
+      execSync(`termux-notification --title "Claude Code" --content "${msg}"`, { stdio: 'ignore' });
+    } catch { /* swallow — termux-api may not be installed */ }
+    return;
+  }
+
+  // Windows: BurntToast → msg fallback
   try {
     const probe = execSync(
       'powershell.exe -NoProfile -Command "Get-Module -ListAvailable BurntToast | Select-Object -ExpandProperty Name"',
