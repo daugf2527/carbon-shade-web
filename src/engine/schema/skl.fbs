@@ -1,0 +1,106 @@
+// skl.fbs — DNF skill runtime schema (Phase 2 Day 1)
+//
+// Data source: verification/baseline-shards/players/swordman.json .skills
+// icewave.skl has 33 sub-keys. This schema covers core combat fields
+// (cooldown, MP cost, casting, cancel, command) + availability + provenance.
+//
+// 2026-05-27 created (user decision Q3 FlatBuffers Day 1, task T1.4).
+
+include "chr.fbs";  // reuse Provenance, PvfFactFloat, PvfFactInt, PvfRef
+
+namespace CarbonShade.Engine.Schema;
+
+// ── CoolTime ────────────────────────────────────────────────────────
+table CoolTime {
+  dungeon_ms: int32;
+  pvp_ms: int32;
+}
+
+// ── ConsumeMp ───────────────────────────────────────────────────────
+table ConsumeMp {
+  base_mp: float32;
+  lvl_max_mp: float32;
+}
+
+// ── CastingTime ─────────────────────────────────────────────────────
+table CastingTime {
+  base_ms: float32;
+  lvl20_ms: float32;
+}
+
+// ── CancelWindow ────────────────────────────────────────────────────
+// cancel passive skill 的 dual-semantics 重解读(SklParser §P2):
+//   "purchase cost" → cancel window start frame
+//   "required level" → cancel window duration frames
+//   "skill class" → cancel group ID
+//   "growtype maximum level" → cancel weapon mask
+table CancelWindow {
+  start_frame: int32;
+  duration_frames: int32;
+  cancel_group: int32;
+  weapon_mask: [int32];
+}
+
+// ── SkillIcon ───────────────────────────────────────────────────────
+table SkillIcon {
+  atlas_path: string;
+  frame: int32;
+  lit_atlas_path: string;
+  lit_frame: int32;
+}
+
+// ── SkillCommandAdvantage ───────────────────────────────────────────
+table SkillCommandAdvantage {
+  normal: float32;
+  advanced: float32;
+}
+
+// ── SklDef ──────────────────────────────────────────────────────────
+table SklDef {
+  schema_version: uint16 = 1;
+
+  // ── HOT: read every input frame ──
+  skill_type: string;               // "active" / "passive"
+  weapon_effect_type: string;       // "physical" / "magical" / "unknown"
+  command: [string];                // ["(right)","," ,"(down)", ...]
+  cool_time: CoolTime;
+  consume_mp: ConsumeMp;
+  casting_time: CastingTime;
+  cancel_window: CancelWindow;      // null for non-cancel skills
+  auto_cool_time_apply: bool;
+
+  // ── WARM: read per skill-use / damage calc ──
+  skill_class: int32;
+  purchase_cost: PvfFactInt;
+  required_level: PvfFactInt;
+  required_level_range: PvfFactInt;
+  maximum_level: PvfFactInt;
+  feature_skill_index: PvfFactInt;
+  maintain_mp: PvfFactFloat;
+  skill_command_advantage: SkillCommandAdvantage;
+
+  // ── COLD: read once at init ──
+  icon: SkillIcon;
+  durability_decrease_rate: PvfFactFloat;
+  has_dungeon: bool;
+  has_pvp: bool;
+  has_warroom: bool;
+  has_death_tower: bool;
+  consume_item: [int32];
+  pre_required_skill: [int32];
+  growtype_maximum_level: [int32];  // 6-element array
+  skill_fitness_growtype: [int32];  // variable-length
+
+  // ── Level data (variable-length raw arrays) ──
+  level_property: [ubyte];          // raw PvfAttribute[] serialized; Stage 2 unpacks
+  level_info: [ubyte];              // same
+
+  // ── Provenance ──
+  provenance: Provenance;
+  kind: string;                     // "skl"
+  path: string;                     // "skill/swordman/icewave.skl"
+  name: string;                     // human-readable name from PVF stringtable
+}
+
+root_type SklDef;
+file_identifier "SKLD";

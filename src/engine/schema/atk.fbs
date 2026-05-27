@@ -1,0 +1,49 @@
+// atk.fbs — DNF attack info runtime schema (Phase 2 Day 1)
+//
+// Data source: verification/baseline-shards/players/swordman.json .attacks
+// attack3.atk has 22 sub-keys. This schema covers combat-critical fields
+// (damage bonus, hit reaction, element, lift/push/knock) + provenance.
+//
+// 2026-05-27 created (user decision Q3 FlatBuffers Day 1, task T1.4).
+
+include "chr.fbs";  // reuse Provenance, PvfFactFloat, PvfFactInt, PvfRef
+
+namespace CarbonShade.Engine.Schema;
+
+// ── AtkDef ──────────────────────────────────────────────────────────
+table AtkDef {
+  schema_version: uint16 = 1;
+
+  // ── HOT: read every hit detection frame ──
+  attack_enemy: bool;               // true = damages enemies
+  attack_friend: bool;              // true = damages allies (rare)
+  pvp_only: bool;                   // PvP-only attack (filtered in PVE build)
+  element: string;                  // "none" / "fire" / "water" / "dark" / "light"
+  hit_reaction: string;             // "hit_down" / "hit_lift_up" / "hit_horizon" / etc.
+  attack_kind: string;              // CUSTOM_ATTACKINFO enum name
+
+  // ── WARM: read per-hit damage calc ──
+  damage_bonus: PvfFactFloat;       // e.g. +20% for attack3
+  lift_up: PvfFactFloat;            // vertical launch velocity (px/s, Tier-3)
+  push_aside: PvfFactFloat;         // horizontal push velocity (px/s, Tier-3)
+  knuck_back: PvfFactFloat;         // knockback force (Tier-3)
+  weapon_damage_apply: PvfFactFloat;
+
+  // ── Status infliction flags ──
+  causes_bounce: bool;
+  causes_down: bool;
+  causes_stuck: bool;
+  causes_stun: bool;
+  ignore_weight: bool;
+
+  // ── COLD: audio ──
+  hit_wav: string;                  // hit sound effect name
+
+  // ── Provenance ──
+  provenance: Provenance;
+  kind: string;                     // "atk"
+  path: string;                     // "character/swordman/attackinfo/attack3.atk"
+}
+
+root_type AtkDef;
+file_identifier "ATKD";

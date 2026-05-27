@@ -71,13 +71,67 @@ if (staleMapIds.length > 0) {
 
 Stage 2 runtime 如果想用 mapSpecification 做副本布局，**必须 robust 处理 stale id**（fallback / skip / 报错都行，由 Stage 2 决定）。
 
-## 跨副本扫描（待办）
+## 跨副本扫描结果（2026-05-27 已完成）
 
-本次只实测 jungle 一个 dgn。建议在 baseline `--pve-full` 模式下跑一次，console 收集所有 `[exporter] dgn "X": N/M mapIds...` warning，得到全副本 stale rate 统计。可能：
-- jungle 75% stale 是异常高的
-- 其他 dgn stale rate 是 0% 或低于 20%（更接近完整）
+跑 `node scripts/scan-dgn-stale-mapids.mjs`，对全部 338 个 .dgn 计算 stale rate。原始数据在 `verification/dgn-stale-summary-2026-05-27.json`。
 
-落档为 `verification/dgn-stale-summary.json` 是 Stage 2 启动前的好 audit gate。
+### 全局统计
+
+| 指标 | 值 |
+|------|----|
+| .dgn 文件总数 | 338 |
+| 含 `mapSpecification` 段的 .dgn | **89** (26% — 其余 249 个 .dgn 不用 mapSpec 描述布局) |
+| 总 mapId references | 1,126 |
+| 总 stale references | **561** |
+| **全局 stale rate** | **49.8%** |
+
+**结论一**：~74% 的 .dgn 根本不用 `mapSpecification`，可能改用 startMap/bossMap 数组 / 引擎硬编码布局 / 其他段。**mapSpecification 不是副本布局的统一接口**。
+
+### Stale rate 分布（双峰）
+
+| 桶 | dgn 数 | 解读 |
+|----|--------|------|
+| **0% (完全 OK)** | **37** | 副本数据完全维护，引用全部解析 |
+| 1-20% | 0 | 真空区 — 极少有"边缘 stale" |
+| 21-50% | 5 | jungle 之外的部分 stale 案例 (shadowmaze, kingsruins, vilmark 等) |
+| 51-80% | 5 | jungle 在这里 (75%) |
+| **81-100% (几乎全 stale)** | **42** | **deprecated dungeon**——mapSpec 是历史遗留，副本可能 EOL 或重做 |
+
+**结论二**：双峰分布说明 DNF 副本数据维护是**全有或全无**——要么所有 mapId 都对得上（37 个干净 dgn），要么 mapSpec 整段废弃（42 个 100% stale 的）。**中间地带极少**（jungle 的 75% 算"接近废弃"）。
+
+### 0% stale 的"干净 dgn"代表
+
+| dgn | references |
+|-----|------------|
+| dungeon/act3/goddesstemple.dgn | 10 |
+| dungeon/act3/bloodhell.dgn | 7 |
+| dungeon/act3/breeding.dgn | 9 |
+| dungeon/act7/gentdefence.dgn | 20 |
+| dungeon/act2/palaceofload.dgn | 29 |
+| dungeon/act6/danceingbutterfly.dgn | 77 |
+| dungeon/village/grim_low/grim03.dgn | 15 |
+
+**结论三**：**Stage 2 PVE 优先用 0% stale 的 dgn**——核心 act3 的 goddesstemple / bloodhell / breeding 都干净，act6/act7/act2 几个大型 dgn 也干净，足够 Phase 2 副本系统的覆盖度。**jungle (75% stale) 反而是个边缘案例**，不应作首选副本。
+
+### 100% stale 的"废弃 dgn"代表
+
+| dgn | references |
+|-----|------------|
+| dungeon/village/cartelarad/grozni.dgn | 98 |
+| dungeon/act7/nightassault.dgn | 42 |
+| dungeon/village/cartelarad/odesa.dgn | 39 |
+| dungeon/act5/bwanga.dgn | 35 |
+| dungeon/act7/supplycut.dgn | 25 |
+
+42 个 81-100% stale 集中在 **village（村镇）/ event（活动）/ ancient（古龙）/ anton（安顿）/ act5+act7（高难度副本）**——这些区域多数是早期被重做或 EOL 的内容。**Phase 2 副本系统 PVE 范围内可以全部跳过**（用户决策 Q2/C "先扩数据再做" + Q31/B "最小闭环" 都不依赖这些）。
+
+### 处理决策（基于扫描结果）
+
+| 阶段 | 行动 |
+|------|------|
+| **Stage 1 (现在)** | RuntimeExporter console.warn 已加（per-dgn 输出 stale 数）。`scripts/scan-dgn-stale-mapids.mjs` 提供全局视图。**不做数据剔除**（PVF truth 保留）。 |
+| **Stage 2 副本系统** | 加 `dgn.shape.staleMapIds` 字段（exporter 在写 shard 时把数组带上），让 Stage 2 引擎决定 fallback。优先用 0% stale 的 dgn（goddesstemple / bloodhell 等）。 |
+| **Stage 3+** | 如需支持 deprecated dgn，需要 .map 反查机制（按 mapId → search PVF for any map with that id）。当前不做。 |
 
 ## Reference
 

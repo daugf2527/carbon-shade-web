@@ -1,0 +1,136 @@
+// chr.fbs — DNF character runtime schema (Phase 2 Day 1)
+//
+// Data source: verification/baseline-shards/players/swordman.json .chr
+// swordman.chr has 26 sub-keys. This schema covers all scalar + provenance
+// fields needed by Stage 2 systems (Physics/Animation/Damage/Resource).
+// Array fields (growth, motionRefs, attackInfo, weaponHitInfo, awakening)
+// are represented as FlatBuffer vectors.
+//
+// 2026-05-27 created (user decision Q3 FlatBuffers Day 1, task T1.4).
+
+namespace CarbonShade.Engine.Schema;
+
+// ── Shared provenance type ─────────────────────────────────────────
+// PVF 提取溯源链。每个运行时 field 的 provenance 经由构建工具在编译
+// .bin 时嵌入。runtime 正常不读（COLD），但 debug/audit 时有用。
+table Provenance {
+  extractor_version: string;
+  extract_timestamp: string;    // ISO 8601
+  source_ref: string;           // e.g. "pvf:character/swordman/swordman.chr"
+  source_pvf_hash: string;      // "crc32-head:c0779278|size:205695984"
+  section_name: string;         // original PVF section this field came from
+}
+
+// ── PvfFact<T> wrappers ────────────────────────────────────────────
+// PvfFact carries value + unit + provenance + optional tier-3 marks.
+// Separate tables for number/string because FlatBuffer union has overhead.
+table PvfFactFloat {
+  value: float32;
+  unit: string;
+  provenance: Provenance;
+  source_type: string;          // "tier3" if unverified
+  requires_verification: bool;  // local_baseline flag
+}
+
+table PvfFactInt {
+  value: int32;
+  unit: string;
+  provenance: Provenance;
+  source_type: string;
+  requires_verification: bool;
+}
+
+table PvfFactString {
+  value: string;
+  unit: string;
+  provenance: Provenance;
+}
+
+// ── Growth entry (9 fields × 17 levels) ────────────────────────────
+table GrowthRow {
+  field_name: string;           // "hpMax", "physicalAttack", etc.
+  unit: string;                 // "hp", "physAtk", etc.
+  values: [float32];            // 17 elements (base + 16 level increments)
+  provenance: Provenance;
+  source_type: string;
+  requires_verification: bool;
+}
+
+// ── WidthBox ────────────────────────────────────────────────────────
+struct WidthBox {
+  w: int32;                     // collision AABB width (swordman: 40)
+  h: int32;                     // collision AABB height/depth (swordman: 10)
+}
+
+// ── PvfRef (cross-file reference) ──────────────────────────────────
+table PvfRef {
+  target_kind: string;          // "atk", "ani", "skl", etc.
+  target_path: string;          // absolute PVF path
+  raw: string;                  // original relative string from PVF section
+}
+
+// ── Awakening skill slot ────────────────────────────────────────────
+table AwakeningSlot {
+  skill_id: int32;
+  level: int32;
+}
+
+table Awakening {
+  skill_slots: [AwakeningSlot];
+  names: [string];              // flattened 5×2 matrix as 10 strings
+  tier1_slot_counts: [int32];
+  tier2_slot_counts: [int32];
+}
+
+// ── WeaponHitInfo row ──────────────────────────────────────────────
+table WeaponHitInfoRow {
+  hit_tag: string;
+  blood_tag: string;
+  damage_scale_pct: float32;
+  crit_or_similar: float32;
+  push_back: float32;
+  launch: float32;
+}
+
+// ── ChrDef ─────────────────────────────────────────────────────────
+// Top-level character definition. 1:1 with JSON shard .chr sub-object.
+// Fields ordered by HOT → WARM → COLD access frequency.
+table ChrDef {
+  schema_version: uint16 = 1;
+
+  // ── HOT: read every combat tick ──
+  jump_power: PvfFactFloat;         // 430 (ambiguous unit, Tier-3)
+  jump_speed: PvfFactFloat;         // 95
+  move_speed: PvfFactFloat;         // 850 (%×SPEED_VALUE_DEFAULT)
+  attack_speed: PvfFactFloat;       // 850
+  cast_speed: PvfFactFloat;         // 700
+  width_box: WidthBox;              // [40, 10]
+
+  // ── WARM: read per state-transition / damage calc ──
+  dark_resistance: PvfFactFloat;    // 20%
+  light_resistance: PvfFactFloat;   // -20%
+  weight: PvfFactFloat;             // 68000 (audio-only label, Tier-3)
+  growth: [GrowthRow];              // 9 rows × 17 levels
+
+  // ── COLD: read once at init / equipment change ──
+  body_image_path: PvfFactString;   // avatar sprite path template
+  awakening: Awakening;
+  weapon_hit_info: [WeaponHitInfoRow]; // 6 rows
+
+  // ── References (used by exporter to inline sub-resources) ──
+  motion_refs: [PvfRef];            // 24 motion → .ani paths
+  attack_info_base: [PvfRef];       // attackBase (3 for swordman)
+  attack_info_etc: [PvfRef];        // etc (87 for swordman)
+  attack_info_jump: PvfRef;
+  attack_info_dash: PvfRef;
+
+  // ── Provenance (whole-document level) ──
+  provenance: Provenance;
+
+  // ── Kind tag ──
+  kind: string;                     // "chr"
+  path: string;                     // "character/swordman/swordman.chr"
+}
+
+root_type ChrDef;
+file_identifier "CHRD";
