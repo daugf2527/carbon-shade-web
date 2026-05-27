@@ -1,0 +1,1932 @@
+{
+  "13-DataStore": {
+    "unique": 22,
+    "calls": 2193,
+    "names": [
+      {
+        "count": 885,
+        "name": "sq_var"
+      },
+      {
+        "count": 220,
+        "name": "sq_GetIntData"
+      },
+      {
+        "count": 217,
+        "name": "sq_IntVectPush"
+      },
+      {
+        "count": 186,
+        "name": "sq_GetLevelData"
+      },
+      {
+        "count": 132,
+        "name": "sq_IntVectClear"
+      },
+      {
+        "count": 97,
+        "name": "sq_IntVectorPush"
+      },
+      {
+        "count": 93,
+        "name": "sq_GetGlobalIntVector"
+      },
+      {
+        "count": 72,
+        "name": "sq_IntVectorClear"
+      },
+      {
+        "count": 71,
+        "name": "sq_GetBonusRateWithPassive"
+      },
+      {
+        "count": 69,
+        "name": "sq_GetVectorData"
+      },
+      {
+        "count": 21,
+        "name": "sq_getJob"
+      },
+      {
+        "count": 18,
+        "name": "sq_IsEnd"
+      },
+      {
+        "count": 17,
+        "name": "sq_Append"
+      },
+      {
+        "count": 16,
+        "name": "sq_GetCurrentModuleType"
+      },
+      {
+        "count": 14,
+        "name": "sq_IsHoldable"
+      },
+      {
+        "count": 14,
+        "name": "sq_IsGrabable"
+      },
+      {
+        "count": 13,
+        "name": "sq_ObjectToSQRCharacter"
+      },
+      {
+        "count": 13,
+        "name": "sq_GetGroup"
+      },
+      {
+        "count": 8,
+        "name": "sq_GetShuttleValue"
+      },
+      {
+        "count": 7,
+        "name": "sq_IsFixture"
+      },
+      {
+        "count": 6,
+        "name": "sq_p"
+      },
+      {
+        "count": 4,
+        "name": "sq_getGrowType"
+      }
+    ]
+  },
+  "12-ScriptRT": {
+    "unique": 6,
+    "calls": 474,
+    "names": [
+      {
+        "count": 231,
+        "name": "sq_AddFunctionName"
+      },
+      {
+        "count": 143,
+        "name": "sq_PlaySound"
+      },
+      {
+        "count": 67,
+        "name": "sq_RGB"
+      },
+      {
+        "count": 14,
+        "name": "sq_RGBA"
+      },
+      {
+        "count": 13,
+        "name": "sq_ALPHA"
+      },
+      {
+        "count": 6,
+        "name": "sq_RunScript"
+      }
+    ]
+  },
+  "02-Net/RPC": {
+    "unique": 33,
+    "calls": 750,
+    "names": [
+      {
+        "count": 226,
+        "name": "sq_AddSetStatePacket"
+      },
+      {
+        "count": 196,
+        "name": "sq_BinaryWriteDword"
+      },
+      {
+        "count": 60,
+        "name": "sq_BinaryStartWrite"
+      },
+      {
+        "count": 33,
+        "name": "sq_BinaryWriteWord"
+      },
+      {
+        "count": 32,
+        "name": "sq_WriteDword"
+      },
+      {
+        "count": 22,
+        "name": "sq_WriteWord"
+      },
+      {
+        "count": 22,
+        "name": "sq_StartWrite"
+      },
+      {
+        "count": 19,
+        "name": "sq_BinaryWriteFloat"
+      },
+      {
+        "count": 18,
+        "name": "sq_BinaryGetReadSize"
+      },
+      {
+        "count": 16,
+        "name": "sq_BinaryParameterWriteDword"
+      },
+      {
+        "count": 13,
+        "name": "sq_WriteFloat"
+      },
+      {
+        "count": 10,
+        "name": "sq_binaryData_writeDword"
+      },
+      {
+        "count": 9,
+        "name": "sq_binaryData_startWrite"
+      },
+      {
+        "count": 8,
+        "name": "sq_AddSetStatePacketActiveObject"
+      },
+      {
+        "count": 7,
+        "name": "sq_AddMessage"
+      },
+      {
+        "count": 6,
+        "name": "sq_isPVPMode"
+      },
+      {
+        "count": 6,
+        "name": "sq_getSendState"
+      },
+      {
+        "count": 6,
+        "name": "sq_binaryData_writeWord"
+      },
+      {
+        "count": 6,
+        "name": "sq_SendHitObjectPacket"
+      },
+      {
+        "count": 5,
+        "name": "sq_SendMessage"
+      },
+      {
+        "count": 5,
+        "name": "sq_BinaryWriteByte"
+      },
+      {
+        "count": 4,
+        "name": "sq_WriteBool"
+      },
+      {
+        "count": 3,
+        "name": "sq_WriteByte"
+      },
+      {
+        "count": 3,
+        "name": "sq_BinaryWriteBool"
+      },
+      {
+        "count": 3,
+        "name": "sq_BinaryGetDWord"
+      },
+      {
+        "count": 3,
+        "name": "sq_AddSetStatePacketCollisionObject"
+      },
+      {
+        "count": 2,
+        "name": "sq_BinaryStartRead"
+      },
+      {
+        "count": 2,
+        "name": "sq_BinaryParameterStartWrite"
+      },
+      {
+        "count": 1,
+        "name": "sq_binaryData_writeFloat"
+      },
+      {
+        "count": 1,
+        "name": "sq_addSetStatePacketColObj"
+      },
+      {
+        "count": 1,
+        "name": "sq_SendSetHpPacket"
+      },
+      {
+        "count": 1,
+        "name": "sq_SendHitObjectPacketWithNoStuck"
+      },
+      {
+        "count": 1,
+        "name": "sq_AddMessagePrintf"
+      }
+    ]
+  },
+  "05-Animation": {
+    "unique": 31,
+    "calls": 773,
+    "names": [
+      {
+        "count": 195,
+        "name": "sq_LoadSkillEffectAni"
+      },
+      {
+        "count": 145,
+        "name": "sq_SetCurrentAnimation"
+      },
+      {
+        "count": 79,
+        "name": "sq_GetCurrentAnimation"
+      },
+      {
+        "count": 68,
+        "name": "sq_GetCurrentAni"
+      },
+      {
+        "count": 37,
+        "name": "sq_GetCurrentFrameIndex"
+      },
+      {
+        "count": 37,
+        "name": "sq_CreateAnimation"
+      },
+      {
+        "count": 20,
+        "name": "sq_StartDrawCastGauge"
+      },
+      {
+        "count": 20,
+        "name": "sq_EndDrawCastGauge"
+      },
+      {
+        "count": 20,
+        "name": "sq_AnimationProc"
+      },
+      {
+        "count": 19,
+        "name": "sq_AddDrawOnlyAniFromParent"
+      },
+      {
+        "count": 18,
+        "name": "sq_drawCurrentFrame"
+      },
+      {
+        "count": 18,
+        "name": "sq_ani_GetCurrentFrameIndex"
+      },
+      {
+        "count": 18,
+        "name": "sq_GetAnimationFrameIndex"
+      },
+      {
+        "count": 10,
+        "name": "sq_GetAniRealImageSize"
+      },
+      {
+        "count": 9,
+        "name": "sq_ani_IsEnd"
+      },
+      {
+        "count": 9,
+        "name": "sq_DrawSpecificFrameEffect_SIMPLE"
+      },
+      {
+        "count": 7,
+        "name": "sq_SetAnimationSpeedRate"
+      },
+      {
+        "count": 7,
+        "name": "sq_GetCustomAni"
+      },
+      {
+        "count": 5,
+        "name": "sq_getAutoLayerWorkAnimation"
+      },
+      {
+        "count": 4,
+        "name": "sq_DeleteAni"
+      },
+      {
+        "count": 4,
+        "name": "sq_ChangeDrawLayer"
+      },
+      {
+        "count": 4,
+        "name": "sq_AniLayerListSize"
+      },
+      {
+        "count": 4,
+        "name": "sq_DrawCurrentFrameEffect_SIMPLE"
+      },
+      {
+        "count": 3,
+        "name": "sq_getAniLayerListObject"
+      },
+      {
+        "count": 3,
+        "name": "sq_SetAnimationFrameIndex"
+      },
+      {
+        "count": 3,
+        "name": "sq_SetAnimationCurrentTimeByFrame"
+      },
+      {
+        "count": 3,
+        "name": "sq_DrawSpecificFrame"
+      },
+      {
+        "count": 1,
+        "name": "sq_drawCurrentFrameEffectColor"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetShadowTypeByAnimation"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetFrontAnimation"
+      },
+      {
+        "count": 1,
+        "name": "sq_CurrentAnimationProc"
+      }
+    ]
+  },
+  "06-Skill": {
+    "unique": 30,
+    "calls": 359,
+    "names": [
+      {
+        "count": 170,
+        "name": "sq_GetSkillLevel"
+      },
+      {
+        "count": 59,
+        "name": "sq_IsUseSkill"
+      },
+      {
+        "count": 30,
+        "name": "sq_GetSkill"
+      },
+      {
+        "count": 21,
+        "name": "sq_GetCastTime"
+      },
+      {
+        "count": 18,
+        "name": "sq_SendChangeSkillEffectPacket"
+      },
+      {
+        "count": 7,
+        "name": "sq_GetSkillIndex"
+      },
+      {
+        "count": 6,
+        "name": "sq_SetApplyConversionSkill"
+      },
+      {
+        "count": 6,
+        "name": "sq_IsEnterSkill"
+      },
+      {
+        "count": 4,
+        "name": "sq_GetParentSkillSubState"
+      },
+      {
+        "count": 4,
+        "name": "sq_AddPassiveSkillAttackBonusRate"
+      },
+      {
+        "count": 3,
+        "name": "sq_RemoveSkillLoad"
+      },
+      {
+        "count": 3,
+        "name": "sq_GetSkillSubState"
+      },
+      {
+        "count": 3,
+        "name": "sq_GetSkillPower"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetSkillSlotVisible"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetSkillSlotPos"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetSkillSlotEnable"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetExSkillSlotVisible"
+      },
+      {
+        "count": 2,
+        "name": "sq_RemovePassiveSkillAttackBonusRate"
+      },
+      {
+        "count": 2,
+        "name": "sq_GetSkillLoad"
+      },
+      {
+        "count": 2,
+        "name": "sq_GetCastSpeed"
+      },
+      {
+        "count": 2,
+        "name": "sq_DrawSkillIcon"
+      },
+      {
+        "count": 1,
+        "name": "sq_requestBuySkill"
+      },
+      {
+        "count": 1,
+        "name": "sq_getSkillAttackBonusRate"
+      },
+      {
+        "count": 1,
+        "name": "sq_SetSkillSubState"
+      },
+      {
+        "count": 1,
+        "name": "sq_LoadSkillEffect_Swordman"
+      },
+      {
+        "count": 1,
+        "name": "sq_LoadSkillEffect_DemonicSwordman"
+      },
+      {
+        "count": 1,
+        "name": "sq_IsEnterSkillLastKeyUnits"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetStrikerSkillUi"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetSkillPowerWithAttackBonusRate"
+      },
+      {
+        "count": 1,
+        "name": "sq_AddSkillLoad"
+      }
+    ]
+  },
+  "04-Attack/Hit": {
+    "unique": 23,
+    "calls": 413,
+    "names": [
+      {
+        "count": 130,
+        "name": "sq_GetCurrentAttackInfo"
+      },
+      {
+        "count": 90,
+        "name": "sq_SetCurrentAttackBonusRate"
+      },
+      {
+        "count": 76,
+        "name": "sq_SetCurrentAttackInfo"
+      },
+      {
+        "count": 19,
+        "name": "sq_SetAttackBoundingBoxSizeRate"
+      },
+      {
+        "count": 16,
+        "name": "sq_setAttackPowerWithPassive"
+      },
+      {
+        "count": 14,
+        "name": "sq_GetCustomAttackInfo"
+      },
+      {
+        "count": 14,
+        "name": "sq_GetPowerWithPassive"
+      },
+      {
+        "count": 8,
+        "name": "sq_GetAttackBonusRate"
+      },
+      {
+        "count": 7,
+        "name": "sq_SetCurrentAttackPower"
+      },
+      {
+        "count": 6,
+        "name": "sq_SetCurrentAttackeHitStunTime"
+      },
+      {
+        "count": 5,
+        "name": "sq_GetCurrentAttackBonusRate"
+      },
+      {
+        "count": 4,
+        "name": "sq_SetCurrentAttackeDamageAct"
+      },
+      {
+        "count": 4,
+        "name": "sq_SetCurrentAttackInfoFromCustomIndex"
+      },
+      {
+        "count": 4,
+        "name": "sq_GetDefaultAttackInfo"
+      },
+      {
+        "count": 3,
+        "name": "sq_getNewAttackInfoPacket"
+      },
+      {
+        "count": 3,
+        "name": "sq_SetAttackInfoForceHitStunTime"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetAttackInfoHitDelayRateDamager"
+      },
+      {
+        "count": 2,
+        "name": "sq_SendHitObjectPacketByAttackInfo"
+      },
+      {
+        "count": 2,
+        "name": "sq_GetJumpAttackInfo"
+      },
+      {
+        "count": 1,
+        "name": "sq_setAttackInfoType"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetDashAttackInfo"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetCurrentAttackeDamageAct"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetAttackInfoHitDelayRateDamager"
+      }
+    ]
+  },
+  "10-PassiveObj": {
+    "unique": 8,
+    "calls": 225,
+    "names": [
+      {
+        "count": 109,
+        "name": "sq_SendDestroyPacketPassiveObject"
+      },
+      {
+        "count": 81,
+        "name": "sq_SendCreatePassiveObjectPacket"
+      },
+      {
+        "count": 14,
+        "name": "sq_SendCreatePassiveObjectPacketPos"
+      },
+      {
+        "count": 12,
+        "name": "sq_GetPassiveObject"
+      },
+      {
+        "count": 4,
+        "name": "sq_SendCreatePassiveObjectPacketFromPassivePos"
+      },
+      {
+        "count": 2,
+        "name": "sq_GetPassiveObjectByState"
+      },
+      {
+        "count": 2,
+        "name": "sq_CreatePassiveObjectAfterWarning"
+      },
+      {
+        "count": 1,
+        "name": "sq_SendCreatePassiveObjectPacketFromPassive"
+      }
+    ]
+  },
+  "01-Input": {
+    "unique": 8,
+    "calls": 123,
+    "names": [
+      {
+        "count": 91,
+        "name": "sq_IsCommandEnable"
+      },
+      {
+        "count": 10,
+        "name": "sq_IsKeyDown"
+      },
+      {
+        "count": 7,
+        "name": "sq_SetKeyxEnable"
+      },
+      {
+        "count": 5,
+        "name": "sq_IsEnterCommand"
+      },
+      {
+        "count": 4,
+        "name": "sq_IsClipCursor"
+      },
+      {
+        "count": 4,
+        "name": "sq_GetInputDirection"
+      },
+      {
+        "count": 1,
+        "name": "sq_SetEnableKeyInputType"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetKeyxEnable"
+      }
+    ]
+  },
+  "07-Physics": {
+    "unique": 44,
+    "calls": 692,
+    "names": [
+      {
+        "count": 72,
+        "name": "sq_GetDistancePos"
+      },
+      {
+        "count": 64,
+        "name": "sq_StopMove"
+      },
+      {
+        "count": 54,
+        "name": "sq_GetYPos"
+      },
+      {
+        "count": 49,
+        "name": "sq_GetZPos"
+      },
+      {
+        "count": 49,
+        "name": "sq_GetXPos"
+      },
+      {
+        "count": 45,
+        "name": "sq_GetUniformVelocity"
+      },
+      {
+        "count": 45,
+        "name": "sq_SetStaticSpeedInfo"
+      },
+      {
+        "count": 42,
+        "name": "sq_setCurrentAxisPos"
+      },
+      {
+        "count": 30,
+        "name": "sq_GetAccel"
+      },
+      {
+        "count": 27,
+        "name": "sq_SetCurrentPos"
+      },
+      {
+        "count": 27,
+        "name": "sq_SetStaticMoveInfo"
+      },
+      {
+        "count": 26,
+        "name": "sq_SetMoveParticle"
+      },
+      {
+        "count": 22,
+        "name": "sq_GetDirection"
+      },
+      {
+        "count": 14,
+        "name": "sq_GetOppositeDirection"
+      },
+      {
+        "count": 14,
+        "name": "sq_GetObjectHeight"
+      },
+      {
+        "count": 9,
+        "name": "sq_moveWithParent"
+      },
+      {
+        "count": 9,
+        "name": "sq_SetMoveDirection"
+      },
+      {
+        "count": 8,
+        "name": "sq_RemoveParticle"
+      },
+      {
+        "count": 7,
+        "name": "sq_RemoveMoveParticle"
+      },
+      {
+        "count": 7,
+        "name": "sq_GetCenterZPos"
+      },
+      {
+        "count": 7,
+        "name": "sq_GetCenterXPos"
+      },
+      {
+        "count": 6,
+        "name": "sq_SimpleMoveToNearMovablePos"
+      },
+      {
+        "count": 6,
+        "name": "sq_SetZVelocity"
+      },
+      {
+        "count": 5,
+        "name": "sq_HoldAndDelayDie"
+      },
+      {
+        "count": 4,
+        "name": "sq_SetVelocity"
+      },
+      {
+        "count": 4,
+        "name": "sq_SetCurrentDirection"
+      },
+      {
+        "count": 4,
+        "name": "sq_GetShootingVerticalAngle"
+      },
+      {
+        "count": 4,
+        "name": "sq_GetShootingHorizonAngle"
+      },
+      {
+        "count": 4,
+        "name": "sq_GetDistanceObject"
+      },
+      {
+        "count": 4,
+        "name": "sq_GetDistance"
+      },
+      {
+        "count": 3,
+        "name": "sq_findNearLinearMovableXPos"
+      },
+      {
+        "count": 3,
+        "name": "sq_SetSpeedToMoveParticle"
+      },
+      {
+        "count": 3,
+        "name": "sq_GetScreenXPos"
+      },
+      {
+        "count": 2,
+        "name": "sq_GetWidthObject"
+      },
+      {
+        "count": 2,
+        "name": "sq_GetVelocity"
+      },
+      {
+        "count": 2,
+        "name": "sq_GetScreenYPos"
+      },
+      {
+        "count": 2,
+        "name": "sq_GetHeightObject"
+      },
+      {
+        "count": 1,
+        "name": "sq_JumpUpStartFrame"
+      },
+      {
+        "count": 1,
+        "name": "sq_JumpLandStartFrame"
+      },
+      {
+        "count": 1,
+        "name": "sq_JumpDownStartFrame"
+      },
+      {
+        "count": 1,
+        "name": "sq_IsMovablePosCollisionObject"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetVelocityZ"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetMouseYPos"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetMouseXPos"
+      }
+    ]
+  },
+  "11-Pool": {
+    "unique": 9,
+    "calls": 171,
+    "names": [
+      {
+        "count": 72,
+        "name": "sq_CreateCNRDAnimation"
+      },
+      {
+        "count": 26,
+        "name": "sq_GetCNRDObjectToSQRCharacter"
+      },
+      {
+        "count": 23,
+        "name": "sq_GetCNRDObjectToActiveObject"
+      },
+      {
+        "count": 17,
+        "name": "sq_CreatePooledObject"
+      },
+      {
+        "count": 11,
+        "name": "sq_CreateDrawOnlyObject"
+      },
+      {
+        "count": 11,
+        "name": "sq_CreateCNRDPooledObject"
+      },
+      {
+        "count": 5,
+        "name": "sq_GetCNRDObjectToCollisionObject"
+      },
+      {
+        "count": 4,
+        "name": "sq_GetCNRDObjectToAICharacter"
+      },
+      {
+        "count": 2,
+        "name": "sq_GetCNRDObjectToCharacter"
+      }
+    ]
+  },
+  "09-Status": {
+    "unique": 11,
+    "calls": 134,
+    "names": [
+      {
+        "count": 62,
+        "name": "sq_AddStateLayerAnimation"
+      },
+      {
+        "count": 18,
+        "name": "sq_CreateChangeStatus"
+      },
+      {
+        "count": 12,
+        "name": "sq_SetChangeStatusIntoAttackInfo"
+      },
+      {
+        "count": 12,
+        "name": "sq_IsValidActiveStatus"
+      },
+      {
+        "count": 10,
+        "name": "sq_getChangeStatus"
+      },
+      {
+        "count": 8,
+        "name": "sq_AddChangeStatus"
+      },
+      {
+        "count": 6,
+        "name": "sq_ReleaseActiveStatus"
+      },
+      {
+        "count": 2,
+        "name": "sq_sendSetActiveStatusPacket"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetChangeStatusIntoAttackInfoWithEtc"
+      },
+      {
+        "count": 1,
+        "name": "sq_RemoveChangeStatus"
+      },
+      {
+        "count": 1,
+        "name": "sq_IsSetActiveStatus"
+      }
+    ]
+  },
+  "19-StateMachine": {
+    "unique": 2,
+    "calls": 73,
+    "names": [
+      {
+        "count": 67,
+        "name": "sq_GetSTATE"
+      },
+      {
+        "count": 6,
+        "name": "sq_GetParentState"
+      }
+    ]
+  },
+  "14-Appendage": {
+    "unique": 11,
+    "calls": 118,
+    "names": [
+      {
+        "count": 49,
+        "name": "sq_AppendAppendage"
+      },
+      {
+        "count": 23,
+        "name": "sq_RemoveAppendage"
+      },
+      {
+        "count": 13,
+        "name": "sq_IsAppendAppendage"
+      },
+      {
+        "count": 8,
+        "name": "sq_GetAppendage"
+      },
+      {
+        "count": 7,
+        "name": "sq_DeleteAppendages"
+      },
+      {
+        "count": 5,
+        "name": "sq_AppendAppendageID"
+      },
+      {
+        "count": 4,
+        "name": "sq_EffectLayerAppendage"
+      },
+      {
+        "count": 4,
+        "name": "sq_AddChangeStatusAppendageID"
+      },
+      {
+        "count": 2,
+        "name": "sq_MoveToAppendageForce"
+      },
+      {
+        "count": 2,
+        "name": "sq_EffectLayerAppendageOnlyBody"
+      },
+      {
+        "count": 1,
+        "name": "sq_AccelMoveToAppendageForce"
+      }
+    ]
+  },
+  "20-Time": {
+    "unique": 6,
+    "calls": 98,
+    "names": [
+      {
+        "count": 47,
+        "name": "sq_GetCurrentTime"
+      },
+      {
+        "count": 14,
+        "name": "sq_SetValidTime"
+      },
+      {
+        "count": 11,
+        "name": "sq_GetFrameStartTime"
+      },
+      {
+        "count": 10,
+        "name": "sq_GetDelaySum"
+      },
+      {
+        "count": 9,
+        "name": "sq_GetObjectTime"
+      },
+      {
+        "count": 7,
+        "name": "sq_GetStateTimer"
+      }
+    ]
+  },
+  "16-CameraFX": {
+    "unique": 7,
+    "calls": 115,
+    "names": [
+      {
+        "count": 35,
+        "name": "sq_SetMyShake"
+      },
+      {
+        "count": 32,
+        "name": "sq_flashScreen"
+      },
+      {
+        "count": 27,
+        "name": "sq_SetShake"
+      },
+      {
+        "count": 10,
+        "name": "sq_addFlashScreen"
+      },
+      {
+        "count": 6,
+        "name": "sq_setXScrollStop"
+      },
+      {
+        "count": 3,
+        "name": "sq_SetCameraScrollPosition"
+      },
+      {
+        "count": 2,
+        "name": "sq_GetCNRDObjectToFlashScreen"
+      }
+    ]
+  },
+  "15-VFX": {
+    "unique": 15,
+    "calls": 163,
+    "names": [
+      {
+        "count": 35,
+        "name": "sq_AddEffect"
+      },
+      {
+        "count": 30,
+        "name": "sq_AddObjectParticleCreater"
+      },
+      {
+        "count": 29,
+        "name": "sq_AddObject"
+      },
+      {
+        "count": 21,
+        "name": "sq_AddParticleObject"
+      },
+      {
+        "count": 14,
+        "name": "sq_AddEffectFront"
+      },
+      {
+        "count": 10,
+        "name": "sq_CreateParticle"
+      },
+      {
+        "count": 7,
+        "name": "sq_DeleteEffectFront"
+      },
+      {
+        "count": 6,
+        "name": "sq_SetObjectParticlePos"
+      },
+      {
+        "count": 4,
+        "name": "sq_CreateParticleByGlobal"
+      },
+      {
+        "count": 2,
+        "name": "sq_setFullScreenEffect"
+      },
+      {
+        "count": 1,
+        "name": "sq_setCustomHitEffectFileName"
+      },
+      {
+        "count": 1,
+        "name": "sq_SetBodyEffect"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetobjectParticleCreaters"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetParticleInfo"
+      },
+      {
+        "count": 1,
+        "name": "sq_AddEffectBack"
+      }
+    ]
+  },
+  "21-Predicate": {
+    "unique": 26,
+    "calls": 80,
+    "names": [
+      {
+        "count": 41,
+        "name": "sq_IsMyControlObject"
+      },
+      {
+        "count": 4,
+        "name": "sq_IsOpenCreatorControlPopupWindows"
+      },
+      {
+        "count": 3,
+        "name": "sq_IsDownHotKeyCreatorCursor"
+      },
+      {
+        "count": 2,
+        "name": "sq_IsinMapArea"
+      },
+      {
+        "count": 2,
+        "name": "sq_IsVisibleCursor"
+      },
+      {
+        "count": 2,
+        "name": "sq_IsTowerDungeon"
+      },
+      {
+        "count": 2,
+        "name": "sq_IsSameAni"
+      },
+      {
+        "count": 2,
+        "name": "sq_IsRidingObject"
+      },
+      {
+        "count": 2,
+        "name": "sq_IsIntersectRect"
+      },
+      {
+        "count": 2,
+        "name": "sq_IsIgnoreOpenPopupCreator"
+      },
+      {
+        "count": 2,
+        "name": "sq_IsESCClosableWindow"
+      },
+      {
+        "count": 2,
+        "name": "sq_IsDownKey"
+      },
+      {
+        "count": 1,
+        "name": "sq_isSendTimeOutPacket"
+      },
+      {
+        "count": 1,
+        "name": "sq_isEnableBackStepState"
+      },
+      {
+        "count": 1,
+        "name": "sq_IsPauseTypeWorld"
+      },
+      {
+        "count": 1,
+        "name": "sq_IsNamed"
+      },
+      {
+        "count": 1,
+        "name": "sq_IsMousePtInWindowRect"
+      },
+      {
+        "count": 1,
+        "name": "sq_IsKeyFrameFlag"
+      },
+      {
+        "count": 1,
+        "name": "sq_IsItemRecover"
+      },
+      {
+        "count": 1,
+        "name": "sq_IsInScreenCollisionObject"
+      },
+      {
+        "count": 1,
+        "name": "sq_IsInCategory"
+      },
+      {
+        "count": 1,
+        "name": "sq_IsExistObject"
+      },
+      {
+        "count": 1,
+        "name": "sq_IsDimensionDungeon"
+      },
+      {
+        "count": 1,
+        "name": "sq_IsDespairTower"
+      },
+      {
+        "count": 1,
+        "name": "sq_IsBoss"
+      },
+      {
+        "count": 1,
+        "name": "sq_IsAncientDungeon"
+      }
+    ]
+  },
+  "17-Math": {
+    "unique": 12,
+    "calls": 116,
+    "names": [
+      {
+        "count": 33,
+        "name": "sq_getRandom"
+      },
+      {
+        "count": 26,
+        "name": "sq_Abs"
+      },
+      {
+        "count": 11,
+        "name": "sq_ToRadian"
+      },
+      {
+        "count": 7,
+        "name": "sq_SetfRotateAngle"
+      },
+      {
+        "count": 7,
+        "name": "sq_SetCustomRotate"
+      },
+      {
+        "count": 6,
+        "name": "sq_Sin"
+      },
+      {
+        "count": 6,
+        "name": "sq_Cos"
+      },
+      {
+        "count": 6,
+        "name": "sq_Atan"
+      },
+      {
+        "count": 5,
+        "name": "sq_SinTable"
+      },
+      {
+        "count": 5,
+        "name": "sq_CosTable"
+      },
+      {
+        "count": 2,
+        "name": "sq_getRandomUnique"
+      },
+      {
+        "count": 2,
+        "name": "sq_ToDegree"
+      }
+    ]
+  },
+  "18-Timer": {
+    "unique": 1,
+    "calls": 18,
+    "names": [
+      {
+        "count": 18,
+        "name": "sq_timer_"
+      }
+    ]
+  },
+  "22-Identity": {
+    "unique": 6,
+    "calls": 48,
+    "names": [
+      {
+        "count": 14,
+        "name": "sq_GetUniqueId"
+      },
+      {
+        "count": 9,
+        "name": "sq_GetObjectManagerStage"
+      },
+      {
+        "count": 9,
+        "name": "sq_GetObject"
+      },
+      {
+        "count": 6,
+        "name": "sq_GetObjectId"
+      },
+      {
+        "count": 6,
+        "name": "sq_IsMyCharacter"
+      },
+      {
+        "count": 4,
+        "name": "sq_GetTeam"
+      }
+    ]
+  },
+  "99-Unclassified": {
+    "unique": 127,
+    "calls": 207,
+    "names": [
+      {
+        "count": 6,
+        "name": "sq_MoveToNearMovablePos"
+      },
+      {
+        "count": 3,
+        "name": "sq_getAuraMaster"
+      },
+      {
+        "count": 3,
+        "name": "sq_SetPause"
+      },
+      {
+        "count": 3,
+        "name": "sq_SetCustomDamageType"
+      },
+      {
+        "count": 3,
+        "name": "sq_Rewind"
+      },
+      {
+        "count": 3,
+        "name": "sq_GetOcularSpectrum"
+      },
+      {
+        "count": 3,
+        "name": "sq_GetMyControlObjectSize"
+      },
+      {
+        "count": 3,
+        "name": "sq_GetMap"
+      },
+      {
+        "count": 3,
+        "name": "sq_AddHitObject"
+      },
+      {
+        "count": 3,
+        "name": "sq_AddAuraMaster"
+      },
+      {
+        "count": 3,
+        "name": "sq_AddAttackCancelStartFrame"
+      },
+      {
+        "count": 3,
+        "name": "sq_GetJumpAttackAni"
+      },
+      {
+        "count": 3,
+        "name": "sq_GetDashAttackAni"
+      },
+      {
+        "count": 3,
+        "name": "sq_GetBuffAni"
+      },
+      {
+        "count": 3,
+        "name": "sq_GetAttackCancelStartFrameSize"
+      },
+      {
+        "count": 3,
+        "name": "sq_GetAttackAni"
+      },
+      {
+        "count": 2,
+        "name": "sq_setXScrollStart"
+      },
+      {
+        "count": 2,
+        "name": "sq_setXScroll"
+      },
+      {
+        "count": 2,
+        "name": "sq_setAttractAimInfo"
+      },
+      {
+        "count": 2,
+        "name": "sq_getThrowShootAni"
+      },
+      {
+        "count": 2,
+        "name": "sq_getThrowChargeAni"
+      },
+      {
+        "count": 2,
+        "name": "sq_getSquirrelAuraMaster"
+      },
+      {
+        "count": 2,
+        "name": "sq_getRestAni"
+      },
+      {
+        "count": 2,
+        "name": "sq_getPassiveAttackRate"
+      },
+      {
+        "count": 2,
+        "name": "sq_getMyBuffInfoCount"
+      },
+      {
+        "count": 2,
+        "name": "sq_getGetItemAni"
+      },
+      {
+        "count": 2,
+        "name": "sq_getDownAni"
+      },
+      {
+        "count": 2,
+        "name": "sq_getDashAni"
+      },
+      {
+        "count": 2,
+        "name": "sq_getAttractAimPosY"
+      },
+      {
+        "count": 2,
+        "name": "sq_getAttractAimPosX"
+      },
+      {
+        "count": 2,
+        "name": "sq_getAttackCancelStartFrame"
+      },
+      {
+        "count": 2,
+        "name": "sq_ZStop"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetVisibleCursor"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetSoundTagThrowItem"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetSoundTagLackMp"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetSoundTagDie"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetSoundTagCreatureCommand"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetSoundTagCoolTime"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetSoundTagBackStepStart"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetParameterOcularSpectrum"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetMaxHitCounterPerObject"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetGrabable"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetFrameDelayTime"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetCurrentAttacknUpForce"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetCurrentAttacknBackForce"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetClipCursor"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetAllCommandEnable"
+      },
+      {
+        "count": 2,
+        "name": "sq_SetAimPointMarkPosition"
+      },
+      {
+        "count": 2,
+        "name": "sq_PostDelayedMessage"
+      },
+      {
+        "count": 2,
+        "name": "sq_GetSourceChrTarget"
+      },
+      {
+        "count": 2,
+        "name": "sq_GetPopupWindows"
+      },
+      {
+        "count": 2,
+        "name": "sq_GetMyMasterCharacter"
+      },
+      {
+        "count": 2,
+        "name": "sq_GetMyControlObject"
+      },
+      {
+        "count": 2,
+        "name": "sq_GetGlobaludpModuleStage"
+      },
+      {
+        "count": 2,
+        "name": "sq_GetGlobalMainControl"
+      },
+      {
+        "count": 2,
+        "name": "sq_GetDungeonByStage"
+      },
+      {
+        "count": 2,
+        "name": "sq_GetCustomIntDataSize"
+      },
+      {
+        "count": 2,
+        "name": "sq_GetAimPosX"
+      },
+      {
+        "count": 2,
+        "name": "sq_FindTarget"
+      },
+      {
+        "count": 2,
+        "name": "sq_ClearKeyFrameFlag"
+      },
+      {
+        "count": 2,
+        "name": "sq_AddSquirrelAuraMaster"
+      },
+      {
+        "count": 1,
+        "name": "sq_setfindNearMovablePos"
+      },
+      {
+        "count": 1,
+        "name": "sq_setSuperArmor"
+      },
+      {
+        "count": 1,
+        "name": "sq_removeSuperArmor"
+      },
+      {
+        "count": 1,
+        "name": "sq_getStayAni"
+      },
+      {
+        "count": 1,
+        "name": "sq_getSitAni"
+      },
+      {
+        "count": 1,
+        "name": "sq_getRGB"
+      },
+      {
+        "count": 1,
+        "name": "sq_getOverturnAni"
+      },
+      {
+        "count": 1,
+        "name": "sq_getMyCharacter"
+      },
+      {
+        "count": 1,
+        "name": "sq_getMoveAni"
+      },
+      {
+        "count": 1,
+        "name": "sq_getJumpUpStartFrame"
+      },
+      {
+        "count": 1,
+        "name": "sq_getJumpLandStartFrame"
+      },
+      {
+        "count": 1,
+        "name": "sq_getJumpDownStartFrame"
+      },
+      {
+        "count": 1,
+        "name": "sq_getJumpAni"
+      },
+      {
+        "count": 1,
+        "name": "sq_getDashAttackSlideStopFrame"
+      },
+      {
+        "count": 1,
+        "name": "sq_getDamageAni"
+      },
+      {
+        "count": 1,
+        "name": "sq_drawToolTip"
+      },
+      {
+        "count": 1,
+        "name": "sq_createCommonElementalAttack"
+      },
+      {
+        "count": 1,
+        "name": "sq_createAttackObjectWithPath"
+      },
+      {
+        "count": 1,
+        "name": "sq_bottomcreateFlash"
+      },
+      {
+        "count": 1,
+        "name": "sq_SetfindNearLinearMovablePos"
+      },
+      {
+        "count": 1,
+        "name": "sq_SetStartCoolTime"
+      },
+      {
+        "count": 1,
+        "name": "sq_SetObjectBounding"
+      },
+      {
+        "count": 1,
+        "name": "sq_SetMyControlCharacter"
+      },
+      {
+        "count": 1,
+        "name": "sq_SetEnumDrawLayer"
+      },
+      {
+        "count": 1,
+        "name": "sq_SetDownUpFrame"
+      },
+      {
+        "count": 1,
+        "name": "sq_SetDownLieFrame"
+      },
+      {
+        "count": 1,
+        "name": "sq_SetDownDownFrame"
+      },
+      {
+        "count": 1,
+        "name": "sq_SetDownBounceUpFrame"
+      },
+      {
+        "count": 1,
+        "name": "sq_SetDownBounceDownFrame"
+      },
+      {
+        "count": 1,
+        "name": "sq_SetDirection"
+      },
+      {
+        "count": 1,
+        "name": "sq_SetCurrentTimeByFrame"
+      },
+      {
+        "count": 1,
+        "name": "sq_SetCurrentAttackDirection"
+      },
+      {
+        "count": 1,
+        "name": "sq_SetAddWeaponDamage"
+      },
+      {
+        "count": 1,
+        "name": "sq_RemoveAimPointMark"
+      },
+      {
+        "count": 1,
+        "name": "sq_PlayMoveSound"
+      },
+      {
+        "count": 1,
+        "name": "sq_OpenPopupWindow"
+      },
+      {
+        "count": 1,
+        "name": "sq_InitFrameIndices"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetUISystemChatControl"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetStateCashShop"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetRewardState"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetResultState"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetPopupWindowMainCotrol"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetObjectWorldTime"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetObjectWeight"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetMoveParent"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetMapIndex"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetGrowAvatarViewControl"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetGlobalChatControl"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetDuegonIndex"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetCNChangeHp"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetBoundingBoxXSize"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetAttackType"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetAttackBoundRect"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetAniFrameNumber"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetAbilityConvertRate"
+      },
+      {
+        "count": 1,
+        "name": "sq_FindNextTarget"
+      },
+      {
+        "count": 1,
+        "name": "sq_FindFirstTarget"
+      },
+      {
+        "count": 1,
+        "name": "sq_ClearAttackBox"
+      },
+      {
+        "count": 1,
+        "name": "sq_ChangeAttackTypeToOpposite"
+      },
+      {
+        "count": 1,
+        "name": "sq_AttractToMe"
+      },
+      {
+        "count": 1,
+        "name": "sq_AtrractionForce"
+      },
+      {
+        "count": 1,
+        "name": "sq_AddOcularSpectrum"
+      },
+      {
+        "count": 1,
+        "name": "sq_AddObjectTarget"
+      },
+      {
+        "count": 1,
+        "name": "sq_AddCNChangeHp"
+      },
+      {
+        "count": 1,
+        "name": "sq_AddAttackBox"
+      },
+      {
+        "count": 1,
+        "name": "sq_AddAimPointMark"
+      }
+    ]
+  },
+  "03-Monster/AI": {
+    "unique": 8,
+    "calls": 24,
+    "names": [
+      {
+        "count": 5,
+        "name": "sq_GetObjectByObjectId"
+      },
+      {
+        "count": 5,
+        "name": "sq_FindShootingTarget"
+      },
+      {
+        "count": 4,
+        "name": "sq_SetTargetObjectAICharacter"
+      },
+      {
+        "count": 4,
+        "name": "sq_IsInBattle"
+      },
+      {
+        "count": 3,
+        "name": "sq_removeAttractAimPointMark"
+      },
+      {
+        "count": 1,
+        "name": "sq_addAttractAimPointMark"
+      },
+      {
+        "count": 1,
+        "name": "sq_IsHellMonster"
+      },
+      {
+        "count": 1,
+        "name": "sq_IsAiCharacter"
+      }
+    ]
+  },
+  "08-Resource": {
+    "unique": 2,
+    "calls": 3,
+    "names": [
+      {
+        "count": 2,
+        "name": "sq_getHpMaxUp"
+      },
+      {
+        "count": 1,
+        "name": "sq_AddHpMaxUp"
+      }
+    ]
+  }
+}

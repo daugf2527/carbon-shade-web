@@ -45,7 +45,7 @@ Q31/B ────────┘   闭环范围：Animation + HitDetection + Da
 跑 `tools/dnf-extract.exe --pvf data/Script.pvf --list --filter ".nut"` + 抽样统计 sq_\* 频次：
 
 - **193 个 .nut 文件**（md 数字精确匹配 ✅）
-- **483 unique sq_\* API**（md 说 478，~1% 偏差可接受 ✅）
+- **478 case-sensitive 引擎 API / 443 case-normalized 引擎 API**（剔除 5 个 user-defined function 后，与 md 478 精确匹配 ✅，详见 verification report §十）
 - **7,370 调用点** + 启发式分类 12 桶（47% unclassified）
 - 109/193 集中在 atmage，**swordman/fighter/gunner/thief 0 个 .nut**
 
@@ -55,7 +55,16 @@ Q31/B ────────┘   闭环范围：Animation + HitDetection + Da
 - 旧：`agent_claim_unverified` + `requiresManualVerification: true`
 - 新：`counts_verified_clustering_inferred` — 数字级真实，但具体"13 个 system 各包含哪些 API"仍是 inference
 
-**对 Q21 的影响**：.nut 不直接含 tick 顺序信息（sq_\* 是 API 调用，顺序隐含在脚本逻辑）。要从 .nut 反推顺序需要选 3-5 个代表性 .nut 做调用流追踪——这是 follow-up 工作。
+**对 Q21 的精确化**（B 任务怀疑精神审计发现）：
+- ❌ **.nut 不能直接反推 "13-system C++ 内部 tick 顺序"** — 那个在 DNF.exe 硬编码（跟 launch/gravity 一类）
+- ✅ **.nut 能反推 "引擎 → 脚本事件 lifecycle graph"** — 9 .nut 跨类型抽样发现统一的事件触发链：
+  - 输入：`checkCommandEnable` → `checkExecutableSkill`
+  - 状态机：`onEndState` → `onSetState` → `onAfterSetState`
+  - 每帧 tick callback：`onProc`/`procAppend`/`proc_appendage`（**.nut 通过 callback 参与 tick**）
+  - 动画：`onKeyFrameFlag` → `onEndCurrentAni`
+  - 渲染：`prepareDraw` → `drawAppend`
+  - 销毁：`onDestroyObject` / `onVaildTimeEnd` / `isEnd` 谓词
+- 详见 [verification report §十一](../engineering/nut-validation-2026-05-27.md)。Phase 2 落地建议：**JS/TS 实现先对齐 .nut hook 顺序，不必硬抄 C++ tick 顺序**（拿不到）。
 
 ---
 

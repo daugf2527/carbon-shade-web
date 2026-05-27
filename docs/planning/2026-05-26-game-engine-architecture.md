@@ -5,7 +5,7 @@
 > 前者给后者提供稳定数据支撑，后者在浏览器中以固定时间步长消费这些数据。
 
 > ⚠️ **2026-05-27 audit 警告 — 13-system 推导链：计数级已验证，聚类细节仍 inferred**
-> 本文档 §一、§三 反复使用的"13 system"框架原本来自 `kernel-design.md` 一行结论。2026-05-27 在 Windows 上跑 `dnf-extract --filter ".nut"` 重做验证：**193 个 .nut + 483 unique sq_\* API + 7370 调用点** 全部 reproducible（与 md 数字 193 / 478 精确匹配，~1% 偏差）。
+> 本文档 §一、§三 反复使用的"13 system"框架原本来自 `kernel-design.md` 一行结论。2026-05-27 在 Windows 上跑 `dnf-extract --filter ".nut"` 重做验证：**193 个 .nut + 478 case-sensitive 引擎 API + 443 case-normalized / 7,101 调用点** 全部 reproducible（剔除 5 个 user-defined function 后**精确匹配 md 478**）。v4 启发式分类划出 **22 个 system buckets**，可能是 md 13 的细分粒度版本（28% unclassified / call share 2.9%）。
 > **新状态**：`sourceType: "counts_verified_clustering_inferred"` — 数字级证据真实，**但具体"13 个 system 各包含哪些 API"仍是 inference**（启发式分类 47% unclassified）。
 > **完整 verification report**：[docs/engineering/nut-validation-2026-05-27.md](../engineering/nut-validation-2026-05-27.md)
 > **解封剩余**：跑 LLM 深推导 / agent 协作把 47% unclassified 降到 < 5%，得到明确的 13 system × API 表，然后才能让 T3.1-T3.13 task breakdown 站住脚。
