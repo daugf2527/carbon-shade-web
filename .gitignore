@@ -40,3 +40,6 @@ src/engine/schema/*_generated.ts
 # Local scratch files
 .tmp-*
 *.stackdump
+
+# Third-party tool cache (reasonix command output cache)
+.reasonix/
