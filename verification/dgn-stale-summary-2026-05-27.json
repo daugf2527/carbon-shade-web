@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-27T04:07:34.453Z",
+  "generatedAt": "2026-05-28T01:22:01.028Z",
   "pvfHash": "data/Script.pvf",
   "totals": {
     "dgnFilesInPvf": 338,
@@ -7,8 +7,8 @@
     "dgnWithMapSpec": 89,
     "mapFilesInPvf": 2887,
     "uniqueMapIdsInPvf": 1317,
-    "totalMapIdRefs": 1126,
-    "totalStaleRefs": 561,
+    "totalMapIdRefs": 743,
+    "totalStaleRefs": 370,
     "globalStaleRate": 0.498
   },
   "staleBuckets": {
@@ -21,99 +21,26 @@
   "perDgn": [
     {
       "dgn": "dungeon/village/cartelarad/grozni.dgn",
-      "referenced": 98,
-      "stale": 98,
+      "referenced": 25,
+      "stale": 25,
       "staleRate": 1,
       "staleIds": [
         11202,
-        11202,
-        11202,
-        11202,
-        11202,
-        11202,
-        11202,
-        11202,
-        11202,
-        11202,
-        11202,
-        11203,
-        11203,
         11203,
         11204,
-        11204,
-        11204,
-        11204,
-        11204,
-        11204,
-        11205,
-        11205,
         11205,
         11206,
         11208,
-        11208,
-        11208,
-        11208,
-        11208,
-        11208,
-        11208,
-        11209,
-        11209,
-        11209,
-        11209,
-        11209,
         11209,
         11211,
         11212,
-        11212,
-        11212,
-        11212,
-        11212,
-        11212,
-        11212,
         11213,
-        11213,
-        11213,
-        11213,
-        11213,
-        11213,
-        11215,
-        11215,
-        11215,
-        11215,
         11215,
         11216,
         11218,
-        11218,
-        11218,
-        11218,
-        11218,
-        11218,
-        11220,
-        11220,
-        11220,
-        11220,
-        11220,
-        11220,
-        11220,
-        11220,
-        11220,
-        11220,
-        11220,
-        11220,
-        11220,
         11220,
         11221,
-        11221,
-        11221,
-        11221,
-        11221,
         11222,
-        11222,
-        11222,
-        11222,
-        11222,
-        11222,
-        11223,
         11223,
         11224,
         11225,
@@ -126,235 +53,31 @@
       ]
     },
     {
-      "dgn": "dungeon/act7/nightassault.dgn",
-      "referenced": 42,
-      "stale": 42,
-      "staleRate": 1,
-      "staleIds": [
-        16320,
-        16320,
-        16320,
-        16322,
-        16322,
-        16322,
-        16322,
-        16322,
-        16323,
-        16323,
-        16324,
-        16324,
-        16324,
-        16324,
-        16325,
-        16325,
-        16325,
-        16325,
-        16326,
-        16326,
-        16326,
-        16326,
-        16327,
-        16327,
-        16327,
-        16327,
-        16328,
-        16328,
-        16328,
-        16328,
-        16329,
-        16329,
-        16330,
-        16330,
-        16330,
-        16330,
-        16335,
-        16337,
-        16338,
-        16338,
-        16340,
-        16340
-      ]
-    },
-    {
       "dgn": "dungeon/village/cartelarad/odesa.dgn",
-      "referenced": 39,
-      "stale": 39,
+      "referenced": 20,
+      "stale": 20,
       "staleRate": 1,
       "staleIds": [
-        11101,
-        11101,
-        11101,
-        11101,
-        11101,
         11101,
         11102,
         11103,
-        11103,
-        11103,
-        11103,
         11104,
-        11105,
         11105,
         11106,
         11107,
-        11107,
-        11107,
-        11107,
-        11108,
-        11108,
         11108,
         11109,
         11111,
-        11111,
-        11112,
         11112,
         11113,
-        11114,
         11114,
         11115,
         11117,
         11118,
-        11118,
         11119,
-        11120,
         11120,
         11121,
         11122
-      ]
-    },
-    {
-      "dgn": "dungeon/act5/bwanga.dgn",
-      "referenced": 35,
-      "stale": 35,
-      "staleRate": 1,
-      "staleIds": [
-        16011,
-        16011,
-        16011,
-        16011,
-        16011,
-        16011,
-        16012,
-        16012,
-        16012,
-        16012,
-        16012,
-        16012,
-        16013,
-        16013,
-        16013,
-        16013,
-        16013,
-        16014,
-        16014,
-        16014,
-        16014,
-        16014,
-        16015,
-        16015,
-        16015,
-        16015,
-        16016,
-        16016,
-        16016,
-        16016,
-        16017,
-        16017,
-        16017,
-        16018,
-        16018
-      ]
-    },
-    {
-      "dgn": "dungeon/act7/supplycut.dgn",
-      "referenced": 25,
-      "stale": 25,
-      "staleRate": 1,
-      "staleIds": [
-        17002,
-        17002,
-        17002,
-        17003,
-        17003,
-        17003,
-        17004,
-        17004,
-        17004,
-        17005,
-        17005,
-        17005,
-        17006,
-        17006,
-        17007,
-        17007,
-        17008,
-        17008,
-        17010,
-        17010,
-        17016,
-        17016,
-        17017,
-        17017,
-        17021
-      ]
-    },
-    {
-      "dgn": "dungeon/village/gbl/gbl_branchofarad.dgn",
-      "referenced": 22,
-      "stale": 22,
-      "staleRate": 1,
-      "staleIds": [
-        13002,
-        13002,
-        13003,
-        13003,
-        13004,
-        13004,
-        13005,
-        13005,
-        13006,
-        13006,
-        13007,
-        13007,
-        13008,
-        13008,
-        13009,
-        13009,
-        13010,
-        13010,
-        13011,
-        13011,
-        13012,
-        13060
-      ]
-    },
-    {
-      "dgn": "dungeon/village/moonlightpub/aganzo.dgn",
-      "referenced": 21,
-      "stale": 21,
-      "staleRate": 1,
-      "staleIds": [
-        16001,
-        16001,
-        16001,
-        16001,
-        16002,
-        16002,
-        16002,
-        16002,
-        16003,
-        16003,
-        16003,
-        16003,
-        16005,
-        16005,
-        16005,
-        16006,
-        16006,
-        16007,
-        16007,
-        16008,
-        16008
       ]
     },
     {
@@ -385,6 +108,28 @@
       ]
     },
     {
+      "dgn": "dungeon/act7/nightassault.dgn",
+      "referenced": 14,
+      "stale": 14,
+      "staleRate": 1,
+      "staleIds": [
+        16320,
+        16322,
+        16323,
+        16324,
+        16325,
+        16326,
+        16327,
+        16328,
+        16329,
+        16330,
+        16335,
+        16337,
+        16338,
+        16340
+      ]
+    },
+    {
       "dgn": "dungeon/village/gbl/gbl_laboratory.dgn",
       "referenced": 12,
       "stale": 12,
@@ -402,6 +147,26 @@
         13023,
         13024,
         13025
+      ]
+    },
+    {
+      "dgn": "dungeon/village/gbl/gbl_branchofarad.dgn",
+      "referenced": 12,
+      "stale": 12,
+      "staleRate": 1,
+      "staleIds": [
+        13002,
+        13003,
+        13004,
+        13005,
+        13006,
+        13007,
+        13008,
+        13009,
+        13010,
+        13011,
+        13012,
+        13060
       ]
     },
     {
@@ -442,6 +207,25 @@
         17227,
         17228,
         17236
+      ]
+    },
+    {
+      "dgn": "dungeon/act7/supplycut.dgn",
+      "referenced": 11,
+      "stale": 11,
+      "staleRate": 1,
+      "staleIds": [
+        17002,
+        17003,
+        17004,
+        17005,
+        17006,
+        17007,
+        17008,
+        17010,
+        17016,
+        17017,
+        17021
       ]
     },
     {
@@ -495,6 +279,22 @@
         10042,
         10043,
         10044
+      ]
+    },
+    {
+      "dgn": "dungeon/act5/bwanga.dgn",
+      "referenced": 8,
+      "stale": 8,
+      "staleRate": 1,
+      "staleIds": [
+        16011,
+        16012,
+        16013,
+        16014,
+        16015,
+        16016,
+        16017,
+        16018
       ]
     },
     {
@@ -559,6 +359,21 @@
         15022,
         15023,
         15024
+      ]
+    },
+    {
+      "dgn": "dungeon/village/moonlightpub/aganzo.dgn",
+      "referenced": 7,
+      "stale": 7,
+      "staleRate": 1,
+      "staleIds": [
+        16001,
+        16002,
+        16003,
+        16005,
+        16006,
+        16007,
+        16008
       ]
     },
     {
@@ -751,18 +566,6 @@
       ]
     },
     {
-      "dgn": "dungeon/act3/darkhell.dgn",
-      "referenced": 4,
-      "stale": 4,
-      "staleRate": 1,
-      "staleIds": [
-        3415,
-        3418,
-        3418,
-        3421
-      ]
-    },
-    {
       "dgn": "dungeon/act7/outergent.dgn",
       "referenced": 4,
       "stale": 4,
@@ -820,6 +623,17 @@
         16302,
         16303,
         16304
+      ]
+    },
+    {
+      "dgn": "dungeon/act3/darkhell.dgn",
+      "referenced": 3,
+      "stale": 3,
+      "staleRate": 1,
+      "staleIds": [
+        3415,
+        3418,
+        3421
       ]
     },
     {
@@ -906,6 +720,22 @@
       ]
     },
     {
+      "dgn": "dungeon/act4/magmacave.dgn",
+      "referenced": 13,
+      "stale": 8,
+      "staleRate": 0.615,
+      "staleIds": [
+        5007,
+        5008,
+        5009,
+        5010,
+        5011,
+        5012,
+        5014,
+        5015
+      ]
+    },
+    {
       "dgn": "dungeon/act2/floatingcastle.dgn",
       "referenced": 7,
       "stale": 4,
@@ -915,27 +745,6 @@
         4606,
         4607,
         4608
-      ]
-    },
-    {
-      "dgn": "dungeon/act4/magmacave.dgn",
-      "referenced": 23,
-      "stale": 13,
-      "staleRate": 0.565,
-      "staleIds": [
-        5007,
-        5007,
-        5008,
-        5008,
-        5009,
-        5010,
-        5010,
-        5011,
-        5011,
-        5012,
-        5012,
-        5014,
-        5015
       ]
     },
     {
@@ -1019,7 +828,7 @@
     },
     {
       "dgn": "dungeon/act7/gentdefence.dgn",
-      "referenced": 20,
+      "referenced": 17,
       "stale": 0,
       "staleRate": 0,
       "staleIds": []
@@ -1033,14 +842,14 @@
     },
     {
       "dgn": "dungeon/act2/palaceofload.dgn",
-      "referenced": 29,
+      "referenced": 15,
       "stale": 0,
       "staleRate": 0,
       "staleIds": []
     },
     {
       "dgn": "dungeon/act2/draconiantower.dgn",
-      "referenced": 16,
+      "referenced": 9,
       "stale": 0,
       "staleRate": 0,
       "staleIds": []
@@ -1054,7 +863,7 @@
     },
     {
       "dgn": "dungeon/act6/danceingbutterfly.dgn",
-      "referenced": 77,
+      "referenced": 14,
       "stale": 0,
       "staleRate": 0,
       "staleIds": []
@@ -1124,7 +933,7 @@
     },
     {
       "dgn": "dungeon/ancient/cartelcommand.dgn",
-      "referenced": 10,
+      "referenced": 5,
       "stale": 0,
       "staleRate": 0,
       "staleIds": []
@@ -1145,7 +954,7 @@
     },
     {
       "dgn": "dungeon/timegate/topsecretarea.dgn",
-      "referenced": 22,
+      "referenced": 15,
       "stale": 0,
       "staleRate": 0,
       "staleIds": []
@@ -1173,35 +982,35 @@
     },
     {
       "dgn": "dungeon/act9/trombe.dgn",
-      "referenced": 22,
+      "referenced": 12,
       "stale": 0,
       "staleRate": 0,
       "staleIds": []
     },
     {
       "dgn": "dungeon/act9/grandine.dgn",
-      "referenced": 54,
+      "referenced": 14,
       "stale": 0,
       "staleRate": 0,
       "staleIds": []
     },
     {
       "dgn": "dungeon/act8/haze.dgn",
-      "referenced": 17,
+      "referenced": 14,
       "stale": 0,
       "staleRate": 0,
       "staleIds": []
     },
     {
       "dgn": "dungeon/act8/arden.dgn",
-      "referenced": 24,
+      "referenced": 12,
       "stale": 0,
       "staleRate": 0,
       "staleIds": []
     },
     {
       "dgn": "dungeon/quest/lawlessdistrict.dgn",
-      "referenced": 10,
+      "referenced": 8,
       "stale": 0,
       "staleRate": 0,
       "staleIds": []
@@ -1215,7 +1024,7 @@
     },
     {
       "dgn": "dungeon/quest/fairyforest.dgn",
-      "referenced": 25,
+      "referenced": 7,
       "stale": 0,
       "staleRate": 0,
       "staleIds": []
@@ -1250,7 +1059,7 @@
     },
     {
       "dgn": "dungeon/impossible/blackearth.dgn",
-      "referenced": 12,
+      "referenced": 9,
       "stale": 0,
       "staleRate": 0,
       "staleIds": []

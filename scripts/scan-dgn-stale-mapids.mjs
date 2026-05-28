@@ -83,7 +83,7 @@ for (const doc of allDgnDocs) {
   const matAttr = (mapSpec.attributes ?? []).find(a => a.t === "mat");
   if (!matAttr || !Array.isArray(matAttr.items)) continue;
 
-  const refIds = matAttr.items.map(row => {
+  const rawRefIds = matAttr.items.map(row => {
     if (!Array.isArray(row) || row.length < 3) return null;
     const v = row[2];
     if (typeof v === "object" && v !== null && typeof v.v === "number") return v.v;
@@ -91,6 +91,7 @@ for (const doc of allDgnDocs) {
     return null;
   }).filter(x => x !== null);
 
+  const refIds = [...new Set(rawRefIds)];
   const stale = refIds.filter(id => !mapIdsInPvf.has(id));
   totalReferenced += refIds.length;
   totalStale += stale.length;

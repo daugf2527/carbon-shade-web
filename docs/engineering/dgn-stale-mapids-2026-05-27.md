@@ -81,9 +81,9 @@ Stage 2 runtime 如果想用 mapSpecification 做副本布局，**必须 robust 
 |------|----|
 | .dgn 文件总数 | 338 |
 | 含 `mapSpecification` 段的 .dgn | **89** (26% — 其余 249 个 .dgn 不用 mapSpec 描述布局) |
-| 总 mapId references | 1,126 |
-| 总 stale references | **561** |
-| **全局 stale rate** | **49.8%** |
+| 总 mapId references | **743** (per-dgn 去重后；未去重 raw=1,126) |
+| 总 stale references | **370** (per-dgn 去重后；未去重 raw=561) |
+| **全局 stale rate** | **49.8%** (去重前后一致 — 分子分母同比缩放) |
 
 **结论一**：~74% 的 .dgn 根本不用 `mapSpecification`，可能改用 startMap/bossMap 数组 / 引擎硬编码布局 / 其他段。**mapSpecification 不是副本布局的统一接口**。
 
@@ -106,9 +106,9 @@ Stage 2 runtime 如果想用 mapSpecification 做副本布局，**必须 robust 
 | dungeon/act3/goddesstemple.dgn | 10 |
 | dungeon/act3/bloodhell.dgn | 7 |
 | dungeon/act3/breeding.dgn | 9 |
-| dungeon/act7/gentdefence.dgn | 20 |
-| dungeon/act2/palaceofload.dgn | 29 |
-| dungeon/act6/danceingbutterfly.dgn | 77 |
+| dungeon/act7/gentdefence.dgn | 17 |
+| dungeon/act2/palaceofload.dgn | 15 |
+| dungeon/act6/danceingbutterfly.dgn | 14 |
 | dungeon/village/grim_low/grim03.dgn | 15 |
 
 **结论三**：**Stage 2 PVE 优先用 0% stale 的 dgn**——核心 act3 的 goddesstemple / bloodhell / breeding 都干净，act6/act7/act2 几个大型 dgn 也干净，足够 Phase 2 副本系统的覆盖度。**jungle (75% stale) 反而是个边缘案例**，不应作首选副本。
@@ -117,11 +117,11 @@ Stage 2 runtime 如果想用 mapSpecification 做副本布局，**必须 robust 
 
 | dgn | references |
 |-----|------------|
-| dungeon/village/cartelarad/grozni.dgn | 98 |
-| dungeon/act7/nightassault.dgn | 42 |
-| dungeon/village/cartelarad/odesa.dgn | 39 |
-| dungeon/act5/bwanga.dgn | 35 |
-| dungeon/act7/supplycut.dgn | 25 |
+| dungeon/village/cartelarad/grozni.dgn | 25 |
+| dungeon/act7/nightassault.dgn | 14 |
+| dungeon/village/cartelarad/odesa.dgn | 20 |
+| dungeon/act5/bwanga.dgn | 8 |
+| dungeon/act7/supplycut.dgn | 11 |
 
 42 个 81-100% stale 集中在 **village（村镇）/ event（活动）/ ancient（古龙）/ anton（安顿）/ act5+act7（高难度副本）**——这些区域多数是早期被重做或 EOL 的内容。**Phase 2 副本系统 PVE 范围内可以全部跳过**（用户决策 Q2/C "先扩数据再做" + Q31/B "最小闭环" 都不依赖这些）。
 
