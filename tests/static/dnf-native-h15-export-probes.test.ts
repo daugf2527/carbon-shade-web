@@ -23,7 +23,7 @@ import { mkdir, rm, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { assert } from "./test-utils.js";
-import { exportRuntimeShards, SHAPE_VERSION } from "../../src/dnf-native-combat/data/exporter/RuntimeExporter.js";
+import { exportRuntimeShards, SHAPE_VERSION, TIMESTAMP_KEYS as SUT_TIMESTAMP_KEYS } from "../../src/dnf-native-combat/data/exporter/RuntimeExporter.js";
 import type { AtkDef } from "../../src/dnf-native-combat/data/types/AtkDef.js";
 import type { ChrDef } from "../../src/dnf-native-combat/data/types/ChrDef.js";
 import type { MobDef } from "../../src/dnf-native-combat/data/types/MobDef.js";
@@ -152,14 +152,20 @@ function dgnFixture(path: string): DungeonDef {
 // semantic content is identical. Mutates in place and returns the same
 // reference for chaining (each call constructs a fresh fixture so cross-
 // test bleed is impossible).
+//
+// Audit F3 (test-effectiveness, 2026-05-28): the key set is imported from
+// the SUT (RuntimeExporter.TIMESTAMP_KEYS) so the two strippers are
+// guaranteed in sync. Adding a new timestamp key to the SUT automatically
+// widens this helper, eliminating the previous mirror-coded drift risk
+// where a SUT-only addition would silently bypass the simulated
+// re-extraction.
 function stampExtractTimestamps<T>(doc: T, newTs: string): T {
-  const TS_KEYS = new Set(["extractTimestamp", "extract_timestamp"]);
   const walk = (v: unknown): void => {
     if (v === null || typeof v !== "object") return;
     if (Array.isArray(v)) { for (const item of v) walk(item); return; }
     const obj = v as Record<string, unknown>;
     for (const key of Object.keys(obj)) {
-      if (TS_KEYS.has(key) && typeof obj[key] === "string") {
+      if (SUT_TIMESTAMP_KEYS.has(key) && typeof obj[key] === "string") {
         obj[key] = newTs;
       } else {
         walk(obj[key]);
@@ -552,9 +558,101 @@ await mkdir(OUT_DIR, { recursive: true });
 }
 
 // ───────────────────────────────────────────────────────────────────────────
+// H15-12: TIMESTAMP_KEYS invariant — fingerprint strip set must cover every
+// timestamp key actually produced by the parser/exporter pipeline.
+//
+// Audit F3 (test-effectiveness, 2026-05-28): H15-9 previously hand-coded the
+// stamp helper's key set to mirror the SUT's strip set; if a new timestamp
+// key was added to ParsedFieldProvenance or PvfDocument, the SUT would
+// likely strip it (so fingerprint stays stable) AND the helper would silently
+// skip it (so the simulated re-extraction wouldn't even modify it). The
+// circular construction couldn't catch a SUT regression where the strip set
+// fell out of date.
+//
+// Fix path 1: helper imports SUT.TIMESTAMP_KEYS directly (no more mirror).
+// Fix path 2 (this case): independent scan — produce a real shard from a
+// real fixture, walk the on-disk JSON, collect every key whose value matches
+// an ISO-8601 timestamp shape, and assert each one is in SUT.TIMESTAMP_KEYS.
+// If a future parser starts emitting `extractedAt: "2026-...Z"` without
+// updating TIMESTAMP_KEYS, this test fails by detecting the unstripped
+// timestamp leak — independent of the helper.
+// ───────────────────────────────────────────────────────────────────────────
+{
+  const path = "character/ts-invariant/ts-invariant.chr";
+  const subOut = join(OUT_DIR, "ts-invariant");
+  const r = await exportRuntimeShards({
+    outDir: subOut,
+    parsed: [chrFixture(path, "ts-invariant")],
+    meta: { pvfHash: "h15-ts", extractorVersion: "v2.0.0", exportedAt: "2026-05-28T00:00:00Z" },
+  });
+  assert.ok(r.filesWritten >= 1, "H15-12: at least one shard written");
+  const shardJson = await readFile(join(subOut, "players", "ts-invariant.json"), "utf-8");
+  const shard = JSON.parse(shardJson) as unknown;
+
+  // ISO-8601 with required `T` separator and `Z` / offset — matches what the
+  // C++ extractor and Provenance helpers emit. Narrow enough not to false-
+  // positive on the SHA-256 hex, version strings, or shard ids.
+  const ISO8601 = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})$/;
+
+  const leaks: Array<{ keyPath: string; key: string; value: string }> = [];
+  const visit = (node: unknown, keyPath: string): void => {
+    if (node === null || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      node.forEach((v, i) => visit(v, `${keyPath}[${i}]`));
+      return;
+    }
+    const obj = node as Record<string, unknown>;
+    for (const [key, value] of Object.entries(obj)) {
+      const childPath = keyPath === "" ? key : `${keyPath}.${key}`;
+      if (typeof value === "string" && ISO8601.test(value)) {
+        if (!SUT_TIMESTAMP_KEYS.has(key)) {
+          leaks.push({ keyPath: childPath, key, value });
+        }
+      }
+      visit(value, childPath);
+    }
+  };
+  // Top-level shard fields like `exported_at`, `extractor_version` belong to
+  // RuntimeManifest meta and are intentionally NOT stripped — they identify
+  // the export run, not per-fact provenance. Scope the scan to fact-bearing
+  // sub-objects (chr/skills/attacks/animations) where strip-coverage matters.
+  const factRoots = ["chr", "skills", "attacks", "animations"] as const;
+  for (const root of factRoots) {
+    const sub = (shard as Record<string, unknown>)[root];
+    if (sub !== undefined) visit(sub, root);
+  }
+
+  assert.equal(leaks.length, 0,
+    `H15-12: every ISO-8601 timestamp key in shard fact-content must be in SUT TIMESTAMP_KEYS — ` +
+    `unstripped leaks: ${leaks.map(l => `${l.keyPath}=${l.key}:"${l.value}"`).join(", ")}. ` +
+    `Either add the new key to RuntimeExporter.TIMESTAMP_KEYS, or remove the timestamp from the parser output.`);
+
+  // Sanity: the canonical keys must actually be there (otherwise the test is
+  // vacuously true). Confirm at least one fact-side extractTimestamp exists.
+  let foundCanonical = false;
+  const sniff = (node: unknown): void => {
+    if (foundCanonical || node === null || typeof node !== "object") return;
+    if (Array.isArray(node)) { node.forEach(sniff); return; }
+    for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
+      if (SUT_TIMESTAMP_KEYS.has(k) && typeof v === "string") { foundCanonical = true; return; }
+      sniff(v);
+    }
+  };
+  for (const root of factRoots) {
+    const sub = (shard as Record<string, unknown>)[root];
+    if (sub !== undefined) sniff(sub);
+  }
+  assert.ok(foundCanonical,
+    "H15-12: fixture must contain at least one canonical timestamp under fact roots " +
+    "(otherwise the leak-scan is vacuously true and provides no signal)");
+
+  console.log("[OK] H15-12: TIMESTAMP_KEYS covers every ISO-8601 timestamp leaked into shard fact-content");
+}
+
+// ───────────────────────────────────────────────────────────────────────────
 // Cleanup
 // ───────────────────────────────────────────────────────────────────────────
 await rm(OUT_DIR, { recursive: true, force: true });
 
 console.log("");
-console.log("H15 EXPORT probes: all assertions passed (11 cases)");
+console.log("H15 EXPORT probes: all assertions passed (12 cases)");

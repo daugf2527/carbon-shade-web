@@ -409,15 +409,18 @@ Day 15-17: 集成测试 + verification 产物 + 文档补完
   scripts/pipeline.mjs                                    # 5-stage 统一入口
   scripts/import-to-sqlite.mjs                            # LOAD 阶段独立工具（被 pipeline.mjs 调用）
   scripts/export-runtime-json.mjs                         # EXPORT 阶段独立工具
-  src/dnf-native-combat/data/parsers/ChrParser.ts          # ↓ 7 parser 主流；AniParser 走 standalone (§2.2.1)
-  src/dnf-native-combat/data/parsers/SklParser.ts
-  src/dnf-native-combat/data/parsers/AtkParser.ts
-  src/dnf-native-combat/data/parsers/AniParser.ts          # standalone (not in parseStage dispatch — see §2.2.1)
-  src/dnf-native-combat/data/parsers/MobParser.ts
-  src/dnf-native-combat/data/parsers/DgnParser.ts
-  src/dnf-native-combat/data/parsers/MapParser.ts
-  src/dnf-native-combat/data/parsers/EtcParser.ts          # 7th main parser (added during Day 8-10)
+  # ── Dispatch parsers (wired into parseStage.ts switch by extension) ──
+  src/dnf-native-combat/data/parsers/ChrParser.ts          # .chr
+  src/dnf-native-combat/data/parsers/SklParser.ts          # .skl
+  src/dnf-native-combat/data/parsers/AtkParser.ts          # .atk
+  src/dnf-native-combat/data/parsers/MobParser.ts          # .mob
+  src/dnf-native-combat/data/parsers/DgnParser.ts          # .dgn
+  src/dnf-native-combat/data/parsers/MapParser.ts          # .map
+  src/dnf-native-combat/data/parsers/EtcParser.ts          # .etc (added during Day 8-10)
+  # ── Standalone parsers (NOT in parseStage dispatch — invoked separately, see §2.2.1) ──
+  src/dnf-native-combat/data/parsers/AniParser.ts          # .ani — called via loadAniDocumentsViaPipe → aniDefs (CLI: --ani-file)
   src/dnf-native-combat/data/parsers/CancelDecoder.ts      # cancel*.skl post-process（如果工具 L2 不能完全覆盖）
+  # ── Adapters ──
   src/dnf-native-combat/data/parsers/PvfDocumentLoader.ts  # dnf-extract stdout adapter
   src/dnf-native-combat/data/types/*.ts                    # ChrDef / SklDef / AtkDef / AniDef / MobDef / DgnDef / MapDef / EtcDef / Provenance
   dist/data/                                               # EXPORT 输出目录 (NOT src/data/manifests/ — corrected 2026-05-24, audit F1 deliverable-presence)

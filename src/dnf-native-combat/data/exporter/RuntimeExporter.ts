@@ -556,7 +556,11 @@ export function computeContentFingerprint(shape: unknown): string {
 }
 
 const TIMESTAMP_SENTINEL = "<stripped:extractTimestamp>";
-const TIMESTAMP_KEYS = new Set(["extractTimestamp", "extract_timestamp"]);
+// Audit F3 (test-effectiveness, 2026-05-28): exported so H15-9 helper imports
+// the same source-of-truth set, breaking the previous mirror-coded oracle.
+// Adding a new timestamp-bearing key here automatically widens both SUT and
+// the test fixture's stamp helper.
+export const TIMESTAMP_KEYS: ReadonlySet<string> = new Set(["extractTimestamp", "extract_timestamp"]);
 
 function stripExtractTimestamps(value: unknown): unknown {
   if (value === null || typeof value !== "object") return value;
