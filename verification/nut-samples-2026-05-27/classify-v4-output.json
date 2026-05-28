@@ -93,36 +93,6 @@
       }
     ]
   },
-  "12-ScriptRT": {
-    "unique": 6,
-    "calls": 474,
-    "names": [
-      {
-        "count": 231,
-        "name": "sq_AddFunctionName"
-      },
-      {
-        "count": 143,
-        "name": "sq_PlaySound"
-      },
-      {
-        "count": 67,
-        "name": "sq_RGB"
-      },
-      {
-        "count": 14,
-        "name": "sq_RGBA"
-      },
-      {
-        "count": 13,
-        "name": "sq_ALPHA"
-      },
-      {
-        "count": 6,
-        "name": "sq_RunScript"
-      }
-    ]
-  },
   "02-Net/RPC": {
     "unique": 33,
     "calls": 750,
@@ -392,8 +362,8 @@
     ]
   },
   "06-Skill": {
-    "unique": 30,
-    "calls": 359,
+    "unique": 28,
+    "calls": 357,
     "names": [
       {
         "count": 170,
@@ -493,14 +463,6 @@
       },
       {
         "count": 1,
-        "name": "sq_LoadSkillEffect_Swordman"
-      },
-      {
-        "count": 1,
-        "name": "sq_LoadSkillEffect_DemonicSwordman"
-      },
-      {
-        "count": 1,
         "name": "sq_IsEnterSkillLastKeyUnits"
       },
       {
@@ -514,6 +476,32 @@
       {
         "count": 1,
         "name": "sq_AddSkillLoad"
+      }
+    ]
+  },
+  "12-ScriptRT": {
+    "unique": 5,
+    "calls": 243,
+    "names": [
+      {
+        "count": 143,
+        "name": "sq_PlaySound"
+      },
+      {
+        "count": 67,
+        "name": "sq_RGB"
+      },
+      {
+        "count": 14,
+        "name": "sq_RGBA"
+      },
+      {
+        "count": 13,
+        "name": "sq_ALPHA"
+      },
+      {
+        "count": 6,
+        "name": "sq_RunScript"
       }
     ]
   },
@@ -1093,72 +1081,6 @@
       }
     ]
   },
-  "15-VFX": {
-    "unique": 15,
-    "calls": 163,
-    "names": [
-      {
-        "count": 35,
-        "name": "sq_AddEffect"
-      },
-      {
-        "count": 30,
-        "name": "sq_AddObjectParticleCreater"
-      },
-      {
-        "count": 29,
-        "name": "sq_AddObject"
-      },
-      {
-        "count": 21,
-        "name": "sq_AddParticleObject"
-      },
-      {
-        "count": 14,
-        "name": "sq_AddEffectFront"
-      },
-      {
-        "count": 10,
-        "name": "sq_CreateParticle"
-      },
-      {
-        "count": 7,
-        "name": "sq_DeleteEffectFront"
-      },
-      {
-        "count": 6,
-        "name": "sq_SetObjectParticlePos"
-      },
-      {
-        "count": 4,
-        "name": "sq_CreateParticleByGlobal"
-      },
-      {
-        "count": 2,
-        "name": "sq_setFullScreenEffect"
-      },
-      {
-        "count": 1,
-        "name": "sq_setCustomHitEffectFileName"
-      },
-      {
-        "count": 1,
-        "name": "sq_SetBodyEffect"
-      },
-      {
-        "count": 1,
-        "name": "sq_GetobjectParticleCreaters"
-      },
-      {
-        "count": 1,
-        "name": "sq_GetParticleInfo"
-      },
-      {
-        "count": 1,
-        "name": "sq_AddEffectBack"
-      }
-    ]
-  },
   "21-Predicate": {
     "unique": 26,
     "calls": 80,
@@ -1323,6 +1245,68 @@
       }
     ]
   },
+  "15-VFX": {
+    "unique": 14,
+    "calls": 128,
+    "names": [
+      {
+        "count": 30,
+        "name": "sq_AddObjectParticleCreater"
+      },
+      {
+        "count": 29,
+        "name": "sq_AddObject"
+      },
+      {
+        "count": 21,
+        "name": "sq_AddParticleObject"
+      },
+      {
+        "count": 14,
+        "name": "sq_AddEffectFront"
+      },
+      {
+        "count": 10,
+        "name": "sq_CreateParticle"
+      },
+      {
+        "count": 7,
+        "name": "sq_DeleteEffectFront"
+      },
+      {
+        "count": 6,
+        "name": "sq_SetObjectParticlePos"
+      },
+      {
+        "count": 4,
+        "name": "sq_CreateParticleByGlobal"
+      },
+      {
+        "count": 2,
+        "name": "sq_setFullScreenEffect"
+      },
+      {
+        "count": 1,
+        "name": "sq_setCustomHitEffectFileName"
+      },
+      {
+        "count": 1,
+        "name": "sq_SetBodyEffect"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetobjectParticleCreaters"
+      },
+      {
+        "count": 1,
+        "name": "sq_GetParticleInfo"
+      },
+      {
+        "count": 1,
+        "name": "sq_AddEffectBack"
+      }
+    ]
+  },
   "18-Timer": {
     "unique": 1,
     "calls": 18,
@@ -1364,8 +1348,8 @@
     ]
   },
   "99-Unclassified": {
-    "unique": 127,
-    "calls": 207,
+    "unique": 126,
+    "calls": 206,
     "names": [
       {
         "count": 6,
@@ -1754,10 +1738,6 @@
       {
         "count": 1,
         "name": "sq_OpenPopupWindow"
-      },
-      {
-        "count": 1,
-        "name": "sq_InitFrameIndices"
       },
       {
         "count": 1,

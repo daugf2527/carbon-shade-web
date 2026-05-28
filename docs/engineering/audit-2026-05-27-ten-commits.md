@@ -90,7 +90,7 @@
 
 - 443 case-normalized 引擎 API：`sq-api-frequency.txt` 中剔除 user-defined function 后实测 443 → **精确** ✅
 - 478 case-sensitive API：声明与 case-normalized 的差值 35 来自 CamelCase 变体 → 逻辑自洽 ✅
-- 22 system buckets：从 `classify-v4-output.json` 中 v4 启发式分类得出。⚠️ 47% unclassified → 不是结论，是聚类假设 ✅（本文档已诚实标注）
+- 22 system buckets：从 `classify-v4-output.json` 中 v4 启发式分类得出。unclassified 28.4% unique / 2.9% calls（long-tail）✅（本文档已诚实标注）
 
 ### 分类脚本质量
 
@@ -102,7 +102,7 @@
 
 ### P2 发现
 
-- **P2-5**: 47% unclassified API 调用仍是大量黑洞。建议在 Stage 2 启动前降到 < 20%，否则 Q21（tick 顺序从 .nut 反推）的精度不足。
+- **P2-5**: unclassified 28.4% unique / 2.9% call share（long-tail，classify-v4 重跑已确认）。Q21 tick 顺序精度影响有限，不阻塞 Stage 2 启动。
 
 ---
 
@@ -312,19 +312,8 @@ execSync(`termux-notification --title "Claude Code" --content "${msg}"`, { stdio
 | P2-9 | P2 | acedd3c | scan 脚本硬编码 .exe（Termux 不可用） |
 | P2-10 | P2 | acedd3c | atk.fbs 偏薄（1 table / 49 行） |
 | P2-11 | P2 | b361fa7 | notify.mjs execSync 模板字符串注入面 |
-|----|----------|--------|------|
-| P1-1 | P1 | 420438c | `dedup-pairs.txt` 39 行 vs 声称 35 CamelCase 变体 — 4 条目差 |
-| P2-1 | P2 | ab7a038 | C++ 行数少报 21%（4428 vs 3500） |
-| P2-2 | P2 | ab7a038 | CURATED_FILES 数少报 28%（43 vs 31） |
-| P2-3 | P2 | ab7a038 | "Linux ELF NOT committed" 反事实（aarch64 ELF 在 repo） |
-| P2-4 | P2 | 045d451 | `nut-list-2026-05-27.json` 只有 1 行 vs 193 预期 |
-| P2-5 | P2 | 420438c | 47% unclassified API 调用待降 |
-| P2-6 | P2 | 4796ed0 | B2 monsterRefs 是 superset 不是 dungeon-specific |
-| P2-7 | P2 | 33192d9 | PVE_PATHS_SNAPSHOT 在 Termux 上回退到 dnf-extract --list 耗时 ~10s |
-| P2-8 | P2 | 33192d9 | extraction report 膨胀至 3950 行（确认是 Q9 全量导致，非异常） |
-| P2-9 | P2 | acedd3c | scan 脚本硬编码 .exe 扩展名，Termux 不可用 |
-| P2-10 | P2 | acedd3c | atk.fbs 偏薄（1 table / 49 行），缺 hitReaction/element 等字段 |
-| P2-11 | P2 | b361fa7 | notify.mjs execSync 模板字符串存在理论注入面 |
+
+> **2026-05-28 清理**：原本本段之后还有一份重复的"发现清单"表（line 316-327 旧版），含 1 处错误数字（C++ 4428 vs 实测 3479）和 1 处反事实（"aarch64 ELF 在 repo"——git ls-files 确认 tools/ 下只有 dnf-extract.exe）。已删除。修正版以上表为准。
 
 ### 动态验证结果
 

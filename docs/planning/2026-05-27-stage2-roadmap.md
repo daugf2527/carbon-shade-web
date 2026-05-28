@@ -26,7 +26,7 @@
 
 | # | 难点 | 为什么难 | 影响范围 | 优先级 |
 |---|------|---------|---------|--------|
-| **G1** | **22-system 引擎→脚本回调时序** | DNF C++ tick 顺序不可达，.nut 只能反推事件 lifecycle。47% 调用点未分类。顺序错 → 状态机竞争 → 行为诡异 | 全部战斗逻辑 | P0 |
+| **G1** | **22-system 引擎→脚本回调时序** | DNF C++ tick 顺序不可达，.nut 只能反推事件 lifecycle。unclassified 28% unique / 仅 2.9% calls（long-tail）。顺序错 → 状态机竞争 → 行为诡异 | 全部战斗逻辑 | P0 |
 | **G2** | **Fixed Timestep Accumulator** | 浏览器 RAF 不稳定（~16.67ms 但抖动大），需要 Gaffer on Games 累加器模式 + 渲染插值。做错 → 物理漂移 / 快慢不一致 | Simulation Core | P0 |
 | **G3** | **逐帧碰撞事件时间线** | .ani 每帧有独立 atk[]/dmg[] box，要在帧边界精确发射/关闭碰撞事件。普通 .atk 没有 atk box → 需从攻击属性反推 | Hit Detection | P0 |
 | **G4** | **Hitstun 硬编码缺失** | DNF 真实 hitstun/recoil/launch 曲线在 C++ 二进制里，PVF 拿不到。全部标 `local_baseline` + 手动调参 | Reaction System | P1 |
@@ -253,7 +253,7 @@ Phase 5 (3d)
 | 风险 | 概率 | 缓解 |
 |------|------|------|
 | flatc 无法安装 | 中 | T0.3 ShardLoader 先走 JSON fallback，Phase 2 不需要 flatc 也能跑最小闭环 |
-| 22-system 回调时序 .nut 推导不够（47% unclassified） | 中 | Phase 3 先用游戏引擎通用顺序（input→animation→hit→damage→reaction→resource→ai→status），Phase 4 再根据测试调整 |
+| 22-system 回调时序 .nut 推导不够（28% unique unclassified，仅 2.9% calls） | 中 | Phase 3 先用游戏引擎通用顺序（input→animation→hit→damage→reaction→resource→ai→status），Phase 4 再根据测试调整 |
 | hitstun local_baseline 体验差 | 高 | 预留 Phase 4.5 调参窗口（1-2 天），对比 DFO 视频逐帧校准 |
 | Termux 环境缺少 LSP/ast-grep | 中 | grep + node 手动验证可替代，但影响迭代速度。Windows 上做重活，Termux 做轻量编辑 |
 | 多 agent 并行产出又出数字漂移 | 中 | 审计报告 P2-1~P2-3 → 建议以后数字要求标注测量方法 |
