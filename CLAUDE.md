@@ -12,7 +12,7 @@ Active branch: `dnf-native` (master frozen 2026-05-21).
 | Stage | 内容 | 状态 |
 |-------|------|------|
 | Stage 1 | PVF 数据提取管线 (EXTRACT→PARSE→VALIDATE→LOAD→EXPORT) | ✅ 完成 (2026-05-24), [changelog](docs/changelog/2026-05-24-stage1-complete.md) |
-| Stage 2 | 13 系统 DNF 原生引擎层 | 🧠 规划中, [brainstorm](docs/planning/2026-05-24-stage2-brainstorm.md), **未实施** |
+| Stage 2 | 22 系统 DNF 原生引擎层（原 13-system 已细化，见 [field-matrix](docs/engineering/22-system-field-matrix.md)） | 🧠 规划中, **未实施** |
 
 **Stage 1 管线**:
 ```
@@ -37,7 +37,7 @@ PVF --pipe--> dnf-extract (C++) --> PvfDocument[] --> 10 parsers (TS) --> Zod va
 | `npm run audit:verify` | Re-check agent audit claims against cited file:line |
 | `npm run closed-loop:status` | Closed-loop workflow state machine status |
 | `npm run browser:smoke` | Playwright browser test (CI only, needs dev server + display) |
-| `npm run baseline` | Stage 1 sample baseline (31 curated files, ~4s) |
+| `npm run baseline` | Stage 1 sample baseline (43 curated files, ~4s) |
 | `npm run baseline:pve` | Stage 1 PVE-full baseline (8794 character + skill files, ~10min) |
 | `docker compose up --build` | Container on port 5173 |
 
@@ -79,7 +79,7 @@ DNF_PVF_PATH=/path/to/Script.pvf node scripts/pipeline.mjs --full
 node scripts/pipeline.mjs --pvf Script.pvf --file <path> [--file <path> ...] \
   [--stop-at extract|parse|validate|load|export] [--full|--incremental]
 
-# Stage 1 baseline (curated 31-file cross-section)
+# Stage 1 baseline (curated 43-file cross-section)
 DNF_PVF_PATH=... node scripts/stage1-baseline.mjs
 ```
 

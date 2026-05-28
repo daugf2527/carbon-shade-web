@@ -9,7 +9,8 @@
 | `flatbuffers` npm 包 | ✅ 已装（`npm install flatbuffers --save`） |
 | `flatc` CLI 编译器 | ❌ **待装**（网络断时无法下载，本机网络通后做） |
 | `physics.fbs` schema | ✅ 第一个 schema 已写（12 物理常数） |
-| `chr.fbs` / `skl.fbs` / `atk.fbs` / `ani.fbs` / `dgn.fbs` | ❌ 待写（Phase 2 T1.4） |
+| `chr.fbs` / `skl.fbs` / `atk.fbs` | ✅ 已写（acedd3c, 2026-05-27） |
+| `ani.fbs` / `dgn.fbs` | ❌ 待写（Phase 2 T1.4） |
 | `scripts/compile-schema.mjs` 编译器入口 | ✅ 骨架已写（检测 flatc + 编译 / 提示安装） |
 | Round-trip 验证（JSON → .bin → 浏览器读） | ❌ 等 flatc 装好做 |
 

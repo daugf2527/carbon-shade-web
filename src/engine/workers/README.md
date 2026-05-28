@@ -22,7 +22,7 @@ src/engine/workers/
   的 13 system tick 调度。
 - **sim-worker-host**: 主线程通过 `new Worker(new URL("./sim-worker.ts",
   import.meta.url), { type: "module" })` 启动 worker。提供
-  `postInputSnapshot()` / `onStateSnapshot()` 双向消息接口。
+  `postInput()` / `onSnapshot()` 双向消息接口（见 [sim-worker-host.ts](sim-worker-host.ts) 的 `SimWorkerHost` interface）。
 
 ## Vite 配置
 
