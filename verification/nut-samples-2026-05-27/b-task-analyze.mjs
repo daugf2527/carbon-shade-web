@@ -11,8 +11,12 @@
 //   4. Or do different .nut types have different event hooks?
 
 import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const txt = fs.readFileSync('verification/nut-samples-2026-05-27/all-193.jsonl', 'utf8');
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+
+const txt = fs.readFileSync(path.join(HERE, 'all-193.jsonl'), 'utf8');
 const parts = txt.split(/\n?---\n?/).filter(s => s.trim());
 const nuts = new Map(); // path -> content
 for (const p of parts) {

@@ -12,8 +12,12 @@
 // before being added. See nut-validation-2026-05-27.md §十 for audit log.
 
 import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const txt = fs.readFileSync('verification/nut-samples-2026-05-27/all-193.jsonl', 'utf8');
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+
+const txt = fs.readFileSync(path.join(HERE, 'all-193.jsonl'), 'utf8');
 const parts = txt.split(/\n?---\n?/).filter(s => s.trim());
 
 // Step 1+2: extract user-defined function names, then exclude
@@ -27,7 +31,7 @@ for (const p of parts) {
   } catch {}
 }
 
-const raw = fs.readFileSync('verification/nut-samples-2026-05-27/sq-api-frequency.txt', 'utf8').trim().split('\n');
+const raw = fs.readFileSync(path.join(HERE, 'sq-api-frequency.txt'), 'utf8').trim().split('\n');
 const apis = raw
   .map(l => { const m = l.trim().match(/^(\d+)\s+(sq_\S+)$/); return m ? { count: +m[1], name: m[2] } : null; })
   .filter(Boolean)
@@ -98,4 +102,4 @@ console.log('total'.padEnd(22) + String(totalU).padStart(8) + String(totalC).pad
 const u = buckets['99-Unclassified'] || { unique: 0, calls: 0 };
 console.log('unclassified:', u.unique, '/', deduped.length, '=', (u.unique / deduped.length * 100).toFixed(1) + '%  call share:', (u.calls / totalC * 100).toFixed(1) + '%');
 
-fs.writeFileSync('verification/nut-samples-2026-05-27/classify-v4-output.json', JSON.stringify(buckets, null, 2));
+fs.writeFileSync(path.join(HERE, 'classify-v4-output.json'), JSON.stringify(buckets, null, 2));
