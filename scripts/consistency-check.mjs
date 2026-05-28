@@ -353,6 +353,75 @@ checks.push({
     : "all closed",
 });
 
+// 17. 半成品（TODO/FIXME/skeleton/stub）扫描 — 老化趋势警报
+// Sourced from verification/half-finished.md (A5 agent 2026-05-28 基线: 9 TODO 全 ≤ 5 天)
+// 设计意图：单看绝对数无意义，看趋势——TODO 持续累积说明半成品在堆积。
+let todoCount = 0;
+let stubMarkerCount = 0;
+const TODO_BASELINE = 18;  // 2026-05-28 baseline (consistency 宽口径 vs A5 报告 9 是因为 A5 用了更精细过滤)
+const STUB_BASELINE = 36;  // skeleton+stub+not implemented 总数（含描述性 stub 词）
+const codeRoots = ["src", "scripts", "tools"];
+for (const root of codeRoots) {
+  const rootDir = join(ROOT, root);
+  if (!existsSync(rootDir)) continue;
+  const walk = (p) => {
+    for (const entry of readdirSync(p, { withFileTypes: true })) {
+      if (entry.name === "node_modules" || entry.name === ".git") continue;
+      const fp = join(p, entry.name);
+      if (entry.isDirectory()) { walk(fp); continue; }
+      if (!/\.(ts|mjs|cjs|js)$/.test(entry.name)) continue;
+      const text = readTextSafe(fp) || "";
+      todoCount += (text.match(/\bTODO\b|\bFIXME\b|\bXXX\b|\bHACK\b/g) || []).length;
+      stubMarkerCount += (text.match(/\bskeleton\b|\bstub\b|"not implemented"|'not implemented'/gi) || []).length;
+    }
+  };
+  walk(rootDir);
+}
+const todoDelta = todoCount - TODO_BASELINE;
+checks.push({
+  name: "maturity/half-finished",
+  claimSite: "verification/half-finished.md (A5 baseline 2026-05-28)",
+  claim: `${TODO_BASELINE} TODO + ${STUB_BASELINE} stub markers`,
+  truthSite: "src/ scripts/ tools/ live grep",
+  truth: `${todoCount} TODO + ${stubMarkerCount} stub`,
+  info: todoDelta > 5
+    ? `⚠️ TODO 净增 ${todoDelta} — 半成品在累积，run A5 重新基线`
+    : todoDelta < -3
+    ? `✅ TODO 净减 ${-todoDelta} — 实装在推进，update baseline in script`
+    : `TODO 在 baseline ±5 范围内`,
+});
+
+// 18. memory frontmatter verified_at 字段覆盖率
+let memoryWithVerifiedAt = 0;
+const oldMemoryWithoutVerifiedAt = [];
+const NOW = Date.now();
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+for (const f of memoryFiles) {
+  const text = readTextSafe(join(MEMORY_DIR, f)) || "";
+  const fmMatch = text.match(/^---\n([\s\S]*?)\n---/);
+  if (!fmMatch) continue; // 老格式无 frontmatter，不计
+  if (fmMatch[1].includes("verified_at:")) {
+    memoryWithVerifiedAt++;
+  } else {
+    // 看文件名带日期且老于 30 天的，建议补 verified_at
+    const dateMatch = f.match(/(\d{4}-\d{2}-\d{2})/);
+    if (dateMatch) {
+      const fileDate = new Date(dateMatch[1]).getTime();
+      if (NOW - fileDate > THIRTY_DAYS_MS) oldMemoryWithoutVerifiedAt.push(f);
+    }
+  }
+}
+checks.push({
+  name: "maturity/memory-verified-at",
+  claimSite: "memory/*.md frontmatter verified_at",
+  claim: `${memoryWithVerifiedAt} memory carry verified_at`,
+  truthSite: "frontmatter scan",
+  truth: `${oldMemoryWithoutVerifiedAt.length} old (>30d) memory missing verified_at`,
+  info: oldMemoryWithoutVerifiedAt.length > 0
+    ? `老 memory 待加 verified_at: ${oldMemoryWithoutVerifiedAt.slice(0, 5).join(", ")}${oldMemoryWithoutVerifiedAt.length > 5 ? " ..." : ""}`
+    : "all old memory carry verified_at",
+});
+
 // ── 评估 drift ──────────────────────────────────────────────────────────
 
 for (const c of checks) {

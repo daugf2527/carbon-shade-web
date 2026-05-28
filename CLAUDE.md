@@ -85,6 +85,12 @@ node scripts/pipeline.mjs --pvf Script.pvf --file <path> [--file <path> ...] \
 
 # Stage 1 baseline (curated 43-file cross-section)
 DNF_PVF_PATH=... node scripts/stage1-baseline.mjs
+
+# Frame PoC: extract single .ani → PNG frames + meta.json (no npm script)
+DNF_PVF_PATH=... node scripts/extract-berserker-action.mjs <pvf-ani-path>
+
+# F-class research: probe PVF defensive thresholds for C++ extractor hardening
+DNF_PVF_PATH=... node scripts/research-pvf-thresholds.mjs
 ```
 
 ## Architecture
