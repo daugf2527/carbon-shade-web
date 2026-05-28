@@ -66,12 +66,14 @@ Phase 5: 打磨交付 (3d)
 
 **目标**: 开发环境就绪，打通 LFS + flatc 工具链
 
-| 任务 | 内容 | 验收 | 估时 |
-|------|------|------|------|
-| **T0.1** flatc CLI | 从 GitHub Release 下载 flatc 二进制到 `tools/` | `flatc --version` 输出正常 | 30min |
-| **T0.2** LFS push | `git lfs push origin --all`（含 Script.pvf + baseline.db） | Termux 侧 `git lfs pull` 成功 | 30min |
-| **T0.3** runtime shard loader | 写 `src/engine/loader/ShardLoader.ts`，从 dist/data/ 异步加载 JSON shards 给 Phase 3 用（FlatBuffers 就绪前 fallback） | `loadShard("players/swordman")` 返回 typed data | 2h |
-| **T0.4** GameLoop 骨架 | 写 `src/engine/core/GameLoop.ts` — 固定步长累加器 + 渲染插值 | 60Hz tick loop 跑起来（空循环） | 2h |
+> ⚠️ **2026-05-28 竖切核查更新**：Phase 0 **未启动**。声称的"Day 1 骨架已落"（commits 2c4d016/acedd3c/33192d9）只完成了 Phase 1 的部分 .fbs 文件 (T1.4: chr/skl/atk) 和 Phase 2 准备性的 worker 骨架，**跳过了 Phase 0**。flatc 未装 → 4 个 .fbs 从未编译过 → 无 `_generated.ts`；`src/engine/{loader,core}/` 不存在；ani.fbs 缺。Phase 0 顺序需先走完再回 Phase 1。
+
+| 任务 | 内容 | 验收 | 估时 | 状态 |
+|------|------|------|------|------|
+| **T0.1** flatc CLI | 从 GitHub Release 下载 flatc 二进制到 `tools/` | `flatc --version` 输出正常 | 30min | ❌ 未做 |
+| **T0.2** LFS push | `git lfs push origin --all`（含 Script.pvf + baseline.db） | Termux 侧 `git lfs pull` 成功 | 30min | ✅ 完成 (commit 938fe29) |
+| **T0.3** runtime shard loader | 写 `src/engine/loader/ShardLoader.ts`，从 dist/data/ 异步加载 JSON shards 给 Phase 3 用（FlatBuffers 就绪前 fallback） | `loadShard("players/swordman")` 返回 typed data | 2h | ❌ 未做 |
+| **T0.4** GameLoop 骨架 | 写 `src/engine/core/GameLoop.ts` — 固定步长累加器 + 渲染插值 | 60Hz tick loop 跑起来（空循环） | 2h | ❌ 未做 |
 
 **阻塞解除**: T0.1 + T0.3 是 Phase 1+2 的前置
 

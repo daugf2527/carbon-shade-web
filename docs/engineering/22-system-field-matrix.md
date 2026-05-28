@@ -4,6 +4,8 @@
 **数据来源**: `verification/baseline-shards/players/swordman.json` (2.2MB) + `monsters/goblin.json` (27KB) + `shared/physics.json`  
 **classify-v4 参考**: `verification/nut-samples-2026-05-27/classify-v4-output.json`
 
+> ⚠️ **2026-05-28 竖切核查**：本矩阵详列 5/22 系统字段（Animation/Attack/Skill/Physics/Resource，最小闭环 Q31/B 范围）。`src/engine/schema/` 现有 4 个 .fbs（chr/skl/atk/physics）——是**数据实体**而非 system，且**未编译**（flatc 未装，无 `_generated.ts`）。**关键缺口**：`ani.fbs` 不存在——Animation 是每帧 tick 第 1 步（§七），却无 schema。剩 17 个 system 字段空白。
+
 ---
 
 ## 〇、数据地貌总览

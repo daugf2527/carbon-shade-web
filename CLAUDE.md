@@ -5,21 +5,21 @@
 **Carbon Shade / 碳影** — DNF-style 2.5D combat prototype. Engineering name: **Combat Lab**.
 Active branch: `dnf-native` (master frozen 2026-05-21).
 
-## Current state (2026-05-25)
+## Current state (2026-05-28)
 
 **DNF alignment pivot** — 停止新功能，全力对齐 DNF 真值。详见 [`docs/planning/2026-05-21-dnf-alignment-pivot.md`](docs/planning/2026-05-21-dnf-alignment-pivot.md)。
 
 | Stage | 内容 | 状态 |
 |-------|------|------|
 | Stage 1 | PVF 数据提取管线 (EXTRACT→PARSE→VALIDATE→LOAD→EXPORT) | ✅ 完成 (2026-05-24), [changelog](docs/changelog/2026-05-24-stage1-complete.md) |
-| Stage 2 | 22 系统 DNF 原生引擎层（原 13-system 已细化，见 [field-matrix](docs/engineering/22-system-field-matrix.md)） | 🧠 规划中, **未实施** |
+| Stage 2 | 22-system DNF 原生引擎层（[field-matrix](docs/engineering/22-system-field-matrix.md), [roadmap](docs/planning/2026-05-27-stage2-roadmap.md)） | 🚧 Day 1 = **接口 stub，未跑通**: 4 .fbs (chr/skl/atk/physics, **未编译**—flatc 未装/无 _generated.ts/缺 ani.fbs) + sim-worker (echo skeleton, 0 个 .nut hook) + swordman baseline 2.2MB。Phase 0 T0.1/T0.3/T0.4 (flatc/ShardLoader/GameLoop) **未做** |
 
 **Stage 1 管线**:
 ```
 PVF --pipe--> dnf-extract (C++) --> PvfDocument[] --> 10 parsers (TS) --> Zod validator
   --> SQLite (node:sqlite) --> JSON shards (dist/data/players/*.json etc.)
 ```
-**静态审计**: 2026-05-25 完成 6-Agent 全链路审计，48 个发现 (P0×8 / P1×20 / P2×20)，[报告](docs/engineering/audit-2026-05-25-full-pipeline-static.md)。待 Windows 动态验证。
+**审计累积**: 5-25 6-Agent 全链路 (48 finding) + 5-27 10-commit audit (1 P1 / 11 P2)，全部 Windows 动态已验证。22-system 状态：`counts_verified_clustering_inferred`（478 API / 193 .nut / 22+1 buckets，详见 [nut-validation](docs/engineering/nut-validation-2026-05-27.md)）。
 
 **Target version**: `70-85-classic-pre-metastasis` (Level 70 cap, 2012 pre-Metastasis). Modern DNF systems excluded.
 
@@ -39,6 +39,10 @@ PVF --pipe--> dnf-extract (C++) --> PvfDocument[] --> 10 parsers (TS) --> Zod va
 | `npm run browser:smoke` | Playwright browser test (CI only, needs dev server + display) |
 | `npm run baseline` | Stage 1 sample baseline (43 curated files, ~4s) |
 | `npm run baseline:pve` | Stage 1 PVE-full baseline (8794 character + skill files, ~10min) |
+| `npm run validate:sprites` | Validate sprite manifest integrity |
+| `npm run validate:assets` | Validate asset paths against manifest |
+| `npm run validate:combat` | Validate combat boundary config |
+| `npm run consistency` | 4-way drift scan (memory/docs/code/git) — see [Consistency](#4-way-consistency) |
 | `docker compose up --build` | Container on port 5173 |
 
 ### Stage 1 baseline rerun
@@ -142,7 +146,17 @@ Never commit `NEOPLE_API_KEY`.
 | **audit-verify.mjs** | Re-reads agent findings against cited file:line | `npm run audit:verify` |
 | **closed-loop** | 9-step audit→fix→commit pipeline (skill-driven) | `/closed-loop` |
 
-The split: `analyze` = static gates, `completion` = presence, `audit` = semantic depth.
+The split: `analyze` = static gates, `completion` = presence, `audit` = semantic depth, `consistency` = 4-way drift scan.
+
+## 4-way consistency
+
+`npm run consistency` 扫 memory/docs/code/git 四方一致性，分两组：
+- **横向 10 项**（数量/索引）：parsers count / npm scripts coverage / active branch / curated count / nut API 478 / memory index / wiki links / doc refs / static test count / git tree state
+- **纵向 6 项 maturity**（成熟度竖切）：`.fbs vs _generated.ts` 编译闭环 / ani.fbs 缺口 / sim-worker skeleton 标记 / Phase 0 T0.3+T0.4 存在性 / flatc 工具链就绪 / audit fixverify UNFIXED 计数
+
+`--strict` 让任何 drift exit 1；不带 flag 时只报告。pre-push hook 已自动跑（信息性）。
+
+成熟度维度防的是"声明已落 / 代码是 echo stub"这种二元措辞漂移——见 [memory/feedback-maturity-not-binary](C:\Users\newwo\.claude\projects\D--carbon-shade-web\memory\feedback-maturity-not-binary.md)。新加文档/memory/code claim 时，对应 truth 实测点应同步加进 `scripts/consistency-check.mjs` CHECKS 数组。
 
 ## MCP / Skill 工具决策树
 

@@ -1,6 +1,14 @@
 # Documentation Index
 
-> Last updated: 2026-05-15
+> Last updated: 2026-05-28
+>
+> ⚠️ **Branch context**：项目当前在 `dnf-native` 分支。本 index 仍以 `master` 时代（Combat Lab 0.2/0.3, handfeel/fix6, ~5-15）为骨架编排，**Stage 1 / Stage 2 (dnf-native) 的最新文档没有完整反映在下表里**。dnf-native 时代的权威入口：
+> - 当前真值：[`engineering/22-system-field-matrix.md`](engineering/22-system-field-matrix.md)、[`engineering/nut-validation-2026-05-27.md`](engineering/nut-validation-2026-05-27.md)
+> - 路线图：[`planning/2026-05-27-stage2-roadmap.md`](planning/2026-05-27-stage2-roadmap.md)、[`planning/2026-05-27-resolved-decisions.md`](planning/2026-05-27-resolved-decisions.md)
+> - Stage 1 完成档：[`changelog/2026-05-24-stage1-complete.md`](changelog/2026-05-24-stage1-complete.md)
+> - Audit 链：[`engineering/audit-2026-05-25-full-pipeline-static.md`](engineering/audit-2026-05-25-full-pipeline-static.md)、[`engineering/audit-2026-05-27-ten-commits.md`](engineering/audit-2026-05-27-ten-commits.md)
+>
+> 下表 0.2/0.3 时代条目作历史快照保留，新会话查 dnf-native 当前事实请走上面链接 + `CLAUDE.md "Current state"` 段。
 
 This index categorizes all project documentation by status. Navigate by category to find relevant documents.
 

@@ -20,4 +20,13 @@ fi
 ln -sf "$(basename "$REPORT")" verification/latest-report.json
 
 echo "[pre-push] Report: $REPORT"
+
+# 4-way consistency drift scan (informational — does not block push)
+echo "[pre-push] Running consistency drift scan..."
+if npm run consistency 2>&1 | tee verification/consistency-latest.txt | tail -3; then
+  echo "[pre-push] Consistency: see verification/consistency-latest.txt"
+else
+  echo "[pre-push] Consistency: scan exited non-zero (informational only)"
+fi
+
 echo "[pre-push] OK"
