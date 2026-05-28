@@ -84,7 +84,7 @@
 > 这是整个项目最重要的一步。"数据库没建好"的本质就是缺这一步。
 > 不是设计 SQLite 表结构，而是设计仿真循环每帧读什么数据、什么布局。
 
-### T1.1 — 13 system 逐系统字段清单
+### T1.1 — 22 system 逐系统字段清单
 
 - **目的**：搞清楚每个 system 的 `tick()` 函数需要读取哪些字段、什么类型、多大
 - **方法**：从 DNF v2 design doc §2 各模块真值分析 + brainstorm §2 各系统 unknown 出发
@@ -192,7 +192,7 @@
   src/engine/simulation/
   ├── GameLoop.ts          (accumulator pattern, 60Hz fixed + variable render)
   ├── DeterministicPRNG.ts (seeded mulberry32 or xoshiro128)
-  ├── TickOrdering.ts      (13 system 的固定执行顺序)
+  ├── TickOrdering.ts      (22 system 的固定执行顺序)
   └── StateSnapshot.ts     (immutable copy → render thread via postMessage)
   ```
 - **依赖**：T0.5 (Worker 骨架), T1.4 (schema)

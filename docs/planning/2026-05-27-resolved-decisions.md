@@ -1,6 +1,6 @@
-# 2026-05-27 已决策落档（5 个 A 类决策）
+# 2026-05-27 已决策落档（8 个 A 类决策）
 
-> 用户在 2026-05-27 早上给出 "bcabb" 5 字母回答，对应 [decisions-and-questions.md](2026-05-26-decisions-and-questions.md) 里 5 个 Phase 2 开工前阻塞性问题的明确选择。本文档把这 5 个决策、推导依据、关联工作落档。
+> 用户在 2026-05-27 早上给出 "bcabb" 5 字母回答（对应 Q1/Q2/Q4/Q21/Q31），后续会话又陆续决策了 Q3/Q7/Q9。本文档把这 8 个决策、推导依据、关联工作落档。
 
 ---
 
@@ -10,7 +10,10 @@
 |---|------|--------|------|
 | **Q1** | 13-system（后证实为 22-system）框架用还是不用 | **B** | ✅ 已 Windows 验证 — classify-v4 输出 22 个 classified bucket + 1 unclassified。13→22 是粒度细化，不是推翻。当工作假设 |
 | **Q2** | Runtime Schema Design 何时做 | **C** | 先扩数据再做 — swordman 数据补全后再定 .fbs schema |
-| **Q4** | 参考角色 | **A** | swordman — 10 motion + 3 atk + 2 skl 已 inline，零工作量起步 |
+| **Q3** | FlatBuffers 什么时候切 | **A** | Phase 2 Day 1 就用 — flatbuffers npm 装 + scripts/compile-schema.mjs + physics/chr/skl/atk 4 个 .fbs 已落（commit 2c4d016 + acedd3c）|
+| **Q4** | 参考角色 | **A** | swordman — 10 motion + 3 atk + 2 skl 已 inline，零工作量起步；berserker 实测在 PVF 中不是独立 class |
+| **Q7** | Web Worker 架构 Day 1 就分 | **A** | Day 1 就分 — vite worker config + sim-worker/host skeleton 已就位（commit 2c4d016）|
+| **Q9** | CURATED_FILES 扩多大 | **A+B** | "鬼剑士优先狂战士"模式 — BASELINE_JOB=swordman 扫 character/<job>/* 排除 equipment/*，1414 文件，swordman.json 跃迁 3/2/12 → 81/205/161（commit 33192d9）|
 | **Q21** | 22 个 system 的 tick 执行顺序怎么定 | **B** | 从 .nut 反推 — .nut 不含 C++ tick 顺序，但能反推引擎→脚本回调时序。Phase 2 先对齐 .nut hook 顺序 |
 | **Q31** | "最小闭环"精确定义 | **B** | 命中 → 伤害 → 受击 → HP 扣减（4-5 system 范围） |
 
@@ -100,9 +103,9 @@ Q31/B ────────┘   闭环范围：Animation + HitDetection + Da
 
 ---
 
-## 仍未决定的 30 个问题
+## 仍未决定的 24 个问题
 
-以下来自 [decisions-and-questions.md](2026-05-26-decisions-and-questions.md) 的 Q3/Q5-Q20/Q22-Q30/Q32 + 本次 PR 留下的 3 个 — 共 30 个待决。详见 [p1-p2-backlog.md](2026-05-26-p1-p2-backlog.md) 末尾的待决问题清单。
+以下来自 [decisions-and-questions.md](2026-05-26-decisions-and-questions.md) 的 Q5-Q6/Q8/Q10-Q20/Q22-Q30/Q32 + 本次 PR 留下的 3 个 — 共 24 个待决。详见 [p1-p2-backlog.md](2026-05-26-p1-p2-backlog.md) 末尾的待决问题清单。
 
 ---
 

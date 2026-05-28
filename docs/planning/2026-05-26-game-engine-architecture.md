@@ -6,9 +6,9 @@
 
 > ⚠️ **2026-05-27 audit 警告 — 13-system 推导链：计数级已验证，聚类细节仍 inferred**
 > 本文档 §一、§三 反复使用的"13 system"框架原本来自 `kernel-design.md` 一行结论。2026-05-27 在 Windows 上跑 `dnf-extract --filter ".nut"` 重做验证：**193 个 .nut + 478 case-sensitive 引擎 API + 443 case-normalized / 7,101 调用点** 全部 reproducible（剔除 5 个 user-defined function 后**精确匹配 md 478**）。v4 启发式分类划出 **22 个 system buckets**，可能是 md 13 的细分粒度版本（28% unclassified / call share 2.9%）。
-> **新状态**：`sourceType: "counts_verified_clustering_inferred"` — 数字级证据真实，**但具体"13 个 system 各包含哪些 API"仍是 inference**（启发式分类 47% unclassified）。
+> **新状态**：`sourceType: "counts_verified_clustering_inferred"` — 数字级证据真实，**但具体"22 个 system 各包含哪些 API"仍是 inference**（启发式分类 28% unique unclassified / 仅 2.9% calls，long-tail）。
 > **完整 verification report**：[docs/engineering/nut-validation-2026-05-27.md](../engineering/nut-validation-2026-05-27.md)
-> **解封剩余**：跑 LLM 深推导 / agent 协作把 47% unclassified 降到 < 5%，得到明确的 13 system × API 表，然后才能让 T3.1-T3.13 task breakdown 站住脚。
+> **解封剩余**：跑 LLM 深推导 / agent 协作把 unclassified API 进一步分类，得到明确的 22 system × API 表，然后才能让 T3.1-T3.13 task breakdown 站住脚。
 
 ---
 
@@ -20,7 +20,7 @@
 | SQLite 数据库 | 离线资产索引（构建时查询，运行时不用） |
 | JSON shards | 源格式（需编译成 FlatBuffers 才能上线） |
 | Stage 1 pipeline | Asset Build Pipeline（跟 Unreal Cooking / Unity AssetBundle 一回事） |
-| 13 个战斗系统 | 仿真循环里 13 个 tick() 函数（按固定顺序执行，每帧） |
+| 13 个战斗系统 | 仿真循环里 N 个 tick() 函数（按固定顺序执行，每帧）。⚠️ 2026-05-27 audit 后细化为 **22 个 system buckets**，见 [22-system-field-matrix.md](../engineering/22-system-field-matrix.md) |
 | 数据库建模 | Runtime Data Format Design（不是表关系，是内存布局） |
 | 60fps 渲染 | Fixed Timestep + Variable Render（仿真 60Hz 固定，渲染可变） |
 | 回放系统 | Deterministic Lockstep Replay（输入+种子→确定性重放，不是录像） |
@@ -157,7 +157,7 @@ Stage 1 产出的 JSON shards。人类可读、可 diff、可 review。
 [1b] ★ Runtime Schema 设计 ★
  │   不是"数据库表结构"，是"仿真循环里每个系统读什么字段、多大、什么布局"
  │
- ├── 从 13 system 反推字段需求 (每个 tick 需要什么数据)
+ ├── 从 22 system 反推字段需求 (每个 tick 需要什么数据)
  ├── 字段按 HOT/WARM/COLD 分层
  ├── FlatBuffers .fbs schema 定义
  └── 字段引用链: .skl → .atk → .ani → .img
@@ -191,7 +191,7 @@ Stage 1 产出的 JSON shards。人类可读、可 diff、可 review。
 仿真核心原则:
 - Fixed Timestep Loop (accumulator pattern, 60Hz fixed, variable render)
 - Deterministic PRNG (seeded, per-tick reproducible)
-- Ordering Contract (每 tick 内 13 system 执行顺序固定)
+- Ordering Contract (每 tick 内 22 system 执行顺序固定)
 - State Snapshot (immutable copy → render thread)
 - 所有 combat 代码跑在 Web Worker
 
@@ -323,7 +323,7 @@ Stage 1 产出的 JSON shards。人类可读、可 diff、可 review。
 
 ### 建议的下一步
 
-1. **[1b] Runtime Schema Design** — 从 13 system 反推字段需求，定义 .fbs schema。这是所有后续工作的基础。建模完成之前不要写 Phase 2 代码。
+1. **[1b] Runtime Schema Design** — 从 22 system 反推字段需求，定义 .fbs schema。这是所有后续工作的基础。建模完成之前不要写 Phase 2 代码。（⚠️ 2026-05-27 状态更新：physics/chr/skl/atk 4 个 .fbs 已落，mob/ani/dgn/manifest 仍待写。详见 [22-system-field-matrix.md](../engineering/22-system-field-matrix.md) + [stage2-roadmap.md Phase 1b](2026-05-27-stage2-roadmap.md)）
 
 2. **[1c] 离线编译器** — JSON → FlatBuffers .bin 的编译工具链
 
