@@ -22,7 +22,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, rename } from "node:fs/promises";
 import { join } from "node:path";
 
 import type { AtkDef } from "../types/AtkDef.js";
@@ -433,9 +433,14 @@ export async function exportRuntimeShards(options: ExportOptions): Promise<Expor
   };
   const manifestPath = join(options.outDir, "manifest.json");
   await mkdir(options.outDir, { recursive: true });
-  // audit P1-24 (2026-05-25): non-atomic writeFile — should use tmp+rename to
-  // survive mid-write crash. Original ref :331 drifted to :354.
-  await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
+  // audit P1-24 (fixed 2026-05-28): atomic write via tmp+rename. If process
+  // crashes mid-write, manifest.json keeps the previous valid version rather
+  // than leaving a half-written file that breaks every consumer. POSIX rename
+  // is atomic within same filesystem; Windows ReplaceFileW is also atomic
+  // (Node maps rename → ReplaceFile on existing target).
+  const manifestTmpPath = `${manifestPath}.tmp`;
+  await writeFile(manifestTmpPath, JSON.stringify(manifest, null, 2));
+  await rename(manifestTmpPath, manifestPath);
 
   return {
     outDir: options.outDir,

@@ -51,7 +51,26 @@ export function parsePvfDocument(document: PvfDocument): ParsedPvfDocument {
     case ".map":
       return parseMapDocument(document);
     default:
-      throw new Error(`No parser registered for ${document.path}`);
+      // audit P1-22 (fixed 2026-05-28): previously threw; now signals via a
+      // structured error class so pipelineRunner can route unknown extensions
+      // into parseErrors (collected, not aborted). Real PVF contains plenty
+      // of unregistered extensions (.aic / .lin / .lst / ...); throwing on
+      // every one would block batch runs.
+      throw new UnregisteredExtensionError(document.path);
+  }
+}
+
+/**
+ * Distinct error subclass so callers can `instanceof` check to decide
+ * abort-vs-collect policy. pipelineRunner treats this as a soft skip
+ * (logged + collected into parseErrors). Strict CLI / probe call sites
+ * may still let it propagate.
+ */
+export class UnregisteredExtensionError extends Error {
+  readonly kind = "unregistered_extension" as const;
+  constructor(readonly path: string) {
+    super(`No parser registered for ${path}`);
+    this.name = "UnregisteredExtensionError";
   }
 }
 

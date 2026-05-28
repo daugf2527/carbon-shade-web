@@ -132,17 +132,19 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
 
   // ─── VALIDATE stage ────────────────────────────────────────────────────
   const runId = options.runId ?? slugifyTimestamp(startedAt);
-  // audit P1-19 (2026-05-25): finishedAt should be captured AFTER EXPORT,
-  // not before VALIDATE. Original ref :126 drifted to :135.
-  const finishedAt = new Date().toISOString();
+  // audit P1-19 (fixed 2026-05-28): finishedAt now captures pipeline END
+  // (after EXPORT writes complete). Validation/export need their own
+  // timestamp to mark "when validation snapshot was taken" — use
+  // validationStartedAt for that.
+  const validationStartedAt = new Date().toISOString();
   const pvfHash = pickFirstDefined(documents, d => d.source_pvf_hash) ?? null;
   const extractorVersion = pickFirstDefined(documents, d => d.extractor_version) ?? null;
 
   const validation = shouldRun("validate")
     ? validateParsedDocuments(parsed, {
-        runId, startedAt, finishedAt, pvfHash, extractorVersion, parseErrors,
+        runId, startedAt, finishedAt: validationStartedAt, pvfHash, extractorVersion, parseErrors,
       })
-    : emptyValidationReport(runId, startedAt, finishedAt, pvfHash, extractorVersion);
+    : emptyValidationReport(runId, startedAt, validationStartedAt, pvfHash, extractorVersion);
   const provenanceAudit = buildProvenanceAudit(validation);
 
   // ─── Debug dumps ───────────────────────────────────────────────────────
@@ -203,13 +205,19 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
       outDir: options.exportOutDir,
       parsed,
       aniDefs: options.aniDefs,
-      meta: { pvfHash, extractorVersion, exportedAt: finishedAt },
+      meta: { pvfHash, extractorVersion, exportedAt: validationStartedAt },
       sharedPhysics: options.sharedPhysics,
       sharedEnums: options.sharedEnums,
       incrementalBaseManifest: options.exportBaseManifest,
       useContentFingerprint: options.exportUseContentFingerprint,
     });
   }
+
+  // audit P1-19 (fixed 2026-05-28): real pipeline end timestamp — after EXPORT
+  // writes complete. Used by validation.meta.finishedAt so reports reflect
+  // actual wall-clock end, not "right before VALIDATE started".
+  const finishedAt = new Date().toISOString();
+  validation.meta.finishedAt = finishedAt;
 
   // ─── Determine highest completed stage ─────────────────────────────────
   // The stage actually reached reflects (a) stopAt cap AND (b) whether the

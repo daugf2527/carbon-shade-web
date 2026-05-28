@@ -5,7 +5,50 @@ import type { AniDocument } from "../types/AniDef.js";
 export interface DnfExtractPipeOptions {
   pvfPath: string;
   executablePath?: string;
+  /**
+   * Audit P1-20 (fixed 2026-05-28): wall-clock timeout in ms. PVF corruption
+   * (e.g. malformed dirtree, infinite loop in iconv) can hang spawn forever.
+   * Default 60_000 (60s) — generous enough for the largest single PVF file
+   * extraction observed (~5s) but short enough to surface hangs in CI.
+   * Pass 0 to disable (legacy behavior).
+   */
+  timeoutMs?: number;
 }
+
+/**
+ * Audit P1-20 helper: spawn dnf-extract with a timeout watchdog. Returns a
+ * `kill()` to be called when the child process settles, plus the timer id
+ * so caller can clear it. If the timeout fires before the child exits,
+ * the child is SIGKILLed; the promise chain surfaces a clear error.
+ */
+function spawnWithTimeout(
+  executablePath: string,
+  args: string[],
+  timeoutMs: number,
+): { child: ReturnType<typeof spawn>; clearWatchdog: () => void; timedOut: () => boolean } {
+  const child = spawn(executablePath, args, {
+    cwd: process.cwd(),
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+  let didTimeOut = false;
+  const handle: ReturnType<typeof setTimeout> | null =
+    timeoutMs > 0
+      ? setTimeout(() => {
+          didTimeOut = true;
+          // SIGKILL — SIGTERM may not be honored if child is in C++ tight loop.
+          child.kill("SIGKILL");
+        }, timeoutMs)
+      : null;
+  return {
+    child,
+    clearWatchdog: () => {
+      if (handle !== null) clearTimeout(handle);
+    },
+    timedOut: () => didTimeOut,
+  };
+}
+
+const DEFAULT_TIMEOUT_MS = 60_000;
 
 /**
  * Audit pipeline-closure F6 (2026-05-24): for batch / pipeline use, callers
@@ -194,11 +237,14 @@ export async function loadPvfDocumentsViaPipe(
   options: DnfExtractPipeOptions,
 ): Promise<PvfDocument[]> {
   const executablePath = options.executablePath ?? DEFAULT_DNF_EXTRACT_PATH;
-  // audit P1-20 (2026-05-25): no timeout option — PVF corruption can hang pipeline indefinitely.
-  const child = spawn(executablePath, buildDnfExtractPipeArgs(options), {
-    cwd: process.cwd(),
-    stdio: ["pipe", "pipe", "pipe"],
-  });
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  // audit P1-20 (fixed 2026-05-28): spawn wrapped with watchdog. PVF corruption
+  // can hang in C++ tight loops (iconv/dirtree). SIGKILL after timeoutMs.
+  const { child, clearWatchdog, timedOut } = spawnWithTimeout(
+    executablePath,
+    buildDnfExtractPipeArgs(options),
+    timeoutMs,
+  );
 
   let stdout = "";
   let stderr = "";
@@ -216,7 +262,14 @@ export async function loadPvfDocumentsViaPipe(
     child.on("error", reject);
     child.on("close", resolve);
   });
+  clearWatchdog();
 
+  if (timedOut()) {
+    throw new Error(
+      `dnf-extract --pipe killed after ${timeoutMs}ms timeout (audit P1-20). ` +
+        `PVF may be corrupt or path list too large. Increase timeoutMs or check PVF integrity.\n${stderr}`,
+    );
+  }
   if (exitCode !== 0) {
     throw new Error(`dnf-extract --pipe exited ${exitCode}\n${stderr}`);
   }
@@ -236,11 +289,13 @@ export async function loadPvfDocumentsViaPipeWithErrors(
   options: DnfExtractPipeOptions,
 ): Promise<DnfExtractPipeBatchResult> {
   const executablePath = options.executablePath ?? DEFAULT_DNF_EXTRACT_PATH;
-  // audit P1-20 (2026-05-25): no timeout option — PVF corruption can hang pipeline indefinitely.
-  const child = spawn(executablePath, buildDnfExtractPipeArgs(options), {
-    cwd: process.cwd(),
-    stdio: ["pipe", "pipe", "pipe"],
-  });
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  // audit P1-20 (fixed 2026-05-28): spawn watchdog.
+  const { child, clearWatchdog, timedOut } = spawnWithTimeout(
+    executablePath,
+    buildDnfExtractPipeArgs(options),
+    timeoutMs,
+  );
 
   let stdout = "";
   let stderr = "";
@@ -258,7 +313,13 @@ export async function loadPvfDocumentsViaPipeWithErrors(
     child.on("error", reject);
     child.on("close", resolve);
   });
+  clearWatchdog();
 
+  if (timedOut()) {
+    throw new Error(
+      `dnf-extract --pipe killed after ${timeoutMs}ms timeout (audit P1-20).\n${stderr}`,
+    );
+  }
   if (exitCode !== 0) {
     throw new Error(`dnf-extract --pipe exited ${exitCode}\n${stderr}`);
   }
@@ -282,11 +343,13 @@ export async function loadAniDocumentsViaPipe(
   options: DnfExtractPipeOptions,
 ): Promise<AniDocument[]> {
   const executablePath = options.executablePath ?? DEFAULT_DNF_EXTRACT_PATH;
-  // audit P1-20 (2026-05-25): no timeout option — PVF corruption can hang pipeline indefinitely.
-  const child = spawn(executablePath, buildDnfExtractPipeArgs(options), {
-    cwd: process.cwd(),
-    stdio: ["pipe", "pipe", "pipe"],
-  });
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  // audit P1-20 (fixed 2026-05-28): spawn watchdog for .ani extraction too.
+  const { child, clearWatchdog, timedOut } = spawnWithTimeout(
+    executablePath,
+    buildDnfExtractPipeArgs(options),
+    timeoutMs,
+  );
 
   let stdout = "";
   let stderr = "";
@@ -304,7 +367,13 @@ export async function loadAniDocumentsViaPipe(
     child.on("error", reject);
     child.on("close", resolve);
   });
+  clearWatchdog();
 
+  if (timedOut()) {
+    throw new Error(
+      `dnf-extract --pipe (ani) killed after ${timeoutMs}ms timeout (audit P1-20).\n${stderr}`,
+    );
+  }
   if (exitCode !== 0) {
     throw new Error(`dnf-extract --pipe (ani) exited ${exitCode}\n${stderr}`);
   }
