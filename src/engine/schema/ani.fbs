@@ -1,0 +1,73 @@
+// ani.fbs — DNF animation runtime schema (Phase 2 T1.5)
+//
+// Data source: AniDef in src/dnf-native-combat/data/types/AniDef.ts +
+//   verification/baseline-shards/players/swordman.json .animations[*]
+//
+// Animation 系统是每帧 tick 第 1 步（22-system-field-matrix.md §一）—
+// 必须有 schema 才能进入零拷贝管线（Stage 2 G3 风险点）。
+//
+// 6-int hitbox layout: [x1,y1,z1,x2,y2,z2] (verified HitResolver2D5.ts:19,
+// PvfAnimation.cpp:54-59 std::array<int32_t,6>). Width=x2-x1, height=y2-y1,
+// depth=z2-z1.
+//
+// 2026-05-28 created (Phase 0 + T1.5, ani.fbs 缺口由竖切 audit 暴露).
+
+include "chr.fbs";  // reuse Provenance
+
+namespace CarbonShade.Engine.Schema;
+
+// ── 6-int hitbox struct ─────────────────────────────────────────────
+// struct = inline POD (no offsets). Each frame may reference dozens of
+// hitboxes; struct layout halves memory vs table.
+struct Hitbox6 {
+  x1: int32;
+  y1: int32;
+  z1: int32;
+  x2: int32;
+  y2: int32;
+  z2: int32;
+}
+
+// ── Anchor (foot-relative pixel anchor) ─────────────────────────────
+struct Anchor {
+  x: int32;
+  y: int32;
+}
+
+// ── AniFrameDef ─────────────────────────────────────────────────────
+// Per-frame data. Fields ordered by HOT → WARM → COLD access frequency.
+// Sprite path / imgId / imgParam are read by render layer per-frame.
+// attackBoxes / damageBoxes are read by hit-detection per-frame (tick step #3).
+table AniFrame {
+  // ── HOT: read every render frame ──
+  index: uint16;                    // 0-based frame index
+  anchor: Anchor;                   // foot-relative anchor
+  delay_ms: int32 = 0;              // 0 = "use downstream default" (C++ omits when 0)
+  sprite: string;                   // sprite-pack IMG path (empty when absent)
+  img_id: uint16;                   // sprite-path table index
+  img_param: uint16;                // frame index within IMG file
+
+  // ── HOT: read by HitDetection (tick step #3 per field-matrix §七) ──
+  attack_boxes: [Hitbox6];          // 攻击判定框，经 facing 变换给消费者
+  damage_boxes: [Hitbox6];          // 受击判定框，同上
+}
+
+// ── AniDef ──────────────────────────────────────────────────────────
+// Top-level animation definition. 1:1 with JSON shard .animations[name].
+// Cross-ref: chr.motionRefs[actionName] → ani path → animations[basename(path)].
+table AniDef {
+  schema_version: uint16 = 1;
+
+  // ── HOT: tick-loop driver (field-matrix §一) ──
+  frames_count: uint16;             // == frames.length, validated invariant
+  loop: bool;                       // false = onAnimationEnd fires after last
+  frames: [AniFrame];               // ordered by index
+
+  // ── COLD: ──
+  provenance: Provenance;
+  kind: string;                     // "ani"
+  path: string;                     // "character/swordman/animation/stay.ani"
+}
+
+root_type AniDef;
+file_identifier "ANID";

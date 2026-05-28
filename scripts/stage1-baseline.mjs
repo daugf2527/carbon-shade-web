@@ -106,7 +106,9 @@ const CURATED_FILES = [
   "character/swordman/animation/jumpattack.ani",
   "character/swordman/animation/dashattack.ani",
   "character/swordman/animation/damage1.ani",
+  "character/swordman/animation/damage2.ani",
   "character/swordman/animation/down.ani",
+  "character/swordman/animation/overturn.ani",
 ];
 
 // PVE Phase 2A filter (2026-05-24): expand to all character/* + skill/* files.

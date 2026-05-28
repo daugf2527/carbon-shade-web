@@ -18,7 +18,9 @@ import { readdirSync, mkdirSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
-const ROOT = path.dirname(fileURLToPath(new URL("..", import.meta.url)));
+// __dirname-equivalent: scripts/ → repo root
+const __filename = fileURLToPath(import.meta.url);
+const ROOT = path.resolve(path.dirname(__filename), "..");
 const SCHEMA_DIR = path.join(ROOT, "src", "engine", "schema");
 const OUT_DIR = SCHEMA_DIR; // co-locate _generated.ts with .fbs
 

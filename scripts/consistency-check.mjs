@@ -232,22 +232,47 @@ checks.push({
 // 到"声明已落 / 代码是 echo stub"这种漂移。详见 [[feedback-maturity-not-binary]]。
 // ════════════════════════════════════════════════════════════════════════
 
-// 11. .fbs schema 编译闭环 — .fbs 数 vs _generated.ts 数
+// 11. .fbs schema 编译闭环 — .fbs 数 vs flatc 输出 .ts 数
+// flatc 25.x 按 namespace 输出到子目录（如 carbon-shade/engine/schema/<name>-def.ts），
+// 不是同目录 *_generated.ts。check 改为：每个 .fbs 必须有对应 <stem>-def.ts 存在于 generated 目录。
 const schemaDir = join(ROOT, "src/engine/schema");
 const fbsFiles = existsSync(schemaDir)
   ? readdirSync(schemaDir).filter(f => f.endsWith(".fbs"))
   : [];
-const generatedFiles = existsSync(schemaDir)
-  ? readdirSync(schemaDir).filter(f => f.endsWith("_generated.ts"))
-  : [];
+// 递归扫 schemaDir 找所有 .ts（namespace 子目录里）
+const allGeneratedTs = [];
+if (existsSync(schemaDir)) {
+  const walk = (p) => {
+    for (const e of readdirSync(p, { withFileTypes: true })) {
+      const fp = join(p, e.name);
+      if (e.isDirectory()) walk(fp);
+      else if (e.name.endsWith(".ts")) allGeneratedTs.push(e.name.replace(/\.ts$/, ""));
+    }
+  };
+  walk(schemaDir);
+}
+// 每个 .fbs 必须有同 stem 或 root_type 名（kebab-case）的生成 .ts 之一存在
+const uncompiledFbs = fbsFiles.filter(fbs => {
+  const stem = fbs.replace(/\.fbs$/, "");
+  const fbsContent = readTextSafe(join(schemaDir, fbs)) || "";
+  const rootMatch = fbsContent.match(/root_type\s+(\w+)\s*;/);
+  const rootKebab = rootMatch
+    ? rootMatch[1].replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase()
+    : null;
+  // 任一存在即算编译完成：<stem>-def.ts 或 <root-kebab>.ts
+  return !(
+    allGeneratedTs.includes(`${stem}-def`) ||
+    (rootKebab !== null && allGeneratedTs.includes(rootKebab))
+  );
+});
 checks.push({
   name: "maturity/fbs-compiled",
   claimSite: ".fbs schema files",
   claim: `${fbsFiles.length} .fbs declared`,
-  truthSite: "*_generated.ts (flatc output)",
-  truth: `${generatedFiles.length} generated`,
-  drift: fbsFiles.length > 0 && generatedFiles.length < fbsFiles.length
-    ? `${fbsFiles.length - generatedFiles.length} .fbs uncompiled. flatc never ran. Run: node scripts/compile-schema.mjs`
+  truthSite: "src/engine/schema/**/*-def.ts (flatc TS output)",
+  truth: `${fbsFiles.length - uncompiledFbs.length}/${fbsFiles.length} compiled`,
+  drift: uncompiledFbs.length > 0
+    ? `${uncompiledFbs.length} .fbs uncompiled: ${uncompiledFbs.join(", ")}. Run: node scripts/compile-schema.mjs`
     : null,
 });
 

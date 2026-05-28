@@ -37,7 +37,7 @@ PVF --pipe--> dnf-extract (C++) --> PvfDocument[] --> 10 parsers (TS) --> Zod va
 | `npm run audit:verify` | Re-check agent audit claims against cited file:line |
 | `npm run closed-loop:status` | Closed-loop workflow state machine status |
 | `npm run browser:smoke` | Playwright browser test (CI only, needs dev server + display) |
-| `npm run baseline` | Stage 1 sample baseline (43 curated files, ~4s) |
+| `npm run baseline` | Stage 1 sample baseline (45 curated files, ~4s) |
 | `npm run baseline:pve` | Stage 1 PVE-full baseline (8794 character + skill files, ~10min) |
 | `npm run validate:sprites` | Validate sprite manifest integrity |
 | `npm run validate:assets` | Validate asset paths against manifest |

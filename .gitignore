@@ -36,6 +36,7 @@ tools/dnf-porting-src/build/
 
 # FlatBuffers compiled schema outputs (derived from .fbs by flatc)
 src/engine/schema/*_generated.ts
+src/engine/schema/carbon-shade/
 
 # Local scratch files
 .tmp-*

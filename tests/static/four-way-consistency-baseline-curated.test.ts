@@ -20,7 +20,7 @@ import { assert } from "./test-utils.js";
 
 const ROOT = process.cwd();
 
-const EXPECTED_COUNT = 43;
+const EXPECTED_COUNT = 45;
 
 const baselineSrc = readFileSync(join(ROOT, "scripts/stage1-baseline.mjs"), "utf-8");
 
