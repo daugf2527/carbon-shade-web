@@ -310,7 +310,12 @@ export async function exportRuntimeShards(options: ExportOptions): Promise<Expor
     const monsterAnims: Record<string, AniDef> = {};
     for (const [aniPath, ani] of aniByPath) {
       const inDeclared = declaredAniPaths.has(aniPath);
-      const inPrefix = aniPath.startsWith(`monster/${id}/animation`);  // matches animation/ AND animation_goblin2/ etc
+      // TODO(stale-prefix): startsWith(`monster/${id}/animation`) (no trailing /)
+      // matches both `animation/` and `animation_goblin2/`, but also over-matches
+      // ID-prefix-overlapping archetypes — `goblin` would claim `goblinlord`'s anis.
+      // Harmless while archetypes are non-overlapping; tighten to a boundary regex
+      // (`monster/${id}/animation(_|/)`) when an overlapping mob is added.
+      const inPrefix = aniPath.startsWith(`monster/${id}/animation`);
       if (inDeclared || inPrefix) {
         monsterAnims[basenameWithoutExt(aniPath)] = ani;
       }
@@ -377,8 +382,10 @@ export async function exportRuntimeShards(options: ExportOptions): Promise<Expor
     }
 
     // monsterRefs: extract distinct mob ids that any loaded mob's id matches.
-    // Until .map spawn parsing is wired, this is "all loaded mobs visible to
-    // this dungeon" — a superset that downstream consumers can intersect.
+    // TODO(refine-after-map-spawn): until .map spawn parsing is wired, this is
+    // "all loaded mobs visible to this dungeon" — a superset that downstream
+    // consumers must intersect with the actual .map[].spawn data. Stage 2
+    // T1.4 dgn.fbs schema work should pick this up.
     const monsterRefs: string[] = [];
     const seen = new Set<string>();
     for (const mob of mobs) {

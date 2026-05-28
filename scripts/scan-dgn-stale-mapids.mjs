@@ -17,7 +17,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -25,7 +25,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = path.dirname(__dirname);
 const PVF = path.join(ROOT, "data", "Script.pvf");
-const EXTRACT = path.join(ROOT, "tools", "dnf-extract.exe");
+// Prefer the platform-native binary: .exe on Windows, bare ELF elsewhere (Termux/Linux/CI).
+const EXTRACT_EXE = path.join(ROOT, "tools", "dnf-extract.exe");
+const EXTRACT_ELF = path.join(ROOT, "tools", "dnf-extract");
+const EXTRACT = process.platform === "win32" || existsSync(EXTRACT_EXE) ? EXTRACT_EXE : EXTRACT_ELF;
 const PVF_LIST_PATH = path.join(ROOT, "verification", "pvf-list-stdout.json");
 const OUT_PATH = path.join(ROOT, "verification", "dgn-stale-summary-2026-05-27.json");
 

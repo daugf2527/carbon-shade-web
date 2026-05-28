@@ -40,6 +40,7 @@ export function startSimWorker(seed: number = 0): SimWorkerHost {
   let snapshotCb: ((snap: StateSnapshot) => void) | null = null;
   let errorCb: ((msg: string) => void) | null = null;
   let ready = false;
+  let terminateTimer: ReturnType<typeof setTimeout> | null = null;
   const pendingInputs: InputSnapshot[] = [];
 
   worker.onmessage = (ev: MessageEvent<WorkerOutbound>): void => {
@@ -54,6 +55,12 @@ export function startSimWorker(seed: number = 0): SimWorkerHost {
     } else if (msg.type === "error" && errorCb !== null) {
       errorCb(msg.message);
     }
+  };
+
+  // Uncaught exceptions inside the worker (e.g. SyntaxError, ReferenceError) do
+  // not arrive via postMessage — they fire ErrorEvent on the worker handle.
+  worker.onerror = (ev: ErrorEvent): void => {
+    if (errorCb !== null) errorCb(ev.message || "worker error (no message)");
   };
 
   function postInbound(msg: WorkerInbound): void {
@@ -80,8 +87,13 @@ export function startSimWorker(seed: number = 0): SimWorkerHost {
     },
     shutdown() {
       postInbound({ type: "shutdown" });
-      // worker.terminate() as fallback in case worker doesn't self.close() promptly
-      setTimeout(() => worker.terminate(), 100);
+      // worker.terminate() as fallback in case worker doesn't self.close() promptly.
+      // Save timer id so repeated shutdown() calls don't stack multiple terminate() timers.
+      if (terminateTimer !== null) return;
+      terminateTimer = setTimeout(() => {
+        worker.terminate();
+        terminateTimer = null;
+      }, 100);
     },
   };
 }
