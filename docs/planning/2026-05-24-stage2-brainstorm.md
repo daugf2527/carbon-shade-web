@@ -1,5 +1,10 @@
 # Stage 2 brainstorm topics — DNF-native engine layer (NOT implementation)
 
+> ⚠️ **DEPRECATED (2026-05-27)** — 本文档的 13-system 分类已被 22-system 细分替代，
+> 当前现行设计见 [`docs/engineering/22-system-field-matrix.md`](../engineering/22-system-field-matrix.md)
+> 和 [`docs/planning/2026-05-27-stage2-roadmap.md`](2026-05-27-stage2-roadmap.md)。
+> 本文件作为设计演化历史保留，**不再作为实现依据**。
+
 > **Status**: ideation only. **No code in this stage 2 yet.** Per
 > [[combat-lab-dnf-alignment-pivot-2026-05-21]] memory and the user's
 > goal directive, Stage 2 implementation waits for explicit sign-off on
