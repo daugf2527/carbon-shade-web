@@ -40,6 +40,16 @@ table PvfFactInt {
   requires_verification: bool;
 }
 
+// PvfFactIntArray — multi-int PVF section attrs (e.g. moveSpeed.values=[300,300])
+// Distinguishes from PvfFactInt (single value) by carrying [int32] vector.
+table PvfFactIntArray {
+  values: [int32];
+  unit: string;
+  provenance: Provenance;
+  source_type: string;
+  requires_verification: bool;
+}
+
 table PvfFactString {
   value: string;
   unit: string;
@@ -92,6 +102,36 @@ table WeaponHitInfoRow {
   launch: float32;
 }
 
+// ── WeaponWav row ──────────────────────────────────────────────────
+// 6 weapons (one per equip slot). format key declares ordering of fields.
+// e.g. swordman[0] = {format:"...", attackSwingA, attackSwingB, hitA, hitB, ...}
+table WeaponWavRow {
+  format:        string;        // ordering descriptor for sub-fields
+  attack_swing_a: string;       // .wav path
+  attack_swing_b: string;
+  hit_a:          string;
+  hit_b:          string;
+  // future: misc / step / pickup wavs as discovered
+}
+
+// ── ModuleDamageRate row (1×4 float vector) ────────────────────────
+// 16 rows × 4 cols. Semantics not PVF-documented; positional storage.
+struct ModuleDamageRow {
+  c0: float32;
+  c1: float32;
+  c2: float32;
+  c3: float32;
+}
+
+// ── AttackInfo bundle (1:1 with JSON chr.attackInfo dict) ──────────
+// JSON shape: {attackBase: [3 PvfRef], etc: [87 PvfRef], jumpAttack: PvfRef, dashAttack: PvfRef}
+table AttackInfoBundle {
+  attack_base: [PvfRef];        // 3 .atk refs
+  etc:         [PvfRef];        // 87 .atk refs
+  jump_attack: PvfRef;
+  dash_attack: PvfRef;
+}
+
 // ── ChrDef ─────────────────────────────────────────────────────────
 // Top-level character definition. 1:1 with JSON shard .chr sub-object.
 // Fields ordered by HOT → WARM → COLD access frequency.
@@ -116,13 +156,20 @@ table ChrDef {
   body_image_path: PvfFactString;   // avatar sprite path template
   awakening: Awakening;
   weapon_hit_info: [WeaponHitInfoRow]; // 6 rows
+  weapon_wav: [WeaponWavRow];          // 6 rows (audio metadata per weapon)
+
+  // ── Job identity ──
+  job: PvfFactString;                  // "swordman" / "demonicswordman" / etc
+
+  // ── Numeric tables (Phase 4 weapon enchant / module damage) ──
+  module_damage_rate: [ModuleDamageRow];        // 16 rows × 4 floats
+  upgrade_weapon_attack_power_rate: [float32];  // 12-element strengthening curve
+  weapon_durability_decrease_rate: [int32];     // 6-element per-weapon decrement
+  weapon_skill_info: [int32];                   // 24-element flat int blob (semantics TBD)
 
   // ── References (used by exporter to inline sub-resources) ──
-  motion_refs: [PvfRef];            // 24 motion → .ani paths
-  attack_info_base: [PvfRef];       // attackBase (3 for swordman)
-  attack_info_etc: [PvfRef];        // etc (87 for swordman)
-  attack_info_jump: PvfRef;
-  attack_info_dash: PvfRef;
+  motion_refs: [PvfRef];               // 24 motion → .ani paths
+  attack_info: AttackInfoBundle;       // attackBase / etc / jumpAttack / dashAttack
 
   // ── Provenance (whole-document level) ──
   provenance: Provenance;

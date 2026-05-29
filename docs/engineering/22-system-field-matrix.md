@@ -1,11 +1,10 @@
-# 22-System 字段矩阵（最小闭环 5 系统先行）
+# 22-System 字段矩阵
 
-**日期**: 2026-05-27  
-**数据来源**: `verification/baseline-shards/players/swordman.json` (2.2MB) + `monsters/goblin.json` (27KB) + `shared/physics.json`  
-**classify-v4 参考**: `verification/nut-samples-2026-05-27/classify-v4-output.json`
+**日期**: 2026-05-29（T1.1 补全，覆盖全部 22 系统）
+**数据来源**: `verification/baseline-shards/players/swordman.json` (2.2MB) + `monsters/goblin.json` (27KB) + `shared/physics.json` + `verification/nut-samples-2026-05-27/classify-v4-output.json`
 
-> ⚠️ **2026-05-28 竖切核查**：本矩阵详列 5/22 系统字段（Animation/Attack/Skill/Physics/Resource，最小闭环 Q31/B 范围）。`src/engine/schema/` 现有 4 个 .fbs（chr/skl/atk/physics）——是**数据实体**而非 system，且**未编译**（flatc 未装，无 `_generated.ts`）。**关键缺口**：`ani.fbs` 不存在——Animation 是每帧 tick 第 1 步（§七），却无 schema。剩 17 个 system 字段空白。
-
+> **状态**: 5 个核心系统（Animation/Attack/Skill/Physics/Resource）详细字段 + 17 个扩展系统骨架级字段，全部 22 系统覆盖完毕。
+> ⚠️ **schema 缺口**（2026-05-28 竖切核查遗留）：`src/engine/schema/` 现有 4 个 .fbs（chr/skl/atk/physics）**未编译**（无 `_generated.ts`）；`ani.fbs` 不存在。Phase 1b 补全。
 ---
 
 ## 〇、数据地貌总览
@@ -160,14 +159,16 @@ motionRefs[actionName] → animation path → animations[basename(path)] → fra
 
 ### 技能→攻击引用
 
-**关键链路**: `chr.attackInfo` 记录了每个 action 引用哪个 .atk 文件。skill 的 section 中有 `[attack info]` 段指向特定的 atk。
+**⚠️ 2026-05-29 实测修正**：`skl.sections` 中**不存在** `[attack info]` section，skl 不直接引用 atk。
 
+实际路径（通过 chr 间接）：
 ```
-skill path (如 skill/swordman/upperslash.skl)
-  → .skl sections 中的 [attack info] 段
-  → 引用 atkDef (如 character/swordman/attackinfo/attack1.atk)
-  → attacks["attack1"] 中的 liftUp/pushAside/damageBonus 等
+StateMachine.currentAction（如 "attack1"）
+  → chr.attackInfo["attackBase"][0].targetPath → "character/swordman/attackinfo/attack1.atk"
+  → basename → attacks["attack1"].liftUp / .pushAside / .damageBonus
 ```
+
+skl 只提供 `coolTime / consumeMp / castingTime / command`，atk 绑定在 chr.attackInfo，不在 skl。详见 §五の続き T1.2 路径表。
 
 ### 输出字段
 
@@ -258,6 +259,50 @@ v(t) = v₀ + g × t
 | 新 HP | 渲染/UI | `hp - damage` |
 | HP=0 事件 | StateMachine, Death | `onDeath` |
 | HP 变更事件 | UI, Replay | `onHpChanged(oldHp, newHp)` |
+
+---
+
+## 五の続き、T1.2 字段引用链 JSON Pointer 路径表
+
+> **2026-05-29 实测补全**（T1.2 验收：DAG + JSON Pointer 路径表）
+
+### 链路 A：chr → motion → ani → img
+
+| 步骤 | JSON Pointer | 实测值（swordman） | 说明 |
+|------|-------------|------------------|------|
+| 1. 查 action 对应 ani | `/chr/motionRefs/{motionKey}[0]/targetPath` | `"character/swordman/animation/attack1.ani"` | motionKey 如 `"attack motion"` |
+| 2. 取 ani basename | `basename(targetPath).replace('.ani','')` | `"attack1"` | 用于 shard 内 animations 索引 |
+| 3. 定位 ani 定义 | `/animations/{basename}` | `{loop:false, frames:[...]}` | 161 个 animation 按 basename 索引 |
+| 4. 取帧 sprite | `/animations/{basename}/frames/{i}/sprite` | `"character/swordman/equipment/avatar/skin/sm_body%04d.img"` | `%04d` → imgParam 填充 |
+| 5. 取 imgId / imgParam | `/animations/{basename}/frames/{i}/imgId` + `.imgParam` | `imgId:0, imgParam:0` | imgId=sprite table 索引，imgParam=frame index |
+| 6. 取攻击框/受击框 | `/animations/{basename}/frames/{i}/attackBoxes` + `.damageBoxes` | `[{x1,y1,z1,x2,y2,z2}]` | **attack1 的 attackBoxes 全为空**，需从 chr.attackInfo 反推 |
+
+**⚠️ 关键发现**：`chr.motionRefs` 的 key 不是 action name（如 `"attack1"`），而是 PVF section 名（如 `"attack motion"`），一个 key 可能映射多个 .ani（如 `attack motion` → attack1.ani/attack2.ani/attack3.ani）。
+
+### 链路 B：chr → attackInfo → atk
+
+| 步骤 | JSON Pointer | 实测值（swordman） | 说明 |
+|------|-------------|------------------|------|
+| 1. 查 action 对应 atk | `/chr/attackInfo/{infoKey}[0]/targetPath` | `"character/swordman/attackinfo/attack1.atk"` | infoKey 如 `"attackBase"` |
+| 2. 取 atk basename | `basename(targetPath).replace('.atk','')` | `"attack1"` | 用于 shard 内 attacks 索引 |
+| 3. 定位 atk 定义 | `/attacks/{basename}` | `{liftUp, pushAside, damageBonus, ...}` | 81 个 attack 按 basename 索引 |
+| 4. 读伤害参数 | `/attacks/{basename}/liftUp/value` | `75` (px/s) | 弹起速度 |
+| 5. 读命中反应 | `/attacks/{basename}/hitReaction` | `"hit_down"` | 命中后状态机触发 |
+
+**chr.attackInfo keys（实测）**: `attackBase`（3个 atk）/ `dashAttack` / `jumpAttack` / `etc`（87个 atk）
+
+### 链路 C：skl → （通过 chr 间接）→ atk
+
+**实测发现**：skl.sections 中**不存在** `[attack info]` section，fieldMatrix §三的"→ .sections[attack info] → 引用 .atk path"描述有误。
+
+实际路径：
+```
+StateMachine.currentAction
+  → chr.attackInfo[infoKey] → atk basename → attacks[basename]
+  → chr.motionRefs[motionKey] → ani path → animations[basename]
+```
+
+skl 只提供 CD/MP/command/castingTime，**不直接引用 atk**。atk 选择由 chr.attackInfo 决定，与 action 名称绑定。
 
 ---
 
@@ -356,10 +401,439 @@ Frame N (16.67ms budget):
 
 ---
 
-## 九、剩余 17 个系统（Phase 4 再排）
+## 九、剩余 17 个系统字段矩阵
 
-classify-v4 的 22 buckets 减去以上 5 个 = 剩余 17 个：
+**更新日期**: 2026-05-29
+**数据来源**: `verification/nut-samples-2026-05-27/classify-v4-output.json` API 名称推断
+**分层标准**: HOT = 每帧 tick 必读/写；WARM = 每次状态转换读；COLD = 初始化/懒加载
 
-02-Net/RPC, 03-Monster/AI, 01-Input, 09-Status, 10-PassiveObj, 11-Pool, 12-ScriptRT, 13-DataStore, 14-Appendage, 15-VFX, 16-CameraFX, 17-Math, 18-Timer, 19-StateMachine, 20-Time, 21-Predicate, 22-Identity
+### Phase 优先级总览
 
-其中 Input (01) 和 StateMachine (19) 在最小闭环起步阶段可能需要简化版，其余 Phase 4 再排。
+| 系统 | Phase | PvE 最小闭环必须 | 理由 |
+|------|-------|-----------------|------|
+| 19-StateMachine | **Phase 3** | ✅ 必须 | 驱动 action 切换，是整个 tick 的入口 |
+| 01-Input | **Phase 3** | ✅ 必须 | 玩家指令 → 状态机转换的唯一来源 |
+| 03-Monster/AI | **Phase 3** | ✅ 必须 | 哥布林需要 AI 才能触发攻击 |
+| 09-Status | **Phase 3** | ✅ 必须 | 受击后的 hitstun/down 状态管理 |
+| 22-Identity | **Phase 3** | ✅ 必须 | 对象查找/目标选取的基础 |
+| 20-Time | **Phase 3** | ✅ 必须 | CD/hitstun 计时依赖 |
+| 17-Math | **Phase 3** | ✅ 必须 | 距离判断/随机数（AI 行为） |
+| 21-Predicate | **Phase 3** | ✅ 必须 | 条件判断（IsMyControlObject 等） |
+| 13-DataStore | **Phase 3** | ✅ 必须 | sq_var 脚本变量存储，技能逻辑依赖 |
+| 18-Timer | **Phase 3** | ✅ 必须 | sq_timer_ 延迟触发（技能后摇） |
+| 10-PassiveObj | **Phase 4** | 可延后 | 投射物/陷阱，基础攻击不需要 |
+| 11-Pool | **Phase 4** | 可延后 | 对象池，性能优化阶段 |
+| 14-Appendage | **Phase 4** | 可延后 | buff 附件，基础战斗不需要 |
+| 15-VFX | **Phase 4** | 可延后 | 粒子特效，视觉层 |
+| 16-CameraFX | **Phase 4** | 可延后 | 屏幕震动/闪光，视觉层 |
+| 12-ScriptRT | **Phase 4** | 可延后 | 音效/颜色，视觉/音频层 |
+| 02-Net/RPC | **Phase 5+** | ❌ OOS | PvE 单机不需要网络同步 |
+
+---
+
+## 九（续）、17 个系统字段骨架
+
+---
+
+### 系统 A：19-StateMachine（状态机）
+
+**Phase**: 3 — 最小闭环必须
+**职责**: 管理角色当前所处的 action 状态（stay/move/attack1/damage1/down 等），响应事件触发状态转换。
+
+| 字段 | 层级 | 来源 | 说明 |
+|------|------|------|------|
+| `currentState` | HOT | runtime | 当前状态名，如 `"attack1"` |
+| `parentState` | WARM | runtime | 父状态（技能子状态用） |
+| `stateTransitionTable` | COLD | chr/skl | 合法转换表（cancel window 等） |
+| `onAnimationEnd` | HOT | Animation 事件 | 非 loop 动画结束 → 触发转换 |
+| `onLanding` | HOT | Physics 事件 | 落地 → 退出 airborne 状态 |
+
+**输出**: `currentAction: string` → 驱动 Animation / Attack / Skill 系统
+
+**API 证据**: `sq_GetSTATE` (67 calls), `sq_GetParentState` (6 calls)
+
+---
+
+### 系统 B：01-Input（输入）
+
+**Phase**: 3 — 最小闭环必须
+**职责**: 读取玩家按键，判断是否满足技能 command 序列，向 StateMachine 发出 action 请求。
+
+| 字段 | 层级 | 来源 | 说明 |
+|------|------|------|------|
+| `commandBuffer` | HOT | runtime | 最近 N 帧的按键序列 |
+| `keyState` | HOT | runtime | 当前帧各键是否按下 |
+| `commandEnabled` | WARM | runtime | 是否允许输入（受击/硬直期间禁用） |
+| `inputDirection` | HOT | runtime | 方向键状态 → 移动/朝向 |
+| `keyxEnabled` | WARM | runtime | 特定按键是否启用（技能锁定） |
+
+**输出**: `actionRequest: string` → StateMachine
+
+**API 证据**: `sq_IsCommandEnable` (91), `sq_IsKeyDown` (10), `sq_SetKeyxEnable` (7), `sq_IsEnterCommand` (5), `sq_GetInputDirection` (4)
+
+---
+
+### 系统 C：03-Monster/AI（怪物 AI）
+
+**Phase**: 3 — 最小闭环必须
+**职责**: 控制怪物行为决策——寻路、选目标、决定何时发动攻击。
+
+| 字段 | 层级 | 来源 | 路径 | 实测值（goblin） | 说明 |
+|------|------|------|------|-----------------|------|
+| `targetId` | HOT | runtime | — | — | 当前攻击目标 |
+| `abilityCategory` | COLD | mob | `mob.abilityCategory.value` | `{hp max:70, equipment_physical_attack:90, ...}` (%) | 怪物能力倍率 |
+| `aiState` | HOT | runtime | — | — | AI 状态（idle/chase/attack/stun） |
+| `sight` | COLD | mob | `mob.sight.value` | `300` (px) | 视野范围（字段名是 `sight`，不是 `sightRange`） |
+| `warlike` | COLD | mob | `mob.warlike.value` | `60` (raw) | 仇恨激活阈值 |
+| `attackDelay` | COLD | mob | `mob.attackDelay.value` | `1500` (ms) | 攻击间隔 |
+| `attackDecisionTimer` | WARM | runtime | — | — | 距上次攻击决策的时间 |
+| `animationRefs` | COLD | mob | `mob.animationRefs[]` | `[{targetKind:'ani', targetPath:'monster/goblin/animation_goblin2/stay.ani', ...}]` | 动画引用列表 |
+| `attackInfo` | COLD | mob | `mob.attackInfo[]` | `[{targetKind:'atk', targetPath:'monster/goblin/attackinfo/attack1.atk'}]` | 攻击信息引用 |
+| `weight` | COLD | mob | `mob.weight.value` | `45000` (raw) | 受击位移权重 |
+| `hitRecovery` | COLD | mob | `mob.hitRecovery.values[level]` | `[500, 500]` (ms) | 受击硬直时间 |
+| `widthBox` | COLD | mob | `mob.widthBox.values` | `[40, 10]` (px) | 碰撞体宽高 |
+
+**输出**: `actionRequest: string` → StateMachine（怪物侧）
+
+**API 证据**: `sq_GetObjectByObjectId` (5), `sq_FindShootingTarget` (5), `sq_SetTargetObjectAICharacter` (4), `sq_IsInBattle` (4)
+
+**⚠️ 字段修正**（2026-05-29 实测）: 原矩阵写 `aggroRange` 字段不存在。实际字段为 `sight`（300px 视野）+ `warlike`（60 仇恨阈值）。`sightRange` 是错误名称。
+
+---
+
+### 系统 D：09-Status（状态效果）
+
+**Phase**: 3 — 最小闭环必须
+**职责**: 管理角色身上的状态效果（hitstun/down/stun/freeze 等），决定角色是否能行动。
+
+| 字段 | 层级 | 来源 | 说明 |
+|------|------|------|------|
+| `activeStatuses` | HOT | runtime | 当前生效的状态列表 |
+| `changeStatus` | WARM | atk/skl | 攻击附带的状态变更定义 |
+| `statusDuration` | WARM | runtime | 各状态剩余持续时间 |
+| `stateLayerAnimation` | WARM | runtime | 状态对应的叠加动画（如冰冻特效） |
+| `isValidActiveStatus` | HOT | runtime | 状态是否仍有效（用于每帧检查） |
+
+**输出**: `canAct: boolean`, `isStunned: boolean` → StateMachine / Input
+
+**API 证据**: `sq_AddStateLayerAnimation` (62), `sq_CreateChangeStatus` (18), `sq_SetChangeStatusIntoAttackInfo` (12), `sq_IsValidActiveStatus` (12), `sq_getChangeStatus` (10)
+
+---
+
+### 系统 E：22-Identity（对象标识）
+
+**Phase**: 3 — 最小闭环必须
+**职责**: 对象注册/查找——通过 uniqueId 获取场景中的任意对象，判断所属队伍/是否为玩家控制。
+
+| 字段 | 层级 | 来源 | 说明 |
+|------|------|------|------|
+| `uniqueId` | COLD | runtime | 对象唯一 ID（场景内） |
+| `objectId` | COLD | runtime | 对象类型 ID |
+| `team` | COLD | runtime | 所属队伍（player/enemy） |
+| `isMyCharacter` | WARM | runtime | 是否为本地玩家控制 |
+| `objectManagerStage` | COLD | runtime | 对象管理器阶段引用 |
+
+**输出**: `object: Actor` → 所有需要目标引用的系统
+
+**API 证据**: `sq_GetUniqueId` (14), `sq_GetObjectManagerStage` (9), `sq_GetObject` (9), `sq_GetObjectId` (6), `sq_IsMyCharacter` (6), `sq_GetTeam` (4)
+
+---
+
+### 系统 F：20-Time（时间查询）
+
+**Phase**: 3 — 最小闭环必须
+**职责**: 提供当前帧时间戳、对象存活时间、状态计时器——CD/hitstun 持续时间计算的基础。
+
+| 字段 | 层级 | 来源 | 说明 |
+|------|------|------|------|
+| `currentTime` | HOT | runtime | 当前世界时间（ms） |
+| `frameStartTime` | HOT | runtime | 本帧开始时间戳 |
+| `objectTime` | WARM | runtime | 对象自创建起的存活时间 |
+| `stateTimer` | WARM | runtime | 当前状态已持续时间 |
+| `validTime` | WARM | runtime | 对象有效期（超时自动销毁） |
+| `delaySum` | WARM | ani | 动画帧延迟累计（= 动画总时长） |
+
+**输出**: `elapsed: number` → Status/Skill CD 计算
+
+**API 证据**: `sq_GetCurrentTime` (47), `sq_SetValidTime` (14), `sq_GetFrameStartTime` (11), `sq_GetDelaySum` (10), `sq_GetObjectTime` (9), `sq_GetStateTimer` (7)
+
+---
+
+### 系统 G：17-Math（数学工具）
+
+**Phase**: 3 — 最小闭环必须
+**职责**: 提供随机数、绝对值、三角函数、角度转换——AI 行为随机化和投射物角度计算。
+
+| 字段 | 层级 | 来源 | 说明 |
+|------|------|------|------|
+| `randomSeed` | COLD | runtime | 随机数种子（replay 确定性） |
+| `rotateAngle` | WARM | runtime | 对象旋转角度（投射物方向） |
+| `customRotate` | WARM | runtime | 自定义旋转参数 |
+
+**输出**: `randomValue: number`, `angle: number` → AI/Physics/VFX
+
+**API 证据**: `sq_getRandom` (33), `sq_Abs` (26), `sq_ToRadian` (11), `sq_SetfRotateAngle` (7), `sq_SetCustomRotate` (7), `sq_Sin/Cos/Atan` (各 6)
+
+**注意**: `sq_getRandom` 33 次调用 — replay 确定性要求必须用 seeded PRNG，不能用 `Math.random()`
+
+---
+
+### 系统 H：21-Predicate（条件判断）
+
+**Phase**: 3 — 最小闭环必须
+**职责**: 提供各类布尔查询——是否为玩家控制对象、是否在地图区域内、是否为 Boss 等。
+
+| 字段 | 层级 | 来源 | 说明 |
+|------|------|------|------|
+| `isMyControlObject` | HOT | runtime | 是否为本地玩家控制（最高频，41 calls） |
+| `isInMapArea` | WARM | runtime | 是否在地图可移动区域内 |
+| `isBoss` | COLD | mob | 是否为 Boss 怪物 |
+| `isIntersectRect` | HOT | runtime | 矩形相交检测（辅助碰撞） |
+| `isExistObject` | WARM | runtime | 对象是否仍存在于场景 |
+
+**输出**: `bool` → StateMachine / AI / Input 的条件分支
+
+**API 证据**: `sq_IsMyControlObject` (41), `sq_IsSameAni` (2), `sq_IsIntersectRect` (2), `sq_IsBoss` (1), `sq_IsExistObject` (1)
+
+---
+
+### 系统 I：13-DataStore（脚本数据存储）
+
+**Phase**: 3 — 最小闭环必须
+**职责**: .nut 脚本的运行时变量存储——`sq_var` 是最高频 API（885 calls），是脚本状态的核心载体。
+
+| 字段 | 层级 | 来源 | 说明 |
+|------|------|------|------|
+| `scriptVars` | HOT | runtime | sq_var 键值对（脚本局部变量） |
+| `intData` | WARM | runtime | 整型数据槽（sq_GetIntData） |
+| `levelData` | COLD | chr/skl | 等级相关数据（sq_GetLevelData） |
+| `intVector` | WARM | runtime | 整型向量（临时列表，sq_IntVectPush/Clear） |
+| `globalIntVector` | WARM | runtime | 全局整型向量（跨脚本共享） |
+| `bonusRateWithPassive` | COLD | skl | 被动技能加成倍率 |
+| `job` | COLD | chr | 职业 ID（sq_getJob） |
+| `group` | COLD | runtime | 对象分组（sq_GetGroup） |
+
+**输出**: 脚本变量读写 → 所有 .nut 脚本逻辑
+
+**API 证据**: `sq_var` (885), `sq_GetIntData` (220), `sq_IntVectPush` (217), `sq_GetLevelData` (186), `sq_IntVectClear` (132), `sq_GetBonusRateWithPassive` (71)
+
+---
+
+### 系统 J：18-Timer（延迟定时器）
+
+**Phase**: 3 — 最小闭环必须
+**职责**: 提供 `sq_timer_` 延迟回调机制——技能后摇、延迟伤害、定时触发效果。
+
+| 字段 | 层级 | 来源 | 说明 |
+|------|------|------|------|
+| `timerQueue` | HOT | runtime | 待触发的定时器队列 |
+| `timerDelay` | WARM | skl/nut | 延迟时间（ms） |
+| `timerCallback` | WARM | nut | 到期后执行的脚本函数 |
+
+**输出**: 延迟事件 → StateMachine / Status / VFX
+
+**API 证据**: `sq_timer_` (18 calls，唯一 API，命名模式暗示是前缀，实际有多个具体 timer 函数)
+
+---
+
+### 系统 K：10-PassiveObj（被动对象/投射物）
+
+**Phase**: 4 — 可延后
+**职责**: 创建/销毁场景中的被动对象（投射物、陷阱、召唤物）。不参与基础近战攻击闭环。
+
+| 字段 | 层级 | 来源 | 说明 |
+|------|------|------|------|
+| `passiveObjectId` | COLD | runtime | 被动对象 ID |
+| `passiveObjectState` | WARM | runtime | 对象当前状态 |
+| `createPos` | WARM | runtime | 创建位置 {x, y, z} |
+| `passiveObjectType` | COLD | skl/nut | 对象类型（投射物/陷阱/召唤物） |
+
+**输出**: `PassiveObject` 实例 → Physics / HitDetection
+
+**API 证据**: `sq_SendDestroyPacketPassiveObject` (109), `sq_SendCreatePassiveObjectPacket` (81), `sq_GetPassiveObject` (12)
+
+---
+
+### 系统 L：11-Pool（对象池）
+
+**Phase**: 4 — 可延后
+**职责**: CNRD（Create-No-Render-Destroy）对象池管理——复用频繁创建/销毁的对象（特效、投射物）。
+
+| 字段 | 层级 | 来源 | 说明 |
+|------|------|------|------|
+| `cnrdPool` | COLD | runtime | CNRD 对象池 |
+| `pooledObjectType` | COLD | runtime | 池化对象类型 |
+| `drawOnlyObject` | WARM | runtime | 仅渲染不参与逻辑的对象 |
+
+**输出**: 复用对象引用 → VFX / PassiveObj
+
+**API 证据**: `sq_CreateCNRDAnimation` (72), `sq_GetCNRDObjectToSQRCharacter` (26), `sq_CreatePooledObject` (17), `sq_CreateDrawOnlyObject` (11)
+
+---
+
+### 系统 M：14-Appendage（附件/buff 附着）
+
+**Phase**: 4 — 可延后
+**职责**: 管理附着在角色身上的 buff 附件（光环、持续效果层）。
+
+| 字段 | 层级 | 来源 | 说明 |
+|------|------|------|------|
+| `appendageList` | WARM | runtime | 当前附件列表 |
+| `appendageId` | COLD | skl/nut | 附件类型 ID |
+| `effectLayerAppendage` | WARM | runtime | 特效层附件 |
+| `changeStatusAppendageId` | WARM | runtime | 状态变更附件 ID |
+
+**输出**: 附件效果 → Status / VFX
+
+**API 证据**: `sq_AppendAppendage` (49), `sq_RemoveAppendage` (23), `sq_IsAppendAppendage` (13), `sq_GetAppendage` (8)
+
+---
+
+### 系统 N：15-VFX（视觉特效）
+
+**Phase**: 4 — 可延后
+**职责**: 创建/管理粒子特效、命中特效、全屏特效。纯视觉层，不影响战斗逻辑。
+
+| 字段 | 层级 | 来源 | 说明 |
+|------|------|------|------|
+| `particleCreator` | COLD | runtime | 粒子创建器引用 |
+| `particlePos` | WARM | runtime | 粒子位置 |
+| `effectFront` | WARM | runtime | 前景特效层 |
+| `hitEffectFileName` | COLD | atk | 自定义命中特效文件 |
+| `bodyEffect` | WARM | runtime | 角色身体特效 |
+
+**输出**: 粒子/特效对象 → 渲染层
+
+**API 证据**: `sq_AddObjectParticleCreater` (30), `sq_AddObject` (29), `sq_AddParticleObject` (21), `sq_AddEffectFront` (14), `sq_CreateParticle` (10)
+
+---
+
+### 系统 O：16-CameraFX（镜头特效）
+
+**Phase**: 4 — 可延后
+**职责**: 屏幕震动、闪光、镜头滚动控制。纯视觉反馈，不影响战斗逻辑。
+
+| 字段 | 层级 | 来源 | 说明 |
+|------|------|------|------|
+| `shakeIntensity` | WARM | runtime | 震动强度 |
+| `shakeMyOnly` | WARM | runtime | 仅震动本地玩家视角 |
+| `flashColor` | WARM | runtime | 闪光颜色/持续时间 |
+| `xScrollStop` | WARM | runtime | X 轴滚动锁定 |
+| `cameraScrollPos` | WARM | runtime | 镜头滚动目标位置 |
+
+**输出**: 渲染层镜头参数
+
+**API 证据**: `sq_SetMyShake` (35), `sq_flashScreen` (32), `sq_SetShake` (27), `sq_addFlashScreen` (10), `sq_setXScrollStop` (6)
+
+---
+
+### 系统 P：12-ScriptRT（脚本运行时工具）
+
+**Phase**: 4 — 可延后
+**职责**: 脚本运行时杂项——音效播放、颜色构造、子脚本执行。
+
+| 字段 | 层级 | 来源 | 说明 |
+|------|------|------|------|
+| `soundTag` | COLD | ani/skl | 音效标签（文件路径） |
+| `rgbColor` | WARM | runtime | RGB 颜色值（特效着色） |
+| `rgbaColor` | WARM | runtime | RGBA 颜色值（透明度） |
+| `alphaValue` | WARM | runtime | Alpha 透明度 |
+| `subScriptPath` | COLD | nut | 子脚本路径（sq_RunScript） |
+
+**输出**: 音效触发 / 颜色参数 → 渲染/音频层
+
+**API 证据**: `sq_PlaySound` (143), `sq_RGB` (67), `sq_RGBA` (14), `sq_ALPHA` (13), `sq_RunScript` (6)
+
+---
+
+### 系统 Q：02-Net/RPC（网络/远程调用）
+
+**Phase**: 5+ — PvE 单机 OOS（Out of Scope）
+**职责**: 多人同步——序列化状态包、发送命中事件、广播 HP 变更。PvE 单机模式完全不需要。
+
+| 字段 | 层级 | 来源 | 说明 |
+|------|------|------|------|
+| `statePacket` | — | runtime | 状态同步包（二进制序列化） |
+| `hitObjectPacket` | — | runtime | 命中事件网络包 |
+| `sendState` | — | runtime | 当前发送状态 |
+| `isPVPMode` | — | runtime | 是否 PvP 模式（PvE 恒为 false） |
+
+**输出**: 网络包 → 服务器/其他客户端
+
+**API 证据**: `sq_AddSetStatePacket` (226), `sq_BinaryWriteDword` (196), `sq_BinaryStartWrite` (60), `sq_isPVPMode` (6)
+
+**PvE 处理**: 所有 `sq_AddSetStatePacket` / `sq_BinaryWrite*` 调用在 PvE 模式下为 no-op stub
+
+---
+
+### 系统 R：99-Unclassified（未分类）
+
+**Phase**: 按需归类
+**职责**: 126 个唯一 API，206 次调用，涵盖杂项功能。主要包含：
+
+- **动画引用查询**: `sq_getStayAni`, `sq_getDashAni`, `sq_getDownAni`, `sq_getJumpAni` 等 — 应归入 05-Animation
+- **超级护甲**: `sq_setSuperArmor`, `sq_removeSuperArmor` — 应归入 09-Status
+- **击退力**: `sq_SetCurrentAttacknUpForce`, `sq_SetCurrentAttacknBackForce` — 应归入 04-Attack/Hit
+- **地图/副本**: `sq_GetMap`, `sq_GetDungeonByStage`, `sq_GetMapIndex` — 副本系统（OOS for Phase 3）
+- **UI/弹窗**: `sq_GetPopupWindows`, `sq_OpenPopupWindow` — UI 层（OOS for Phase 3）
+- **下落帧**: `sq_SetDownUpFrame`, `sq_SetDownLieFrame`, `sq_SetDownBounceUpFrame` — 应归入 07-Physics
+
+**Phase 3 需要的 99 项**: `sq_setSuperArmor`/`sq_removeSuperArmor`（超甲）、`sq_SetCurrentAttacknUpForce`/`sq_SetCurrentAttacknBackForce`（击退力覆盖）
+
+---
+
+## 十、更新后的字段引用链 DAG（全 22 系统）
+
+```
+[01-Input] 按键序列
+    │ actionRequest
+    ▼
+[19-StateMachine] currentState ←── [09-Status] canAct / isStunned
+    │ currentAction                      ▲
+    │                              [20-Time] stateTimer
+    ├──────────────────────────────────────────────────────┐
+    ▼                                                      ▼
+[05-Animation] frames[i]                          [06-Skill] coolTime/MP
+    │ activeAtkBoxes / activeDmgBoxes                      │ atkRef
+    ▼                                                      ▼
+[04-Attack/Hit] AABB overlap ←──────────────── [13-DataStore] sq_var
+    │ HitEvent {liftUp, pushAside, atkDef}
+    ├──────────────────┬──────────────────────────────────┐
+    ▼                  ▼                                  ▼
+[07-Physics]    [DamageFormula]                   [09-Status]
+  Z 积分           damageDealt                  AddChangeStatus
+  onLanding            │                        (hitstun/down)
+                       ▼
+                [08-Resource] hp -= damage
+                       │ onDeath / onHpChanged
+
+横切支撑层（所有系统均可调用）:
+[22-Identity]  uniqueId / GetObject / GetTeam
+[17-Math]      getRandom / Abs / Sin / Cos
+[21-Predicate] IsMyControlObject / IsExistObject
+[20-Time]      GetCurrentTime / GetStateTimer
+[18-Timer]     sq_timer_ 延迟回调
+[13-DataStore] sq_var 脚本变量
+
+Phase 4 扩展层:
+[03-Monster/AI] → [19-StateMachine]（怪物侧）
+[10-PassiveObj] → [07-Physics] + [04-Attack/Hit]
+[14-Appendage]  → [09-Status]
+[11-Pool]       → [15-VFX] + [10-PassiveObj]
+[15-VFX]        → 渲染层
+[16-CameraFX]   → 渲染层
+[12-ScriptRT]   → 音频层
+
+Phase 5+ OOS:
+[02-Net/RPC]    → 服务器（PvE 单机 no-op）
+```
+
+---
+
+## 十一、HOT/WARM/COLD 分层汇总
+
+| 层级 | 字段特征 | 代表字段 |
+|------|---------|---------|
+| **HOT** | 每帧 tick 必读/写，放 sim-worker 内存 | `currentState`, `activeAtkBoxes`, `hp`, `commandBuffer`, `scriptVars(sq_var)`, `currentTime`, `isMyControlObject` |
+| **WARM** | 每次状态转换读，可缓存 | `stateTransitionTable`, `changeStatus`, `statusDuration`, `timerQueue`, `appendageList` |
+| **COLD** | 初始化时加载，只读 | `abilityCategory`, `levelData`, `bonusRateWithPassive`, `job`, `passiveObjectType`, `soundTag` |
