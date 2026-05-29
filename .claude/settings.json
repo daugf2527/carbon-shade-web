@@ -76,6 +76,16 @@
             "description": "编辑 .ts 文件后自动 typecheck"
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/post-node-check.mjs",
+            "description": "编辑 .mjs/.js 后跑 node --check 抓语法错"
+          }
+        ]
       }
     ],
     "SessionStart": [
