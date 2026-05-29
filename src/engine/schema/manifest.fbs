@@ -1,0 +1,45 @@
+// manifest.fbs — DNF shard content manifest schema
+//
+// Data source: verification/baseline-shards/manifest.json
+// Extracted fields (100% from json.load() — no guessing):
+//   root: manifest_version, exported_at, pvf_hash, extractor_version, files[]
+//   entry: path, sha256, sizeBytes, kind, shape_version
+//
+// kind枚举值 (实测自15个文件): player | monster | dungeon | shared
+//
+// 2026-05-29 created (Stage 2 Phase 0, schema parity with chr.fbs style).
+
+namespace CarbonShade.Engine.Schema;
+
+// ── ShardKind ──────────────────────────────────────────────────────
+// 实测 manifest.json files[].kind 全部枚举值（15 entries，4 distinct）
+enum ShardKind : byte {
+  player   = 0,
+  monster  = 1,
+  dungeon  = 2,
+  shared   = 3,
+}
+
+// ── ManifestEntry ─────────────────────────────────────────────────
+// 1:1 对应 manifest.json files[] 数组的每个元素。
+// 字段顺序：HOT（路由用）→ WARM（完整性校验）→ COLD（版本追踪）。
+table ManifestEntry {
+  path:          string;    // e.g. "players/swordman.json"
+  kind:          ShardKind; // player / monster / dungeon / shared
+  size_bytes:    uint32;    // sizeBytes（原始 JSON 字段 camelCase，FBS 用 snake_case）
+  sha256:        string;    // hex digest, e.g. "363b8023..."
+  shape_version: string;    // shard schema version, e.g. "1.0.0"
+}
+
+// ── ContentManifest ───────────────────────────────────────────────
+// Root table。manifest 本身就是溯源，不再内嵌 Provenance table。
+table ContentManifest {
+  manifest_version:  string;          // "1.0.0"
+  exported_at:       string;          // ISO 8601, e.g. "2026-05-27T03:45:21.006Z"
+  pvf_hash:          string;          // "crc32-head:c0779278|size:205695984"
+  extractor_version: string;          // "v2.0.0"
+  entries:           [ManifestEntry]; // all shard entries
+}
+
+root_type ContentManifest;
+file_identifier "MFST";

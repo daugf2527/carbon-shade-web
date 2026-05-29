@@ -39,7 +39,9 @@ walk(schemaDir);
 
 const failures: string[] = [];
 
-// Invariant 1: each .fbs's root_type (or stem-def fallback) must be in generated set
+// Invariant 1: each .fbs's root_type (or stem-def fallback) must be in generated set.
+// include-only .fbs (no root_type, used purely as a header for other schemas) are
+// tolerated as long as their stem appears anywhere in the generated tree.
 for (const fbs of fbsFiles) {
   const stem = fbs.replace(/\.fbs$/, "");
   const fbsContent = readFileSync(join(schemaDir, fbs), "utf-8");
@@ -47,10 +49,27 @@ for (const fbs of fbsFiles) {
   const rootKebab = rootMatch
     ? rootMatch[1].replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase()
     : null;
+
+  if (rootMatch === null) {
+    // include-only fbs (e.g. pairs.fbs): 解析所有 `table Xxx` 声明，逐个验证生成
+    const tableMatches = [...fbsContent.matchAll(/table\s+(\w+)\s*\{/g)];
+    if (tableMatches.length === 0) {
+      failures.push(`${fbs} (include-only) → no table declarations found`);
+      continue;
+    }
+    const missing = tableMatches
+      .map((m) => m[1].replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase())
+      .filter((kebab) => !allGeneratedTs.includes(kebab));
+    if (missing.length > 0) {
+      failures.push(`${fbs} (include-only) → ${missing.length} tables not generated: ${missing.join(", ")}. Run: node scripts/compile-schema.mjs`);
+    }
+    continue;
+  }
+
   const ok = allGeneratedTs.includes(`${stem}-def`) ||
     (rootKebab !== null && allGeneratedTs.includes(rootKebab));
   if (!ok) {
-    failures.push(`${fbs} (root_type=${rootMatch?.[1] ?? "?"}) → no matching .ts in generated tree. Run: node scripts/compile-schema.mjs`);
+    failures.push(`${fbs} (root_type=${rootMatch[1]}) → no matching .ts in generated tree. Run: node scripts/compile-schema.mjs`);
   }
 }
 

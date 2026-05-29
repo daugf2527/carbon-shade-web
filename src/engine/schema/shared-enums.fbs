@@ -1,0 +1,24 @@
+// shared-enums.fbs — Phase 2 SharedEnums root_type wrapper.
+//
+// shape: SharedEnumsShape (RuntimeExporter.ts:87-91)
+// sample: verification/baseline-shards/shared/enums.json
+//   3 top-level keys: shape_version, tables, field_to_enum
+//   tables: 6 张 (ATTACKTYPE/ELEMENT/DAMAGEACT/KNOCK_BACK_TYPE/DOWN_PARAM_TYPE/CUSTOM_ATTACKINFO)
+//   field_to_enum: 6 个 (hitReaction → DAMAGEACT 等)
+//
+// 2026-05-29 created (Phase 2 T2.1).
+
+include "pairs.fbs";
+
+namespace CarbonShade.Engine.Schema;
+
+table SharedEnums {
+  schema_version: uint16 = 1;
+
+  shape_version: string;        // "1.0.0"
+  tables:        [EnumTablePair];     // 6 entries
+  field_to_enum: [FieldEnumMapPair];  // 6 entries
+}
+
+root_type SharedEnums;
+file_identifier "ENUM";

@@ -1,0 +1,37 @@
+// player-shard.fbs — Phase 2 PlayerShard root_type wrapper.
+//
+// 1 player shard = 1 .chr file + 该 job 名下 .skl/.ani/.atk dict.
+// shape: PlayerRuntimeShape (RuntimeExporter.ts:42-65)
+// sample: verification/baseline-shards/players/swordman.json
+//   8 top-level keys: shape_version, job, parent_job, chr, skills, animations, attacks, etc
+//   205 skills / 161 animations / 81 attacks
+//
+// 2026-05-29 created (Phase 2 T2.1).
+
+include "chr.fbs";
+include "pairs.fbs";
+
+namespace CarbonShade.Engine.Schema;
+
+table PlayerShard {
+  schema_version: uint16 = 1;
+
+  // 身份
+  shape_version: string;     // "1.0.0"
+  job:           string;     // "swordman" / "demonicswordman" / etc
+  parent_job:    string;     // "swordman" (sub-class shares parent resources)
+
+  // 核心 entity
+  chr: ChrDef (required);
+
+  // dict (sorted by key, runtime 二分查找)
+  skills:     [SklPair];     // swordman: 205 entries
+  animations: [AniPair];     // swordman: 161 entries
+  attacks:    [AtkPair];     // swordman: 81 entries
+
+  // EtcDef 占位 — etc.fbs 还没有 (D2 范围), 当前裸字节存
+  etc:  [ubyte];             // EtcDef 序列化字节
+}
+
+root_type PlayerShard;
+file_identifier "PSHA";

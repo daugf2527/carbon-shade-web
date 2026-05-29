@@ -1,0 +1,39 @@
+// pairs.fbs — Pair-table encoding for dict-typed shard fields.
+//
+// FlatBuffers 没原生 map. shard 里的 Record<string, T> (skills/animations/
+// attacks/tables) 都用 [Pair] 数组 + serialize 时按 key 字典序排, runtime O(log N) 二分.
+//
+// 这些 pair 单独成文件方便其他 wrapper.fbs include 复用.
+//
+// 2026-05-29 created.
+
+include "skl.fbs";
+include "ani.fbs";
+include "atk.fbs";
+
+namespace CarbonShade.Engine.Schema;
+
+table SklPair {
+  key:   string;        // skill basename, e.g. "icewave" / "weaponcombo"
+  value: SklDef;
+}
+
+table AniPair {
+  key:   string;        // ani basename, e.g. "stay" / "attack1"
+  value: AniDef;
+}
+
+table AtkPair {
+  key:   string;        // atk basename, e.g. "weaponcombo" / "icewave"
+  value: AtkDef;
+}
+
+table EnumTablePair {
+  key:    string;        // enum table name, e.g. "ATTACKTYPE" / "ELEMENT"
+  values: [string];      // index → name
+}
+
+table FieldEnumMapPair {
+  key:       string;     // field name, e.g. "hitReaction"
+  enum_name: string;     // → "DAMAGEACT"
+}

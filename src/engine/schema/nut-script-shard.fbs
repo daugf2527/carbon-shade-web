@@ -1,0 +1,26 @@
+// nut-script-shard.fbs — D1.1 占位 root_type for Squirrel script shards.
+//
+// Phase 1.5 真接入 NutExtractor → pipelineRunner → exporter 链时填字段.
+// 当前: NutExtractor.ts 已有 (parsers/NutExtractor.ts), pipelineRunner 0 调.
+// 估计量级: PVF 含 ~500 个 .nut (sqr/dnf_enum_header.nut 等).
+//
+// 2026-05-29 created as placeholder (Phase 2 T2.1).
+
+namespace CarbonShade.Engine.Schema;
+
+table NutScriptShard {
+  schema_version: uint16 = 1;
+
+  shape_version: string;     // "1.0.0"
+  path:          string;     // PVF path, e.g. "sqr/dnf_enum_header.nut"
+  content:       string;     // raw Squirrel source (passthrough)
+  line_count:    int32;      // \n 计数 (NutExtractor 已计算)
+
+  // 未来扩展 (Phase 1.5 接入时按需加):
+  //   ast:         [ubyte];
+  //   entrypoints: [string];
+  //   includes:    [string];
+}
+
+root_type NutScriptShard;
+file_identifier "NUTS";

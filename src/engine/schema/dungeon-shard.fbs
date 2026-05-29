@@ -1,0 +1,31 @@
+// dungeon-shard.fbs — Phase 2 DungeonShard root_type wrapper.
+//
+// 1 dungeon shard = 1 .dgn + 多 .map + monster 引用 list.
+// shape: DungeonRuntimeShape (RuntimeExporter.ts:74-86)
+// sample: verification/baseline-shards/dungeons/jungle.json
+//   5 top-level keys: shape_version, id, dgn, maps[], monsterRefs[]
+//   3 maps / 1 monsterRef ("goblin")
+//
+// 注意: dgn.fbs 自己 root_type=DgnDef 只覆盖 .dgn 子树, 不能直接做 dungeon shard 顶层.
+// 这里 wrap 它 + 加 maps/monster_refs 到顶层.
+//
+// 2026-05-29 created (Phase 2 T2.1).
+
+include "dgn.fbs";
+
+namespace CarbonShade.Engine.Schema;
+
+table DungeonShard {
+  schema_version: uint16 = 1;
+
+  shape_version: string;     // "1.0.0"
+  id:            string;     // "jungle"
+
+  dgn:  DgnDef (required);
+  maps: [MapDef];            // jungle: 3 maps
+
+  monster_refs: [string];    // ["goblin"] — runtime resolves to MonsterShard
+}
+
+root_type DungeonShard;
+file_identifier "DSHA";

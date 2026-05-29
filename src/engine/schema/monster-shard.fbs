@@ -1,0 +1,29 @@
+// monster-shard.fbs — Phase 2 MonsterShard root_type wrapper.
+//
+// 1 monster shard = 1 .mob file + 该 monster 的 .atk/.ani dict.
+// shape: MonsterRuntimeShape (RuntimeExporter.ts:66-73)
+// sample: verification/baseline-shards/monsters/goblin.json
+//   5 top-level keys: shape_version, id, mob, attacks, animations
+//   1 attack / 8 animations
+//
+// 2026-05-29 created (Phase 2 T2.1).
+
+include "mob.fbs";
+include "pairs.fbs";
+
+namespace CarbonShade.Engine.Schema;
+
+table MonsterShard {
+  schema_version: uint16 = 1;
+
+  shape_version: string;     // "1.0.0"
+  id:            string;     // "goblin"
+
+  mob: MobDef (required);
+
+  attacks:    [AtkPair];     // goblin: 1 entry
+  animations: [AniPair];     // goblin: 8 entries
+}
+
+root_type MonsterShard;
+file_identifier "MSHA";

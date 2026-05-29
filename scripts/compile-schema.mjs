@@ -73,7 +73,7 @@ let failCount = 0;
 for (const fbs of fbsFiles) {
   const result = spawnSync(
     "flatc",
-    ["--ts", "--gen-object-api", "--ts-no-import-ext", "-o", OUT_DIR, fbs],
+    ["--ts", "--gen-object-api", "-o", OUT_DIR, fbs],
     { encoding: "utf8" },
   );
   if (result.status !== 0) {
@@ -89,3 +89,43 @@ if (failCount > 0) {
   process.exit(1);
 }
 console.log(`[compile-schema] all ${fbsFiles.length} compiled successfully.`);
+
+// === Step 4: compile generated .ts → .js ===
+console.log(`[compile-schema] compiling generated .ts → .js...`);
+const GEN_DIR = path.join(SCHEMA_DIR, "carbon-shade", "engine", "schema");
+if (existsSync(GEN_DIR)) {
+  const tsFiles = readdirSync(GEN_DIR).filter(f => f.endsWith('.ts'));
+  if (tsFiles.length === 0) {
+    console.warn(`[compile-schema] no .ts files found in ${GEN_DIR}`);
+  } else {
+    // Compile all .ts files in one tsc invocation
+    // Use node_modules/.bin/tsc directly to avoid npx PATH issues
+    const tscPath = path.join(ROOT, "node_modules", ".bin", "tsc");
+    const tscArgs = [
+      "--module", "esnext",
+      "--target", "es2022",
+      "--moduleResolution", "bundler",
+      "--skipLibCheck",
+      "--outDir", GEN_DIR,
+      ...tsFiles.map(f => path.join(GEN_DIR, f))
+    ];
+
+    const tscResult = spawnSync(tscPath, tscArgs, {
+      encoding: "utf8",
+      cwd: ROOT,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      shell: true  // Windows needs shell for .bin scripts
+    });
+
+    if (tscResult.status !== 0) {
+      console.error(`[compile-schema] tsc failed (exit ${tscResult.status}):`);
+      if (tscResult.stdout) console.error(tscResult.stdout);
+      if (tscResult.stderr) console.error(tscResult.stderr);
+      if (tscResult.error) console.error(tscResult.error);
+      process.exit(1);
+    }
+    console.log(`[compile-schema] generated ${tsFiles.length} .ts files compiled to .js`);
+  }
+} else {
+  console.warn(`[compile-schema] generated dir not found: ${GEN_DIR}`);
+}

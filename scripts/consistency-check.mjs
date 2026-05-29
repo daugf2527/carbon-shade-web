@@ -252,6 +252,7 @@ if (existsSync(schemaDir)) {
   walk(schemaDir);
 }
 // 每个 .fbs 必须有同 stem 或 root_type 名（kebab-case）的生成 .ts 之一存在
+// include-only .fbs (无 root_type, 仅作 header) 容忍: 检查 stem 是否出现在任何生成 .ts 中
 const uncompiledFbs = fbsFiles.filter(fbs => {
   const stem = fbs.replace(/\.fbs$/, "");
   const fbsContent = readTextSafe(join(schemaDir, fbs)) || "";
@@ -259,7 +260,14 @@ const uncompiledFbs = fbsFiles.filter(fbs => {
   const rootKebab = rootMatch
     ? rootMatch[1].replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase()
     : null;
-  // 任一存在即算编译完成：<stem>-def.ts 或 <root-kebab>.ts
+  if (rootMatch === null) {
+    // include-only fbs (e.g. pairs.fbs): 解析所有 `table Xxx` 声明，逐个验证生成
+    const tableMatches = [...fbsContent.matchAll(/table\s+(\w+)\s*\{/g)];
+    if (tableMatches.length === 0) return true;  // 真正空 fbs，标记为未编译
+    return tableMatches
+      .map(m => m[1].replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase())
+      .some(kebab => !allGeneratedTs.includes(kebab));
+  }
   return !(
     allGeneratedTs.includes(`${stem}-def`) ||
     (rootKebab !== null && allGeneratedTs.includes(rootKebab))

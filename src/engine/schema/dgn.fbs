@@ -1,0 +1,260 @@
+// dgn.fbs — DNF dungeon runtime schema (Phase 3 minimum / Phase 4 complete)
+//
+// Data source: verification/baseline-shards/dungeons/jungle.json
+// Extracted from pvf:dungeon/act3/jungle.dgn + pvf:map/jungle/*.map
+// All fields verified against jungle.json实物; no field is name-guessed.
+//
+// Phase 3 (Stage 2 initial combat loop — marked P3):
+//   DgnDef + MapDef with monster spawn data, dungeon topology, and
+//   the minimal fields needed to instantiate a single combat room.
+//
+// Phase 4 (full dungeon rendering / pathgate transitions — marked P4):
+//   Passive objects, background layers, greed layout, worldmap pattern,
+//   animation refs, pathgate topology.
+//
+// Field ordering: HOT → WARM → COLD (P3 fields first within each table).
+//
+// 2026-05-29 created. jungle.json实测: 3 maps, 1 monsterRef, dungeonId=22.
+
+include "chr.fbs";  // Provenance / PvfFactFloat / PvfFactInt / PvfFactString / PvfRef
+
+namespace CarbonShade.Engine.Schema;
+
+// ── IntToken ───────────────────────────────────────────────────────────────
+// Raw PVF typed token: {t:"int", v:N}.
+// Used for flat int sequences whose sub-structure the parser left opaque
+// (monsterSpawns, passiveObjects, specialPassiveObjects, etc.).
+// Source: jungle.json maps[0].monsterSpawns[0] = {t:"int", v:500}
+struct IntToken {
+  t_is_str: bool;   // false=int token, true=str token (for mixed sequences)
+  v_int: int32;     // valid when t_is_str=false
+}
+
+// ── StrOrIntToken ──────────────────────────────────────────────────────────
+// Mixed typed token: {t:"int"|"str", v:N|"s"}.
+// Used for specialPassiveObjects which mixes int and str tokens.
+// Source: jungle.json maps[0].specialPassiveObjects contains {t:"str",v:"[item]"}
+table StrOrIntToken {
+  t_is_str: bool;
+  v_int:    int32;    // valid when t_is_str=false
+  v_str:    string;   // valid when t_is_str=true
+}
+
+// ── DgnSize ────────────────────────────────────────────────────────────────
+// P3 — dungeon grid dimensions.
+// Source: jungle.json dgn.size = {width:4, height:4}
+struct DgnSize {
+  width:  int32;   // 4 — grid columns
+  height: int32;   // 4 — grid rows
+}
+
+// ── MapSpecRow ─────────────────────────────────────────────────────────────
+// P4 — one row of dgn.mapSpecification.items (3 ints: col, row, mapId).
+// Source: jungle.json dgn.mapSpecification.items[0] = [1, 0, 3206]
+struct MapSpecRow {
+  col:    int32;
+  row:    int32;
+  map_id: int32;
+}
+
+// ── MapSpecification ──────────────────────────────────────────────────────
+// P4 — full map-specification matrix.
+// Source: jungle.json dgn.mapSpecification = {rows:8, cols:3, items:[...]}
+table MapSpecification {
+  rows:  int32;           // 8
+  cols:  int32;           // 3
+  items: [MapSpecRow];    // 8 entries
+}
+
+// ── AnimationRef ───────────────────────────────────────────────────────────
+// P4 — .ani cross-reference embedded in map or dgn sections.
+// Source: jungle.json maps[0].animationRefs[0].targetPath =
+//         "map/jungle/animation/act3_vine.ani"
+table AnimationRef {
+  target_kind: string;   // "ani"
+  target_path: string;   // absolute PVF path
+  raw:         string;   // original relative string from PVF section
+}
+
+// ── ImageRef ───────────────────────────────────────────────────────────────
+// P4 — .img reference from dgn.imageRefs (cutscene/minimap/worldmap).
+// Source: jungle.json dgn.imageRefs[0] = {section:"cutscene image",
+//         path:"map/cutscene/behemoth.img", resolved:false}
+table ImageRef {
+  section:  string;   // "cutscene image" | "minimap image" | "worldmap pattern info"
+  path:     string;   // PVF path (may not be resolved in extractor)
+  resolved: bool;     // false = extractor did not resolve the .img
+}
+
+// ── EventMonsterConfig ────────────────────────────────────────────────────
+// P4 — event monster definition from dgn.eventMonsters flat array.
+// Source: jungle.json dgn.eventMonsters = [1,10000,61727,1,300,80,1]
+// Parser interpretation: [enabled, spawnIntervalMs, monsterId, ?, ?, ?, ?]
+// Unit semantics partially opaque — stored as raw int sequence for Phase 4 use.
+table EventMonsterConfig {
+  raw_ints: [int32];   // length=7 for jungle
+}
+
+// ── MapDef ─────────────────────────────────────────────────────────────────
+// One combat room. jungle.json has 3 map entries.
+// Source: pvf:map/jungle/*.map
+table MapDef {
+  // ── P3 HOT: fields needed to run a combat room ──────────────────────────
+  kind:        string;           // "map"
+  path:        string;           // PVF path e.g. "map/jungle/e3204(1,2).map"
+  dungeon_id:  PvfFactInt;       // 22 (unit="id"); links map to parent dgn
+                                 // Source: maps[0].dungeonId.value=22
+  map_type:    PvfFactString;    // "[normal]" (unit="raw-string")
+                                 // Source: maps[0].mapType.value="[normal]"
+  name:        PvfFactString;    // stringtable-link key (value may be Korean)
+                                 // Source: maps[0].name.unit="stringtable-link"
+  player_number: [int32];        // [2, 8] — min/max player count
+                                 // Source: maps[0].playerNumber=[2,8]
+  monster_spawns: [IntToken];    // flat int-token stream (length=60 for map[0])
+                                 // Source: maps[0].monsterSpawns len=60,
+                                 //   [0]={t:"int",v:500} [1]={t:"int",v:0}
+                                 //   [2]={t:"int",v:30}
+
+  // ── P3 WARM: map scroll physics ─────────────────────────────────────────
+  near_sight_scroll:   PvfFactInt;   // 110 px — front layer scroll speed
+                                     // Source: maps[0].nearSightScroll.value=110
+  middle_sight_scroll: PvfFactInt;   // 90 px
+                                     // Source: maps[0].middleSightScroll.value=90
+  far_sight_scroll:    PvfFactInt;   // 56 px — back layer scroll speed
+                                     // Source: maps[0].farSightScroll.value=56
+
+  // ── P3 WARM: pathgate entry/exit positions ───────────────────────────────
+  pathgate_pos: [int32];   // flat [x0,y0, x1,y1, ...] pairs (length=8 for map[0])
+                           // Source: maps[0].pathgatePos=[10,272,1552,250,1222,182,786,318]
+
+  // ── P3 COLD: tile set ────────────────────────────────────────────────────
+  tiles: [string];         // PVF-relative tile paths (7 entries for map[0])
+                           // Source: maps[0].tiles[0]="tile/bigwindowbgplant.til"
+
+  // ── P3 COLD: audio cues ──────────────────────────────────────────────────
+  sounds: [string];        // BGM/ambient sound keys (length=2 for map[0])
+                           // Source: maps[0].sounds=["m_dendroid","r_amb_wind"]
+
+  // ── P4: AI hints per spawn group ─────────────────────────────────────────
+  monster_ai_hints: [string];   // "[normal]" per spawn group
+                                // Source: maps[0].monsterAiHints=["[normal]"×6]
+
+  // ── P4: event monster spawn positions ────────────────────────────────────
+  event_monster_positions: [int32];   // flat [x,y,z, ...] triples (length=12)
+                                      // Source: maps[0].eventMonsterPositions=
+                                      //   [754,196,0, 877,240,0, 1050,299,0, 1212,303,0]
+
+  // ── P4: PvP start area (empty in jungle — PVE dungeon) ───────────────────
+  pvp_start_area: [int32];   // [] for jungle (PVE only; P4 placeholder for PvP maps)
+                             // Source: maps[0].pvpStartArea=[]
+
+  // ── P4: passive destructible objects ─────────────────────────────────────
+  passive_objects: [IntToken];   // flat int-token stream (length=40 for map[0])
+                                 // Source: maps[0].passiveObjects len=40
+  special_passive_objects: [StrOrIntToken];  // mixed int/str stream (length=22)
+                                              // Source: maps[0].specialPassiveObjects
+                                              //   contains {t:"str",v:"[item]"}
+
+  // ── P4: animation decoration ─────────────────────────────────────────────
+  animation_refs:       [AnimationRef];   // 3 entries for map[0] (vine.ani ×3)
+  background_animation: [AnimationRef];   // [] for map[0]
+                                          // Source: maps[0].backgroundAnimation=[]
+
+  // ── P4: greed (2.5D movement zone tag, ASCII grid) ───────────────────────
+  greed: PvfFactString;   // "nn nn" for map[0] (unit="raw-string")
+                          // Source: maps[0].greed.value="nn nn"
+
+  // ── Provenance ───────────────────────────────────────────────────────────
+  provenance: Provenance;
+}
+
+// ── DgnDef ─────────────────────────────────────────────────────────────────
+// Top-level dungeon definition. 1:1 with the JSON shard .dgn sub-object
+// plus the surrounding envelope (id, maps, monsterRefs).
+//
+// P3 covers: monster/map references + level/topology fields sufficient
+// for a single-room combat loop.
+// P4 covers: full rendering, pathgate objects, greed layout, worldmap.
+table DgnDef {
+  schema_version: uint16 = 1;
+
+  // ── P3 HOT: dungeon identity ──────────────────────────────────────────────
+  id:   string;   // "jungle" — short dungeon key used as shard filename
+                  // Source: jungle.json id="jungle"
+  kind: string;   // "dgn"
+                  // Source: jungle.json dgn.kind="dgn"
+  path: string;   // "dungeon/act3/jungle.dgn"
+                  // Source: jungle.json dgn.path="dungeon/act3/jungle.dgn"
+
+  // ── P3 HOT: level gating ─────────────────────────────────────────────────
+  basis_level:             PvfFactInt;    // 31 (unit="level")
+                                         // Source: dgn.basisLevel.value=31
+  minimum_required_level:  PvfFactInt;   // 28 (unit="level")
+                                         // Source: dgn.minimumRequiredLevel.value=28
+
+  // ── P3 HOT: map topology ─────────────────────────────────────────────────
+  size:      DgnSize;     // {width:4, height:4}
+                          // Source: dgn.size={width:4,height:4}
+  start_map: [int32];     // [0,3,3,3] — entry coords (opaque 4-tuple from PVF)
+                          // Source: dgn.startMap=[0,3,3,3]
+  boss_map:  [int32];     // [0,0,3,0] — boss room coords (same 4-tuple format)
+                          // Source: dgn.bossMap=[0,0,3,0]
+
+  // ── P3 WARM: monster cross-references ────────────────────────────────────
+  monster_refs: [string]; // ["goblin"] — mob definition keys used in this dgn
+                          // Source: jungle.json monsterRefs=["goblin"]
+
+  // ── P3 WARM: embedded map rooms ──────────────────────────────────────────
+  maps: [MapDef];         // 3 MapDef entries for jungle
+                          // Source: jungle.json maps length=3
+
+  // ── P3 COLD: XP multiplier ───────────────────────────────────────────────
+  experience_increasing_point: PvfFactFloat;  // 0.9 (unit="multiplier")
+                                              // Source: dgn.experienceIncreasingPoint.value=0.9
+
+  // ── P3 COLD: champion level thresholds ───────────────────────────────────
+  champion_levels: [int32];   // [8,16,24,32,36] — accumulated kills for champion tier
+                              // Source: dgn.championLevels=[8,16,24,32,36]
+
+  // ── P4: display metadata ─────────────────────────────────────────────────
+  name:    PvfFactString;  // stringtable-link key (value="" for jungle)
+                           // Source: dgn.name.unit="link-key"
+  explain: PvfFactString;  // flavor text link key (value="" for jungle)
+                           // Source: dgn.explain.unit="link-key"
+
+  // ── P4: background scroll offset ─────────────────────────────────────────
+  background_pos: PvfFactInt;  // 80 px
+                               // Source: dgn.backgroundPos.value=80
+
+  // ── P4: map layout matrix ─────────────────────────────────────────────────
+  map_specification: MapSpecification;  // 8×3 matrix mapping grid→mapId
+                                        // Source: dgn.mapSpecification.{rows:8,cols:3}
+
+  // ── P4: asset references ─────────────────────────────────────────────────
+  entering_title_refs: [PvfRef];  // [dungeon/act3/title/jungle.ani]
+                                  // Source: dgn.enteringTitleRefs[0].targetPath
+  image_refs: [ImageRef];         // 3 entries (cutscene/minimap/worldmap)
+                                  // Source: dgn.imageRefs length=3
+
+  // ── P4: pathgate object IDs ───────────────────────────────────────────────
+  pathgate_objects: [int32];  // [431,432,5671,433,434,5672,435,436,437,438]
+                              // Source: dgn.pathgateObjects length=10
+
+  // ── P4: event monster config (opaque flat stream) ────────────────────────
+  event_monsters: EventMonsterConfig;   // raw=[1,10000,61727,1,300,80,1]
+                                        // Source: dgn.eventMonsters length=7
+
+  // ── P4: greed room-type layout (ASCII zone map) ───────────────────────────
+  greed_layout: string;   // "bbnnnnee\r\n jjhhhhmm\r\n ddnnnngg\r\n bbhhhhee"
+                          // Source: dgn.greedLayout (multi-line raw string)
+
+  // ── P4: worldmap pattern (opaque mixed stream) ───────────────────────────
+  worldmap_pattern_info: [StrOrIntToken];   // [int:1, int:6, str:img-path, int:1]
+                                            // Source: dgn.worldmapPatternInfo length=4
+
+  // ── Provenance (document level) ──────────────────────────────────────────
+  provenance: Provenance;
+}
+
+root_type DgnDef;
+file_identifier "DGND";

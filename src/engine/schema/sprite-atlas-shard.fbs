@@ -1,0 +1,38 @@
+// sprite-atlas-shard.fbs — D1.2 占位 root_type for sprite atlas metadata.
+//
+// 1 atlas shard = 1 .png 文件的 frame 索引表.
+// 像素 PNG 不进 .bin, 单独走 dist/_assets/<job>/<atlas>.png; 这里只装索引.
+// 字段量级: swordman MVP ~200 frames (Phase 3 用什么提什么).
+//
+// 与 ani.fbs 的区别:
+//   ani.fbs.AniDef.frames[] 装 sprite 的引用 (path/imgId/imgParam) + 帧时序;
+//   sprite-atlas-shard.fbs 装 atlas 内的几何坐标 (atlas 内每帧的 xywh).
+//   runtime: AniDef.frames[i].imgId → SpriteAtlasShard.frames[imgId] → 拿坐标贴 PNG.
+//
+// 2026-05-29 created as placeholder (Phase 2 T2.1).
+
+namespace CarbonShade.Engine.Schema;
+
+struct SpriteFrame {
+  // (x,y,w,h) in atlas image space; (offset_x, offset_y) for anchor alignment.
+  x:        int32;
+  y:        int32;
+  w:        int32;
+  h:        int32;
+  offset_x: int32;
+  offset_y: int32;
+}
+
+table SpriteAtlasShard {
+  schema_version: uint16 = 1;
+
+  shape_version: string;     // "1.0.0"
+  atlas_name:    string;     // "sm_body" / "swordman_main" 等 (对应 .img 文件名)
+  atlas_path:    string;     // dist 相对路径, e.g. "_assets/swordman/sm_body.png"
+  width:         int32;      // PNG 像素宽
+  height:        int32;      // PNG 像素高
+  frames:        [SpriteFrame];   // index = imgId, runtime 按 imgId 直接索引
+}
+
+root_type SpriteAtlasShard;
+file_identifier "SPRA";

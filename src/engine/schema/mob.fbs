@@ -1,0 +1,167 @@
+// mob.fbs — DNF monster definition runtime schema
+//
+// Data source: verification/baseline-shards/monsters/goblin.json .mob
+// Derived from pvf:monster/goblin/goblin.mob (crc32-head:c0779278|size:205695984)
+// All fields backed by json.load() real extraction — no guessing from field names.
+//
+// Key findings from goblin.mob:
+//   - hpMax is absent as a direct PVF section; hp comes from abilityCategory scaling
+//   - attackKind is a 24-element positional array (mixed float/int), stored as opaque blob
+//   - castSpeed / attackSpeed parsed only from raw sections (not promoted to top-level by parser)
+//   - level[0,1] = [minLevel=1, maxLevel=6]
+//   - weight[0,1] = [single=45000, dual=45000]; weightDual.values = [45000, 45000]
+//   - moveSpeed.values = [300, 300]; hitRecovery.values = [500, 500] ms
+//   - widthBox.values = [40, 10] (width, height)
+//   - stuckbonusOnDamage.values = [0, 0, 0, 0]
+//   - category = ["human","goblin","melee combat","close-passive"]
+//   - animationRefs: 8 .ani entries; attackInfo: 1 .atk entry
+//
+// Phase annotations:
+//   [P3] = Phase 3 (Combat / simulation systems) — must have before first monster fight
+//   [P4] = Phase 4 (Polish / AI / drop systems) — can stub on Day 1
+//
+// 2026-05-29 created.
+
+include "chr.fbs";   // reuse Provenance / PvfFactFloat / PvfFactInt / PvfFactString / PvfRef / WidthBox
+
+namespace CarbonShade.Engine.Schema;
+
+// ── AbilityCategory ────────────────────────────────────────────────────────
+// Scaling percentages applied to derived stats. All 5 keys observed in goblin:
+//   hp_max=70, equipment_physical_attack=90, equipment_physical_defense=90,
+//   equipment_magical_attack=90, equipment_magical_defense=90  (unit: percent)
+// [P3] needed for damage calc scaling
+table AbilityCategory {
+  hp_max:                   int16;   // % of base — goblin: 70
+  equipment_phys_atk:       int16;   // % — goblin: 90
+  equipment_phys_def:       int16;   // % — goblin: 90
+  equipment_magic_atk:      int16;   // % — goblin: 90
+  equipment_magic_def:      int16;   // % — goblin: 90
+  provenance: Provenance;            // section "ability category"
+  source_type: string;               // "tier3"
+  requires_verification: bool;
+}
+
+// ── AttackKindEntry ────────────────────────────────────────────────────────
+// goblin.mob section "attack kind" has 24 positional mixed float/int elements.
+// Semantics of positions are not documented in PVF spec; stored as-extracted.
+// [P4] full decode; [P3] only raw blob is required for .atk lookup
+table AttackKindEntry {
+  type_tag: string;    // "float" | "int"  — original {'t':...} field
+  value:    float32;   // all values fit in float32 (max observed: 100)
+}
+
+// ── ItemDropEntry ──────────────────────────────────────────────────────────
+// section "item": triplets [itemId, weight, ...] observed:
+//   [(1000,50), (1047,200), (1004,100)]
+// [P4] drop table is not needed until Stage 2 Phase 4
+table ItemDropEntry {
+  item_id: int32;
+  drop_weight: int32;
+}
+
+// ── MobDef ─────────────────────────────────────────────────────────────────
+// Top-level monster definition. 1:1 with JSON shard .mob sub-object.
+// Fields ordered HOT → WARM → COLD.
+table MobDef {
+  schema_version: uint16 = 1;
+
+  // ── HOT: read every combat tick ────────────────────────────────── [P3]
+  //
+  // width_box: AABB collision box. goblin values=[40,10], unit="raw"
+  //   source: section "width", widthBox.values[0]=40 (w), [1]=10 (h)
+  width_box: WidthBox;
+
+  // move_speed: goblin sections "move speed" attrs=[300,300]
+  //   (parser top-level moveSpeed.values=[300,300], unit="raw")
+  move_speed: PvfFactIntArray;   // [P3] goblin: [300, 300] (base, max)
+
+  // hit_recovery: section "hit recovery" attrs=[500,500] ms
+  //   (hitRecovery.values=[500,500], unit="ms")
+  hit_recovery: PvfFactIntArray; // [P3] goblin: [500, 500] (min, max) ms
+
+  // sight: aggro detection radius. goblin sight.value=300, unit="px"
+  //   source: section "sight"
+  sight: PvfFactInt;             // [P3] goblin: 300 px
+
+  // warlike: aggression threshold. goblin warlike.value=60, unit="raw"
+  //   source: section "warlike"
+  warlike: PvfFactInt;           // [P3] goblin: 60
+
+  // ── WARM: read per state-transition / damage calc ──────────────── [P3]
+  //
+  // level: goblin level.values=[1,6], unit="raw"
+  //   source: section "level" attrs=[1,6] → [min, max]
+  level: PvfFactIntArray;        // [P3] goblin: [1, 6]
+
+  // weight: launch/knockback weight class (single PvfFact value).
+  //   weight.value=45000, unit="raw", tier3 (requires verification)
+  weight:      PvfFactInt;       // [P3] goblin: 45000
+  weight_dual: PvfFactIntArray;  // [P3] goblin: [45000, 45000]
+
+  // hp_max: top-level field (often null when scaling lives in ability_category).
+  //   goblin hpMax=null; ability_category.hp_max=70% is the actual scaling.
+  hp_max: PvfFactInt;            // [P3] goblin: null
+
+  // attack_delay: ms between successive attacks.
+  //   attackDelay.value=1500, unit="ms", tier3
+  //   source: section "attack delay"
+  attack_delay: PvfFactInt;      // [P3] goblin: 1500 ms
+
+  // attack_speed_base / attack_speed_max: section "attack speed" attrs=[400,400]
+  //   (parser top-level attackSpeed=None — only in raw sections)
+  attack_speed_base: PvfFactInt; // [P3] goblin: 400
+  attack_speed_max:  PvfFactInt; // [P3] goblin: 400
+
+  // ability_category: scaling %s for derived stats (hp/atk/def).
+  //   abilityCategory.unit="percent"; 5 keys documented above
+  ability_category: AbilityCategory; // [P3]
+
+  // stuck_bonus_on_damage: 4-element vector. goblin values=[0,0,0,0], unit="raw"
+  //   source: section "stuckbonus on damage"
+  //   Semantics of 4 positions not PVF-documented; stored positionally.
+  stuck_bonus_on_damage: [int32];    // [P3] goblin: [0,0,0,0]
+
+  // attack_kind: 24-element positional array (mixed float/int).
+  //   source: section "attack kind" — raw blob, decode in Phase 4
+  attack_kind: [AttackKindEntry];    // [P3] raw; [P4] semantic decode
+
+  // attack_info: .atk file references. goblin: 1 entry → attackinfo/attack1.atk
+  attack_info: [PvfRef];             // [P3] goblin: 1 entry (targetKind="atk")
+
+  // cast_speed_base / cast_speed_max: section "cast speed" attrs=[700,790]
+  //   (parser top-level castSpeed=None — only in raw sections)
+  cast_speed_base: PvfFactInt;       // [P4] goblin: 700
+  cast_speed_max:  PvfFactInt;       // [P4] goblin: 790
+
+  // ── COLD: read once at init / spawning ──────────────────────────── [P4]
+  //
+  // name: monster display name. goblin name.value="" (empty), unit="raw-string"
+  //   source: section "name"
+  name: PvfFactString;               // [P4] goblin: "" (empty string)
+
+  // category: string tag list.
+  //   goblin: ["human","goblin","melee combat","close-passive"]
+  //   source: section "category"
+  category: [string];                // [P4] goblin: 4 tags
+
+  // animation_refs: 8 .ani motion references for goblin.
+  //   source: parsed animationRefs array (targetKind="ani")
+  //   Observed motions: damage1, stay, down, overturn, move, damage2, sit, attack1
+  animation_refs: [PvfRef];          // [P4] goblin: 8 entries
+
+  // item_drops: triplets from section "item". goblin: 3 entries.
+  //   [(1000,50),(1047,200),(1004,100)]
+  //   [P4] drop system not active in Phase 3
+  item_drops: [ItemDropEntry];       // [P4] goblin: 3 entries
+
+  // ── Provenance (whole-document level) ──────────────────────────────────
+  provenance: Provenance;
+
+  // ── Kind / path tags ───────────────────────────────────────────────────
+  kind: string;   // "mob"
+  path: string;   // "monster/goblin/goblin.mob"
+}
+
+root_type MobDef;
+file_identifier "MOBD";
