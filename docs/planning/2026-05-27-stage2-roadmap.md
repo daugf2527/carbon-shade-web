@@ -100,6 +100,8 @@ Phase 5: 打磨交付 (3d)
 | **T1.6** dgn.fbs | 副本格式：roomGraph / mapRefs / monsterRefs / eventMonsters | 从 jungle.json 手工编译 | 1h |
 | **T1.7** manifest.fbs | 内容清单：shard[] (path/hash/version) | 从 dist-manifest 手工编译 | 30min |
 | **T1.8** flatc 代码生成 | 跑 `flatc --ts -o src/engine/schema/ src/engine/schema/*.fbs` 生成 TS 类型 | 所有 .fbs 都有对应的 `_generated.ts`，typecheck 通过 | 30min |
+| **T1.9** standalone parser 进 dispatch ★ Stage 1 遗留 | Ani / Nut / Img 三个 parser 实现了但没 wired 进 `pipelineRunner` dispatch（parseStage.ts:77-83 注释承认）。需扩 `PvfDocumentLoader` filter（type:"document" → 含 animation/text/binary 的 union），并把 `parsePvfDocument` 入参拓宽 | pipelineRunner 跑一遍 PVE-full 后，AniDef[] / NutTextDoc[] / ImgBinaryDoc[] 出现在 ParsedPvfDocument union 里，验证报告里有 ani/nut/img 计数 | 1d |
+| **T1.10** full-PVF refIntegrity 压测 ★ Stage 1 遗留 | 当前 PVE-full baseline 的 2099 条 ref 未解析（curated 故意排除 targets）。跑一次完整 PVF（不 curated）、记 ref 解析率 | 全量 baseline 报告里 refIntegrity 解析 ≥ 95% | 半天 |
 
 **阻塞解除**: Phase 1 完成 → Phase 2 可以开始
 

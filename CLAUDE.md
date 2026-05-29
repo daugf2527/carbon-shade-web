@@ -11,12 +11,12 @@ Active branch: `dnf-native` (master frozen 2026-05-21).
 
 | Stage | 内容 | 状态 |
 |-------|------|------|
-| Stage 1 | PVF 数据提取管线 (EXTRACT→PARSE→VALIDATE→LOAD→EXPORT) | ✅ 完成 (2026-05-24), [changelog](docs/changelog/2026-05-24-stage1-complete.md) |
+| Stage 1 | PVF 数据提取管线 (EXTRACT→PARSE→VALIDATE→LOAD→EXPORT) | 🟡 PVE-full 跑通 (2026-05-24, [changelog](docs/changelog/2026-05-24-stage1-complete.md)) — 5 stage 实质实现 + 410 文件 0 错误；**遗留**：3 个 standalone parser (Ani/Nut/Img) 未 wired 进 dispatch、full-PVF refIntegrity 未压测 → 延入 Stage 2 Phase 1 T1.9/T1.10 |
 | Stage 2 | 22-system DNF 原生引擎层（[field-matrix](docs/engineering/22-system-field-matrix.md), [roadmap](docs/planning/2026-05-27-stage2-roadmap.md)） | 🚧 Phase 0 ✅ 完成 (2026-05-29): flatc 工具链 + ShardLoader + GameLoop 60Hz 验证通过。Phase 1 进行中: 4 .fbs (chr/skl/atk/ani) 已编译，sim-worker echo skeleton 存在 |
 
 **Stage 1 管线**:
 ```
-PVF --pipe--> dnf-extract (C++) --> PvfDocument[] --> 10 parsers (TS) --> Zod validator
+PVF --pipe--> dnf-extract (C++) --> PvfDocument[] --> 7 parsers in dispatch + 3 standalone (TS) --> Zod validator
   --> SQLite (node:sqlite) --> JSON shards (dist/data/players/*.json etc.)
 ```
 **审计累积**: 5-25 6-Agent 全链路 (48 finding) + 5-27 10-commit audit (1 P1 / 11 P2)，全部 Windows 动态已验证。22-system 状态：`counts_verified_clustering_inferred`（478 API / 193 .nut / 22+1 buckets，详见 [nut-validation](docs/engineering/nut-validation-2026-05-27.md)）。

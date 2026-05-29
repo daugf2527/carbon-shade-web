@@ -68,22 +68,27 @@ PVF file paths ─────► │  EXTRACT             │ ─► PvfDocumen
                       └──────────────────────┘
 ```
 
-## Key numbers (stage1-baseline run, 18 curated files, real PVF)
+## Key numbers (stage1-baseline run, real PVF, PVE-full mode @ 2026-05-27)
 
-| Metric | Value |
-|---|---|
-| Pipeline wall-clock | 2.8 s |
-| Files extracted | 18 |
-| Files parsed | 18 (100%) |
-| Parse errors | 0 |
-| Validation errors | 0 |
-| Validation warnings | 0 |
-| Tier-3 fields surfaced | 44 (≈4 per player .chr, 11 × 4) |
-| PvP fields surfaced | 2 |
-| Refs resolved / missing | 3 / 2086 (curated set doesn't include ref targets) |
-| SQLite upserts | 18 |
-| Export shards written | 15 (11 player + 1 monster + 2 shared + 1 manifest) |
-| `players/swordman.json` size | 244 KB (target ≥ 200 KB) |
+> **Refresh log**：原表基于 18-file curated subset（2026-05-24）。后续 commit `0d795f4`
+> 切到 PVE-full（swordman 全量 + 11 player + goblin + jungle）+ commit `b6884f3`
+> P1 加固后，下面是 **2026-05-27** 的真实 baseline，并由 2026-05-29 审计核对一致。
+
+| Metric | Value (curated, 旧) | Value (PVE-full, 当前) |
+|---|---|---|
+| Pipeline wall-clock | 2.8 s | 4.7 s |
+| Files extracted | 18 | **410** |
+| Files parsed | 18 (100%) | **410 (100%)** |
+| Parse errors | 0 | **0** |
+| Validation errors | 0 | **0** |
+| Validation warnings | 0 | **0** |
+| Tier-3 fields surfaced | 44 | **439** (across 184 files) |
+| PvP fields surfaced | 2 | **176** |
+| Refs resolved / missing | 3 / 2086 | **n/a / 2099** (curated subset 仍排除 ref targets — 全量解析需独立一遍) |
+| SQLite upserts | 18 | 410 |
+| Export shards written | 15 (11 player + 1 monster + 2 shared + 1 manifest) | 14 (11 player + 1 monster + 1 dgn + manifest + shared 2) |
+| `players/swordman.json` size | 244 KB | **2.29 MB** (PVE-full 全节填入；不再是 244 KB curated) |
+| `players/demonicswordman.json` size | n/a | 2.30 MB |
 
 ## Overshoots beyond design
 
@@ -197,12 +202,33 @@ tools/dnf-porting-src/                          (C++ extractor source)
 
 ```
 npm run typecheck             passed
-npm run static:test           passed (no "passed":false in result tree)
+npm run static:test           passed (75/76; tick-benchmark.test.ts microbench
+                              偶发超阈 670μs/tick > 500μs，与 Stage 1 数据
+                              管线无关，是 master 战斗内核的性能 microbench)
 npm run build                 passed
 npm run analyze               8/8 gates pass (depcruise circular=0, ...)
-npm run completion            30/31 deliverables present (97%; only this changelog was missing pre-this-commit)
+npm run completion            31/31 deliverables present (2026-05-29 实测)
 DNF_PVF_PATH=... smoke:pipeline   PASS in 4.2s
 ```
+
+## 2026-05-29 审计补遗（doc-vs-real drift 修正）
+
+5-29 用户怀疑"Stage 1 完成"是否真的端到端。实测结果：
+
+- **5 stage 实质（非 stub）实现** — 8 个核心文件（pipelineRunner / parseStage /
+  validator / SqliteImporter / RuntimeExporter + 4 关键 parsers）逐一核查，
+  全部为真实业务逻辑，无 `not implemented` / 空 catch / `return []`。
+- **PVE-full baseline 实测一致** — 410 文件 / 0 错误 / 0 警告 / swordman.json
+  2.29 MB / shape_version=1.0.0 / sha256+sizeBytes 都在 manifest 里。
+- **31/31 deliverable 全绿** — `npm run completion` 输出。
+- **3 处遗留**（不阻断 Stage 1 sign-off，但**不能再宣称"全通"**）：
+  1. **3 个 standalone parser（Ani / Nut / Img）未 wired 进 pipelineRunner
+     dispatch** — parseStage.ts:77-83 自己注释承认。Stage 2 Phase 1 backlog。
+  2. **refIntegrity 2099 条 ref 未解析** — curated set 故意排除 ref targets，
+     不算 bug；但**不能用于"全 PVF 都干净"的推论**。需独立一遍 full-PVF run
+     才能证。
+  3. **本表的旧数字（18 文件 / 2.8s / 244 KB）** 已被 PVE-full（commit
+     `0d795f4`）覆盖 5 天才在本次审计补刷 — 典型 doc/code drift。
 
 ## What Stage 2 looks like (preview, NOT implementation)
 
