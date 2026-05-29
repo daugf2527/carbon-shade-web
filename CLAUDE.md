@@ -5,14 +5,14 @@
 **Carbon Shade / 碳影** — DNF-style 2.5D combat prototype. Engineering name: **Combat Lab**.
 Active branch: `dnf-native` (master frozen 2026-05-21).
 
-## Current state (2026-05-28)
+## Current state (2026-05-29)
 
 **DNF alignment pivot** — 停止新功能，全力对齐 DNF 真值。详见 [`docs/planning/2026-05-21-dnf-alignment-pivot.md`](docs/planning/2026-05-21-dnf-alignment-pivot.md)。
 
 | Stage | 内容 | 状态 |
 |-------|------|------|
 | Stage 1 | PVF 数据提取管线 (EXTRACT→PARSE→VALIDATE→LOAD→EXPORT) | ✅ 完成 (2026-05-24), [changelog](docs/changelog/2026-05-24-stage1-complete.md) |
-| Stage 2 | 22-system DNF 原生引擎层（[field-matrix](docs/engineering/22-system-field-matrix.md), [roadmap](docs/planning/2026-05-27-stage2-roadmap.md)） | 🚧 Day 1 = **接口 stub，未跑通**: 4 .fbs (chr/skl/atk/physics, **未编译**—flatc 未装/无 _generated.ts/缺 ani.fbs) + sim-worker (echo skeleton, 0 个 .nut hook) + swordman baseline 2.2MB。Phase 0 T0.1/T0.3/T0.4 (flatc/ShardLoader/GameLoop) **未做** |
+| Stage 2 | 22-system DNF 原生引擎层（[field-matrix](docs/engineering/22-system-field-matrix.md), [roadmap](docs/planning/2026-05-27-stage2-roadmap.md)） | 🚧 Phase 0 ✅ 完成 (2026-05-29): flatc 工具链 + ShardLoader + GameLoop 60Hz 验证通过。Phase 1 进行中: 4 .fbs (chr/skl/atk/ani) 已编译，sim-worker echo skeleton 存在 |
 
 **Stage 1 管线**:
 ```

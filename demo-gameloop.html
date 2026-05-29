@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GameLoop 60Hz 验证 Demo</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #0b1220;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: #e2e8f0;
+    }
+    h1 { font-size: 18px; margin-bottom: 16px; }
+    .stats {
+      background: rgba(15,23,42,0.85);
+      border: 1px solid #334155;
+      border-radius: 4px;
+      padding: 12px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .stats div { margin-bottom: 4px; }
+    .stats .label { color: #94a3b8; display: inline-block; width: 180px; }
+    .stats .value { color: #22d3ee; font-weight: 600; }
+    .controls {
+      margin-top: 16px;
+    }
+    .controls button {
+      background: rgba(15,23,42,0.85);
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      border-radius: 4px;
+      padding: 6px 12px;
+      margin-right: 8px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .controls button:hover {
+      background: rgba(30,41,59,0.95);
+      border-color: #475569;
+    }
+    .log {
+      background: rgba(15,23,42,0.85);
+      border: 1px solid #334155;
+      border-radius: 4px;
+      padding: 12px;
+      margin-top: 12px;
+      font-size: 11px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .log div { margin-bottom: 2px; color: #cbd5e1; }
+  </style>
+</head>
+<body>
+  <h1>GameLoop 60Hz 固定步长验证</h1>
+
+  <div class="stats">
+    <div><span class="label">当前 Tick:</span> <span class="value" id="tick">0</span></div>
+    <div><span class="label">累计运行时间:</span> <span class="value" id="elapsed">0.00s</span></div>
+    <div><span class="label">实际帧率 (RAF):</span> <span class="value" id="fps">0</span> fps</div>
+    <div><span class="label">仿真帧率 (Tick):</span> <span class="value" id="tickRate">0</span> tps</div>
+    <div><span class="label">渲染插值因子 (alpha):</span> <span class="value" id="alpha">0.000</span></div>
+    <div><span class="label">状态:</span> <span class="value" id="status">运行中</span></div>
+  </div>
+
+  <div class="controls">
+    <button id="pauseBtn">暂停</button>
+    <button id="slowBtn">慢动作 (0.5x)</button>
+    <button id="normalBtn">正常速度</button>
+    <button id="stepBtn">单步执行</button>
+  </div>
+
+  <div class="log" id="log"></div>
+
+  <script type="module">
+    // 内联 GameLoop 实现（从 src/engine/core/GameLoop.ts 复制）
+    class GameLoop {
+      constructor(kernel, options = {}) {
+        this.kernel = kernel;
+        this.tickRate = options.tickRate ?? 1 / 60;
+        this.maxCatchUpTicks = options.maxCatchUpTicks ?? 4;
+        this.pauseThresholdMs = options.pauseThresholdMs ?? 250;
+
+        this.accumulatorSeconds = 0;
+        this.paused = false;
+        this.slowMotionFactor = 1;
+        this.singleStepArmed = false;
+        this.tickCounter = 0;
+      }
+
+      get currentTick() {
+        return this.tickCounter;
+      }
+
+      get alpha() {
+        return this.accumulatorSeconds / this.tickRate;
+      }
+
+      update(deltaMs) {
+        if (this.paused) {
+          if (this.singleStepArmed) {
+            this.kernel.tick();
+            this.tickCounter++;
+            this.singleStepArmed = false;
+          }
+          return;
+        }
+
+        if (deltaMs > this.pauseThresholdMs) {
+          this.accumulatorSeconds = 0;
+          this.kernel.onLargeDelta?.(deltaMs);
+          return;
+        }
+
+        this.accumulatorSeconds += (deltaMs * this.slowMotionFactor) / 1000;
+
+        let ticks = 0;
+        while (this.accumulatorSeconds >= this.tickRate && ticks < this.maxCatchUpTicks) {
+          this.kernel.tick();
+          this.tickCounter++;
+          this.accumulatorSeconds -= this.tickRate;
+          ticks++;
+        }
+
+        if (ticks >= this.maxCatchUpTicks && this.accumulatorSeconds >= this.tickRate) {
+          const dropped = this.accumulatorSeconds;
+          this.accumulatorSeconds = 0;
+          this.kernel.emitLongFrameWarning?.(deltaMs, dropped);
+        }
+      }
+
+      setSlowMotion(factor) {
+        this.slowMotionFactor = Math.max(0.1, factor);
+      }
+
+      armSingleStep() {
+        this.paused = true;
+        this.singleStepArmed = true;
+        this.accumulatorSeconds = 0;
+      }
+
+      pause() {
+        this.paused = true;
+        this.accumulatorSeconds = 0;
+      }
+
+      resume() {
+        this.paused = false;
+        this.singleStepArmed = false;
+        this.accumulatorSeconds = 0;
+      }
+
+      isPaused() {
+        return this.paused;
+      }
+    }
+
+    // Demo kernel
+    const kernel = {
+      tick() {
+        // 空循环 — 只记录 tick
+      },
+      onLargeDelta(deltaMs) {
+        addLog(`⚠️ 检测到长帧: ${deltaMs.toFixed(1)}ms (tab 切换或断点)`);
+      },
+      emitLongFrameWarning(deltaMs, droppedSeconds) {
+        addLog(`⚠️ 性能掉队: deltaMs=${deltaMs.toFixed(1)}ms, 丢弃累加器 ${droppedSeconds.toFixed(3)}s`);
+      }
+    };
+
+    const loop = new GameLoop(kernel);
+
+    // RAF 循环
+    let lastTime = performance.now();
+    let frameCount = 0;
+    let fpsUpdateTime = lastTime;
+    let tickCountLastSecond = 0;
+    let tickRateUpdateTime = lastTime;
+    let currentFps = 0;
+    let currentTickRate = 0;
+
+    function animate(currentTime) {
+      const deltaMs = currentTime - lastTime;
+      lastTime = currentTime;
+
+      loop.update(deltaMs);
+
+      // 更新 UI
+      document.getElementById('tick').textContent = loop.currentTick;
+      document.getElementById('elapsed').textContent = (loop.currentTick / 60).toFixed(2) + 's';
+      document.getElementById('alpha').textContent = loop.alpha.toFixed(3);
+      document.getElementById('status').textContent = loop.isPaused() ? '暂停' : '运行中';
+
+      // 计算 RAF 帧率
+      frameCount++;
+      if (currentTime - fpsUpdateTime >= 1000) {
+        currentFps = Math.round(frameCount * 1000 / (currentTime - fpsUpdateTime));
+        document.getElementById('fps').textContent = currentFps;
+        frameCount = 0;
+        fpsUpdateTime = currentTime;
+      }
+
+      // 计算 Tick 帧率
+      if (currentTime - tickRateUpdateTime >= 1000) {
+        currentTickRate = loop.currentTick - tickCountLastSecond;
+        document.getElementById('tickRate').textContent = currentTickRate;
+        tickCountLastSecond = loop.currentTick;
+        tickRateUpdateTime = currentTime;
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    // 启动
+    requestAnimationFrame(animate);
+
+    // 控制按钮
+    document.getElementById('pauseBtn').addEventListener('click', () => {
+      if (loop.isPaused()) {
+        loop.resume();
+        addLog('▶️ 恢复运行');
+      } else {
+        loop.pause();
+        addLog('⏸️ 暂停');
+      }
+    });
+
+    document.getElementById('slowBtn').addEventListener('click', () => {
+      loop.setSlowMotion(0.5);
+      loop.resume();
+      addLog('🐌 慢动作 0.5x');
+    });
+
+    document.getElementById('normalBtn').addEventListener('click', () => {
+      loop.setSlowMotion(1.0);
+      loop.resume();
+      addLog('▶️ 正常速度 1.0x');
+    });
+
+    document.getElementById('stepBtn').addEventListener('click', () => {
+      loop.armSingleStep();
+      loop.update(16.67); // 手动触发一次 update
+      addLog(`⏭️ 单步执行 → tick=${loop.currentTick}`);
+    });
+
+    // 日志
+    function addLog(msg) {
+      const logDiv = document.getElementById('log');
+      const entry = document.createElement('div');
+      const timestamp = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+      entry.textContent = `[${timestamp}] ${msg}`;
+      logDiv.appendChild(entry);
+      logDiv.scrollTop = logDiv.scrollHeight;
+
+      // 限制日志条数
+      if (logDiv.children.length > 50) {
+        logDiv.removeChild(logDiv.firstChild);
+      }
+    }
+
+    // 初始日志
+    addLog('✅ GameLoop 启动 — 目标 60Hz 固定步长');
+    addLog('📊 观察 "仿真帧率 (Tick)" 应稳定在 60 tps');
+
+    // Console 输出（满足验收标准）
+    setInterval(() => {
+      console.log(`tick=${loop.currentTick}, elapsed=${(loop.currentTick / 60).toFixed(2)}s, tickRate=${currentTickRate}tps, fps=${currentFps}, alpha=${loop.alpha.toFixed(3)}`);
+    }, 1000);
+  </script>
+</body>
+</html>

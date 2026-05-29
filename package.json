@@ -17,6 +17,8 @@
     "analyze": "node scripts/analyze.mjs",
     "completion": "node scripts/completion.mjs",
     "audit:verify": "node scripts/audit-verify.mjs",
+    "compile:schema": "node scripts/compile-schema.mjs",
+    "compile:assets": "node --experimental-transform-types --no-warnings scripts/compile-runtime-assets.mjs",
     "closed-loop:status": "node scripts/closed-loop-status.mjs",
     "baseline": "node scripts/stage1-baseline.mjs",
     "baseline:pve": "node scripts/stage1-baseline.mjs --pve-full",
