@@ -474,8 +474,8 @@ const SklSchema = z.object({
     baseMs: z.number().finite(),
     lvl20Ms: z.number().finite(),
   }).strict()),
-  levelProperty: z.nullable(z.array(PvfAttributeSchema).max(1000)),
-  levelInfo: z.nullable(z.array(PvfAttributeSchema).max(1000)),
+  levelProperty: z.nullable(z.array(PvfAttributeSchema).max(10000)),
+  levelInfo: z.nullable(z.array(PvfAttributeSchema).max(10000)),
   preRequiredSkill: z.nullable(z.array(z.number().finite()).max(100)),
   featureSkillIndex: z.nullable(z.number().finite()),
   icon: z.nullable(z.object({
@@ -785,6 +785,8 @@ export function buildProvenanceAudit(report: VerificationReport): ProvenanceAudi
  */
 function validateSchema(def: ParsedPvfDocument, issues: ValidationIssue[]): void {
   const kind = (def as { kind?: unknown }).kind;
+  // ani/nut/img are validated by their own parsers; no Zod schema needed here
+  if (kind === "ani" || kind === "nut" || kind === "img") return;
   if (typeof kind !== "string" || !(kind in KIND_SCHEMAS)) {
     issues.push({
       level: "error",

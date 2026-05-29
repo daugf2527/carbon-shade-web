@@ -212,6 +212,7 @@ export async function exportRuntimeShards(options: ExportOptions): Promise<Expor
   const dgns: DungeonDef[] = [];
   const etcs: EtcDef[] = [];
   const maps: MapDef[] = [];
+  const anisFromParsed: AniDef[] = [];
   for (const def of options.parsed) {
     byPath.set(def.path, def);
     switch (def.kind) {
@@ -222,12 +223,20 @@ export async function exportRuntimeShards(options: ExportOptions): Promise<Expor
       case "dgn": dgns.push(def); break;
       case "etc": etcs.push(def); break;
       case "map": maps.push(def); break;
+      case "ani": anisFromParsed.push(def); break;
     }
   }
 
-  // Index animations by basename for lookup during entity composition
+  // Index animations by basename for lookup during entity composition.
+  // T1.9 (2026-05-29): AniDefs may now arrive via the dispatch (parsed[]
+  // contains them when .ani routes through parseStage). The legacy
+  // `options.aniDefs` parameter is still honored for backward compat with
+  // callers that load .ani separately; entries from both sources are merged.
   const aniByPath = new Map<string, AniDef>();
   for (const ani of options.aniDefs ?? []) {
+    aniByPath.set(ani.path, ani);
+  }
+  for (const ani of anisFromParsed) {
     aniByPath.set(ani.path, ani);
   }
 

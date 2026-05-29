@@ -189,7 +189,15 @@ async function resolveTargetFiles() {
     );
     return [...new Set([...jobPaths, ...nonJob])];
   }
-  if (PVE_FULL) return pveFullFiles();
+  if (PVE_FULL) {
+    const pveFull = await pveFullFiles();
+    // Merge CURATED monster/dungeon/map fixtures so PVE-full shards include
+    // cross-domain entities (goblin, jungle) that PVE_PREFIXES doesn't cover.
+    const nonCharSkill = CURATED_FILES.filter(
+      p => !p.startsWith("character/") && !p.startsWith("skill/")
+    );
+    return [...new Set([...pveFull, ...nonCharSkill])];
+  }
   return CURATED_FILES;
 }
 
@@ -334,19 +342,18 @@ const runId = "stage1-baseline";  // fixed runId so report filenames are stable
 const startMs = Date.now();
 console.log(`[baseline] starting on ${targetFiles.length} ${PVE_FULL ? "PVE-full" : "curated"} files…`);
 
-// Phase 4 P0-4: partition .ani out of main pipeline target list. Main
-// pipeline (PvfDocumentLoader) drops type:"animation" with only a warn —
-// AniParser instead runs in extractAndParseAnis() and feeds aniDefs.
-const aniTargets = targetFiles.filter(p => p.toLowerCase().endsWith(".ani"));
-const nonAniTargets = targetFiles.filter(p => !p.toLowerCase().endsWith(".ani"));
-console.log(`[baseline] ani routing: ${aniTargets.length} .ani → AniParser; ${nonAniTargets.length} → main pipeline`);
-
-const aniDefs = await extractAndParseAnis(aniTargets);
-console.log(`[baseline] parsed ${aniDefs.length} AniDef from ${aniTargets.length} .ani requests`);
+// T1.9 (2026-05-29): .ani is now first-class in the dispatch — parseStage
+// routes type:"animation" to AniParser via the RawPvfChunk union, and
+// loadAllChunksViaPipe collects animation chunks alongside documents.
+// The pre-T1.9 split (extractAndParseAnis side-loop + aniDefs option) is
+// no longer needed — .ani files travel through the main pipeline like
+// every other parsed kind, so validator.byPath includes them and ref
+// integrity to .ani targets is now resolvable.
+console.log(`[baseline] all ${targetFiles.length} files (incl. .ani) → main pipeline dispatch (T1.9)`);
 
 const result = await runExtractParsePipeline({
   pvfPath,
-  files: nonAniTargets,
+  files: targetFiles,
   debugOut,
   executablePath: EXTRACT,
   runId,
@@ -354,7 +361,6 @@ const result = await runExtractParsePipeline({
   sqliteDbPath,
   sqliteMode: "full",
   exportOutDir: exportOut,
-  aniDefs,
   sharedPhysics: physicsMod.DNF_PHYSICS_CONSTANTS,
   sharedEnums: {
     tables: {

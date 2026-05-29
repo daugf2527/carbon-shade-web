@@ -1,96 +1,96 @@
 {
   "manifest_version": "1.0.0",
-  "exported_at": "2026-05-27T03:45:21.006Z",
+  "exported_at": "2026-05-29T15:30:43.436Z",
   "pvf_hash": "crc32-head:c0779278|size:205695984",
   "extractor_version": "v2.0.0",
   "files": [
     {
       "path": "players/swordman.json",
-      "sha256": "363b8023a319a17018b29c63d0ff5fa3e54a1ef7bad54d06b96879785853ce32",
-      "sizeBytes": 2293569,
+      "sha256": "8708f2d799b78931559907a8a32ea92f17e5098ba737a08efa3c1c3d27a4c47c",
+      "sizeBytes": 2306284,
       "kind": "player",
       "shape_version": "1.0.0"
     },
     {
       "path": "players/demonicswordman.json",
-      "sha256": "1b144c78bef5670545bb12c58d74ca18f2ad86806bcc8d9c683bc564015613c0",
-      "sizeBytes": 2299658,
-      "kind": "player",
-      "shape_version": "1.0.0"
-    },
-    {
-      "path": "players/gunner.json",
-      "sha256": "c15607e1ea17e63d7a8c715719f91934a239e7e9a60f4c885681184805fe8f51",
-      "sizeBytes": 79876,
+      "sha256": "64c99101ec4f65311a59a23da3c2175578efb22a6ca9c30b7af3fbcdaef1f1c7",
+      "sizeBytes": 2312373,
       "kind": "player",
       "shape_version": "1.0.0"
     },
     {
       "path": "players/atgunner.json",
-      "sha256": "ddfceccd4516147f327648260b8536e3f39535fca2e1e7083a818df115c4408a",
-      "sizeBytes": 95676,
+      "sha256": "bb485830eef26c37e7a19ba47a1c3335dfb8ff372f41089b5dca933387f1c07d",
+      "sizeBytes": 2733238,
+      "kind": "player",
+      "shape_version": "1.0.0"
+    },
+    {
+      "path": "players/gunner.json",
+      "sha256": "c90c160267fb1d64f4e6fcacc6f310321506fc46e369b42f8273b230d0929d96",
+      "sizeBytes": 2717438,
       "kind": "player",
       "shape_version": "1.0.0"
     },
     {
       "path": "players/priest.json",
-      "sha256": "e3a782d35bed341b2d9a50ddba4971874220b054df24b7fc08653852142ee05e",
-      "sizeBytes": 130323,
-      "kind": "player",
-      "shape_version": "1.0.0"
-    },
-    {
-      "path": "players/fighter.json",
-      "sha256": "eca4b2e3bdd1dd7691fce781d68faa3ad6f44cfb854ad58d52038b39537a3eb1",
-      "sizeBytes": 105417,
+      "sha256": "9ea3b67c7ea5284a96ed400614b1d8717662072eda0f1ed055f781f85ed13435",
+      "sizeBytes": 4932600,
       "kind": "player",
       "shape_version": "1.0.0"
     },
     {
       "path": "players/atfighter.json",
-      "sha256": "4027714696db62d84f1fad3d42943111ae5f21ffb551c33c83bf789ec5c828e9",
-      "sizeBytes": 126995,
+      "sha256": "b40ea9c3ccc8012bad56522f9909fb173ad9fca023388ac0d5be1b7a27cfffed",
+      "sizeBytes": 1964412,
       "kind": "player",
       "shape_version": "1.0.0"
     },
     {
-      "path": "players/mage.json",
-      "sha256": "97076a9e12a702b27483987d266f28d2178f38e6f760bb25bebeb36e81d72e4d",
-      "sizeBytes": 87558,
+      "path": "players/fighter.json",
+      "sha256": "a932a564ea7a6d3070785f4d08a8ce6f91a81f97d3252350b351e1eb02587784",
+      "sizeBytes": 1942834,
       "kind": "player",
       "shape_version": "1.0.0"
     },
     {
       "path": "players/atmage.json",
-      "sha256": "c707bff5725c75a26e951829fa7c173b6df5ba89cc642c203458d0ac5601bcdf",
-      "sizeBytes": 93311,
+      "sha256": "97ea5dd322aef05e39973992909f14422c643325a865c73e4a2e1ec4ad9437ca",
+      "sizeBytes": 7785403,
+      "kind": "player",
+      "shape_version": "1.0.0"
+    },
+    {
+      "path": "players/mage.json",
+      "sha256": "0984beb0141b48f56ee99abb3effbdbb1313d5ba6f9828b7bd1b6be01c36e9c4",
+      "sizeBytes": 7779650,
       "kind": "player",
       "shape_version": "1.0.0"
     },
     {
       "path": "players/creatormage.json",
-      "sha256": "67c44bf0aa9ef893bd5beeaf8198b40da8ec85e367e5efc662c755f4f78c6a84",
-      "sizeBytes": 89875,
+      "sha256": "3a6bc0e5a8f9dcc80c1c5ef8102c83bd170217eb3a507492bac440c3dbd53c15",
+      "sizeBytes": 7781967,
       "kind": "player",
       "shape_version": "1.0.0"
     },
     {
       "path": "players/thief.json",
-      "sha256": "14d3312b63195ee0a3dea27a1d4118627a153dd9976e6c8c1eb493e7375ac894",
-      "sizeBytes": 108893,
+      "sha256": "6f80f5a51829b17c97e70f38236edcc5ddb5ee428a76a9c18cfbbb30960d92de",
+      "sizeBytes": 5930803,
       "kind": "player",
       "shape_version": "1.0.0"
     },
     {
       "path": "monsters/goblin.json",
-      "sha256": "a3f38aa2f093900dad900848dde528a8c2cda96bd4bbac9e79b7020b465b8612",
-      "sizeBytes": 26895,
+      "sha256": "981112e5873ae0ce68f53640debcaaec39b7a4f8e0ec6e7b69b6e07248f8847c",
+      "sizeBytes": 26999,
       "kind": "monster",
       "shape_version": "1.0.0"
     },
     {
       "path": "dungeons/jungle.json",
-      "sha256": "a5b3fa0419b70609454333d7b43c900ea696ee5ee7314ff9b546386d03f67100",
+      "sha256": "d8bac98117d088029760733c4581482b310902e5c85184078059a890d5c2048f",
       "sizeBytes": 64701,
       "kind": "dungeon",
       "shape_version": "1.0.0"
