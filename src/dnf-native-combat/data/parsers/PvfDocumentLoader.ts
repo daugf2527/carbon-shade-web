@@ -1,6 +1,9 @@
 import { spawn } from "node:child_process";
 import type { PvfDocument } from "../types/PvfDocument.js";
 import type { AniDocument } from "../types/AniDef.js";
+import type { NutTextDocument } from "../types/NutDef.js";
+import type { ImgBinaryDocument } from "../types/ImgDef.js";
+import type { RawPvfChunk } from "../pipeline/parseStage.js";
 
 export interface DnfExtractPipeOptions {
   pvfPath: string;
@@ -454,4 +457,98 @@ export function parseDnfExtractPipeOutputAnimations(stdout: string): AniDocument
     );
   }
   return animations;
+}
+
+/**
+ * T1.9 (2026-05-29): Parse dnf-extract pipe stdout, collecting ALL chunk types
+ * (document / animation / text / binary) into a single RawPvfChunk[].
+ *
+ * Default semantics mirror parseDnfExtractPipeOutput (throw-on-first-error)
+ * so that pipelineRunner inherits the same error contract as the legacy
+ * document-only loader. Callers that need batch error collection should
+ * use parseDnfExtractPipeOutputWithErrors instead and post-process.
+ */
+export function parseDnfExtractPipeOutputAllChunks(stdout: string): RawPvfChunk[] {
+  const lines = stdout.split(/\r?\n/);
+  const rawChunks: string[] = [];
+  let buffer: string[] = [];
+  for (const line of lines) {
+    if (line === "---") {
+      if (buffer.length > 0) {
+        rawChunks.push(buffer.join("\n"));
+        buffer = [];
+      }
+    } else {
+      buffer.push(line);
+    }
+  }
+  if (buffer.length > 0) rawChunks.push(buffer.join("\n"));
+
+  const chunks: RawPvfChunk[] = [];
+  for (let i = 0; i < rawChunks.length; i++) {
+    const raw = rawChunks[i].trim();
+    if (!raw) continue;
+    let parsed: { type?: string; error?: unknown; path?: unknown } & Record<string, unknown>;
+    try {
+      parsed = JSON.parse(raw) as typeof parsed;
+    } catch (parseError) {
+      const preview = raw.length > 80 ? `${raw.slice(0, 80)}…` : raw;
+      const reason = parseError instanceof Error ? parseError.message : String(parseError);
+      throw new Error(
+        `dnf-extract pipe: JSON.parse failed for chunk index ${i} ` +
+        `(preview: ${JSON.stringify(preview)}): ${reason}`,
+      );
+    }
+    if (parsed.type === "error") {
+      const path = typeof parsed.path === "string" && parsed.path.length > 0 ? parsed.path : "<unknown>";
+      const msg = typeof parsed.error === "string"
+        ? parsed.error
+        : parsed.error === undefined
+          ? "unknown error"
+          : JSON.stringify(parsed.error);
+      throw new Error(`dnf-extract error for ${path} (chunk index ${i}): ${msg}`);
+    }
+    // Accept document / animation / text / binary — all are valid RawPvfChunk variants
+    chunks.push(parsed as unknown as RawPvfChunk);
+  }
+  return chunks;
+}
+
+/**
+ * T1.9 (2026-05-29): Spawn dnf-extract --pipe and return ALL chunk types as
+ * RawPvfChunk[]. Used by pipelineRunner when ani/nut/img dispatch is enabled.
+ * Throw-on-first-error semantics — mirrors loadPvfDocumentsViaPipe.
+ */
+export async function loadAllChunksViaPipe(
+  paths: string[],
+  options: DnfExtractPipeOptions,
+): Promise<RawPvfChunk[]> {
+  const executablePath = options.executablePath ?? DEFAULT_DNF_EXTRACT_PATH;
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const { child, clearWatchdog, timedOut } = spawnWithTimeout(executablePath, buildDnfExtractPipeArgs(options), timeoutMs);
+
+  let stdout = "";
+  let stderr = "";
+  child.stdout.setEncoding("utf8");
+  child.stderr.setEncoding("utf8");
+  child.stdout.on("data", (chunk: string) => { stdout += chunk; });
+  child.stderr.on("data", (chunk: string) => { stderr += chunk; });
+
+  for (const path of paths) child.stdin.write(`${path}\n`);
+  child.stdin.write("quit\n");
+  child.stdin.end();
+
+  const exitCode = await new Promise<number | null>((resolve, reject) => {
+    child.on("error", reject);
+    child.on("close", resolve);
+  });
+  clearWatchdog();
+
+  if (timedOut()) {
+    throw new Error(`dnf-extract --pipe killed after ${timeoutMs}ms timeout (audit P1-20).\n${stderr}`);
+  }
+  if (exitCode !== 0) {
+    throw new Error(`dnf-extract --pipe exited ${exitCode}\n${stderr}`);
+  }
+  return parseDnfExtractPipeOutputAllChunks(stdout);
 }

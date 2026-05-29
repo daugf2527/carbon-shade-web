@@ -22,6 +22,7 @@ export function parseAniDocument(document: AniDocument): AniDef {
   }
 
   return {
+    kind: "ani",
     path: document.path,
     framesCount: document.framesCount,
     loop: Boolean(document.loop),

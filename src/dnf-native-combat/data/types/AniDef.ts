@@ -106,6 +106,7 @@ export interface AniFrameDef {
 export interface AniDef {
   /** Internal PVF path */
   path: string;
+  readonly kind: "ani";
   /** Total frame count; guaranteed to equal frames.length */
   framesCount: number;
   /** Whether the animation loops */

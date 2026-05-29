@@ -6,6 +6,9 @@ import { parseSklDocument } from "../parsers/SklParser.js";
 import { parseDgnDocument } from "../parsers/DgnParser.js";
 import { parseEtcDocument } from "../parsers/EtcParser.js";
 import { parseMapDocument } from "../parsers/MapParser.js";
+import { parseAniDocument } from "../parsers/AniParser.js";
+import { extractNutDocument } from "../parsers/NutExtractor.js";
+import { parseImgBinaryDocument } from "../parsers/ImgParser.js";
 import type { AtkDef } from "../types/AtkDef.js";
 import type { ChrDef } from "../types/ChrDef.js";
 import type { MobDef } from "../types/MobDef.js";
@@ -13,9 +16,15 @@ import type { SkillDef } from "../types/SklDef.js";
 import type { DungeonDef } from "../types/DgnDef.js";
 import type { EtcDef } from "../types/EtcDef.js";
 import type { MapDef } from "../types/MapDef.js";
+import type { AniDef, AniDocument } from "../types/AniDef.js";
+import type { NutDef, NutTextDocument } from "../types/NutDef.js";
+import type { ImgDef, ImgBinaryDocument } from "../types/ImgDef.js";
 import type { PvfDocument } from "../types/PvfDocument.js";
 
-export type ParsedPvfDocument = ChrDef | MobDef | AtkDef | SkillDef | DungeonDef | EtcDef | MapDef;
+export type ParsedPvfDocument = ChrDef | MobDef | AtkDef | SkillDef | DungeonDef | EtcDef | MapDef | AniDef | NutDef | ImgDef;
+
+/** Union of all raw chunk types emitted by dnf-extract --pipe */
+export type RawPvfChunk = PvfDocument | AniDocument | NutTextDocument | ImgBinaryDocument;
 
 // Detect the routing extension, with a special case for paths whose basename is
 // just `.chr` / `.mob` / `.atk` / `.skl` / `.dgn` / `.etc` / `.map`. Node's
@@ -34,29 +43,43 @@ function routingExtension(filePath: string): string {
   return "";
 }
 
-export function parsePvfDocument(document: PvfDocument): ParsedPvfDocument {
-  switch (routingExtension(document.path)) {
+export function parsePvfDocument(document: RawPvfChunk): ParsedPvfDocument {
+  // Route by type field first for the three standalone-parser types whose
+  // input shapes differ from PvfDocument (T1.9: wired 2026-05-29).
+  if (document.type === "animation") {
+    return parseAniDocument(document as AniDocument);
+  }
+  if (document.type === "text") {
+    return extractNutDocument(document as NutTextDocument);
+  }
+  if (document.type === "binary") {
+    return parseImgBinaryDocument(document as ImgBinaryDocument);
+  }
+
+  // type:"document" — route by file extension
+  const pvfDoc = document as PvfDocument;
+  switch (routingExtension(pvfDoc.path)) {
     case ".chr":
-      return parseChrDocument(document);
+      return parseChrDocument(pvfDoc);
     case ".mob":
-      return parseMobDocument(document);
+      return parseMobDocument(pvfDoc);
     case ".atk":
-      return parseAtkDocument(document);
+      return parseAtkDocument(pvfDoc);
     case ".skl":
-      return parseSklDocument(document);
+      return parseSklDocument(pvfDoc);
     case ".dgn":
-      return parseDgnDocument(document);
+      return parseDgnDocument(pvfDoc);
     case ".etc":
-      return parseEtcDocument(document);
+      return parseEtcDocument(pvfDoc);
     case ".map":
-      return parseMapDocument(document);
+      return parseMapDocument(pvfDoc);
     default:
       // audit P1-22 (fixed 2026-05-28): previously threw; now signals via a
       // structured error class so pipelineRunner can route unknown extensions
       // into parseErrors (collected, not aborted). Real PVF contains plenty
       // of unregistered extensions (.aic / .lin / .lst / ...); throwing on
       // every one would block batch runs.
-      throw new UnregisteredExtensionError(document.path);
+      throw new UnregisteredExtensionError(pvfDoc.path);
   }
 }
 
@@ -73,11 +96,3 @@ export class UnregisteredExtensionError extends Error {
     this.name = "UnregisteredExtensionError";
   }
 }
-
-// NOTE: AniParser (.ani), NutExtractor (.nut), and ImgParser (.img binary) are
-// implemented in ../parsers/ but NOT wired into this dispatch. Their input
-// shapes (AniDocument / NutTextDocument / ImgBinaryDocument) diverge from
-// PvfDocument — the C++ extractor emits type:"animation" / type:"text" /
-// type:"binary" JSON, while PvfDocumentLoader.ts currently filters to
-// type:"document" only. To wire them in, extend PvfDocumentLoader's filter
-// + widen this dispatch's input to a union. Tracked for the next pass.

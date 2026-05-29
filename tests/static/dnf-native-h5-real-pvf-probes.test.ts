@@ -350,9 +350,12 @@ if (!existsSync(EXTRACT_BIN)) {
     }
   }
 
-  // 3c. After B7 fix: .ani files are emitted by dnf-extract as type="animation",
-  //     not "document"; loader now filters them out. Pipeline exits 0 with
-  //     filesExtracted: 0 (loader swallows non-document types).
+  // 3c. After T1.9 wired (2026-05-29): .ani files now route through AniParser
+  //     via the new RawPvfChunk dispatch. Pipeline exits 0 with
+  //     filesExtracted: 1, filesParsed: 1 (parsed into AniDef).
+  //     Previously (B7 era) the loader filtered out type="animation" chunks
+  //     and exposed nothing to parse — that was tracked as Stage 1 debt and
+  //     resolved by T1.9.
   {
     const r = runCli([
       "--pvf",
@@ -365,16 +368,16 @@ if (!existsSync(EXTRACT_BIN)) {
     if (r.code === 0) {
       try {
         const summary = JSON.parse(r.stdout);
-        if (summary.filesExtracted === 0 && summary.filesParsed === 0) {
-          ok("real-neg-ani", "B7 fix verified: .ani filtered by loader (filesExtracted=0)");
+        if (summary.filesExtracted === 1 && summary.filesParsed === 1) {
+          ok("real-neg-ani", "T1.9 verified: .ani routes through AniParser (filesExtracted=1 filesParsed=1)");
         } else {
-          bug("real-neg-ani", `expected filesExtracted=0; got ${JSON.stringify(summary)}`);
+          bug("real-neg-ani", `expected filesExtracted=1 filesParsed=1; got ${JSON.stringify(summary)}`);
         }
       } catch {
         bug("real-neg-ani", `CLI stdout not JSON: ${r.stdout.slice(0, 200)}`);
       }
     } else {
-      bug("real-neg-ani", `expected exit 0 after B7 fix; got ${r.code}, stderr=${r.stderr.slice(0, 200)}`);
+      bug("real-neg-ani", `expected exit 0 after T1.9; got ${r.code}, stderr=${r.stderr.slice(0, 200)}`);
     }
   }
 

@@ -1,7 +1,7 @@
 import { mkdir, open, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { loadPvfDocumentsViaPipe } from "../parsers/PvfDocumentLoader.js";
-import { parsePvfDocument, type ParsedPvfDocument } from "./parseStage.js";
+import { loadAllChunksViaPipe } from "../parsers/PvfDocumentLoader.js";
+import { parsePvfDocument, type ParsedPvfDocument, type RawPvfChunk } from "./parseStage.js";
 import {
   buildProvenanceAudit,
   validateParsedDocuments,
@@ -26,7 +26,8 @@ export interface PipelineRunOptions {
   files: string[];
   debugOut: string;
   executablePath?: string;
-  loadDocuments?: (files: string[]) => Promise<PvfDocument[]>;
+  /** T1.9: loadDocuments now returns RawPvfChunk[] to support ani/nut/img dispatch. */
+  loadDocuments?: (files: string[]) => Promise<RawPvfChunk[]>;
   runId?: string;
   verificationOutDir?: string | null;
   sqliteDbPath?: string;
@@ -36,7 +37,7 @@ export interface PipelineRunOptions {
    * Default: undefined → EXPORT stage is skipped. Pass a path to enable.
    */
   exportOutDir?: string;
-  /** Optional AniDef[] loaded outside the dispatch (animation parser is standalone). */
+  /** @deprecated T1.9: AniDef[] are now produced by the dispatch. Kept for backward compat. */
   aniDefs?: ReadonlyArray<AniDef>;
   /** Optional physics + enum content for shared/*.json shards. */
   sharedPhysics?: Record<string, unknown>;
@@ -107,23 +108,23 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
   const stopIdx = stageOrder.indexOf(stopAt);
   const shouldRun = (s: typeof stageOrder[number]) => stageOrder.indexOf(s) <= stopIdx;
 
-  const documents = options.loadDocuments
+  const rawChunks: RawPvfChunk[] = options.loadDocuments
     ? await options.loadDocuments(options.files)
-    : await loadPvfDocumentsViaPipe(options.files, {
-      pvfPath: options.pvfPath,
-      executablePath: options.executablePath,
-    });
+    : await loadAllChunksViaPipe(options.files, {
+        pvfPath: options.pvfPath,
+        executablePath: options.executablePath,
+      });
 
   // ─── PARSE stage ───────────────────────────────────────────────────────
   const parsed: ParsedPvfDocument[] = [];
   const parseErrors: PipelineParseError[] = [];
   if (shouldRun("parse")) {
-    for (const document of documents) {
+    for (const chunk of rawChunks) {
       try {
-        parsed.push(parsePvfDocument(document));
+        parsed.push(parsePvfDocument(chunk));
       } catch (error) {
         parseErrors.push({
-          path: document.path ?? "<unknown>",
+          path: (chunk as { path?: string }).path ?? "<unknown>",
           message: error instanceof Error ? error.message : String(error),
         });
       }
@@ -137,8 +138,8 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
   // timestamp to mark "when validation snapshot was taken" — use
   // validationStartedAt for that.
   const validationStartedAt = new Date().toISOString();
-  const pvfHash = pickFirstDefined(documents, d => d.source_pvf_hash) ?? null;
-  const extractorVersion = pickFirstDefined(documents, d => d.extractor_version) ?? null;
+  const pvfHash = pickFirstDefined(rawChunks, d => (d as { source_pvf_hash?: string }).source_pvf_hash) ?? null;
+  const extractorVersion = pickFirstDefined(rawChunks, d => (d as { extractor_version?: string }).extractor_version) ?? null;
 
   const validation = shouldRun("validate")
     ? validateParsedDocuments(parsed, {
@@ -151,8 +152,8 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
   await mkdir(options.debugOut, { recursive: true });
   await writeJsonlStreaming(
     join(options.debugOut, "extract.jsonl"),
-    documents,
-    document => JSON.stringify(document),
+    rawChunks,
+    chunk => JSON.stringify(chunk),
   );
   if (shouldRun("parse")) {
     await writeJsonlStreaming(
@@ -190,9 +191,12 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
     shouldRun("validate") && validation.stats.errors > 0;
   let sqliteImport: SqliteImportResult | null = null;
   if (!validationFatal && shouldRun("load") && typeof options.sqliteDbPath === "string") {
+    // SqliteImporter expects PvfDocument[] for the raw documents parameter.
+    // Filter rawChunks to type:"document" only for the importer.
+    const pvfDocuments = rawChunks.filter((c): c is PvfDocument => (c as PvfDocument).type === "document");
     sqliteImport = importToSqlite(
       { dbPath: options.sqliteDbPath, mode: options.sqliteMode ?? "full" },
-      documents,
+      pvfDocuments,
       parsed,
       validation,
     );
@@ -232,7 +236,7 @@ export async function runExtractParsePipeline(options: PipelineRunOptions): Prom
   return {
     stage: highest,
     stagesRun,
-    filesExtracted: documents.length,
+    filesExtracted: rawChunks.length,
     filesParsed: parsed.length,
     parseErrors,
     debugOut: options.debugOut,
