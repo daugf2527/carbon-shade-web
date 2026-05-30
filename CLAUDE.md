@@ -43,6 +43,8 @@ PVF --pipe--> dnf-extract (C++) --> PvfDocument[] --> 7 parsers in dispatch + 3 
 | `npm run validate:assets` | Validate asset paths against manifest |
 | `npm run validate:combat` | Validate combat boundary config |
 | `npm run consistency` | 4-way drift scan (memory/docs/code/git) — see [Consistency](#4-way-consistency) |
+| `npm run compile:schema` | flatc → TS types from `src/engine/schema/*.fbs` |
+| `npm run compile:assets` | JSON shards → FlatBuffers `.bin` in `public/assets/` |
 | `docker compose up --build` | Container on port 5173 |
 
 ### Stage 1 baseline rerun
