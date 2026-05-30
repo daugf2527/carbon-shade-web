@@ -287,9 +287,16 @@ async function singleJobFiles(job) {
   // 2026-05-30 Stage 3 T-A.1: 武器 attackBox 在 equipment/<job>/weapon/<wpn>/ 下的 .ani 里
   // 主线 prefix = 角色/技能；BASELINE_WEAPONS 白名单允许特定武器目录穿过 /equipment/ 排除
   // BASELINE_WEAPONS 支持武器类型 ("beamsword") 或类型/等级 ("beamsword/beamswdb")，逗号分隔
+  // 2026-05-31 Stage 3 T-B.4: 支持 "beamsword" 匹配所有 beamsword/* 等级
   const prefixes = [`character/${job}/`, `skill/${job}/`];
   const weaponList = (process.env.BASELINE_WEAPONS ?? "").split(",").map(s => s.trim()).filter(Boolean);
-  const weaponPrefixes = weaponList.map(w => `equipment/character/${job}/weapon/${w}/`);
+  const weaponPrefixes = weaponList.flatMap(w => {
+    if (w.includes('/')) return [`equipment/character/${job}/weapon/${w}/`];
+    // 武器类型不含 / 时，匹配该类型下所有等级
+    return all.filter(p => p.startsWith(`equipment/character/${job}/weapon/${w}/`))
+      .map(p => p.match(/^(equipment\/character\/[^/]+\/weapon\/[^/]+\/[^/]+\/)/)?.[1])
+      .filter((v, i, a) => v && a.indexOf(v) === i); // 去重
+  });
   const EXTS = new Set([".chr", ".atk", ".skl", ".ani", ".etc"]);
   return all.filter(p => {
     const isMain = prefixes.some(pre => p.startsWith(pre));
