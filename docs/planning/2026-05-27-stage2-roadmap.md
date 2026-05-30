@@ -130,7 +130,7 @@ Phase 5: 打磨交付 (3d)
 
 | 任务 | 内容 | 验收 | 估时 |
 |------|------|------|------|
-| **T3.1** GameLoop 实装 | 补全 T0.4 的空循环：fixed-timestep accumulator + deterministic PRNG (FNV-1a seeded) + tick counter | console 输出 `tick=0,1,2...` 稳定 60Hz | 2h |
+| **T3.1** GameLoop 实装 | 补全 T0.4 的空循环：fixed-timestep accumulator + deterministic PRNG (FNV-1a seeded) + tick counter | console 输出 `tick=0,1,2...` 稳定 60Hz | 2h | ✅ 完成 (2026-05-30) — FNV-1a PRNG + setInterval 60Hz tick loop，sim-worker 脱离 skeleton |
 | **T3.2** StateMachine 骨架 | 9-state FSM：IDLE→READY→ATTACK→HIT→DOWN→DEAD + 转换条件接口 | 状态转换 log 输出 | 3h |
 | **T3.3** Actor 实体管理 | swordman + goblin 各一个 Actor 实例，从 shard 读 chr/mob 数据初始化 | console 输出 actor stats | 2h |
 
