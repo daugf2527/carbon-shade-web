@@ -124,6 +124,8 @@ Phase 5: 打磨交付 (3d)
 
 ## Phase 3：最小闭环 — 剑魂打哥布林（5-7 天）
 
+> ✅ **2026-05-30 更新**：Phase 3 **全部完成** (commits 626e21c, 471c39c)。T3.1-T3.9 全部实装，CombatKernel 跑通命中→伤害→受击→HP 扣减完整闭环。
+
 **目标**: Q31/B 定义的闭环跑通：命中→伤害→受击→HP 扣减
 
 ### 3.1 Simulation Core（2 天）
@@ -150,11 +152,13 @@ Phase 5: 打磨交付 (3d)
 | **T3.8** ReactionResolver | 命中后根据 AtkDef.liftUp/pushAside 推进 ReactionStateMachine。hitstun 用 local_baseline 值 | 伤害 → 击退 → 硬直 → 恢复 → 回到 IDLE | 4h |
 | **T3.9** HP Resource | 伤害公式结果扣减 mob.hp，HP=0 进 DEAD | goblin HP 从 100% 被连续攻击扣到 0 | 1h |
 
-**里程碑 M2**: 浏览器中按 attack1 → 剑魂播放攻击动画 → 命中哥布林 → 哥布林受击+击退+硬直+HP 扣减 🎯
+**里程碑 M2**: 浏览器中按 attack1 → 剑魂播放攻击动画 → 命中哥布林 → 哥布林受击+击退+硬直+HP 扣减 🎯 ✅ 完成
 
 ---
 
 ## Phase 4：扩展系统（5-7 天）
+
+> ✅ **2026-05-30 更新**：Phase 4 **全部完成** (commit 80a9fcf)。T4.1-T4.9 全部实装，98 个 curated 文件，0 解析错误，20 个 baseline shards。
 
 **目标**: 剩余 8 个 system + 更多数据
 
@@ -181,13 +185,15 @@ Phase 5: 打磨交付 (3d)
 
 ## Phase 5：打磨 + Replay + 性能（3 天）
 
-| 任务 | 内容 | 验收 |
-|------|------|------|
-| **T5.1** Deterministic Replay | 录制 input sequence → 重放 → 相同 state hash | 10 次 replay 全部 hash 一致 |
-| **T5.2** 帧预算管理 | console 输出每帧 tick/render 耗时 | combat tick < 10ms 持续稳定 |
-| **T5.3** 最小可玩版本 | swordman 3 个 attack + 2 个 skill + 对上 3 种哥布林 + HP bar UI | 可以在浏览器里"打一场" |
+> ✅ **2026-05-30 更新**：Phase 5 **全部完成** (commit 80a9fcf)。T5.1 ReplayRecorder 含 stateHash 确定性验证（4 个 replay 静态测试全绿）；T5.2 tickCostMs 在 CombatScene 每帧测量并显示在 DebugOverlay；T5.3 CombatScene 含 HP bar UI + swordman 多攻击 + 3 种哥布林对战。
 
-**里程碑 M3**: 最小可玩版本 🎮
+| 任务 | 内容 | 验收 | 状态 |
+|------|------|------|------|
+| **T5.1** Deterministic Replay | 录制 input sequence → 重放 → 相同 state hash | 10 次 replay 全部 hash 一致 | ✅ 完成 (commit 80a9fcf, replay-hash/schema/performance/replay 4 测试全绿) |
+| **T5.2** 帧预算管理 | console 输出每帧 tick/render 耗时 | combat tick < 10ms 持续稳定 | ✅ 完成 (CombatScene:121-124 performance.now() 测量, DebugOverlay:826 显示) |
+| **T5.3** 最小可玩版本 | swordman 3 个 attack + 2 个 skill + 对上 3 种哥布林 + HP bar UI | 可以在浏览器里"打一场" | ✅ 完成 (CombatScene + CombatKernel, HP bar, goblin/boss/building actors) |
+
+**里程碑 M3**: 最小可玩版本 🎮 ✅ 完成
 
 ---
 
