@@ -284,11 +284,19 @@ async function singleJobFiles(job) {
   if (!Array.isArray(all)) {
     throw new Error(`pvf-list-stdout.json missing files array (got ${typeof snapshot.files})`);
   }
+  // 2026-05-30 Stage 3 T-A.1: 武器 attackBox 在 equipment/<job>/weapon/<wpn>/ 下的 .ani 里
+  // 主线 prefix = 角色/技能；BASELINE_WEAPONS 白名单允许特定武器目录穿过 /equipment/ 排除
+  // BASELINE_WEAPONS 支持武器类型 ("beamsword") 或类型/等级 ("beamsword/beamswdb")，逗号分隔
   const prefixes = [`character/${job}/`, `skill/${job}/`];
+  const weaponList = (process.env.BASELINE_WEAPONS ?? "").split(",").map(s => s.trim()).filter(Boolean);
+  const weaponPrefixes = weaponList.map(w => `equipment/character/${job}/weapon/${w}/`);
   const EXTS = new Set([".chr", ".atk", ".skl", ".ani", ".etc"]);
   return all.filter(p => {
-    if (!prefixes.some(pre => p.startsWith(pre))) return false;
-    if (p.includes('/equipment/')) return false;  // exclude avatar/weapon ani (~21k for swordman)
+    const isMain = prefixes.some(pre => p.startsWith(pre));
+    const isWeapon = weaponPrefixes.some(pre => p.startsWith(pre));
+    if (!isMain && !isWeapon) return false;
+    // 角色/技能路径仍排除 equipment（avatar 等无关动画）
+    if (isMain && p.includes('/equipment/')) return false;
     const dot = p.lastIndexOf(".");
     if (dot < 0) return false;
     return EXTS.has(p.slice(dot).toLowerCase());

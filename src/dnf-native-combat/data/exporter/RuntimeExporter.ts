@@ -61,6 +61,13 @@ export interface PlayerRuntimeShape {
   animations: Record<string, AniDef>;     // key: ani file basename (no .ani)
   attacks: Record<string, AtkDef>;        // key: atk file basename (no .atk)
   etc: EtcDef | null;                     // character/characteretc/<parentJob>.etc when present
+  /**
+   * 2026-05-30 Stage 3 T-A.3: 武器动画分桶。
+   * key1 = 武器 ref ("beamsword/beamswdb")，key2 = ani basename ("attack1")。
+   * 武器动画提供 `atk` (attackBox) 数据；角色动画提供 `dmg` (damageBox) + 身体 sprite。
+   * 运行时通过 angryActor.weaponRef + actionName 双查 lookup。
+   */
+  weaponAnimations: Record<string, Record<string, AniDef>>;
 }
 
 export interface MonsterRuntimeShape {
@@ -266,9 +273,19 @@ export async function exportRuntimeShards(options: ExportOptions): Promise<Expor
       }
     }
     const playerAnims: Record<string, AniDef> = {};
+    const playerWeaponAnims: Record<string, Record<string, AniDef>> = {};
+    const weaponRefRe = new RegExp(`^equipment/character/${parentJob}/weapon/([^/]+)/([^/]+)/`);
     for (const [aniPath, ani] of aniByPath) {
       if (aniPath.startsWith(`character/${parentJob}/animation/`)) {
         playerAnims[basenameWithoutExt(aniPath)] = ani;
+        continue;
+      }
+      // 2026-05-30 Stage 3 T-A.3: 武器 ani 入桶
+      const m = aniPath.match(weaponRefRe);
+      if (m) {
+        const weaponRef = `${m[1]}/${m[2]}`;
+        if (!playerWeaponAnims[weaponRef]) playerWeaponAnims[weaponRef] = {};
+        playerWeaponAnims[weaponRef][basenameWithoutExt(aniPath)] = ani;
       }
     }
     const playerEtc = etcs.find(e => e.path === `character/characteretc/${parentJob}.etc`) ?? null;
@@ -282,6 +299,7 @@ export async function exportRuntimeShards(options: ExportOptions): Promise<Expor
       animations: playerAnims,
       attacks: playerAttacks,
       etc: playerEtc,
+      weaponAnimations: playerWeaponAnims,
     };
     await queueWrite(`players/${shardKey}.json`, shape, "player");
   }
