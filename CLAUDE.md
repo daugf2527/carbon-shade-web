@@ -11,7 +11,7 @@ Active branch: `dnf-native` (master frozen 2026-05-21).
 
 | Stage | 内容 | 状态 |
 |-------|------|------|
-| Stage 1 | PVF 数据提取管线 (EXTRACT→PARSE→VALIDATE→LOAD→EXPORT) | 🟡 PVE-full 跑通 (2026-05-24, [changelog](docs/changelog/2026-05-24-stage1-complete.md)) — 5 stage 实质实现 + 410 文件 0 错误；**遗留**：3 个 standalone parser (Ani/Nut/Img) 未 wired 进 dispatch、full-PVF refIntegrity 未压测 → 延入 Stage 2 Phase 1 T1.9/T1.10 |
+| Stage 1 | PVF 数据提取管线 (EXTRACT→PARSE→VALIDATE→LOAD→EXPORT) | ✅ **完成** (2026-05-30) — 8808 文件 0 错误，refIntegrity 99.1%，16 shards。T1.9 (Ani/Nut/Img dispatch) + T1.10 (full-PVF 压测) 全部通过 |
 | Stage 2 | 22-system DNF 原生引擎层（[field-matrix](docs/engineering/22-system-field-matrix.md), [roadmap](docs/planning/2026-05-27-stage2-roadmap.md)） | 🚧 Phase 0 ✅ 完成 (2026-05-29): flatc 工具链 + ShardLoader + GameLoop 60Hz 验证通过。Phase 1 进行中: 4 .fbs (chr/skl/atk/ani) 已编译，sim-worker echo skeleton 存在 |
 
 **Stage 1 管线**:
@@ -256,3 +256,13 @@ Weapons at `equipment/character/<job>/weapon/<type>/<id>/<action>.ani`.
 不需要 /plan：单文件修复 / typo / 单个 frame data 条目调整。
 
 **Windows 用户**：Shift+Tab 在部分终端 skip plan mode，改用 **Alt+M**（与 WIN1 速查表 W6 一致）。
+
+## 代码搜索工具策略
+
+**优先 `mcp__fast-context__fast_context_search`**（本仓三轮实测：Q1 kernel tick 主循环 / Q2 damage 链路 fast-context 都比 Grep 更聚焦——Grep 在 `combat/` 下散到 ai/reaction/hit/resources 多个目录，fast-context 直击 `combat/kernel/{CombatKernel,FixedStepSimulation,CombatSystem}.ts` 和 `combat/damage/{DamageResolver,DamageFormula}.ts` 核心）。
+
+例外：
+- **已知精确符号名**（如 `CombatKernel` / `DamageResolver` / `HitResolutionSystem`）→ 直接 Grep
+- **跨多目录链路追踪**（input → action → kernel → damage）→ 第一次 Grep 容易猜错命名（本仓 input 实际是 `BrowserInputState` / `RunCommandDetector` / `FrameDataAction`，不是常规的 `enqueueAction`）→ 先 fast-context 探路或 `ls src/combat/input/`
+
+详细决策树和归因见 user memory `[[reference-fast-context-mcp]]`。
