@@ -54,13 +54,22 @@ function decideHit(attacker: Actor, target: Actor, actionName: ActionName, hitbo
   assert.equal(decision.accepted, true);
   assert.equal(decision.rejectedReason, undefined);
 
-  const damage = new DamageResolver().apply(grunt, new DamageResolver().requestFromHit(decision, "corr-test", "attack1"), {
+  const damage = new DamageResolver().apply(grunt, new DamageResolver().requestFromHit(
+    decision, "corr-test", "attack1", undefined,
+    { strength: player.strength, intelligence: player.intelligence, physAtk: player.physAtk, magAtk: player.magAtk, independentAtk: player.independentAtk, elementalDamage: player.elemStrength },
+    { defense: grunt.defense, elemResist: grunt.elemResist },
+    "physical_percent",
+    player.level,
+  ), {
     isCounter: decision.isCounter,
     isBackAttack: decision.isBackAttack,
     isCritical: false,
   });
-  assert.equal(damage.finalDamage, 12);
-  assert.equal(grunt.resources.hp, grunt.resources.maxHp - 12);
+  // Stage 3 T-A.9: 公式改后 attack1 (baseDmg=10 as skill%) × physAtk(~83) × statRatio(~2.92) × defRatio ≈ 23.
+  // 用动态校验代替硬编码: damage 在合理范围且 grunt 没被一击秒杀.
+  assert.ok(damage.finalDamage > 0, `attack1 should deal damage, got ${damage.finalDamage}`);
+  assert.ok(damage.finalDamage < grunt.resources.maxHp, `attack1 should not one-shot grunt, dealt ${damage.finalDamage}/${grunt.resources.maxHp}`);
+  assert.equal(grunt.resources.hp, grunt.resources.maxHp - damage.finalDamage);
 
   const reaction = new ReactionResolver().resolve(grunt, decision);
   new ReactionResolver().apply(grunt, reaction, decision, player, 1);

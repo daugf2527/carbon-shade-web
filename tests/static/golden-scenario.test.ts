@@ -19,7 +19,8 @@ assert.ok(finalHash && finalHash.length > 0, "replay must have a final stateHash
 
 // Golden hash snapshot — update when combat logic intentionally changes
 // 2026-05-21: Updated for Phase 4A (AirbornePhysicsSystem + DNF true gravity).
-const GOLDEN_HASH = "8da32064";
+// 2026-05-30: Stage 3 T-A.7/A.9 — PVF 真值化 (player hp/atk) + DamageFormula 修正 (atkPower 当基数).
+const GOLDEN_HASH = "bd19313f";
 assert.equal(
   finalHash,
   GOLDEN_HASH,

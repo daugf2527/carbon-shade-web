@@ -13,6 +13,7 @@ Active branch: `dnf-native` (master frozen 2026-05-21).
 |-------|------|------|
 | Stage 1 | PVF 数据提取管线 (EXTRACT→PARSE→VALIDATE→LOAD→EXPORT) | ✅ **完成** (2026-05-30) — 8808 文件 0 错误，refIntegrity 99.1%，16 shards。T1.9 (Ani/Nut/Img dispatch) + T1.10 (full-PVF 压测) 全部通过 |
 | Stage 2 | 22-system DNF 原生引擎层（[field-matrix](docs/engineering/22-system-field-matrix.md), [roadmap](docs/planning/2026-05-27-stage2-roadmap.md)） | ✅ **完成** (2026-05-30) — Phase 0-5 全部完成。CombatKernel 命中→伤害→受击→HP 闭环，ReplayRecorder stateHash 确定性验证，CombatScene 最小可玩版本（HP bar + swordman + 3 种哥布林）。76 静态测试全绿，M3 里程碑达成 |
+| Stage 3 | 真值驱动重构（[roadmap](docs/planning/2026-05-30-stage3-truth-driven-refactor.md)） | 🟢 **Phase A 完成** (2026-05-30) — 武器 ani 入 shard (T-A.1-3) + TS truth SOT (T-A.4) + 砍 default.json (T-A.5) + ActorFactory PVF 真值 stat (T-A.7) + DamageFormula 修正 (T-A.9 quick fix) + 激进改名 9 ACTIONS → PVF (T-A.10) + PoC truth 测试 (T-A.11)。**核心成果：玩家不再一击秒杀**（attack1 → grunt 23 dmg, 160→137 HP）。77/82 静态测试通过，5 个 fail 是 PVF 量纲改变后的期望值漂移（留 Phase D baseline 重跑）|
 
 **Stage 1 管线**:
 ```

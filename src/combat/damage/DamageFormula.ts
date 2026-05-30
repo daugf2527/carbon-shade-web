@@ -133,6 +133,11 @@ export class DamageFormulaResolver {
     // baseDamage 解释为 skill% (per-hit 占 atkPower 的百分比), 除以 100 还原.
     // 之前 multiplier 把 atkPower 当乘数, 1800 atkPower × baseDmg(10) = 18000 一击秒杀.
     // 现在 atkPower 81 × skill%(0.10) × statRatio(2.92) ≈ 24 per hit.
+    //
+    // 例外: status DOT (sourceKind=status_dot) 不走 skill% × atkPower 模型, 是 DOT 平伤.
+    // PVE 状态 DOT 来自 status profile.dotDamagePerStack 的硬值 (bleed=6, poison=5 等),
+    // 直接当 finalDamage flat (× defRatio).
+    const isStatusDot = req.sourceKind === "status_dot";
     const skillPercent = req.baseDamage / 100;
     let multiplier = statRatio
       * R_ATK_POWER_PCT     // ratio_2 (future, equipment)
@@ -150,11 +155,13 @@ export class DamageFormulaResolver {
       multiplier *= modifier.value;
     }
 
-    // base = atkPower × skill% (DNF 70-85 真值公式).
-    const base = (atkPower || 1.0) * skillPercent;
+    // base = atkPower × skill% (DNF 70-85 真值公式). Status DOT 退回 baseDamage flat.
+    const base = isStatusDot ? req.baseDamage : (atkPower || 1.0) * skillPercent;
+    // Status DOT 也跳过 statRatio (它已经在配置里"per stack"), 只 keep defRatio.
+    const effMultiplier = isStatusDot ? defRatio : multiplier;
 
     return {
-      finalDamage: damageAllowed ? Math.max(0, Math.floor(base * multiplier)) : 0,
+      finalDamage: damageAllowed ? Math.max(0, Math.floor(base * effMultiplier)) : 0,
       multipliers,
     };
   }
