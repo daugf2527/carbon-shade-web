@@ -5,14 +5,14 @@
 **Carbon Shade / 碳影** — DNF-style 2.5D combat prototype. Engineering name: **Combat Lab**.
 Active branch: `dnf-native` (master frozen 2026-05-21).
 
-## Current state (2026-05-29)
+## Current state (2026-05-30)
 
 **DNF alignment pivot** — 停止新功能，全力对齐 DNF 真值。详见 [`docs/planning/2026-05-21-dnf-alignment-pivot.md`](docs/planning/2026-05-21-dnf-alignment-pivot.md)。
 
 | Stage | 内容 | 状态 |
 |-------|------|------|
 | Stage 1 | PVF 数据提取管线 (EXTRACT→PARSE→VALIDATE→LOAD→EXPORT) | ✅ **完成** (2026-05-30) — 8808 文件 0 错误，refIntegrity 99.1%，16 shards。T1.9 (Ani/Nut/Img dispatch) + T1.10 (full-PVF 压测) 全部通过 |
-| Stage 2 | 22-system DNF 原生引擎层（[field-matrix](docs/engineering/22-system-field-matrix.md), [roadmap](docs/planning/2026-05-27-stage2-roadmap.md)） | 🚧 Phase 0 ✅ 完成 (2026-05-29): flatc 工具链 + ShardLoader + GameLoop 60Hz 验证通过。Phase 1 进行中: 4 .fbs (chr/skl/atk/ani) 已编译，sim-worker echo skeleton 存在 |
+| Stage 2 | 22-system DNF 原生引擎层（[field-matrix](docs/engineering/22-system-field-matrix.md), [roadmap](docs/planning/2026-05-27-stage2-roadmap.md)） | ✅ **完成** (2026-05-30) — Phase 0-5 全部完成。CombatKernel 命中→伤害→受击→HP 闭环，ReplayRecorder stateHash 确定性验证，CombatScene 最小可玩版本（HP bar + swordman + 3 种哥布林）。76 静态测试全绿，M3 里程碑达成 |
 
 **Stage 1 管线**:
 ```
