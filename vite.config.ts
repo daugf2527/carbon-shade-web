@@ -1,4 +1,5 @@
 import { defineConfig } from "vite";
+import { visualizer } from "rollup-plugin-visualizer";
 
 export default defineConfig({
   define: {
@@ -8,6 +9,14 @@ export default defineConfig({
   server: { host: "0.0.0.0", port: 5173 },
   preview: { host: "0.0.0.0", port: 4173 },
   build: { outDir: "dist", emptyOutDir: true, sourcemap: false },
+  plugins: [
+    visualizer({
+      filename: "dist/stats.html",
+      open: false,
+      gzipSize: true,
+      brotliSize: true,
+    }),
+  ],
   // 2026-05-27 Q7: Phase 2 Day 1 Web Worker 骨架 — combat tick 跑 worker，
   // 主线程只处理 input + RAF + UI 渲染。`format: "es"` 保留 ES module
   // import，让 worker 内部能复用 simulation kernel 代码（不需要重新打包
