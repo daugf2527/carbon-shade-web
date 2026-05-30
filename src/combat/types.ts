@@ -393,6 +393,7 @@ export interface DamageRequest {
   correlationId: string;
   attackerStats?: { strength?: number; intelligence?: number; physAtk?: number; magAtk?: number; independentAtk?: number; elementalDamage?: number };
   targetStats?: { defense?: number; elemResist?: number };
+  weaponDamageScale?: number;
 }
 export interface DamageApplied { attackerId?: ActorId; targetId: ActorId; actionName?: ActionName; sourceKind: DamageSourceKind; reactionPolicy: DamageReactionPolicy; baseDamage: number; finalDamage: number; hpBefore: number; hpAfter: number; isCounter: boolean; isBackAttack: boolean; isCritical: boolean; multipliers: Array<{name:string; value:number}>; sourceHitDecisionId?: string; sourceStatusId?: string; }
 

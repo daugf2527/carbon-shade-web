@@ -139,6 +139,10 @@ export class DamageFormulaResolver {
     // 直接当 finalDamage flat (× defRatio).
     const isStatusDot = req.sourceKind === "status_dot";
     const skillPercent = req.baseDamage / 100;
+    const weaponScale = req.weaponDamageScale ?? 1.0;
+    if (weaponScale !== 1.0) {
+      multipliers.push({ name: "weapon_damage_scale", value: weaponScale });
+    }
     let multiplier = statRatio
       * R_ATK_POWER_PCT     // ratio_2 (future, equipment)
       * eleRatio             // ratio_3
@@ -149,6 +153,7 @@ export class DamageFormulaResolver {
       * defRatio             // ratio_8
       * R_MISC               // ratio_9 (future)
       * counterMult
+      * weaponScale          // weapon damage scale from weaponHitInfo
       / FINAL_DIVISOR;
 
     for (const modifier of extraMultipliers) {
