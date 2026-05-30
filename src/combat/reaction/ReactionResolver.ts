@@ -142,8 +142,10 @@ export class ReactionResolver {
     const weaponHitInfo = (SWORDMAN_DATA.chr.weaponHitInfo as WeaponHitInfo[])[slot];
     if (!weaponHitInfo) return null;
 
-    // H2: weight factor formula (stub constants)
-    const weightFactor = Math.max(MIN_WEIGHT_FACTOR, 1 - target.weight / WEIGHT_THRESHOLD);
+    // H2: weight factor formula (D9=B stub: assume target weight = 68000, swordman chr default)
+    // TODO Phase E: read actual target.chr.weight from entity data
+    const stubTargetWeight = 68000;
+    const weightFactor = Math.max(MIN_WEIGHT_FACTOR, 1 - stubTargetWeight / WEIGHT_THRESHOLD);
 
     // velocityY = liftUp × launch × weightFactor
     const velocityY = config.liftUp.value * weaponHitInfo.launch * weightFactor;
