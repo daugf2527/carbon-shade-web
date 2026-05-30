@@ -71,6 +71,13 @@ export function createActor(id: string, type: ActorType, faction: Faction, x: nu
   const hurtOffsetY = id === "boss" ? 58 : id === "imp" ? 60 : 26;
   const mp = faction === "player" ? 1000 : 100;
 
+  // DNF 70-85 classic stat block — local_baseline values
+  // Player: Lv70 swordman baseline. Enemies: scaled by type.
+  const level    = faction === "player" ? 70 : type === "boss" ? 72 : 68;
+  const strength = faction === "player" ? 480 : type === "boss" ? 320 : 180;
+  const physAtk  = faction === "player" ? 1800 : type === "boss" ? 1200 : 600;
+  const defense  = faction === "player" ? 0 : type === "boss" ? 800 : 400;
+
   return {
     id,
     type,
@@ -83,6 +90,15 @@ export function createActor(id: string, type: ActorType, faction: Faction, x: nu
     pushBox: { w: pushWidth, d: pushDepth, immovable: type === "building" },
     hurtBoxes: [{ offset: { x: 0, z: 0, y: hurtOffsetY }, w: hurtWidth, d: hurtDepth, h: hurtHeight }],
     resources: { hp, maxHp: hp, mp, maxMp: mp, cube: 3 },
+    level,
+    strength,
+    intelligence: 0,
+    physAtk,
+    magAtk: 0,
+    independentAtk: 0,
+    elemStrength: 0,
+    elemResist: 0,
+    defense,
     cooldowns: { remaining: new Map(), globalRemaining: 0 },
     buffs: [],
     statusEffects: [],

@@ -49,6 +49,40 @@ interface ActorView {
 type CombatLabRuntime = { scene?: CombatScene; kernel?: CombatKernel; kernelReady?: boolean };
 type GameplayKeyEvent = { code: string; repeat: boolean; preventDefault(): void };
 
+interface CombatStats {
+  sessionStartTick: number;
+  // hit/damage
+  hits: number;
+  misses: number; // armor_feedback_only counted separately
+  armorBlocks: number;
+  totalDamageDealt: number;
+  totalDamageReceived: number;
+  damageByAction: Record<string, number>;
+  hitsByAction: Record<string, number>;
+  damageToTarget: Record<string, number>;
+  // reactions
+  reactionCounts: Record<string, number>;
+  // actor deaths
+  deaths: Record<string, number>;
+  // actions
+  actionsUsed: Record<string, number>;
+  // status effects applied by player
+  statusApplied: Record<string, number>;
+  // performance
+  peakTickCostMs: number;
+  fpsSamples60: number[];
+}
+
+function makeCombatStats(tick: number): CombatStats {
+  return {
+    sessionStartTick: tick, hits: 0, misses: 0, armorBlocks: 0,
+    totalDamageDealt: 0, totalDamageReceived: 0,
+    damageByAction: {}, hitsByAction: {}, damageToTarget: {},
+    reactionCounts: {}, deaths: {}, actionsUsed: {},
+    statusApplied: {}, peakTickCostMs: 0, fpsSamples60: [],
+  };
+}
+
 export class CombatScene extends Phaser.Scene {
   kernel!: CombatKernel;
   simulation!: FixedStepSimulation;
@@ -56,6 +90,7 @@ export class CombatScene extends Phaser.Scene {
   private debugLayer!: DebugLayer;
   private audioGate: AudioUnlockGate | null = null;
   private readonly feedbackGraphics: Phaser.GameObjects.Graphics[] = [];
+  private _stats: CombatStats = makeCombatStats(0);
   private readonly worldWidth = 3600;
   private readonly worldHeight = 1080;
   private readonly groundLineY = 810;
@@ -89,7 +124,9 @@ export class CombatScene extends Phaser.Scene {
     this.cameraController = new CameraController(this.worldWidth, this.worldHeight);
     this.debugLayer = new DebugLayer(this, this.groundLineY);
     this.audioGate = (this.game.registry.get("audioGate") as AudioUnlockGate | undefined) ?? null;
+    this._stats = makeCombatStats(0);
     this.bindFeedbackHandlers();
+    this.bindStatsListeners();
     this.cameras.main.setBackgroundColor("#0b1220");
 
     this.createBackground();
@@ -122,11 +159,15 @@ export class CombatScene extends Phaser.Scene {
     this.simulation.update(delta);
     this.cameraController.tick();
     this.lastTickCostMs = performance.now() - tickStart;
+    if (this.lastTickCostMs > this._stats.peakTickCostMs) this._stats.peakTickCostMs = this.lastTickCostMs;
 
     // F1: FPS regression tracking
     const fps = this.game.loop.actualFps ?? 0;
     this.fpsSamples.push(fps);
     if (this.fpsSamples.length > 60) this.fpsSamples.shift();
+    // stats fps sampling (keep last 60 for avg)
+    this._stats.fpsSamples60.push(fps);
+    if (this._stats.fpsSamples60.length > 60) this._stats.fpsSamples60.shift();
     if (this.fpsSamples.length >= 30) {
       const avgFps = this.fpsSamples.reduce((a, b) => a + b, 0) / this.fpsSamples.length;
       if (avgFps < CombatScene.FPS_LOW_THRESHOLD) {
@@ -371,6 +412,86 @@ export class CombatScene extends Phaser.Scene {
         this.fadeGraphics(effect, 140, 1.4);
       }
     });
+  }
+
+  private bindStatsListeners(): void {
+    const s = this._stats;
+    this.kernel.bus.on("HitConfirmed", event => {
+      const payload = event.payload as {
+        hitbox?: { baseDamage?: number; id?: string };
+        armorDecision?: { controlBlocked?: boolean; reactionOverride?: string };
+        finalDamage?: number;
+      };
+      const isArmor = payload.armorDecision?.reactionOverride === "armor_feedback_only"
+        || payload.armorDecision?.controlBlocked;
+      const dmg = payload.finalDamage ?? payload.hitbox?.baseDamage ?? 0;
+      const action = (event.payload as { actionName?: string }).actionName ?? "unknown";
+      const target = event.targetActorId ?? "unknown";
+      if (event.sourceActorId === "player") {
+        if (isArmor) {
+          s.armorBlocks++;
+        } else {
+          s.hits++;
+          s.totalDamageDealt += dmg;
+          s.damageByAction[action] = (s.damageByAction[action] ?? 0) + dmg;
+          s.hitsByAction[action] = (s.hitsByAction[action] ?? 0) + 1;
+          s.damageToTarget[target] = (s.damageToTarget[target] ?? 0) + dmg;
+        }
+      } else {
+        s.totalDamageReceived += dmg;
+      }
+    });
+    this.kernel.bus.on("ReactionApplied", event => {
+      const reaction = (event.payload as { finalReaction?: string }).finalReaction ?? "unknown";
+      s.reactionCounts[reaction] = (s.reactionCounts[reaction] ?? 0) + 1;
+    });
+    this.kernel.bus.on("ActionEntered", event => {
+      if (event.targetActorId !== "player" && event.sourceActorId !== "player") return;
+      const name = (event.payload as { actionName?: string }).actionName ?? "unknown";
+      s.actionsUsed[name] = (s.actionsUsed[name] ?? 0) + 1;
+    });
+    this.kernel.bus.on("ActorDead" as any, event => {
+      const id = event.targetActorId ?? (event.payload as { actorId?: string }).actorId ?? "unknown";
+      s.deaths[id] = (s.deaths[id] ?? 0) + 1;
+    });
+    this.kernel.bus.on("StatusApplied" as any, event => {
+      if (event.sourceActorId !== "player") return;
+      const kind = (event.payload as { kind?: string }).kind ?? "unknown";
+      s.statusApplied[kind] = (s.statusApplied[kind] ?? 0) + 1;
+    });
+  }
+
+  printStats(): void {
+    const s = this._stats;
+    const ticks = this.kernel.tickCount - s.sessionStartTick;
+    const seconds = (ticks / 60).toFixed(1);
+    const avgFps = s.fpsSamples60.length
+      ? (s.fpsSamples60.reduce((a, b) => a + b, 0) / s.fpsSamples60.length).toFixed(1)
+      : "n/a";
+    const actors = this.kernel.actors;
+    const hpSnapshot = Object.fromEntries(
+      actors.map(a => [a.id, `${a.resources.hp}/${a.resources.maxHp}`])
+    );
+    const hitRate = s.hits + s.armorBlocks > 0
+      ? ((s.hits / (s.hits + s.armorBlocks)) * 100).toFixed(0) + "%"
+      : "n/a";
+    const avgDmgPerHit = s.hits > 0 ? (s.totalDamageDealt / s.hits).toFixed(1) : "0";
+
+    console.log("[COMBAT STATS] ===========================");
+    console.log(`  duration      : ${seconds}s (${ticks} ticks)`);
+    console.log(`  hits landed   : ${s.hits}  armor blocked: ${s.armorBlocks}  hit rate: ${hitRate}`);
+    console.log(`  dmg dealt     : ${s.totalDamageDealt}  avg/hit: ${avgDmgPerHit}`);
+    console.log(`  dmg received  : ${s.totalDamageReceived}`);
+    console.log(`  dmg by action :`, s.damageByAction);
+    console.log(`  hits by action:`, s.hitsByAction);
+    console.log(`  dmg to target :`, s.damageToTarget);
+    console.log(`  reactions     :`, s.reactionCounts);
+    console.log(`  deaths        :`, Object.keys(s.deaths).length ? s.deaths : "(none)");
+    console.log(`  status applied:`, Object.keys(s.statusApplied).length ? s.statusApplied : "(none)");
+    console.log(`  actions used  :`, s.actionsUsed);
+    console.log(`  hp snapshot   :`, hpSnapshot);
+    console.log(`  avg fps: ${avgFps}  peak tick cost: ${s.peakTickCostMs.toFixed(2)}ms`);
+    console.log("[COMBAT STATS] ===========================");
   }
 
   private spawnBloodlustAttachVfx(x: number, y: number): void {
@@ -853,6 +974,11 @@ export class CombatScene extends Phaser.Scene {
     if (event.code === "F4") {
       event.preventDefault();
       this.simulation.armSingleStep();
+      return;
+    }
+    if (event.code === "KeyP") {
+      event.preventDefault();
+      this.printStats();
       return;
     }
     if (event.code === "F6") {
