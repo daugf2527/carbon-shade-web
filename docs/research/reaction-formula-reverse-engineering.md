@@ -117,7 +117,37 @@ weightFactor(target) = clamp(1 - target.weight / WEIGHT_THRESHOLD, MIN_FACTOR, 1
 待定常数:
 - `WEIGHT_THRESHOLD`: 推测 100000 ~ 200000 (使剑魂 weight=68000 时 factor ≈ 0.5)
 - `MIN_FACTOR`: 推测 0.1 (重 boss 也能轻微抬起)
-- `weaponHitInfo[currentWeapon].launch_multiplier`: 当前武器在 weaponHitInfo 表的哪一槽？取决于攻击 ID 路由（待查）
+- `weaponHitInfo[currentWeapon].launch_multiplier`: 当前武器在 weaponHitInfo 表的哪一槽？取决于攻击 ID 路由（见下文 H2.1）
+
+### H2.1: weaponHitInfo slot 路由规则（2026-05-31 T-C.2 补充）
+
+**问题**: chr.weaponHitInfo 是 6-slot 数组，每个 slot 有不同的 launch/pushBack multiplier。如何决定当前攻击用哪个 slot？
+
+**假设**: 基于攻击类型的 hardcoded 映射表（PVF 无直接字段）
+
+```typescript
+const WEAPON_SLOT_ROUTING: Record<string, number> = {
+  // 普攻系列 → slot 0（基础攻击）
+  'attack1': 0,
+  'attack2': 0,
+  'attack3': 0,
+  'dashattack': 0,
+  'jumpattack': 0,
+  
+  // 重击/特殊攻击 → slot 3（高伤害）
+  'hardattack': 3,
+  'chargecrash': 3,
+  
+  // 技能默认 → slot 0（除非技能特殊指定）
+  // 例如：UpwardSlash 可能用 slot 2（blow 类型，launch=-0.95 向下击）
+};
+```
+
+**验证方式**: 
+1. 对比 DNF 客户端实测：同一攻击打不同怪物的 launch 高度
+2. 反推 slot index：`observedLaunch / atk.liftUp / weightFactor = weaponHitInfo[slot].launch`
+
+**D9=B 降级**: Phase C 先用 hardcoded 表，Phase E 再从 .skl 或客户端实测校准
 
 **测试场景**:
 1. swordman (weight=68000) attack3 (liftUp=300) 打 grunt (weight=?) 飞多高
@@ -132,6 +162,37 @@ directionSign = attacker.facing === "right" ? 1 : -1
 ```
 
 负值 `pushAside` 罕见——实测一例 `ghostsidewind: pushAside=-200`，应表示反向击（吸过来？还是后撤？）
+
+### H3.1: weight factor 公式细化（2026-05-31 T-C.2 补充）
+
+**问题**: PVF 标记 chr.weight 为 `unit="audio-only"`，语义不明确。是否真的用于物理计算？
+
+**假设**: weight 用于 launch/pushback 减免，但单位可能不是物理质量
+
+```typescript
+// D9=B stub 公式（Phase C 先用线性假设）
+function weightFactor(targetWeight: number): number {
+  const WEIGHT_THRESHOLD = 150000; // stub 常数，Phase E 校准
+  const MIN_FACTOR = 0.1;          // 最小减免（重 boss 也能轻微抬起）
+  const ratio = targetWeight / WEIGHT_THRESHOLD;
+  return Math.max(MIN_FACTOR, 1 - ratio);
+}
+
+// 示例：
+// - grunt (weight=30000): factor = 1 - 30000/150000 = 0.8 (80% 效果)
+// - swordman (weight=68000): factor = 1 - 68000/150000 = 0.55 (55% 效果)
+// - boss (weight=200000): factor = 0.1 (10% 效果，触底)
+```
+
+**已知不确定性**:
+- `WEIGHT_THRESHOLD` 常数需要客户端实测校准
+- weight 单位可能是"音效选择 key"而非物理质量（PVF 标注 audio-only）
+- 如果 weight 不影响 launch，公式退化为 `velocityY = atk.liftUp × weaponHitInfo[slot].launch`（去掉 weightFactor）
+
+**验证方式**: 
+1. 实测 attack3 (liftUp=300) 打不同 weight 怪物的飞行高度
+2. 如果飞行高度无差异 → weight 不参与计算
+3. 如果有差异 → 反推 WEIGHT_THRESHOLD 常数
 
 ### H4 (推测，待 Phase C T-C.4): hitstun 公式
 
