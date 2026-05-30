@@ -51,14 +51,20 @@ const GOBLIN_BASE: ActorStats = {
 };
 
 export function statsFromMonsterShard(mob: Record<string, unknown>): ActorStats {
-  const cat = (mob.abilityCategory as { value?: Record<string, number> } | null)?.value ?? {};
-  const hpPct = cat["hp max"] ?? 100;
+  type CatEntry = { op: "*" | "+"; value: number };
+  const cat = (mob.abilityCategory as { value?: Record<string, CatEntry> } | null)?.value ?? {};
+  const applyEntry = (base: number, entry: CatEntry | undefined, defaultPct = 100): number =>
+    entry === undefined
+      ? Math.round(base * defaultPct / 100)
+      : entry.op === "+"
+        ? Math.round(base + entry.value)
+        : Math.round(base * entry.value / 100);
   return {
-    hpMax: Math.round(GOBLIN_BASE.hpMax * hpPct / 100),
+    hpMax: applyEntry(GOBLIN_BASE.hpMax, cat["hp max"]),
     mpMax: 0,
     moveSpeed: scalarVal(mob.moveSpeed as never),
-    physicalAttack: Math.round(GOBLIN_BASE.physicalAttack * (cat["equipment_physical_attack"] ?? 100) / 100),
-    physicalDefense: Math.round(GOBLIN_BASE.physicalDefense * (cat["equipment_physical_defense"] ?? 100) / 100),
+    physicalAttack: applyEntry(GOBLIN_BASE.physicalAttack, cat["equipment_physical_attack"]),
+    physicalDefense: applyEntry(GOBLIN_BASE.physicalDefense, cat["equipment_physical_defense"]),
   };
 }
 

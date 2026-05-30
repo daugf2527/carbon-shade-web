@@ -213,13 +213,14 @@ const PvfVectorFactSchema = z.object({
   ...PvfFactBaseFields,
 });
 
-/** PvfFact<Record<string, number>> — keyed scalar map (e.g. mob "ability
- *  category" stat->percent). Phase 3 (2026-05-26). Numeric values are
- *  .finite(). Map key cardinality is bounded by the PVF section structure
- *  (typically <=10 stat keys per mob); no explicit cap is added since the
- *  parser already throws on duplicate keys and divisible-by-3 invariant. */
-const PvfFactRecordNumberSchema = z.object({
-  value: z.record(z.string(), z.number().finite()),
+/** PvfFact<Record<string, AbilityCategoryEntry>> — keyed {op,value} map from
+ *  mob "ability category" section. Phase 4: extended to accept "+" additive
+ *  operator alongside "*" multiplicative (goblintaskmaster, 2026-05-30). */
+const PvfFactAbilityCategorySchema = z.object({
+  value: z.record(z.string(), z.object({
+    op: z.enum(["*", "+"]),
+    value: z.number().finite(),
+  })),
   ...PvfFactBaseFields,
 });
 
@@ -359,7 +360,7 @@ const MobSchema = z.object({
   // validate without backward break.
   weightDual: z.nullable(PvfVectorFactSchema),
   hpMax: z.nullable(PvfVectorFactSchema),
-  abilityCategory: z.nullable(PvfFactRecordNumberSchema),
+  abilityCategory: z.nullable(PvfFactAbilityCategorySchema),
   level: z.nullable(PvfVectorFactSchema),
   attackDelay: z.nullable(PvfFactNumberSchema),
   moveSpeed: z.nullable(PvfVectorFactSchema),

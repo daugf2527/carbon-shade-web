@@ -1,6 +1,13 @@
 import type { PvfAttribute, PvfDocument, PvfRef, PvfSection } from "./PvfDocument.js";
 import type { ExtractedDocumentProvenance, PvfFact, PvfStringFact, PvfVectorFact } from "./Provenance.js";
 
+/** One stat entry from the "ability category" PVF section. */
+export interface AbilityCategoryEntry {
+  /** `"*"` = multiplicative (percent); `"+"` = additive (absolute). */
+  op: "*" | "+";
+  value: number;
+}
+
 export interface MobDef {
   kind: "mob";
   path: string;
@@ -38,19 +45,16 @@ export interface MobDef {
    */
   hpMax: PvfVectorFact | null;
   /**
-   * Per-stat percentage scalars from the "ability category" section.
+   * Per-stat scalars from the "ability category" section. Each entry records
+   * the operator (`*` multiplicative percent or `+` additive absolute) and
+   * value as emitted by the PVF triple `[str("[stat]"), str(op), int(val)]`.
    *
-   * Real PVF emits triples `[str("[stat]"), str("*"), int(percent)]` —
-   * verified across 5/5 goblin samples (2026-05-26). The `*` operator slot
-   * is uniformly multiplicative in observed data. Example for cowardgoblin:
-   *   { "hp max": 80, "equipment_physical_attack": 80, ... }
-   *
-   * Runtime mob HP = baseReferenceHp * abilityCategory["hp max"] / 100.
-   * Base reference table lives outside the .mob file (.chr / DNF.exe);
-   * Stage 1 keeps the raw percentages, Stage 2 resolves the multiplier
-   * against the per-level reference when the engine boots. Tier-3.
+   * Multiplicative example (cowardgoblin): `{ "hp max": { op:"*", value:80 } }`
+   * → runtime HP = baseReferenceHp * value / 100.
+   * Additive example (goblintaskmaster): `{ "hp max": { op:"+", value:6000 } }`
+   * → runtime HP = baseReferenceHp + value. Tier-3.
    */
-  abilityCategory: PvfFact<Record<string, number>> | null;
+  abilityCategory: PvfFact<Record<string, AbilityCategoryEntry>> | null;
   /**
    * Mob level range `[min, max]` from the "level" section. Real PVF emits
    * two ints (e.g. goblin `[1, 6]`, cowardgoblin `[1, 99]`). Pair stored

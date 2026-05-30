@@ -1,4 +1,4 @@
-import type { MobDef } from "../types/MobDef.js";
+import type { AbilityCategoryEntry, MobDef } from "../types/MobDef.js";
 import type {
   PvfAttribute,
   PvfDocument,
@@ -96,24 +96,21 @@ function collectCategoryNames(document: PvfDocument): string[] {
 }
 
 /**
- * Parse "ability category" section into a `Record<string, number>` of
- * `stat -> percent`.
+ * Parse "ability category" section into a per-stat map of `{ op, value }`.
  *
- * Real PVF emits triples per stat: `[str("[hp max]"), str("*"), int(80), ...]`
- * (verified across 5/5 goblin samples, 2026-05-26). The operator slot is
- * uniformly multiplicative ("*") in observed data; non-multiplicative
- * operators would change semantics (additive vs multiplicative), so we
- * hard-fail on any other operator to surface unknown shapes rather than
- * silently coerce.
+ * Real PVF emits triples per stat: `[str("[stat]"), str(op), int(val), ...]`
+ * Two operators observed:
+ *   `"*"` — multiplicative percent (e.g. goblin `[hp max] * 80`)
+ *   `"+"` — additive absolute     (e.g. goblintaskmaster `[hp max] + 6000`)
  *
  * Tolerance:
  *   - Section absent           -> return null (legitimate "no scaling")
  *   - Section present + empty  -> throw (real PVF emits >=1 triple)
  *   - Attr count not divisible by 3 -> throw (extractor invariant violation)
  *   - Slot type mismatch       -> throw (str/str/int expected per slot)
- *   - Operator slot not "*"    -> throw (unknown semantics)
+ *   - Operator not "*" or "+"  -> throw (unknown semantics)
  */
-function parseAbilityCategory(document: PvfDocument): PvfFact<Record<string, number>> | null {
+function parseAbilityCategory(document: PvfDocument): PvfFact<Record<string, AbilityCategoryEntry>> | null {
   const section = firstSection(document, "ability category");
   if (section === null) return null;
   const attrs = section.attributes;
@@ -129,7 +126,7 @@ function parseAbilityCategory(document: PvfDocument): PvfFact<Record<string, num
       `not divisible by 3 in ${document.path}. Expected triples (key, op, value).`,
     );
   }
-  const map: Record<string, number> = {};
+  const map: Record<string, AbilityCategoryEntry> = {};
   for (let i = 0; i < attrs.length; i += 3) {
     const keyAttr = attrs[i];
     const opAttr = attrs[i + 1];
@@ -152,15 +149,15 @@ function parseAbilityCategory(document: PvfDocument): PvfFact<Record<string, num
         `(raw=${JSON.stringify(rawKey)}) in ${document.path}.`,
       );
     }
-    // Slot 1: str "*" (multiplicative is the only operator observed in goblin samples)
+    // Slot 1: str operator — "*" (multiplicative percent) or "+" (additive absolute)
     let op: string | null = null;
     if (opAttr.t === "str" && typeof (opAttr as { v?: unknown }).v === "string") {
       op = (opAttr as { v: string }).v;
     }
-    if (op !== "*") {
+    if (op !== "*" && op !== "+") {
       throw new Error(
         `[MobParser] parseAbilityCategory: triple[${i / 3}] operator slot is ` +
-        `${JSON.stringify(op ?? `(type ${opAttr.t})`)} (expected "*") in ${document.path}. ` +
+        `${JSON.stringify(op ?? `(type ${opAttr.t})`)} (expected "*" or "+") in ${document.path}. ` +
         `Unknown operators have unverified semantics; refusing to silently coerce.`,
       );
     }
@@ -181,11 +178,11 @@ function parseAbilityCategory(document: PvfDocument): PvfFact<Record<string, num
         `Each stat should appear at most once.`,
       );
     }
-    map[key] = value;
+    map[key] = { op: op as "*" | "+", value };
   }
   return {
     value: map,
-    unit: "percent",
+    unit: "mixed",
     provenance: fieldProvenance(document, "ability category"),
   };
 }

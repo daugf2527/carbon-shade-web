@@ -73,6 +73,39 @@ const CURATED_FILES = [
   "monster/goblin/animation_goblin2/damage2.ani",
   "monster/goblin/animation_goblin2/sit.ani",
   "monster/goblin/animation_goblin2/attack1.ani",
+  // T4.7 — goblinthrower (投掷哥布林, normal)
+  "monster/goblin/goblinthrower.mob",
+  "monster/goblin/attackinfo/attack2.atk",
+  "monster/goblin/animation_kinol2/stay.ani",
+  "monster/goblin/animation_kinol2/move.ani",
+  "monster/goblin/animation_kinol2/attack1.ani",
+  "monster/goblin/animation_kinol2/throw.ani",
+  "monster/goblin/animation_kinol2/damage1.ani",
+  "monster/goblin/animation_kinol2/damage2.ani",
+  "monster/goblin/animation_kinol2/down.ani",
+  "monster/goblin/animation_kinol2/sit.ani",
+  "monster/goblin/animation_kinol2/overturn.ani",
+  // T4.7 — goblinkrazyivan (boss)
+  "monster/newmonsters/risk_dungeon/vilmark/goblinkrazyivan/goblinkrazyivan.mob",
+  "monster/newmonsters/risk_dungeon/vilmark/goblinkrazyivan/attackinfo/attack1.atk",
+  "monster/newmonsters/risk_dungeon/vilmark/goblinkrazyivan/animation_goblin/stay.ani",
+  "monster/newmonsters/risk_dungeon/vilmark/goblinkrazyivan/animation_goblin/move.ani",
+  "monster/newmonsters/risk_dungeon/vilmark/goblinkrazyivan/animation_goblin/attack1.ani",
+  "monster/newmonsters/risk_dungeon/vilmark/goblinkrazyivan/animation_goblin/damage1.ani",
+  "monster/newmonsters/risk_dungeon/vilmark/goblinkrazyivan/animation_goblin/damage2.ani",
+  "monster/newmonsters/risk_dungeon/vilmark/goblinkrazyivan/animation_goblin/down.ani",
+  "monster/newmonsters/risk_dungeon/vilmark/goblinkrazyivan/animation_goblin/sit.ani",
+  "monster/newmonsters/risk_dungeon/vilmark/goblinkrazyivan/animation_goblin/overturn.ani",
+  // T4.7 — goblintaskmaster (elite)
+  "monster/newmonsters/advanceatlar/enemy/goblintaskmaster/goblintaskmaster.mob",
+  "monster/newmonsters/advanceatlar/enemy/goblintaskmaster/animation/stay.ani",
+  "monster/newmonsters/advanceatlar/enemy/goblintaskmaster/animation/move.ani",
+  "monster/newmonsters/advanceatlar/enemy/goblintaskmaster/animation/attack1.ani",
+  "monster/newmonsters/advanceatlar/enemy/goblintaskmaster/animation/damage1.ani",
+  "monster/newmonsters/advanceatlar/enemy/goblintaskmaster/animation/damage2.ani",
+  "monster/newmonsters/advanceatlar/enemy/goblintaskmaster/animation/down.ani",
+  "monster/newmonsters/advanceatlar/enemy/goblintaskmaster/animation/sit.ani",
+  "monster/newmonsters/advanceatlar/enemy/goblintaskmaster/animation/overturn.ani",
   // Dungeon sample — P1-1 fix (2026-05-24, complete-stage1-review): without
   // a .dgn the baseline left dist/data/dungeons/ empty, leaving the Stage 2
   // DungeonRuntimeShape consumer surface with no fixture to compare against.
@@ -85,6 +118,15 @@ const CURATED_FILES = [
   "map/jungle/e3204(1,2).map",
   "map/jungle/h3204(3,0).map",
   "map/jungle/h3206(0,6).map",
+  // T4.8 — bloodhell: 0% stale dgn (all 7 mapIds alive per dgn-stale-summary)
+  "dungeon/act3/bloodhell.dgn",
+  "map/bloodhell/n6008(2,1).map",
+  "map/bloodhell/h6009(2,2).map",
+  "map/bloodhell/h6010(2,3).map",
+  "map/bloodhell/h6011(1,3).map",
+  "map/bloodhell/h6012(3,3).map",
+  "map/bloodhell/bh6015(0,2).map",
+  "map/bloodhell/bh6016(4,2).map",
   // Phase 4 P0-4 (2026-05-26, stage1.5-revised-plan §二.P0-4): swordman
   // core motion .ani inlined into player shard so Stage 2 system 5
   // (Animation playback) has per-frame hitbox data on Day 1. Without these,
@@ -109,6 +151,22 @@ const CURATED_FILES = [
   "character/swordman/animation/damage2.ani",
   "character/swordman/animation/down.ani",
   "character/swordman/animation/overturn.ani",
+  // T4.9 — shared down/overturn/sit for remaining 5 jobs with own animation/
+  "character/gunner/animation/down.ani",
+  "character/gunner/animation/overturn.ani",
+  "character/gunner/animation/sit.ani",
+  "character/priest/animation/down.ani",
+  "character/priest/animation/overturn.ani",
+  "character/priest/animation/sit.ani",
+  "character/fighter/animation/down.ani",
+  "character/fighter/animation/overturn.ani",
+  "character/fighter/animation/sit.ani",
+  "character/mage/animation/down.ani",
+  "character/mage/animation/overturn.ani",
+  "character/mage/animation/sit.ani",
+  "character/thief/animation/down.ani",
+  "character/thief/animation/overturn.ani",
+  "character/thief/animation/sit.ani",
 ];
 
 // PVE Phase 2A filter (2026-05-24): expand to all character/* + skill/* files.

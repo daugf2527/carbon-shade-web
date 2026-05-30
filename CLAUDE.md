@@ -37,7 +37,7 @@ PVF --pipe--> dnf-extract (C++) --> PvfDocument[] --> 7 parsers in dispatch + 3 
 | `npm run audit:verify` | Re-check agent audit claims against cited file:line |
 | `npm run closed-loop:status` | Closed-loop workflow state machine status |
 | `npm run browser:smoke` | Playwright browser test (CI only, needs dev server + display) |
-| `npm run baseline` | Stage 1 sample baseline (45 curated files, ~4s) |
+| `npm run baseline` | Stage 1 sample baseline (98 curated files, ~6s) |
 | `npm run baseline:pve` | Stage 1 PVE-full baseline (8794 character + skill files, ~10min) |
 | `npm run validate:sprites` | Validate sprite manifest integrity |
 | `npm run validate:assets` | Validate asset paths against manifest |
@@ -85,7 +85,7 @@ DNF_PVF_PATH=/path/to/Script.pvf node scripts/pipeline.mjs --full
 node scripts/pipeline.mjs --pvf Script.pvf --file <path> [--file <path> ...] \
   [--stop-at extract|parse|validate|load|export] [--full|--incremental]
 
-# Stage 1 baseline (curated 43-file cross-section)
+# Stage 1 baseline (curated 98-file cross-section)
 DNF_PVF_PATH=... node scripts/stage1-baseline.mjs
 
 # Frame PoC: extract single .ani → PNG frames + meta.json (no npm script)
