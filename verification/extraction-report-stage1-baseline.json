@@ -1,14 +1,14 @@
 {
   "meta": {
     "runId": "stage1-baseline",
-    "startedAt": "2026-05-30T07:35:39.879Z",
-    "finishedAt": "2026-05-30T07:35:46.267Z",
+    "startedAt": "2026-05-30T12:21:31.956Z",
+    "finishedAt": "2026-05-30T12:21:41.003Z",
     "pvfHash": "crc32-head:c0779278|size:205695984",
     "extractorVersion": "v2.0.0"
   },
   "stats": {
-    "filesTotal": 1628,
-    "filesParsed": 1628,
+    "filesTotal": 1626,
+    "filesParsed": 1626,
     "filesFailed": 0,
     "errors": 0,
     "warnings": 0,
