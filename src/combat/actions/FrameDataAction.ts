@@ -2,7 +2,7 @@ import type { FieldProvenanceMap, FrameDataAction, HitBoxFrameWindow, ActionName
 
 const SOURCE_CAPTURED_AT = "2026-05-03";
 const sourcePolicy = { sourceType:"local_baseline", confidence:"medium", requiresManualVerification:true } as const;
-const combatCancelTargets: ActionName[] = ["NormalBasic1","NormalBasic2","NormalBasic3","DashAttack","Jump","JumpAttack","FrenzyBasic1","FrenzyBasic2","FrenzyBasic3","UpwardSlash","MountainousWheel","RagingFury","Bloodlust","GoreCross","OutrageBreak","ExtremeOverkill","RagingFury2","BloodRuin","BloodSword","BurstFury","EarthShatter","Backstep","Walk","Run","Idle"];
+const combatCancelTargets: ActionName[] = ["attack1","attack2","attack3","dashattack","jump","jumpattack","FrenzyBasic1","FrenzyBasic2","FrenzyBasic3","UpwardSlash","MountainousWheel","RagingFury","Bloodlust","GoreCross","OutrageBreak","ExtremeOverkill","RagingFury2","BloodRuin","BloodSword","BurstFury","EarthShatter","Backstep","move","dash","stay"];
 
 function provenance(sourceRef: string, sourceType: Provenance["sourceType"] = "local_baseline", confidence: Provenance["confidence"] = "medium", requiresCalibration = sourceType !== "official_api"): Provenance {
   return { sourceType, confidence, sourceRef, capturedAt:SOURCE_CAPTURED_AT, version:"combat-data-v1", requiresCalibration };
@@ -38,7 +38,7 @@ function lunge(frames: number[], dx: number, dz = 0): RootMotionStep[] {
 function hit(id:string, start:number, end:number, group:string, baseDamage:number, opts: Partial<HitBoxFrameWindow>={}): HitBoxFrameWindow {
   return { id, start, end, hitGroupId:group, offsetX:64, offsetZ:0, offsetY:30, w:110, d:40, h:60, hitType:"slash", damageType:"physical", baseDamage, attackLevel:1, controlPower:1, canHitDowned:false, canLaunch:false, canKnockdown:false, canGrab:false, maxTargets:6, impactSnapX:4, visualRecoilFrames:5, ...opts };
 }
-function movementAction(actionName:"Walk" | "Run", speedXPerTick:number): FrameDataAction {
+function movementAction(actionName:"move" | "dash", speedXPerTick:number): FrameDataAction {
   const startup: FrameWindow[] = [];
   const active = [] as HitBoxFrameWindow[];
   const recovery: FrameWindow[] = [];
@@ -123,15 +123,15 @@ export function getAction(name: ActionName): FrameDataAction {
 }
 
 export const ACTIONS: Record<ActionName, FrameDataAction> = {
-  Idle: action("Idle",1,[],0),
-  Walk: movementAction("Walk",2.45),
-  Run: movementAction("Run",4.15),
-  NormalBasic1: action("NormalBasic1",20,[hit("nb1",5,8,"normal_1",10,{offsetX:50,w:92,d:40,h:58,offsetY:30,impactSnapX:5,visualRecoilFrames:6,reactionProfile:lightStagger})],4,lunge([3,4],0.85)),
-  NormalBasic2: action("NormalBasic2",22,[hit("nb2",6,9,"normal_2",14,{offsetX:64,w:118,d:42,h:62,offsetY:32,impactSnapX:6,visualRecoilFrames:7,reactionProfile:mediumStagger})],5,lunge([4,5],1.05)),
-  NormalBasic3: action("NormalBasic3",31,[hit("nb3",8,13,"normal_3",24,{offsetX:82,w:156,d:46,h:70,offsetY:34,attackLevel:2,controlPower:2,impactSnapX:11,visualRecoilFrames:9,reactionProfile:heavyStagger})],7,lunge([5,6,7],1.18)),
-  DashAttack: action("DashAttack",24,[hit("dash_attack",7,11,"dash_attack",18,{offsetX:78,w:150,d:44,h:62,offsetY:32,attackLevel:2,controlPower:2,impactSnapX:9,visualRecoilFrames:8,reactionProfile:mediumStagger})],4,lunge([3,4,5,6,7],2.6)),
-  Jump: { ...action("Jump",72,[],0,[{frame:3,dx:0.5,dz:0,dy:0,collisionPolicy:"slide"},{frame:6,dx:0.4,dz:0,dy:0,collisionPolicy:"slide"},{frame:9,dx:0.3,dz:0,dy:0,collisionPolicy:"slide"},{frame:12,dx:0.2,dz:0,dy:0,collisionPolicy:"slide"},{frame:15,dx:0.1,dz:0,dy:0,collisionPolicy:"slide"},{frame:18,dx:0.05,dz:0,dy:0,collisionPolicy:"slide"},{frame:21,dx:0,dz:0,dy:0,collisionPolicy:"slide"},{frame:24,dx:0,dz:0,dy:0,collisionPolicy:"slide"},{frame:30,dx:0,dz:0,dy:0,collisionPolicy:"slide"},{frame:33,dx:0,dz:0,dy:0,collisionPolicy:"slide"},{frame:36,dx:0,dz:0,dy:0,collisionPolicy:"slide"},{frame:39,dx:-0.05,dz:0,dy:0,collisionPolicy:"slide"},{frame:42,dx:-0.1,dz:0,dy:0,collisionPolicy:"slide"},{frame:45,dx:-0.2,dz:0,dy:0,collisionPolicy:"slide"},{frame:48,dx:-0.3,dz:0,dy:0,collisionPolicy:"slide"},{frame:51,dx:-0.4,dz:0,dy:0,collisionPolicy:"slide"}]), cancelPolicy:{ hitCancelFrom:1, whiffCancelFrom:1, into:["JumpAttack"] } },
-  JumpAttack: action("JumpAttack",26,[hit("jump_attack",6,10,"jump_attack",16,{offsetX:70,w:132,d:42,h:72,offsetY:40,impactSnapX:7,visualRecoilFrames:7,reactionProfile:mediumStagger})],4,[{frame:3,dx:1.4,dz:0,dy:0,collisionPolicy:"slide"},{frame:4,dx:1.4,dz:0,dy:0,collisionPolicy:"slide"},{frame:12,dx:1.0,dz:0,dy:0,collisionPolicy:"slide"},{frame:13,dx:0.8,dz:0,dy:0,collisionPolicy:"slide"}]),
+  stay: action("stay",1,[],0),
+  move: movementAction("move",2.45),
+  dash: movementAction("dash",4.15),
+  attack1: action("attack1",20,[hit("nb1",5,8,"normal_1",10,{offsetX:50,w:92,d:40,h:58,offsetY:30,impactSnapX:5,visualRecoilFrames:6,reactionProfile:lightStagger})],4,lunge([3,4],0.85)),
+  attack2: action("attack2",22,[hit("nb2",6,9,"normal_2",14,{offsetX:64,w:118,d:42,h:62,offsetY:32,impactSnapX:6,visualRecoilFrames:7,reactionProfile:mediumStagger})],5,lunge([4,5],1.05)),
+  attack3: action("attack3",31,[hit("nb3",8,13,"normal_3",24,{offsetX:82,w:156,d:46,h:70,offsetY:34,attackLevel:2,controlPower:2,impactSnapX:11,visualRecoilFrames:9,reactionProfile:heavyStagger})],7,lunge([5,6,7],1.18)),
+  dashattack: action("dashattack",24,[hit("dash_attack",7,11,"dash_attack",18,{offsetX:78,w:150,d:44,h:62,offsetY:32,attackLevel:2,controlPower:2,impactSnapX:9,visualRecoilFrames:8,reactionProfile:mediumStagger})],4,lunge([3,4,5,6,7],2.6)),
+  jump: { ...action("jump",72,[],0,[{frame:3,dx:0.5,dz:0,dy:0,collisionPolicy:"slide"},{frame:6,dx:0.4,dz:0,dy:0,collisionPolicy:"slide"},{frame:9,dx:0.3,dz:0,dy:0,collisionPolicy:"slide"},{frame:12,dx:0.2,dz:0,dy:0,collisionPolicy:"slide"},{frame:15,dx:0.1,dz:0,dy:0,collisionPolicy:"slide"},{frame:18,dx:0.05,dz:0,dy:0,collisionPolicy:"slide"},{frame:21,dx:0,dz:0,dy:0,collisionPolicy:"slide"},{frame:24,dx:0,dz:0,dy:0,collisionPolicy:"slide"},{frame:30,dx:0,dz:0,dy:0,collisionPolicy:"slide"},{frame:33,dx:0,dz:0,dy:0,collisionPolicy:"slide"},{frame:36,dx:0,dz:0,dy:0,collisionPolicy:"slide"},{frame:39,dx:-0.05,dz:0,dy:0,collisionPolicy:"slide"},{frame:42,dx:-0.1,dz:0,dy:0,collisionPolicy:"slide"},{frame:45,dx:-0.2,dz:0,dy:0,collisionPolicy:"slide"},{frame:48,dx:-0.3,dz:0,dy:0,collisionPolicy:"slide"},{frame:51,dx:-0.4,dz:0,dy:0,collisionPolicy:"slide"}]), cancelPolicy:{ hitCancelFrom:1, whiffCancelFrom:1, into:["jumpattack"] } },
+  jumpattack: action("jumpattack",26,[hit("jump_attack",6,10,"jump_attack",16,{offsetX:70,w:132,d:42,h:72,offsetY:40,impactSnapX:7,visualRecoilFrames:7,reactionProfile:mediumStagger})],4,[{frame:3,dx:1.4,dz:0,dy:0,collisionPolicy:"slide"},{frame:4,dx:1.4,dz:0,dy:0,collisionPolicy:"slide"},{frame:12,dx:1.0,dz:0,dy:0,collisionPolicy:"slide"},{frame:13,dx:0.8,dz:0,dy:0,collisionPolicy:"slide"}]),
   FrenzyToggle: { ...action("FrenzyToggle",1,[],0), costProfile:{ mpCost:10, costTiming:"on_request" }, cooldownProfile:{ actionName:"FrenzyToggle", independentCooldownFrames:600, globalCooldownFrames:30, cooldownStartsAt:"on_action_enter", freezesDuringHitStop:true } },
   FrenzyBasic1: action("FrenzyBasic1",18,[hit("fb1a",4,6,"frenzy_1a",12,{reactionProfile:reaction({ hitStunFrames:7, knockbackX:2.2, knockbackZ:0.2, horizontalFriction:0.75 })}), hit("fb1b",7,9,"frenzy_1b",12,{reactionProfile:reaction({ hitStunFrames:8, knockbackX:2.6, knockbackZ:0.25, horizontalFriction:0.75 })})],3,lunge([3,4,5],1.8)),
   FrenzyBasic2: action("FrenzyBasic2",20,[hit("fb2a",5,7,"frenzy_2a",14,{reactionProfile:reaction({ hitStunFrames:8, knockbackX:2.8, knockbackZ:0.25, horizontalFriction:0.76 })}), hit("fb2b",8,10,"frenzy_2b",14,{reactionProfile:reaction({ hitStunFrames:9, knockbackX:3.1, knockbackZ:0.3, horizontalFriction:0.76 })})],3,lunge([4,5,6],2.0)),

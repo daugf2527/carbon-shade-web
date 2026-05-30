@@ -157,7 +157,7 @@ function assertChain1(results: Results, actorSnapshots: any[], eventSummary: any
   record("event_count_gt_50", (eventSummary.totalEvents ?? 0) > 50, { totalEvents: eventSummary.totalEvents });
 
   const actions = eventSummary.actionEntered || [];
-  record("action_normal_basic", actions.includes("NormalBasic1"), { actions });
+  record("action_normal_basic", actions.includes("attack1"), { actions });
   record("action_upward_slash", actions.includes("UpwardSlash"), { actions });
   record("action_raging_fury", actions.includes("RagingFury") || actions.includes("RagingFury2"), { actions });
 

@@ -61,16 +61,16 @@ const dash = new CombatKernel();
 dash.locomotion.armRun(dash.player, "right");
 dash.press("KeyX");
 dash.tick();
-assert.equal(dash.player.currentAction?.actionName, "DashAttack", "X from run should route to DashAttack");
+assert.equal(dash.player.currentAction?.actionName, "dashattack", "X from run should route to DashAttack");
 
 const jump = new CombatKernel();
 jump.press("KeyC");
 jump.tick();
-assert.equal(jump.player.currentAction?.actionName, "Jump", "C from neutral should enter Jump");
+assert.equal(jump.player.currentAction?.actionName, "jump", "C from neutral should enter Jump");
 jump.release("KeyC");
 jump.press("KeyX");
 jump.tick();
-assert.equal(jump.player.currentAction?.actionName, "JumpAttack", "X during Jump should route to JumpAttack");
+assert.equal(jump.player.currentAction?.actionName, "jumpattack", "X during Jump should route to JumpAttack");
 
 const bloodlust = new CombatKernel();
 const boss = bloodlust.actors.find(a => a.id === "boss")!;
@@ -153,6 +153,6 @@ bleedingTarget.resources.hp = 8;
 frenzyHeal.player.resources.hp = 90;
 frenzyHeal.buffs.apply(frenzyHeal.player, "frenzy", frenzyHeal.tickCount, frenzyHeal.bus);
 frenzyHeal.status.applyBleed(bleedingTarget, frenzyHeal.player.id, "ForceBleed", frenzyHeal.tickCount, frenzyHeal.bus, 1);
-frenzyHeal.requestAction(frenzyHeal.player, "NormalBasic1");
+frenzyHeal.requestAction(frenzyHeal.player, "attack1");
 frenzyHeal.runTicks(9);
 assert.ok(frenzyHeal.player.resources.hp > 90, "Frenzy should restore HP when killing a bleeding enemy");

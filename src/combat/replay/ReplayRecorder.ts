@@ -66,9 +66,8 @@ export class ReplayRecorder {
     const statusManifestHash = options.statusManifestHash ?? computeStatusManifestHash(DEFAULT_STATUS_MANIFEST);
     const enemyManifestHash = options.enemyManifestHash ?? computeEnemyManifestHash(DEFAULT_ENEMY_MANIFEST);
     const damageManifestHash = options.damageManifestHash ?? computeDamageManifestHash(classicDamageProfile as DamageManifest);
-    const defaultActionDataSource = loadedManifestHash
-      ? ACTION_MANIFEST_DATA_SOURCE
-      : "src/combat/actions/FrameDataAction.ts#ACTIONS:fallback_manifest_not_loaded";
+    // Stage 3 T-A.5: ACTION_MANIFEST_DATA_SOURCE 现在指向 ACTIONS TS 模块, 无 JSON fallback.
+    const defaultActionDataSource = ACTION_MANIFEST_DATA_SOURCE;
     this.metadata = {
       buildHash: options.buildHash ?? (typeof __BUILD_HASH__ !== 'undefined' ? __BUILD_HASH__ : 'local-dev'),
       combatSchemaHash: options.combatSchemaHash ?? manifestHash,

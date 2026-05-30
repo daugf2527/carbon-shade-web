@@ -18,7 +18,7 @@ export class HitDecisionResolver {
     const rawReaction = query.canLaunch ? "launch" : query.canKnockdown ? "downed" : "light_stagger";
     const armorDecision = this.armor.decide(target, query, rawReaction);
     const isBackAttack = (target.facing === "right" && attacker.position.x < target.position.x) || (target.facing === "left" && attacker.position.x > target.position.x);
-    const isCounter = target.currentAction !== undefined && !["Idle","QuickRebound"].includes(target.currentAction.actionName) && !target.flags.dead;
+    const isCounter = target.currentAction !== undefined && !["stay","QuickRebound"].includes(target.currentAction.actionName) && !target.flags.dead;
     return { id, queryId:query.id, attackerId:attacker.id, targetId:target.id, geometryOverlapped:geometry.overlap, accepted, rejectedReason, armorDecision, downedDecision:downed, grabDecision, isCounter, isBackAttack, isCritical:false, hitbox };
   }
 }

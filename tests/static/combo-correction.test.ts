@@ -22,12 +22,12 @@ function clearCombatLocks(kernel: CombatKernel): void {
 
 const stand = new CombatKernel();
 const standTarget = placeTarget(stand);
-stand.requestAction(stand.player, "NormalBasic1");
+stand.requestAction(stand.player, "attack1");
 stand.runTicks(9);
 assert.equal(standTarget.comboCorrection.standGauge, 420, "standing light hit should add the clean-room stand correction value");
 clearCombatLocks(stand);
 placeTarget(stand);
-stand.requestAction(stand.player, "NormalBasic3");
+stand.requestAction(stand.player, "attack3");
 stand.runTicks(14);
 assert.equal(standTarget.comboCorrection.standGauge, 1020, "heavy standing hit should include the stand heavy bonus");
 assert.ok(standTarget.comboCorrection.hitRecoveryGauge > 0, "normal hitstun should advance hit recovery correction");
@@ -58,7 +58,7 @@ const downReject = new CombatKernel();
 const downRejectTarget = placeTarget(downReject);
 downRejectTarget.reactionState = "downed";
 downRejectTarget.handfeel.downRemaining = 30;
-downReject.requestAction(downReject.player, "NormalBasic1");
+downReject.requestAction(downReject.player, "attack1");
 downReject.runTicks(9);
 assert.equal(downRejectTarget.comboCorrection.downGauge, 0, "ordinary basic attacks should still not touch downed correction when rejected");
 assert.ok(downReject.bus.archive.some(event => event.type === "HitRejected" && (event.payload as any).rejectedReason === "downed_not_allowed"), "downed_not_allowed rejection should be preserved");
@@ -86,21 +86,21 @@ assert.ok(forcedWake.bus.archive.some(event => event.type === "ComboForcedWake" 
 
 clearCombatLocks(forcedWake);
 placeTarget(forcedWake);
-forcedWake.requestAction(forcedWake.player, "NormalBasic1");
+forcedWake.requestAction(forcedWake.player, "attack1");
 forcedWake.runTicks(9);
 assert.ok(forcedWake.bus.archive.some(event => event.type === "HitRejected" && event.targetActorId === forcedWakeTarget.id && (event.payload as any).rejectedReason === "target_invulnerable"), "forced wake true invulnerability should reject immediate follow-up hits");
 
 const standKnockdown = new CombatKernel();
 const standKnockdownTarget = placeTarget(standKnockdown);
 standKnockdownTarget.comboCorrection.standGauge = 10000;
-standKnockdown.requestAction(standKnockdown.player, "NormalBasic1");
+standKnockdown.requestAction(standKnockdown.player, "attack1");
 standKnockdown.runTicks(9);
 assert.equal(standKnockdownTarget.reactionState, "downed", "full stand correction should force the next ordinary standing hit to knock down");
 assert.ok(standKnockdown.bus.archive.some(event => event.type === "ComboStandKnockdown" && event.targetActorId === standKnockdownTarget.id), "stand correction knockdown should be replay-visible");
 
 const reset = new CombatKernel();
 const resetTarget = placeTarget(reset);
-reset.requestAction(reset.player, "NormalBasic1");
+reset.requestAction(reset.player, "attack1");
 reset.runTicks(9);
 assert.ok(resetTarget.comboCorrection.standGauge > 0, "setup should create standing correction before reset");
 clearCombatLocks(reset);
@@ -114,7 +114,7 @@ assert.ok(reset.bus.archive.some(event => event.type === "ComboCorrectionReset" 
 const bossScale = new CombatKernel();
 const bossScaleTarget = placeTarget(bossScale, "boss", 70);
 bossScaleTarget.comboCorrection.standGauge = 10000;
-bossScale.requestAction(bossScale.player, "NormalBasic1");
+bossScale.requestAction(bossScale.player, "attack1");
 bossScale.runTicks(9);
 const bossDamage = bossScale.bus.archive.find(event => event.type === "DamageApplied" && event.targetActorId === bossScaleTarget.id)?.payload as any;
 assert.ok(bossDamage.finalDamage < bossDamage.baseDamage, "boss/protected targets should receive combo damage scaling at high correction");
@@ -123,7 +123,7 @@ assert.ok(bossDamage.multipliers.some((m: { name: string }) => m.name === "combo
 const gruntNoScale = new CombatKernel();
 const gruntNoScaleTarget = placeTarget(gruntNoScale);
 gruntNoScaleTarget.comboCorrection.standGauge = 10000;
-gruntNoScale.requestAction(gruntNoScale.player, "NormalBasic1");
+gruntNoScale.requestAction(gruntNoScale.player, "attack1");
 gruntNoScale.runTicks(9);
 const gruntDamage = gruntNoScale.bus.archive.find(event => event.type === "DamageApplied" && event.targetActorId === gruntNoScaleTarget.id)?.payload as any;
 assert.equal(gruntDamage.finalDamage, gruntDamage.baseDamage, "ordinary grunt targets should not get combo damage scaling");

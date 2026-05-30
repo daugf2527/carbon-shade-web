@@ -108,13 +108,13 @@ export const MOVEMENT_SPEEDS = {
 // This is a design choice, not derived from official data.
 
 export const COMBAT_CANCEL_TARGETS = [
-  "NormalBasic1", "NormalBasic2", "NormalBasic3",
-  "DashAttack", "Jump", "JumpAttack",
+  "attack1", "attack2", "attack3",
+  "dashattack", "jump", "jumpattack",
   "FrenzyBasic1", "FrenzyBasic2", "FrenzyBasic3",
   "UpwardSlash", "MountainousWheel", "RagingFury", "Bloodlust",
   "GoreCross", "OutrageBreak", "ExtremeOverkill", "RagingFury2",
   "BloodRuin", "BloodSword", "BurstFury", "EarthShatter",
-  "Backstep", "Walk", "Run", "Idle",
+  "Backstep", "move", "dash", "stay",
 ] as const;
 
 // --- Default Frame Policy (Local Baseline) ---
@@ -136,13 +136,13 @@ export const DEFAULT_FRAME_POLICY = {
 // These are hand-tuned values, NOT derived from official DNF frame data.
 
 export const LOCAL_FRAME_COUNTS = {
-  Idle: { totalFrames: 1 },
-  NormalBasic1: { totalFrames: 20, startupEnd: 4, activeStart: 5, activeEnd: 8 },
-  NormalBasic2: { totalFrames: 22, startupEnd: 5, activeStart: 6, activeEnd: 9 },
-  NormalBasic3: { totalFrames: 31, startupEnd: 7, activeStart: 8, activeEnd: 13 },
-  DashAttack: { totalFrames: 24, startupEnd: 6, activeStart: 7, activeEnd: 11 },
-  Jump: { totalFrames: 22 },
-  JumpAttack: { totalFrames: 26, activeStart: 6, activeEnd: 10 },
+  stay: { totalFrames: 1 },
+  attack1: { totalFrames: 20, startupEnd: 4, activeStart: 5, activeEnd: 8 },
+  attack2: { totalFrames: 22, startupEnd: 5, activeStart: 6, activeEnd: 9 },
+  attack3: { totalFrames: 31, startupEnd: 7, activeStart: 8, activeEnd: 13 },
+  dashattack: { totalFrames: 24, startupEnd: 6, activeStart: 7, activeEnd: 11 },
+  jump: { totalFrames: 22 },
+  jumpattack: { totalFrames: 26, activeStart: 6, activeEnd: 10 },
   FrenzyBasic1: { totalFrames: 18 },
   FrenzyBasic2: { totalFrames: 20 },
   FrenzyBasic3: { totalFrames: 28 },

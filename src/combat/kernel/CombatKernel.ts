@@ -233,11 +233,11 @@ export class CombatKernel {
   private consumeInput(): void {
     const player=this.player;
     if(player.flags.dead) return;
-    const allowed = new Set<ActionName>(["Walk","Run","NormalBasic1","DashAttack","Jump","JumpAttack","UpwardSlash","MountainousWheel","RagingFury","Bloodlust","Backstep","QuickRebound","FrenzyToggle","Derange","Diehard","Thirst","BloodMemory","VimAndVigor","ForceDownPlayer","ForceBleed","RunScreenshotScenario"]);
+    const allowed = new Set<ActionName>(["move","dash","attack1","dashattack","jump","jumpattack","UpwardSlash","MountainousWheel","RagingFury","Bloodlust","Backstep","QuickRebound","FrenzyToggle","Derange","Diehard","Thirst","BloodMemory","VimAndVigor","ForceDownPlayer","ForceBleed","RunScreenshotScenario"]);
     const item=this.inputBuffer.consumeAllowed(this.tickCount, allowed, this.hitStop.isFrozen(player.id) || this.recoil.isRecoiling(player.id));
     if(!item) return;
 
-    if (item.actionName === "Walk" || item.actionName === "Run") {
+    if (item.actionName === "move" || item.actionName === "dash") {
       this.consumeLocomotionCommand(player, item);
       return;
     }
@@ -249,7 +249,7 @@ export class CombatKernel {
   private consumeLocomotionCommand(player: Actor, item: BufferedInput): void {
     if (!this.isMovementHeld()) return;
     if (item.facing) player.facing = item.facing;
-    if (item.actionName === "Run") this.locomotion.armRun(player, item.facing ?? player.facing);
+    if (item.actionName === "dash") this.locomotion.armRun(player, item.facing ?? player.facing);
     else this.locomotion.armWalk(player, item.facing);
     this.bus.emit("InputConsumed", CombatEventPriority.Debug, this.tickCount, item);
   }
@@ -270,9 +270,9 @@ export class CombatKernel {
   }
 
   private mapPlayerAction(action:ActionName): ActionName {
-    if(action==="NormalBasic1" && this.player.currentAction?.actionName==="Jump") return "JumpAttack";
-    if(action==="NormalBasic1" && this.player.locomotion.mode==="run") return "DashAttack";
-    if(action==="NormalBasic1" && this.player.buffs.some(b=>b.type==="frenzy")) return "FrenzyBasic1";
+    if(action==="attack1" && this.player.currentAction?.actionName==="jump") return "jumpattack";
+    if(action==="attack1" && this.player.locomotion.mode==="run") return "dashattack";
+    if(action==="attack1" && this.player.buffs.some(b=>b.type==="frenzy")) return "FrenzyBasic1";
     return action;
   }
 
@@ -290,8 +290,8 @@ export class CombatKernel {
   }
 
   requestAction(actor: Actor, actionName: ActionName, source:"command"|"hotkey"|"debug"|"ai"="debug", facing?: Facing): boolean {
-    if(actionName==="Walk" || actionName==="Run") {
-      if (actionName === "Run") this.locomotion.armRun(actor, facing ?? actor.facing);
+    if(actionName==="move" || actionName==="dash") {
+      if (actionName === "dash") this.locomotion.armRun(actor, facing ?? actor.facing);
       else this.locomotion.armWalk(actor, facing);
       return true;
     }
@@ -355,7 +355,7 @@ export class CombatKernel {
     // Source: src/data/official/dnf/characters.ts DNF_JUMP_DERIVED_H1.swordman.initialZVelocity
     // H1 hypothesis (experimental, requires .exe verification): swordman jump_power=430 px/s.
     // At 60 Hz: 430/60 = 7.17 px/tick.
-    if (resolvedActionName === "Jump") {
+    if (resolvedActionName === "jump") {
       actor.velocity.y = DNF_JUMP_DERIVED_H1.swordman.initialZVelocity.value / 60;
     }
     return true;
@@ -398,10 +398,10 @@ export class CombatKernel {
   private resolveRequestedAction(actor: Actor, actionName: ActionName): ActionName | null {
     const current = actor.currentAction;
     if (!current) return actionName;
-    if (actionName === "NormalBasic1") {
-      if (current.actionName === "NormalBasic1") return this.canCancelInto(actor, "NormalBasic2") ? "NormalBasic2" : null;
-      if (current.actionName === "NormalBasic2") return this.canCancelInto(actor, "NormalBasic3") ? "NormalBasic3" : null;
-      if (current.actionName === "NormalBasic3") return this.canCancelInto(actor, "NormalBasic1") ? "NormalBasic1" : null;
+    if (actionName === "attack1") {
+      if (current.actionName === "attack1") return this.canCancelInto(actor, "attack2") ? "attack2" : null;
+      if (current.actionName === "attack2") return this.canCancelInto(actor, "attack3") ? "attack3" : null;
+      if (current.actionName === "attack3") return this.canCancelInto(actor, "attack1") ? "attack1" : null;
     }
     if (actionName === "FrenzyBasic1") {
       if (current.actionName === "FrenzyBasic1") return this.canCancelInto(actor, "FrenzyBasic2") ? "FrenzyBasic2" : null;
@@ -673,7 +673,7 @@ export class CombatKernel {
     const grunt=this.actors.find(a=>a.id==="grunt")!;
     const boss=this.actors.find(a=>a.id==="boss")!;
     const building=this.actors.find(a=>a.id==="building")!;
-    grunt.position.x=525; this.requestAction(player,"NormalBasic1"); this.runTicks(9); this.hitStop.clear(); this.recoil.clear();
+    grunt.position.x=525; this.requestAction(player,"attack1"); this.runTicks(9); this.hitStop.clear(); this.recoil.clear();
     grunt.position.x=525; this.requestAction(player,"UpwardSlash"); this.runTicks(12); this.hitStop.clear(); this.recoil.clear();
     grunt.position.x=525; grunt.reactionState="downed"; this.requestAction(player,"RagingFury"); this.runTicks(36); this.hitStop.clear(); this.recoil.clear();
     boss.position.x=525; this.requestAction(player,"UpwardSlash"); this.runTicks(12); this.hitStop.clear(); this.recoil.clear(); boss.position.x=1815;

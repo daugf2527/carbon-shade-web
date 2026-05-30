@@ -712,14 +712,14 @@ export class CombatScene extends Phaser.Scene {
       view.weapon.clear();
       if (isPlayer && actor.action && !spriteSpec) {
         const action = getAction(actor.action as Parameters<typeof getAction>[0]);
-        const isAttackAction = ["NormalBasic1", "NormalBasic2", "NormalBasic3", "DashAttack", "JumpAttack", "FrenzyBasic1", "FrenzyBasic2", "FrenzyBasic3", "UpwardSlash", "MountainousWheel", "RagingFury", "Bloodlust"].includes(actor.action);
+        const isAttackAction = ["attack1", "attack2", "attack3", "dashattack", "jumpattack", "FrenzyBasic1", "FrenzyBasic2", "FrenzyBasic3", "UpwardSlash", "MountainousWheel", "RagingFury", "Bloodlust"].includes(actor.action);
         if (isAttackAction) {
           const localFrame = actor.localFrame ?? 0;
           const active = action.active.some(box => localFrame >= box.start && localFrame <= box.end);
           const frenzyColor = frenzy ? 0xef4444 : 0xd1d5db;
           const attackFacing = actor.lockedFacing ?? facing;
           const facingSign = attackFacing === "left" ? -1 : 1;
-          const arcRadius = actor.action === "RagingFury" ? 138 : actor.action === "UpwardSlash" ? 105 : actor.action === "NormalBasic3" ? 108 : actor.action === "NormalBasic2" ? 93 : 78;
+          const arcRadius = actor.action === "RagingFury" ? 138 : actor.action === "UpwardSlash" ? 105 : actor.action === "attack3" ? 108 : actor.action === "attack2" ? 93 : 78;
           const bladeY = actor.action === "UpwardSlash" ? -90 : -66;
           if (active) {
             view.weapon.lineStyle(10, 0x7f1d1d, 0.82);
@@ -739,7 +739,7 @@ export class CombatScene extends Phaser.Scene {
             }
             view.weapon.strokePath();
             view.weapon.fillStyle(0xef4444, 0.6);
-            view.weapon.fillCircle((99 + (actor.action === "NormalBasic3" ? 42 : 0)) * facingSign, bladeY + 6, actor.action === "NormalBasic3" ? 7 : 4);
+            view.weapon.fillCircle((99 + (actor.action === "attack3" ? 42 : 0)) * facingSign, bladeY + 6, actor.action === "attack3" ? 7 : 4);
           }
         }
       }
@@ -941,7 +941,7 @@ export class CombatScene extends Phaser.Scene {
 
     this.setTextIfChanged(this.debugText, [
       `Tick: ${snapshot.tick} | Events: ${snapshot.eventCount} | Actors: ${snapshot.performance.actorCount}`,
-      `Player: ${player ? `${player.action ?? "Idle"} @ x=${player.pos.x.toFixed(1)} facing=${player.facing ?? "?"}` : "missing"}`,
+      `Player: ${player ? `${player.action ?? "stay"} @ x=${player.pos.x.toFixed(1)} facing=${player.facing ?? "?"}` : "missing"}`,
       `LastHit: ${snapshot.lastHit.actionName ?? "-"} ${snapshot.lastHit.finalReaction ?? ""} dmg=${snapshot.lastHit.finalDamage ?? 0}`,
       `Scenario: ${scenario}`,
       `TickCost: ${(snapshot.performance.tickCostMs ?? 0).toFixed(1)}ms | Pool: ${snapshot.performance.poolStatus}`,
@@ -1059,13 +1059,13 @@ export class CombatScene extends Phaser.Scene {
 
   private createDnfTestButtons(): void {
     const actions: Array<{ label: string; fn: () => void }> = [
-      { label: "Stay", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "Idle" as any, "debug"); } },
-      { label: "Walk→", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "Walk" as any, "debug", "right"); } },
-      { label: "Run→", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "Run" as any, "debug", "right"); } },
-      { label: "Atk1", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "NormalBasic1" as any, "debug"); } },
-      { label: "Atk2", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "NormalBasic2" as any, "debug"); } },
-      { label: "Atk3", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "NormalBasic3" as any, "debug"); } },
-      { label: "Jump", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "Jump" as any, "debug"); } },
+      { label: "Stay", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "stay" as any, "debug"); } },
+      { label: "Walk→", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "move" as any, "debug", "right"); } },
+      { label: "Run→", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "dash" as any, "debug", "right"); } },
+      { label: "Atk1", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "attack1" as any, "debug"); } },
+      { label: "Atk2", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "attack2" as any, "debug"); } },
+      { label: "Atk3", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "attack3" as any, "debug"); } },
+      { label: "Jump", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "jump" as any, "debug"); } },
       { label: "Backstep", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "Backstep" as any, "debug"); } },
       { label: "UpSlash", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "UpwardSlash" as any, "debug"); } },
       { label: "Hit", fn: () => { const p = this.kernel.actors[0]!; p.reactionState = "light_stagger" as any; p.handfeel.reactionRemaining = 20; } },

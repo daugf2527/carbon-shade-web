@@ -80,7 +80,7 @@ export class HitResolutionSystem implements CombatSystem {
       }
       this.applyForcedWakeIfQueued(ctx, bus, target, corr);
 
-      const action = getAction(attacker.currentAction?.actionName ?? "Idle");
+      const action = getAction(attacker.currentAction?.actionName ?? "stay");
       const controlBlocked = decision.armorDecision?.controlBlocked === true;
       const baseHs = decision.armorDecision?.hitStopAllowed === false ? 0 : action.hitStopProfile.frames;
       let attackerHs = baseHs;
@@ -214,7 +214,7 @@ export class HitResolutionSystem implements CombatSystem {
   }
 
   isFrenzySkillAttackAction(actionName: ActionName): boolean {
-    return actionName === "FrenzyBasic1" || actionName === "FrenzyBasic2" || actionName === "FrenzyBasic3" || actionName === "DashAttack" || actionName === "JumpAttack" || actionName === "RagingFury" || actionName === "Bloodlust" || actionName === "GoreCross" || actionName === "OutrageBreak" || actionName === "ExtremeOverkill" || actionName === "RagingFury2" || actionName === "BloodRuin" || actionName === "BloodSword" || actionName === "BurstFury" || actionName === "EarthShatter" || actionName === "UpwardSlash" || actionName === "MountainousWheel";
+    return actionName === "FrenzyBasic1" || actionName === "FrenzyBasic2" || actionName === "FrenzyBasic3" || actionName === "dashattack" || actionName === "jumpattack" || actionName === "RagingFury" || actionName === "Bloodlust" || actionName === "GoreCross" || actionName === "OutrageBreak" || actionName === "ExtremeOverkill" || actionName === "RagingFury2" || actionName === "BloodRuin" || actionName === "BloodSword" || actionName === "BurstFury" || actionName === "EarthShatter" || actionName === "UpwardSlash" || actionName === "MountainousWheel";
   }
 
   isVimAndVigorBleedAction(actionName: ActionName): boolean {

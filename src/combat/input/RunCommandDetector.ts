@@ -56,7 +56,7 @@ export class RunCommandDetector {
         state.pressTick = frame.tick;
         if (!withinWindow) {
           state.mode = "walk";
-          outputs.push(this.makeBufferedInput("Walk", frame.tick, facing, facing === currentFacing ? 4 : 3));
+          outputs.push(this.makeBufferedInput("move", frame.tick, facing, facing === currentFacing ? 4 : 3));
         }
       }
 
@@ -64,14 +64,14 @@ export class RunCommandDetector {
         state.mode = "run";
         state.pendingDoubleTap = false;
         state.pressTick = null;
-        outputs.push(this.makeBufferedInput("Run", frame.tick, facing, facing === currentFacing ? 6 : 5));
+        outputs.push(this.makeBufferedInput("dash", frame.tick, facing, facing === currentFacing ? 6 : 5));
       }
     }
 
     return outputs;
   }
 
-  private makeBufferedInput(actionName: "Walk" | "Run", tick: number, facing: Facing, priority: number): BufferedInput {
+  private makeBufferedInput(actionName: "move" | "dash", tick: number, facing: Facing, priority: number): BufferedInput {
     return {
       actionName,
       source: "command",

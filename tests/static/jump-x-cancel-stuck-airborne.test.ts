@@ -30,7 +30,7 @@ kernel.press("KeyX");
 kernel.tick();
 kernel.release("KeyX");
 log("press X (cancel)");
-assert.equal(player.currentAction?.actionName, "JumpAttack", "应该 cancel 到 JumpAttack");
+assert.equal(player.currentAction?.actionName, "jumpattack", "应该 cancel 到 JumpAttack");
 
 // 4) 跑完 JumpAttack 全部 26 帧 + 缓冲 50 帧让任何潜在重力或动作恢复
 for (let i = 0; i < 80; i++) {

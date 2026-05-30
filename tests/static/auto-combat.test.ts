@@ -2,7 +2,7 @@ import { assert } from "./test-utils.js";
 import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 import type { ActionName, Actor } from "../../src/combat/types.js";
 
-const PLAYER_ROTATION: ActionName[] = ["NormalBasic1", "UpwardSlash", "Bloodlust", "RagingFury", "MountainousWheel"];
+const PLAYER_ROTATION: ActionName[] = ["attack1", "UpwardSlash", "Bloodlust", "RagingFury", "MountainousWheel"];
 const TARGET_ORDER = ["grunt", "dummy", "imp", "boss"];
 const LONG_RUN_TICKS = 1200;
 

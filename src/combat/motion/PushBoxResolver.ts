@@ -5,7 +5,7 @@ function isSoftEnemy(a: Actor): boolean { return a.faction === "enemy" && a.type
 function isHardBlocker(a: Actor): boolean { return a.type === "building" || a.type === "boss" || a.pushBox.immovable === true; }
 function isAttackAction(a: Actor): boolean {
   const name = a.currentAction?.actionName ?? "";
-  return name.startsWith("Normal") || name.startsWith("Frenzy") || name === "DashAttack" || name === "JumpAttack" || name === "UpwardSlash" || name === "MountainousWheel" || name === "RagingFury" || name === "Bloodlust";
+  return name.startsWith("attack") || name.startsWith("Frenzy") || name === "dashattack" || name === "jumpattack" || name === "UpwardSlash" || name === "MountainousWheel" || name === "RagingFury" || name === "Bloodlust";
 }
 
 /**

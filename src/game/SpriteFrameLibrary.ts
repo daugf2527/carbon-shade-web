@@ -545,24 +545,24 @@ export function getCombatSpriteSpec(req: ActorSpriteRequest): SpriteSpec | null 
     }
 
     // Attacks
-    if (action === "UpwardSlash" || action === "NormalBasic3" || action === "FrenzyBasic3" || action === "MountainousWheel" || action === "RagingFury") {
+    if (action === "UpwardSlash" || action === "attack3" || action === "FrenzyBasic3" || action === "MountainousWheel" || action === "RagingFury") {
       const dnf = DNF_ACTIONS["swordman_attack3"];
       if (dnf) return dbg("swordman_attack3", pickDnfActionSpec(dnf, lf));
       return dbg("fallback:attack3", spec(s, "attack3", req, "action", 2));
     }
-    if (action === "NormalBasic2" || action === "FrenzyBasic2" || action === "DashAttack" || action === "JumpAttack" || action === "Bloodlust") {
+    if (action === "attack2" || action === "FrenzyBasic2" || action === "dashattack" || action === "jumpattack" || action === "Bloodlust") {
       const dnf = DNF_ACTIONS["swordman_attack2"];
       if (dnf) return dbg("swordman_attack2", pickDnfActionSpec(dnf, lf));
       return dbg("fallback:attack2", spec(s, "attack2", req, "action", 2));
     }
-    if (action === "NormalBasic1" || action === "FrenzyBasic1") {
+    if (action === "attack1" || action === "FrenzyBasic1") {
       const dnf = DNF_ACTIONS["swordman_attack1"];
       if (dnf) return dbg("swordman_attack1", pickDnfActionSpec(dnf, lf));
       return dbg("fallback:attack1", spec(s, "attack1", req, "action", 2));
     }
 
     // Jump
-    if (action === "Jump") {
+    if (action === "jump") {
       const dnf = DNF_ACTIONS["swordman_jump"];
       if (dnf) return dbg("swordman_jump", pickDnfActionSpec(dnf, lf));
       return dbg("fallback:jump", spec(s, "jump", req, "loop", 1));

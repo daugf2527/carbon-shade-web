@@ -11,7 +11,7 @@ export class HitResolver2D5 {
       tick,
       attackerId: attacker.id,
       actionInstanceId: attacker.currentAction?.id ?? "none",
-      actionName: attacker.currentAction?.actionName ?? "Idle",
+      actionName: attacker.currentAction?.actionName ?? "stay",
       hitboxId: hitbox.id,
       hitGroupId: hitbox.hitGroupId,
       shape: hitbox.shape ?? "rect",

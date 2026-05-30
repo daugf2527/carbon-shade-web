@@ -129,9 +129,13 @@ export class DamageFormulaResolver {
     }
 
     // Compute final multiplier (10-multiplier structure)
+    // Stage 3 T-A.9 (2026-05-30) quick fix: atkPower 是基数, 不是乘数.
+    // baseDamage 解释为 skill% (per-hit 占 atkPower 的百分比), 除以 100 还原.
+    // 之前 multiplier 把 atkPower 当乘数, 1800 atkPower × baseDmg(10) = 18000 一击秒杀.
+    // 现在 atkPower 81 × skill%(0.10) × statRatio(2.92) ≈ 24 per hit.
+    const skillPercent = req.baseDamage / 100;
     let multiplier = statRatio
-      * (atkPower || 1.0)  // ratio_1
-      * R_ATK_POWER_PCT     // ratio_2 (future)
+      * R_ATK_POWER_PCT     // ratio_2 (future, equipment)
       * eleRatio             // ratio_3
       * critRatio            // ratio_4
       * R_BUFF               // ratio_5 (future)
@@ -146,8 +150,11 @@ export class DamageFormulaResolver {
       multiplier *= modifier.value;
     }
 
+    // base = atkPower × skill% (DNF 70-85 真值公式).
+    const base = (atkPower || 1.0) * skillPercent;
+
     return {
-      finalDamage: damageAllowed ? Math.max(0, Math.floor(req.baseDamage * multiplier)) : 0,
+      finalDamage: damageAllowed ? Math.max(0, Math.floor(base * multiplier)) : 0,
       multipliers,
     };
   }

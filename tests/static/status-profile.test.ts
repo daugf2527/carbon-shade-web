@@ -79,7 +79,7 @@ for (const type of ["bleed", "poison", "burn", "shock"] as const) {
   k.status.applyStatus(target, "rupture", k.player.id, "ForceBleed", k.tickCount, k.bus, 1);
   k.status.applyStatus(target, "rupture", k.player.id, "ForceBleed", k.tickCount, k.bus, 1);
   k.status.applyStatus(target, "rupture", k.player.id, "ForceBleed", k.tickCount, k.bus, 1);
-  k.requestAction(k.player, "NormalBasic1");
+  k.requestAction(k.player, "attack1");
   k.runTicks(9);
   const applied = k.bus.archive.find(e => e.type === "DamageApplied" && e.targetActorId === target.id && (e.payload as any).sourceKind === "direct_hit")?.payload as any;
   assert.ok(applied.multipliers.some((m: { name:string; value:number }) => m.name === "rupture_incoming_damage" && m.value === 1.3), "Three Rupture stacks should add a 1.3x incoming direct damage multiplier");

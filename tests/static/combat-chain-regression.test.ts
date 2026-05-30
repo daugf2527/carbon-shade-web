@@ -50,11 +50,11 @@ function decideHit(attacker: Actor, target: Actor, actionName: ActionName, hitbo
   const grunt = createActor("grunt", "enemy", "enemy", 310, 0);
   beginAction(grunt, "EnemyBasic", 1);
 
-  const decision = decideHit(player, grunt, "NormalBasic1");
+  const decision = decideHit(player, grunt, "attack1");
   assert.equal(decision.accepted, true);
   assert.equal(decision.rejectedReason, undefined);
 
-  const damage = new DamageResolver().apply(grunt, new DamageResolver().requestFromHit(decision, "corr-test", "NormalBasic1"), {
+  const damage = new DamageResolver().apply(grunt, new DamageResolver().requestFromHit(decision, "corr-test", "attack1"), {
     isCounter: decision.isCounter,
     isBackAttack: decision.isBackAttack,
     isCritical: false,
@@ -90,10 +90,10 @@ function decideHit(attacker: Actor, target: Actor, actionName: ActionName, hitbo
 {
   const player = createActor("player", "player", "player", 260, 0);
   const grunt = createActor("grunt", "enemy", "enemy", 310, 0);
-  const action = getAction("NormalBasic1");
+  const action = getAction("attack1");
   const hitbox = action.active[0];
   assert.ok(hitbox);
-  beginAction(player, "NormalBasic1", hitbox.start);
+  beginAction(player, "attack1", hitbox.start);
   player.currentAction?.alreadyHitByGroup.set(hitbox.hitGroupId, new Set([grunt.id]));
 
   const hitResolver = new HitResolver2D5();

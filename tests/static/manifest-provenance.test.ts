@@ -22,13 +22,11 @@ function cloneActions(): Record<ActionName, FrameDataAction> {
 }
 
 {
+  // Stage 3 T-A.5 (2026-05-30): default.json 已删除, ACTIONS (TS) 是唯一 SOT.
+  // 原断言"JSON 与 TS 结构一致 + hash 相等"前提消失, 改为只验 ACTIONS 通过 schema gate.
   const loaded = await loadActionsManifest();
-  assert.deepEqual(validateManifest(loaded), [], "JSON actions manifest should satisfy runtime provenance gates");
-  // Strip sourceProvenance metadata before structural comparison (metadata, not combat data)
-  const loadedStripped = JSON.parse(JSON.stringify(loaded, (key, val) => key === "sourceProvenance" ? undefined : val));
-  const actionsStripped = JSON.parse(JSON.stringify(cloneActions(), (key, val) => key === "sourceProvenance" ? undefined : val));
-  assert.deepEqual(loadedStripped, actionsStripped, "JSON actions manifest should remain in JSON-structural parity with ACTIONS");
-  assert.equal(computeActionsHash(loaded), computeActionsHash(ACTIONS), "JSON actions manifest hash should match ACTIONS hash");
+  assert.deepEqual(validateManifest(loaded), [], "actions manifest should satisfy runtime provenance gates");
+  assert.equal(computeActionsHash(loaded), computeActionsHash(ACTIONS), "loaded manifest hash should match ACTIONS hash");
   assert.equal(loaded.RagingFury.fieldProvenance?.cooldownProfile?.sourceType, "official_api");
 }
 
@@ -39,7 +37,7 @@ function cloneActions(): Record<ActionName, FrameDataAction> {
   const result = await initializeActionManifestForRuntime({ loadActions: async () => runtimeActions });
   assert.equal(getAction("RagingFury").totalFrames, runtimeActions.RagingFury.totalFrames);
   assert.equal(result.manifestHash, computeActionsHash(runtimeActions));
-  assert.equal(result.dataSource, "src/data/manifest/actions/default.json#actions");
+  assert.equal(result.dataSource, "src/combat/actions/FrameDataAction.ts#ACTIONS");
   loadFromManifest(loaded);
 }
 
@@ -117,7 +115,7 @@ function cloneActions(): Record<ActionName, FrameDataAction> {
   assert.equal(recorder.metadata.enemyManifestHash, enemyManifestHash);
   assert.equal(recorder.metadata.damageManifestHash, damageManifestHash);
   assert.equal(recorder.metadata.sourcePolicyVersion, SOURCE_POLICY_VERSION);
-  assert.equal(recorder.metadata.dataSources.actions, "src/data/manifest/actions/default.json#actions");
+  assert.equal(recorder.metadata.dataSources.actions, "src/combat/actions/FrameDataAction.ts#ACTIONS");
   assert.equal(recorder.metadata.dataSources.status, "src/data/manifest/status/default.json#profiles");
   assert.equal(recorder.metadata.dataSources.ai, "src/data/manifest/ai/enemy-default.json#profiles");
   assert.equal(recorder.metadata.dataSources.damage, "src/data/manifest/damage/classic-profile.json#constants");

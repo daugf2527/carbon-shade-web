@@ -15,7 +15,7 @@ const detector = new RunCommandDetector();
 
 const walkOnly = detector.detect(frame(1, ["ArrowRight"], ["ArrowRight"]), "right");
 assert.equal(walkOnly.length, 1, "First press must emit Walk");
-assert.equal(walkOnly[0]?.actionName, "Walk");
+assert.equal(walkOnly[0]?.actionName, "move");
 
 const release = detector.detect(frame(2, [], [], ["ArrowRight"]), "right");
 assert.equal(release.length, 0, "Release alone must not emit Run");
@@ -25,7 +25,7 @@ assert.equal(secondTap.length, 0, "Second tap inside the window should arm Run w
 
 const run = detector.detect(frame(4, ["ArrowRight"], [], []), "right");
 assert.equal(run.length, 1, "Held second tap must emit Run after the hold threshold");
-assert.equal(run[0]?.actionName, "Run");
+assert.equal(run[0]?.actionName, "dash");
 
 detector.reset();
 
@@ -37,7 +37,7 @@ assert.equal(lateRelease.length, 0);
 
 const outsideWindow = detector.detect(frame(22, ["ArrowRight"], ["ArrowRight"]), "right");
 assert.equal(outsideWindow.length, 1, "A tap outside the double-tap window should stay Walk");
-assert.equal(outsideWindow[0]?.actionName, "Walk");
+assert.equal(outsideWindow[0]?.actionName, "move");
 
 detector.reset();
 

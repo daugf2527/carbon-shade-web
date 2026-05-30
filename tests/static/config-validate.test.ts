@@ -143,15 +143,15 @@ console.log(`OK: Tuning baseline values consistent with action definitions`);
 // has active hitboxes is referenced by a known action name pattern.
 
 const PLAYER_COMBAT_ACTIONS: ActionName[] = [
-  "NormalBasic1", "NormalBasic2", "NormalBasic3",
+  "attack1", "attack2", "attack3",
   "FrenzyBasic1", "FrenzyBasic2", "FrenzyBasic3",
   "UpwardSlash", "MountainousWheel", "RagingFury", "Bloodlust",
-  "DashAttack", "Jump", "JumpAttack", "Backstep",
+  "dashattack", "jump", "jumpattack", "Backstep",
   "QuickRebound", "Derange", "Diehard",
 ];
 
 const NON_SPRITE_ACTIONS: ActionName[] = [
-  "Idle", "Walk", "Run", "FrenzyToggle", "DebugReset",
+  "stay", "move", "dash", "FrenzyToggle", "DebugReset",
   "ForceDownPlayer", "ForceBleed", "SpawnTargets", "RunScreenshotScenario",
   "EnemyBasic",
 ];

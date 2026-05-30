@@ -49,10 +49,10 @@ function playerSpec(overrides: Partial<Parameters<typeof getCombatSpriteSpec>[0]
 
 assert.equal(playerSpec()?.key, "dnf_swordman_stay_00", "Idle should use stay");
 assert.equal(playerSpec({ locomotion: "run" })?.key, "dnf_swordman_dash_00", "Run should use dash");
-assert.equal(playerSpec({ action: "Jump" })?.key, "dnf_swordman_jump_00", "Jump should use jump");
-assert.equal(playerSpec({ action: "NormalBasic1" })?.key, "dnf_swordman_attack1_00", "NormalBasic1 should use attack1");
-assert.equal(playerSpec({ action: "NormalBasic2" })?.key, "dnf_swordman_attack2_00", "NormalBasic2 should use attack2");
-assert.equal(playerSpec({ action: "NormalBasic3" })?.key, "dnf_swordman_attack3_00", "NormalBasic3 should use attack3");
+assert.equal(playerSpec({ action: "jump" })?.key, "dnf_swordman_jump_00", "Jump should use jump");
+assert.equal(playerSpec({ action: "attack1" })?.key, "dnf_swordman_attack1_00", "NormalBasic1 should use attack1");
+assert.equal(playerSpec({ action: "attack2" })?.key, "dnf_swordman_attack2_00", "NormalBasic2 should use attack2");
+assert.equal(playerSpec({ action: "attack3" })?.key, "dnf_swordman_attack3_00", "NormalBasic3 should use attack3");
 assert.equal(playerSpec({ action: "Backstep" })?.key, "dnf_swordman_damage2_00", "Backstep should use damage2");
 assert.equal(playerSpec({ reaction: "light_stagger" })?.key, "dnf_swordman_damage1_00", "Light stagger should use damage1");
 assert.equal(playerSpec({ reaction: "downed" })?.key, "dnf_swordman_down_00", "Downed should use down");

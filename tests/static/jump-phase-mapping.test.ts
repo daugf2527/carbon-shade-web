@@ -30,7 +30,7 @@ registerDnfAction(
 function jumpKeyAt(localFrame: number): string {
   const spec = getCombatSpriteSpec({
     id: "player",
-    action: "Jump",
+    action: "jump",
     reaction: "neutral",
     locomotion: "idle",
     tick: 0,

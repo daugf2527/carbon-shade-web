@@ -2,8 +2,8 @@ import type { EnemyAIState } from "./ai/EnemyAIState.js";
 
 export type ActorId = string;
 export type ActionName =
-  | "Idle" | "Walk" | "Run"
-  | "NormalBasic1" | "NormalBasic2" | "NormalBasic3" | "DashAttack" | "Jump" | "JumpAttack"
+  | "stay" | "move" | "dash"
+  | "attack1" | "attack2" | "attack3" | "dashattack" | "jump" | "jumpattack"
   | "FrenzyToggle" | "FrenzyBasic1" | "FrenzyBasic2" | "FrenzyBasic3"
   | "UpwardSlash" | "MountainousWheel" | "RagingFury" | "Bloodlust" | "Backstep"
   | "QuickRebound" | "Derange" | "Diehard" | "DebugReset"

@@ -9,7 +9,7 @@ k.status.applyBleed(g,k.player.id,"ForceBleed",0,k.bus,1);
 k.runTicks(31);
 assert.equal(g.flags.dead, true);
 assert.equal(k.death.cleanupBarrier.has(g.id), false, "Death cleanup barrier must close after cleanup");
-const ok=k.requestAction(g,"NormalBasic1");
+const ok=k.requestAction(g,"attack1");
 assert.equal(ok, false, "dead actor cannot request actions");
 assert.ok(k.bus.archive.some(e=>e.type==="DeathCleanupCompleted"));
 

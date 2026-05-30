@@ -61,7 +61,7 @@ function action(actionName, totalFrames, active, frames = 3, rootMotionFrames = 
 }
 
 const sourcePolicy = { sourceType: "baseline_tuning", confidence: "medium", requiresManualVerification: true };
-const combatCancelTargets = ["NormalBasic1","NormalBasic2","NormalBasic3","DashAttack","Jump","JumpAttack","FrenzyBasic1","FrenzyBasic2","FrenzyBasic3","UpwardSlash","MountainousWheel","RagingFury","Bloodlust","GoreCross","OutrageBreak","ExtremeOverkill","RagingFury2","BloodRuin","BloodSword","BurstFury","EarthShatter","Backstep","Walk","Run","Idle"];
+const combatCancelTargets = ["attack1","attack2","attack3","dashattack","jump","jumpattack","FrenzyBasic1","FrenzyBasic2","FrenzyBasic3","UpwardSlash","MountainousWheel","RagingFury","Bloodlust","GoreCross","OutrageBreak","ExtremeOverkill","RagingFury2","BloodRuin","BloodSword","BurstFury","EarthShatter","Backstep","move","dash","stay"];
 
 const lightStagger = reaction({ hitStunFrames: 13, knockbackX: 5.4, knockbackZ: 0.32, horizontalFriction: 0.70, downFrames: 0, getUpFrames: 0 });
 const mediumStagger = reaction({ hitStunFrames: 15, knockbackX: 4.8, knockbackZ: 0.38, horizontalFriction: 0.72, downFrames: 0, getUpFrames: 0 });
@@ -89,15 +89,15 @@ const enemyBasicAction = {
 };
 
 const ACTIONS = {
-  Idle: action("Idle", 1, [], 0),
-  Walk: movementAction("Walk", 2.45),
-  Run: movementAction("Run", 4.15),
-  NormalBasic1: action("NormalBasic1", 20, [hit("nb1",5,8,"normal_1",10,{offsetX:50,w:92,d:40,h:58,offsetY:30,impactSnapX:5,visualRecoilFrames:6,reactionProfile:lightStagger})], 4, lunge([3,4],0.85)),
-  NormalBasic2: action("NormalBasic2", 22, [hit("nb2",6,9,"normal_2",14,{offsetX:64,w:118,d:42,h:62,offsetY:32,impactSnapX:6,visualRecoilFrames:7,reactionProfile:mediumStagger})], 5, lunge([4,5],1.05)),
-  NormalBasic3: action("NormalBasic3", 31, [hit("nb3",8,13,"normal_3",24,{offsetX:82,w:156,d:46,h:70,offsetY:34,attackLevel:2,controlPower:2,impactSnapX:11,visualRecoilFrames:9,reactionProfile:heavyStagger})], 7, lunge([5,6,7],1.18)),
-  DashAttack: action("DashAttack", 24, [hit("dash_attack",7,11,"dash_attack",18,{offsetX:78,w:150,d:44,h:62,offsetY:32,attackLevel:2,controlPower:2,impactSnapX:9,visualRecoilFrames:8,reactionProfile:mediumStagger})], 4, lunge([3,4,5,6,7],2.6)),
-  Jump: { ...action("Jump",22,[],0,[{frame:2,dx:0.8,dz:0,dy:4,collisionPolicy:"slide"},{frame:3,dx:0.6,dz:0,dy:3,collisionPolicy:"slide"},{frame:4,dx:0.4,dz:0,dy:2,collisionPolicy:"slide"},{frame:12,dx:0.4,dz:0,dy:-2,collisionPolicy:"slide"},{frame:13,dx:0.6,dz:0,dy:-3,collisionPolicy:"slide"},{frame:14,dx:0.8,dz:0,dy:-4,collisionPolicy:"slide"}]), cancelPolicy:{ hitCancelFrom:1, whiffCancelFrom:1, into:["JumpAttack"] } },
-  JumpAttack: action("JumpAttack", 26, [hit("jump_attack",6,10,"jump_attack",16,{offsetX:70,w:132,d:42,h:72,offsetY:40,impactSnapX:7,visualRecoilFrames:7,reactionProfile:mediumStagger})], 4, [{frame:3,dx:1.4,dz:0,dy:2,collisionPolicy:"slide"},{frame:4,dx:1.4,dz:0,dy:1,collisionPolicy:"slide"},{frame:12,dx:1.0,dz:0,dy:-1,collisionPolicy:"slide"},{frame:13,dx:0.8,dz:0,dy:-2,collisionPolicy:"slide"}]),
+  stay: action("stay", 1, [], 0),
+  move: movementAction("move", 2.45),
+  dash: movementAction("dash", 4.15),
+  attack1: action("attack1", 20, [hit("nb1",5,8,"normal_1",10,{offsetX:50,w:92,d:40,h:58,offsetY:30,impactSnapX:5,visualRecoilFrames:6,reactionProfile:lightStagger})], 4, lunge([3,4],0.85)),
+  attack2: action("attack2", 22, [hit("nb2",6,9,"normal_2",14,{offsetX:64,w:118,d:42,h:62,offsetY:32,impactSnapX:6,visualRecoilFrames:7,reactionProfile:mediumStagger})], 5, lunge([4,5],1.05)),
+  attack3: action("attack3", 31, [hit("nb3",8,13,"normal_3",24,{offsetX:82,w:156,d:46,h:70,offsetY:34,attackLevel:2,controlPower:2,impactSnapX:11,visualRecoilFrames:9,reactionProfile:heavyStagger})], 7, lunge([5,6,7],1.18)),
+  dashattack: action("dashattack", 24, [hit("dash_attack",7,11,"dash_attack",18,{offsetX:78,w:150,d:44,h:62,offsetY:32,attackLevel:2,controlPower:2,impactSnapX:9,visualRecoilFrames:8,reactionProfile:mediumStagger})], 4, lunge([3,4,5,6,7],2.6)),
+  jump: { ...action("jump",22,[],0,[{frame:2,dx:0.8,dz:0,dy:4,collisionPolicy:"slide"},{frame:3,dx:0.6,dz:0,dy:3,collisionPolicy:"slide"},{frame:4,dx:0.4,dz:0,dy:2,collisionPolicy:"slide"},{frame:12,dx:0.4,dz:0,dy:-2,collisionPolicy:"slide"},{frame:13,dx:0.6,dz:0,dy:-3,collisionPolicy:"slide"},{frame:14,dx:0.8,dz:0,dy:-4,collisionPolicy:"slide"}]), cancelPolicy:{ hitCancelFrom:1, whiffCancelFrom:1, into:["jumpattack"] } },
+  jumpattack: action("jumpattack", 26, [hit("jump_attack",6,10,"jump_attack",16,{offsetX:70,w:132,d:42,h:72,offsetY:40,impactSnapX:7,visualRecoilFrames:7,reactionProfile:mediumStagger})], 4, [{frame:3,dx:1.4,dz:0,dy:2,collisionPolicy:"slide"},{frame:4,dx:1.4,dz:0,dy:1,collisionPolicy:"slide"},{frame:12,dx:1.0,dz:0,dy:-1,collisionPolicy:"slide"},{frame:13,dx:0.8,dz:0,dy:-2,collisionPolicy:"slide"}]),
   FrenzyToggle: { ...action("FrenzyToggle",1,[],0), costProfile:{ mpCost:10, costTiming:"on_request" }, cooldownProfile:{ actionName:"FrenzyToggle", independentCooldownFrames:600, globalCooldownFrames:30, cooldownStartsAt:"on_action_enter", freezesDuringHitStop:true } },
   FrenzyBasic1: action("FrenzyBasic1", 18, [hit("fb1a",4,6,"frenzy_1a",12,{reactionProfile:reaction({ hitStunFrames:7, knockbackX:2.2, knockbackZ:0.2, horizontalFriction:0.75 })}), hit("fb1b",7,9,"frenzy_1b",12,{reactionProfile:reaction({ hitStunFrames:8, knockbackX:2.6, knockbackZ:0.25, horizontalFriction:0.75 })})], 3, lunge([3,4,5],1.8)),
   FrenzyBasic2: action("FrenzyBasic2", 20, [hit("fb2a",5,7,"frenzy_2a",14,{reactionProfile:reaction({ hitStunFrames:8, knockbackX:2.8, knockbackZ:0.25, horizontalFriction:0.76 })}), hit("fb2b",8,10,"frenzy_2b",14,{reactionProfile:reaction({ hitStunFrames:9, knockbackX:3.1, knockbackZ:0.3, horizontalFriction:0.76 })})], 3, lunge([4,5,6],2.0)),

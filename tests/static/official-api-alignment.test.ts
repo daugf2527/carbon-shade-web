@@ -47,9 +47,11 @@ assert.equal(diehardRejected.player.resources.hp, diehardHpBeforeReject, "Reject
 assert.equal(diehardRejected.player.buffs.some(buff => buff.type === "diehard"), false, "Rejected Diehard should not apply its buff");
 
 const diehard = new CombatKernel();
-diehard.player.resources.hp = Math.floor(diehard.player.resources.maxHp * 0.5);
+const diehardMaxHp = diehard.player.resources.maxHp;
+const diehardPreCast = Math.floor(diehardMaxHp * 0.5);
+diehard.player.resources.hp = diehardPreCast;
 assert.equal(diehard.requestAction(diehard.player, "Diehard"), true);
-assert.equal(diehard.player.resources.hp, Math.floor(diehard.player.resources.maxHp * 0.7), "Diehard level 1 should recover 20% max HP when used under the 50% threshold");
+assert.equal(diehard.player.resources.hp, Math.min(diehardMaxHp, diehardPreCast + Math.max(1, Math.floor(diehardMaxHp * 0.2))), "Diehard level 1 should recover 20% max HP when used under the 50% threshold");
 const diehardBuff = diehard.player.buffs.find(buff => buff.type === "diehard");
 assert.equal(diehardBuff?.expiresAtTick, diehard.tickCount + 1860, "Diehard level 1 official duration 31s is represented at 60Hz");
 assert.equal(diehardBuff?.modifiers.find(modifier => modifier.key === "diehard_physical_defense")?.value, 8382, "Diehard level 1 official physical defense value should be represented");

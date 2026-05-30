@@ -36,7 +36,7 @@ assert.equal(currentManifestHash, actionManifestHash, "manifestHash must match t
 assert.equal(currentStatusManifestHash, statusManifestHash, "statusManifestHash must match the current status manifest hash");
 assert.equal(currentEnemyManifestHash, enemyManifestHash, "enemyManifestHash must match the current enemy manifest hash");
 assert.equal(currentDamageManifestHash, damageManifestHash, "damageManifestHash must match the current damage manifest hash");
-assert.equal(recorder.metadata.dataSources.actions, "src/data/manifest/actions/default.json#actions");
+assert.equal(recorder.metadata.dataSources.actions, "src/combat/actions/FrameDataAction.ts#ACTIONS");
 assert.equal(recorder.metadata.dataSources.status, "src/data/manifest/status/default.json#profiles");
 assert.equal(recorder.metadata.dataSources.ai, "src/data/manifest/ai/enemy-default.json#profiles");
 assert.equal(recorder.metadata.dataSources.damage, "src/data/manifest/damage/classic-profile.json#constants");

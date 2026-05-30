@@ -17,9 +17,9 @@ const KEYS = [
 ];
 
 const ACTIONS = [
-  "NormalBasic1", "UpwardSlash", "RagingFury", "Backstep",
-  "DashAttack", "Jump", "MountainousWheel", "Bloodlust",
-  "FrenzyToggle", "Derange", "ForceBleed", "Walk", "Run",
+  "attack1", "UpwardSlash", "RagingFury", "Backstep",
+  "dashattack", "jump", "MountainousWheel", "Bloodlust",
+  "FrenzyToggle", "Derange", "ForceBleed", "move", "dash",
 ];
 
 // --- Test 1: No-crash fuzz — random input sequences must never throw ---

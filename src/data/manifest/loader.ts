@@ -1,16 +1,13 @@
-// Manifest loader — loads and validates JSON manifests at startup,
-// providing a single source of truth for runtime data.
+// Manifest loader — validates runtime manifests against schema, providing
+// a single source of truth for runtime data.
 
 import type { FrameDataAction, ActionName, StatusManifest } from "../../combat/types.js";
+import { ACTIONS } from "../../combat/actions/FrameDataAction.js";
 import { validateEnemyManifest, validateManifest, validateStatusManifest, type ManifestValidationOptions } from "./schema.js";
 import { computeActionsHash, type DamageManifest, computeDamageManifestHash } from "./hash.js";
 import { DEFAULT_ENEMY_MANIFEST } from "./ai.js";
 import type { EnemyManifest } from "./aiTypes.js";
 import { DEFAULT_STATUS_MANIFEST } from "./status.js";
-
-// Dynamic import for JSON — in Node tests this works with assert { type: "json" },
-// in browser/Vite this is handled by the bundler's JSON plugin.
-// We use a wrapper that tries both paths.
 
 let _cachedActions: Record<ActionName, FrameDataAction> | null = null;
 let _cachedHash: string | null = null;
@@ -20,31 +17,17 @@ let _cachedDamageManifest: DamageManifest | null = null;
 let _cachedDamageManifestHash: string | null = null;
 
 /**
- * Loads the actions manifest from JSON.
- * Caches result in memory — call once at startup.
+ * Stage 3 T-A.5 (2026-05-30): default.json 已废弃, ACTIONS (TS 模块) 现为唯一 SOT.
+ * 函数签名保留以兼容现有 async 调用方; 内部改为同步返回 ACTIONS.
+ * Phase A 之后 ACTIONS 会改为从 src/data/manifest/truth/ 读 PVF 真值生成.
  */
 export async function loadActionsManifest(options: ManifestValidationOptions = {}): Promise<Record<ActionName, FrameDataAction>> {
   if (_cachedActions) {
     assertValidManifest(_cachedActions, options);
     return _cachedActions;
   }
-
-  // Vite handles JSON imports natively; Node needs assert
-  let manifest: Record<ActionName, FrameDataAction>;
-  try {
-    // Vite path — works in browser dev/prod
-    manifest = (await import("./actions/default.json")).default as Record<ActionName, FrameDataAction>;
-  } catch {
-    // Node path — works in test environment
-    const { readFileSync } = await import("node:fs");
-    const { join, dirname } = await import("node:path");
-    const { fileURLToPath } = await import("node:url");
-    const __dirname = dirname(fileURLToPath(import.meta.url));
-    manifest = JSON.parse(readFileSync(join(__dirname, "actions", "default.json"), "utf-8")) as Record<ActionName, FrameDataAction>;
-  }
-
+  const manifest = ACTIONS as Record<ActionName, FrameDataAction>;
   assertValidManifest(manifest, options);
-
   _cachedActions = manifest;
   _cachedHash = computeActionsHash(manifest);
   return manifest;

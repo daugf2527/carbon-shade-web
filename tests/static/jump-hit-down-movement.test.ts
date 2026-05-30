@@ -26,7 +26,7 @@ for (let i = 0; i < 10; i++) {
 console.log(`Jump 10 帧后: action=${player.currentAction?.actionName}, reactionState=${player.reactionState}, y=${player.position.y}`);
 
 // 敌人攻击玩家
-kernel.requestAction(grunt, "NormalBasic1");
+kernel.requestAction(grunt, "attack1");
 for (let i = 0; i < 20; i++) {
   kernel.tick();
 }
