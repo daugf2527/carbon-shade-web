@@ -1,4 +1,4 @@
-import { assert } from "./test-utils.js";
+import { assert } from "../static/test-utils.js";
 import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 
 const k = new CombatKernel();

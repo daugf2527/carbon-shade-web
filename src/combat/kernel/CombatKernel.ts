@@ -399,6 +399,8 @@ export class CombatKernel {
     const current = actor.currentAction;
     if (!current) return actionName;
     if (actionName === "attack1") {
+      if (current.actionName === "dash") return this.canCancelInto(actor, "dashattack") ? "dashattack" : null;
+      if (current.actionName === "jump") return this.canCancelInto(actor, "jumpattack") ? "jumpattack" : null;
       if (current.actionName === "attack1") return this.canCancelInto(actor, "attack2") ? "attack2" : null;
       if (current.actionName === "attack2") return this.canCancelInto(actor, "attack3") ? "attack3" : null;
       if (current.actionName === "attack3") return this.canCancelInto(actor, "attack1") ? "attack1" : null;
