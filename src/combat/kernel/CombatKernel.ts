@@ -574,7 +574,7 @@ export class CombatKernel {
     const damage=this.damageResolver.apply(target, req, {isCounter:decision.isCounter,isBackAttack:decision.isBackAttack,isCritical:decision.isCritical}, decision.armorDecision?.damageAllowed ?? true, this.hitResolution.damageMultipliersFor(this, attacker, target, req.actionName));
     this.lastHit.updateFromDamage(this.tickCount,damage);
     this.bus.emit("DamageApplied", CombatEventPriority.Damage, this.tickCount, damage, {sourceActorId:attacker.id,targetActorId:target.id, correlationId});
-    const finalReaction=this.reactionResolver.resolve(target,decision);
+    const finalReaction=this.reactionResolver.resolve(target,decision,attacker);
     this.lastHit.updateFromHit(this.tickCount,decision,finalReaction,correlationId);
     this.bus.emit("ReactionRequested", CombatEventPriority.Reaction, this.tickCount, {targetId:target.id, finalReaction}, {targetActorId:target.id, correlationId});
     this.reactionResolver.apply(target,finalReaction,decision,attacker,this.tickCount);

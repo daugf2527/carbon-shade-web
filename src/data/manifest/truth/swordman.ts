@@ -10868,4 +10868,11 @@ export const SWORDMAN_TRUTH: JobTruth = {
   }
 } as const;
 
+/**
+ * Attack reaction data (liftUp/pushAside/hitReaction)
+ * Extracted from .atk files via sync-atk-to-truth.mjs
+ * Stage 3 Phase C - T-C.3
+ */
+export { default as SWORDMAN_ATTACKS } from "./swordman-attacks.json";
+
 export default SWORDMAN_TRUTH;

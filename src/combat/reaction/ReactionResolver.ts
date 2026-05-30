@@ -2,13 +2,69 @@ import type { Actor, HitDecision, ReactionKind } from "../types.js";
 import { signedFacingScale } from "../util/geometry.js";
 import { resolveReactionProfile } from "./ReactionProfiles.js";
 import { applyReactionHandfeel, interruptControlForReaction } from "./ReactionHandfeelApplier.js";
+import SWORDMAN_ATTACKS from "../../data/manifest/truth/swordman-attacks.json" with { type: "json" };
+import SWORDMAN_DATA from "../../../verification/baseline-shards/players/swordman.json" with { type: "json" };
+
+type HitReaction = "hit_lift_up" | "hit_down" | "hit_horizon" | "none";
+
+interface AttackConfig {
+  hitReaction: HitReaction;
+  causesDown: boolean;
+  liftUp?: { value: number };
+  pushAside?: { value: number };
+}
+
+interface WeaponHitInfo {
+  launch: number;
+  pushBack: number;
+  damageScalePct: number;
+}
+
+// H2.1: weaponHitInfo slot routing (hardcoded, D9=B降级路径)
+const WEAPON_SLOT_ROUTING: Record<string, number> = {
+  attack1: 0,
+  attack2: 0,
+  attack3: 0,
+  dashattack: 0,
+  jumpattack: 0,
+  hardattack: 3,
+  chargecrash: 3,
+  chargecrashfinish: 3,
+};
+
+// H2: stub constants (待 Phase E 客户端实测校准)
+const WEIGHT_THRESHOLD = 150000;
+const MIN_WEIGHT_FACTOR = 0.1;
 
 export class ReactionResolver {
-  resolve(_target: Actor, decision: HitDecision): ReactionKind {
+  resolve(_target: Actor, decision: HitDecision, attacker?: Actor): ReactionKind {
+    // Armor override takes precedence
     if (decision.armorDecision?.finalReaction) return decision.armorDecision.finalReaction;
+
+    // Try to route from PVF truth data (swordman-attacks.json)
+    const actionName = attacker?.currentAction?.actionName;
+    if (actionName && actionName in SWORDMAN_ATTACKS) {
+      const config = SWORDMAN_ATTACKS[actionName as keyof typeof SWORDMAN_ATTACKS] as AttackConfig;
+      return this.routeFromHitReaction(config.hitReaction, config.causesDown, decision.hitbox.attackLevel);
+    }
+
+    // Fallback to legacy logic (local_baseline)
     if (decision.hitbox.canLaunch) return "launch";
     if (decision.hitbox.canKnockdown) return "downed";
     return decision.hitbox.attackLevel >= 2 ? "heavy_stagger" : "light_stagger";
+  }
+
+  private routeFromHitReaction(hitReaction: HitReaction, causesDown: boolean, attackLevel: number): ReactionKind {
+    switch (hitReaction) {
+      case "hit_lift_up":
+        return "launch";
+      case "hit_down":
+        return causesDown ? "downed" : "knockback";
+      case "hit_horizon":
+        return attackLevel >= 2 ? "heavy_stagger" : "light_stagger";
+      case "none":
+        return "none";
+    }
   }
 
   apply(target: Actor, reaction: ReactionKind, decision?: HitDecision, attacker?: Actor, tick = 0): void {
@@ -28,35 +84,73 @@ export class ReactionResolver {
     target.handfeel.visualRecoilZ = reaction === "armor_feedback_only" ? 0 : Math.min(3, Math.abs(profile.knockbackZ)) * zScale;
     interruptControlForReaction(target, reaction);
 
+    // Try PVF-driven velocity calculation (D9=B stub coefficients)
+    const actionName = attacker?.currentAction?.actionName;
+    const pvfVelocity = actionName ? this.calculatePvfVelocity(actionName, target, facingScale) : null;
+
     if (reaction === "launch") {
       target.position.x += (decision?.hitbox.impactSnapX ?? 4) * facingScale;
-      target.velocity.y = Math.max(target.velocity.y, profile.launchVelocityY / target.comboCorrection.launchResistance);
-      target.velocity.x = profile.knockbackX * facingScale;
+      if (pvfVelocity) {
+        target.velocity.y = Math.max(target.velocity.y, pvfVelocity.y / target.comboCorrection.launchResistance);
+        target.velocity.x = pvfVelocity.x;
+      } else {
+        target.velocity.y = Math.max(target.velocity.y, profile.launchVelocityY / target.comboCorrection.launchResistance);
+        target.velocity.x = profile.knockbackX * facingScale;
+      }
       target.velocity.z = profile.knockbackZ * zScale;
       return;
     }
 
     if (reaction === "downed" || reaction === "knockback") {
       target.position.x += (decision?.hitbox.impactSnapX ?? 5) * facingScale;
-      target.velocity.y = Math.max(target.velocity.y, profile.launchVelocityY);
-      target.velocity.x = profile.knockbackX * facingScale;
+      if (pvfVelocity) {
+        target.velocity.y = Math.max(target.velocity.y, pvfVelocity.y);
+        target.velocity.x = pvfVelocity.x;
+      } else {
+        target.velocity.y = Math.max(target.velocity.y, profile.launchVelocityY);
+        target.velocity.x = profile.knockbackX * facingScale;
+      }
       target.velocity.z = profile.knockbackZ * zScale;
       return;
     }
 
     if (reaction === "light_stagger" || reaction === "heavy_stagger" || reaction === "micro_stagger") {
       target.position.x += (decision?.hitbox.impactSnapX ?? (reaction === "heavy_stagger" ? 7 : 4)) * facingScale;
-      target.velocity.x = profile.knockbackX * facingScale;
+      if (pvfVelocity) {
+        target.velocity.x = pvfVelocity.x;
+      } else {
+        target.velocity.x = profile.knockbackX * facingScale;
+      }
       target.velocity.z = profile.knockbackZ * zScale;
       target.velocity.y = 0;
       return;
     }
 
     if (reaction === "armor_feedback_only") {
-      // Armor takes the hit feedback but keeps control/no-launch/no-knockdown.
       target.velocity.x = 0;
       target.velocity.z = 0;
       target.velocity.y = 0;
     }
+  }
+
+  private calculatePvfVelocity(actionName: string, target: Actor, facingScale: number): { x: number; y: number } | null {
+    if (!(actionName in SWORDMAN_ATTACKS)) return null;
+    const config = SWORDMAN_ATTACKS[actionName as keyof typeof SWORDMAN_ATTACKS] as AttackConfig;
+    if (!config.liftUp || !config.pushAside) return null;
+
+    const slot = WEAPON_SLOT_ROUTING[actionName] ?? 0;
+    const weaponHitInfo = (SWORDMAN_DATA.chr.weaponHitInfo as WeaponHitInfo[])[slot];
+    if (!weaponHitInfo) return null;
+
+    // H2: weight factor formula (stub constants)
+    const weightFactor = Math.max(MIN_WEIGHT_FACTOR, 1 - target.weight / WEIGHT_THRESHOLD);
+
+    // velocityY = liftUp × launch × weightFactor
+    const velocityY = config.liftUp.value * weaponHitInfo.launch * weightFactor;
+
+    // velocityX = pushAside × pushBack × weightFactor × direction
+    const velocityX = config.pushAside.value * weaponHitInfo.pushBack * weightFactor * facingScale;
+
+    return { x: velocityX, y: velocityY };
   }
 }

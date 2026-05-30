@@ -1,11 +1,12 @@
 import type { CombatSystem } from "../kernel/CombatSystem.js";
 import type { SystemContext } from "../kernel/SystemContext.js";
 import type { CombatEventBus } from "../events/CombatEventBus.js";
-import type { Actor, ActionName, HitDecision } from "../types.js";
+import type { Actor, ActionName, HitDecision, HitBoxFrameWindow } from "../types.js";
 import { getAction } from "../actions/FrameDataAction.js";
 import { CombatEventPriority } from "../events/CombatEventBus.js";
 import { nextId } from "../util/ids.js";
 import { DEFAULT_COMBO_CORRECTION_CONFIG, applyComboCorrectionFromHit } from "../combo/ComboCorrection.js";
+import { isDualTimelineAction } from "../types/DualTimelineAction.js";
 
 export class HitResolutionSystem implements CombatSystem {
   readonly name = "ResolveHits";
@@ -16,7 +17,11 @@ export class HitResolutionSystem implements CombatSystem {
       const inst = attacker.currentAction;
       if (!inst || attacker.flags.dead || ctx.hitStop.isFrozen(attacker.id)) continue;
       const action = getAction(inst.actionName);
-      for (const hitbox of action.active.filter(w => inst.localFrame >= w.start && inst.localFrame <= w.end)) {
+
+      // Extract hitboxes: prefer weapon timeline if available, fallback to action.active
+      const hitboxes = this.extractHitboxes(action, inst.localFrame);
+
+      for (const hitbox of hitboxes) {
         const query = ctx.hitResolver.buildQuery(ctx.tickCount, attacker, hitbox);
         bus.emit("HitQueryBuilt", CombatEventPriority.HitDecision, ctx.tickCount, query, { sourceActorId: attacker.id });
         let targetCount = 0;
@@ -66,7 +71,7 @@ export class HitResolutionSystem implements CombatSystem {
     ctx.lastHit.updateFromDamage(ctx.tickCount, damage);
     bus.emit("DamageApplied", CombatEventPriority.Damage, ctx.tickCount, damage, { sourceActorId: attacker.id, targetActorId: target.id, correlationId: corr });
 
-    const finalReaction = ctx.reactionResolver.resolve(target, decision);
+    const finalReaction = ctx.reactionResolver.resolve(target, decision, attacker);
     ctx.lastHit.updateFromHit(ctx.tickCount, decision, finalReaction, corr);
     if (req.reactionPolicy === "normal_hit_reaction") {
       bus.emit("ReactionRequested", CombatEventPriority.Reaction, ctx.tickCount, { targetId: target.id, finalReaction }, { targetActorId: target.id, correlationId: corr });
@@ -229,5 +234,78 @@ export class HitResolutionSystem implements CombatSystem {
     if (decision.armorDecision?.baseType === "boss_super_armor") ctx.scenario.armorHitObserved = true;
     if (decision.armorDecision?.baseType === "building_armor" && finalReaction === "armor_feedback_only" && damage.finalDamage > 0) ctx.scenario.buildingArmorBlockedControlObserved = true;
     if (damage.sourceKind === "status_dot" && damage.reactionPolicy === "status_tick_feedback_only") ctx.scenario.bleedObserved = true;
+  }
+
+  /**
+   * Extract hitboxes for current frame.
+   *
+   * Priority:
+   * 1. If action is DualTimelineAction, read from weaponTimeline.frames[localFrame].attackBoxes
+   * 2. Otherwise, fallback to action.active (legacy FrameDataAction)
+   *
+   * Conversion: DNF box6 [x1,y1,z1,x2,y2,z2] → HitBoxFrameWindow
+   * - DNF y = our z (ground depth)
+   * - DNF z = our y (height)
+   */
+  private extractHitboxes(action: unknown, localFrame: number): HitBoxFrameWindow[] {
+    if (isDualTimelineAction(action)) {
+      const frame = action.weaponTimeline.frames.find(f => f.index === localFrame);
+      if (!frame || frame.attackBoxes.length === 0) return [];
+
+      return frame.attackBoxes.map((box, i) => {
+        // Convert box6 to Rect2D5 (center + dimensions)
+        const w = box.x2 - box.x1;
+        const d = box.y2 - box.y1; // DNF y = our z (depth)
+        const h = box.z2 - box.z1; // DNF z = our y (height)
+        const offsetX = (box.x1 + box.x2) / 2;
+        const offsetZ = (box.y1 + box.y2) / 2; // DNF y → our z
+        const offsetY = (box.z1 + box.z2) / 2; // DNF z → our y
+
+        const id = `${action.actionName}_f${localFrame}_box${i}`;
+        const hitGroupId = `${action.actionName}_group`;
+
+        // Use action-level defaults for combat metadata
+        // TODO: Read these from action.active[0] or action-level metadata
+        const defaults = action.active[0] || {
+          hitType: "slash" as const,
+          damageType: "physical" as const,
+          baseDamage: 10,
+          attackLevel: 1,
+          controlPower: 1,
+          canHitDowned: false,
+          canLaunch: false,
+          canKnockdown: false,
+          canGrab: false,
+          maxTargets: 6,
+        };
+
+        return {
+          id,
+          hitGroupId,
+          start: localFrame,
+          end: localFrame,
+          offsetX,
+          offsetZ,
+          offsetY,
+          w,
+          d,
+          h,
+          hitType: defaults.hitType,
+          damageType: defaults.damageType,
+          baseDamage: defaults.baseDamage,
+          attackLevel: defaults.attackLevel,
+          controlPower: defaults.controlPower,
+          canHitDowned: defaults.canHitDowned,
+          canLaunch: defaults.canLaunch,
+          canKnockdown: defaults.canKnockdown,
+          canGrab: defaults.canGrab,
+          maxTargets: defaults.maxTargets,
+        } as HitBoxFrameWindow;
+      });
+    }
+
+    // Fallback: legacy FrameDataAction
+    const legacyAction = action as { active: HitBoxFrameWindow[] };
+    return legacyAction.active.filter(w => localFrame >= w.start && localFrame <= w.end);
   }
 }
