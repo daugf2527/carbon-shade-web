@@ -13,7 +13,7 @@ Active branch: `dnf-native` (master frozen 2026-05-21).
 |-------|------|------|
 | Stage 1 | PVF 数据提取管线 (EXTRACT→PARSE→VALIDATE→LOAD→EXPORT) | ✅ **完成** (2026-05-30) — 8808 文件 0 错误，refIntegrity 99.1%，16 shards。T1.9 (Ani/Nut/Img dispatch) + T1.10 (full-PVF 压测) 全部通过 |
 | Stage 2 | 22-system DNF 原生引擎层（[field-matrix](docs/engineering/22-system-field-matrix.md), [roadmap](docs/planning/2026-05-27-stage2-roadmap.md)） | ✅ **完成** (2026-05-30) — Phase 0-5 全部完成。CombatKernel 命中→伤害→受击→HP 闭环，ReplayRecorder stateHash 确定性验证，CombatScene 最小可玩版本（HP bar + swordman + 3 种哥布林）。76 静态测试全绿，M3 里程碑达成 |
-| Stage 3 | 真值驱动重构（[roadmap](docs/planning/2026-05-30-stage3-truth-driven-refactor.md)） | 🟢 **Phase A-C 完成** (2026-05-30) — Phase A: 武器 ani 入 shard + TS truth SOT + 砍 default.json + ActorFactory PVF 真值 + DamageFormula 修正 + 激进改名 → PVF + PoC truth 测试。Phase B: 切 beamsword/beamswdc + 14 动画 atkBox 覆盖率报告。Phase C: reaction 公式反推文档骨架 + D9=B 降级路径。**核心成果：玩家不再一击秒杀**（attack1 → grunt 23 dmg, 160→137 HP）。80/82 静态测试通过（T-A.12 修复 5 个 baseline fail），2 个 fail 是 pre-existing flaky test|
+| Stage 3 | 真值驱动重构（[roadmap](docs/planning/2026-05-30-stage3-truth-driven-refactor.md), [changelog](docs/changelog/2026-05-30-stage3.md)） | ✅ **完成** (2026-05-30) — Phase A-D 完成。Phase A: 武器 ani 入 shard + TS truth SOT + 砍 default.json + ActorFactory PVF 真值 + DamageFormula 修正 + 激进改名 + PoC truth 测试。Phase B: 切 beamsword/beamswdc + 14 动画 atkBox 覆盖率报告。Phase C: reaction 公式反推文档骨架 + D9=B 降级路径。Phase D: truth 测试集成 + bundle 分析（1.6MB）+ baseline 数据恢复。**核心成果：玩家不再一击秒杀**（attack1 → grunt 23 dmg, 160→137 HP）。80/82 静态测试通过，2 个 fail 是 pre-existing flaky test|
 
 **Stage 1 管线**:
 ```
