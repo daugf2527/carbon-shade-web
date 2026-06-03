@@ -23,10 +23,14 @@ model: sonnet
 
 ### 2. Velocity 写入位置
 只有以下文件允许写入 `.velocity.x`、`.velocity.z`、`.velocity.y`：
-- `src/combat/actors/ActorFactory.ts`（初始化）
-- `src/combat/kernel/CombatKernel.ts`（物理更新）
-- `src/combat/reaction/ReactionResolver.ts`（击退/浮空）
-- `src/combat/ai/EnemyAI.ts`（AI 移动）
+- `src/combat/kernel/CombatKernel.ts`（物理更新 / jump / 归零）
+- `src/combat/reaction/ReactionResolver.ts`（击退/浮空/PVF reaction）
+- `src/combat/reaction/ReactionMotionSystem.ts`（摩擦力/重力/着地归零）
+- `src/combat/motion/AirbornePhysicsSystem.ts`（重力/着地归零）
+- `src/combat/hit/HitResolutionSystem.ts`（命中后归零）
+- `src/combat/ai/EnemyAI.ts`（AI launch/归零）
+
+> 此约束仅针对 `.velocity.x =` 这类**属性赋值 mutation**。对象字面量初始化（如 `ActorFactory.ts` 的 `velocity: { x: 0, y: 0, z: 0 }`）不算 mutation，不受白名单约束、不判违规。
 
 ### 3. 确定性保证
 禁止使用：

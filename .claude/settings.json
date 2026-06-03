@@ -23,6 +23,16 @@
       "Read(**secrets**)"
     ]
   },
+  "skillOverrides": {
+    "claude-api": "off",
+    "keybindings-help": "off",
+    "review": "off",
+    "gh-fix-ci": "off",
+    "finishing-a-development-branch": "off",
+    "requesting-code-review": "off",
+    "receiving-code-review": "off",
+    "auto-commit-cicd": "off"
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -42,16 +52,6 @@
             "type": "command",
             "command": "node .claude/hooks/guard-phaser-boundary.mjs",
             "description": "拦截 src/combat/ 中的 Phaser 导入"
-          }
-        ]
-      },
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .claude/hooks/guard-velocity-writes.mjs",
-            "description": "限制 velocity 写入位置 (CI 边界规则)"
           }
         ]
       },
