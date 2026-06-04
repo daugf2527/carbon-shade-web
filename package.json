@@ -15,6 +15,8 @@
     "validate:assets": "node scripts/validate-assets.mjs",
     "validate:combat": "node scripts/validate-combat-boundaries.mjs",
     "browser:smoke": "playwright test tests/browser/combat-smoke.spec.ts",
+    "browser:qa": "playwright test tests/browser/combat-qa.spec.ts",
+    "test:loop": "node scripts/test-loop.mjs",
     "analyze": "node scripts/analyze.mjs",
     "completion": "node scripts/completion.mjs",
     "audit:verify": "node scripts/audit-verify.mjs",

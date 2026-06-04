@@ -487,19 +487,20 @@ try {
 /* ---------------------------------------------------------------------------
  * Section 3 — scripts/pipeline.mjs CLI surface
  *
- * IMPORTANT: never pass a real --pvf path (Head 5 owns that). All probes
- * here exit BEFORE the compile/import step on line 36 of pipeline.mjs.
+ * IMPORTANT: never pass a real --pvf path (Head 5 owns that). Most probes
+ * here exit before the compile/import step; --stop-at extract intentionally
+ * reaches compile + dnf-extract to prove the accepted-stage path.
  * ------------------------------------------------------------------------ */
 
 const CLI = path.join(ROOT, "scripts", "pipeline.mjs");
 
-function runCli(argv: string[]): { code: number; stdout: string; stderr: string } {
+function runCli(argv: string[], timeoutMs = 60000): { code: number; stdout: string; stderr: string } {
   const r = spawnSync(process.execPath, [CLI, ...argv], {
     cwd: ROOT,
     encoding: "utf8",
-    timeout: 15000,
+    timeout: timeoutMs,
   });
-  return { code: r.status ?? -1, stdout: r.stdout ?? "", stderr: r.stderr ?? "" };
+  return { code: r.status ?? -1, stdout: r.stdout ?? "", stderr: r.stderr ?? r.error?.message ?? "" };
 }
 
 // 3a. No args → exits 2 with usage.
