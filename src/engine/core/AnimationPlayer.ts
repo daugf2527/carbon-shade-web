@@ -21,6 +21,8 @@ export interface AniDef {
   readonly framesCount: number;
   readonly loop: boolean;
   readonly frames: readonly AniFrame[];
+  /** P3.0: launch velocity (px/s up) for liftUp attacks; 0/undefined = grounded attack. */
+  readonly liftVy?: number;
 }
 
 export type FrameEventKind = "frameEnter" | "frameExit" | "animDone";
@@ -88,6 +90,11 @@ export class AnimationPlayer {
     return this.anim !== null && !this.done;
   }
 
+  /** P3.0: launch velocity of the current attack animation (px/s up); 0 if none. */
+  get attackLiftVy(): number {
+    return this.anim?.liftVy ?? 0;
+  }
+
   private emit(kind: FrameEventKind): void {
     const f = this.anim!.frames[this.frameIdx];
     const ev: FrameEvent = { kind, frameIndex: this.frameIdx, attackBoxes: f.attackBoxes, damageBoxes: f.damageBoxes };
@@ -107,5 +114,6 @@ export function parseAniDef(raw: Record<string, unknown>): AniDef {
     framesCount: raw.framesCount as number,
     loop: raw.loop as boolean,
     frames,
+    liftVy: raw.liftVy as number | undefined,
   };
 }

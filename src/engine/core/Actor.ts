@@ -3,8 +3,17 @@
  */
 
 import { ActorState, ActorStateMachine } from "./ActorStateMachine.js";
+import type { AirborneState } from "./AirbornePhysicsSystem.js";
+import { AnimationPlayer } from "./AnimationPlayer.js";
+import type { ReactionState } from "./ReactionResolver.js";
 
 export type ActorKind = "player" | "monster";
+
+/** Per-tick input intent for an actor (P3.0). dir: -1 left, 0 none, 1 right. */
+export interface ActorIntent {
+  attack: boolean;
+  dir: -1 | 0 | 1;
+}
 
 export interface ActorStats {
   readonly hpMax: number;
@@ -73,6 +82,7 @@ export class Actor {
   readonly kind: ActorKind;
   readonly stats: ActorStats;
   readonly fsm: ActorStateMachine;
+  readonly animationPlayer: AnimationPlayer;
 
   hp: number;
   mp: number;
@@ -80,15 +90,22 @@ export class Actor {
   y = 0;
   facing = 1; // 1 = right, -1 = left
 
+  /** Active hit-reaction (hitstun) state; null when not in hitstun. P3.0 per-actor work state (like fsm). */
+  reaction: ReactionState | null = null;
+  /** Active airborne (launch) physics state; null when grounded. P3.0 per-actor work state. */
+  airborne: AirborneState | null = null;
+  /** Frame input intent (P3.0). Written by the scene/recorder/AI; read by InputSystem.
+   *  Decoupled from CombatScene's BrowserInputState — engine only sees abstract intent. */
+  intent: ActorIntent = { attack: false, dir: 0 };
+
   constructor(id: string, kind: ActorKind, stats: ActorStats) {
     this.id = id;
     this.kind = kind;
     this.stats = stats;
     this.hp = stats.hpMax;
     this.mp = stats.mpMax;
-    this.fsm = new ActorStateMachine(ActorState.IDLE, (from, to, tick) => {
-      console.log(`[Actor:${id}] tick=${tick} ${from}→${to}`);
-    });
+    this.fsm = new ActorStateMachine(ActorState.IDLE);
+    this.animationPlayer = new AnimationPlayer();
   }
 
   get isDead(): boolean {

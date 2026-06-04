@@ -455,6 +455,64 @@ checks.push({
     : "all old memory carry verified_at",
 });
 
+// 19. P2a 真值表解封成熟度 — system-api-map 真值表 + truth 测试是否到位
+const sysApiMap = readTextSafe(join(ROOT, "src/data/manifest/truth/system-api-map.ts")) || "";
+const sysApiTestPresent = existsSync(join(ROOT, "tests/truth/system-api-map.test.ts"));
+const hotBucketCount = (sysApiMap.match(/hot:\s*true/g) || []).length;
+const extractedApiCount = (sysApiMap.match(/evidence:\s*"extracted"/g) || []).length;
+checks.push({
+  name: "maturity/p2a-system-api-map",
+  claimSite: "2026-06-04-engine-native-rewrite-roadmap.md P2a 真值解封",
+  claim: "5 HOT 横切系统 API 归属经真值表确认 (extracted-grade)",
+  truthSite: "src/data/manifest/truth/system-api-map.ts + tests/truth/system-api-map.test.ts",
+  truth: `${hotBucketCount} HOT buckets / ${extractedApiCount} extracted / test ${sysApiTestPresent ? "present" : "MISSING"}`,
+  drift: (hotBucketCount >= 5 && extractedApiCount >= 5 && sysApiTestPresent)
+    ? null
+    : `P2a 真值表退化:期望 >=5 HOT buckets + >=5 extracted + truth 测试存在,实得 ${hotBucketCount}/${extractedApiCount}/${sysApiTestPresent}`,
+});
+
+// 20. P2b 横切支撑层成熟度 — 5 个 HOT 横切系统 class + 编排器接入 + 测试
+const crossSystems = ["MathSystem", "DataStoreSystem", "TimerSystem", "TimeSystem", "PredicateSystem"];
+const crossPresent = crossSystems.filter((s) =>
+  existsSync(join(ROOT, `src/engine/kernel/systems/${s}.ts`))).length;
+const crossTestPresent = existsSync(join(ROOT, "tests/static/engine-crosscutting-systems.test.ts"));
+const engineSystemSrc = readTextSafe(join(ROOT, "src/engine/kernel/EngineSystem.ts")) || "";
+const hasSnapshot = /snapshot\?\(\):/.test(engineSystemSrc);
+const hasProvides = /provides\?:/.test(engineSystemSrc);
+checks.push({
+  name: "maturity/p2b-crosscutting-systems",
+  claimSite: "2026-06-04-engine-native-rewrite-roadmap.md P2b 横切支撑层",
+  claim: "5 HOT 横切 System class 接入编排器 + 多帧 stateHash 可复现",
+  truthSite: "src/engine/kernel/systems/ + EngineSystem.snapshot/provides + 测试",
+  truth: `${crossPresent}/5 systems, snapshot=${hasSnapshot}, provides=${hasProvides}, test ${crossTestPresent ? "present" : "MISSING"}`,
+  drift: (crossPresent === 5 && hasSnapshot && hasProvides && crossTestPresent)
+    ? null
+    : `P2b 横切层退化:期望 5 系统 + snapshot + provides + 测试,实得 ${crossPresent}/5 snapshot=${hasSnapshot} provides=${hasProvides} test=${crossTestPresent}`,
+});
+
+// 21. P3.0 攻击闭环成熟度 — 真实领域系统接入 kernel(非 mock)
+const domainSystems = ["AnimationSystem", "CombatResolutionSystem", "HitstunSystem", "AirborneSystem", "ActionSystem", "InputSystem", "EnemyAISystem"];
+const domainPresent = domainSystems.filter((s) =>
+  existsSync(join(ROOT, `src/engine/kernel/systems/${s}.ts`))).length;
+const loopTests = [
+  "engine-combat-loop.test.ts",
+  "engine-airborne-loop.test.ts",
+  "engine-input-action-loop.test.ts",
+  "engine-two-way-fight.test.ts",
+].filter((t) => existsSync(join(ROOT, "tests/static", t))).length;
+const actorSrc = readTextSafe(join(ROOT, "src/engine/core/Actor.ts")) || "";
+const actorHasComponents = /animationPlayer/.test(actorSrc) && /reaction:/.test(actorSrc) && /airborne:/.test(actorSrc) && /intent:/.test(actorSrc);
+checks.push({
+  name: "maturity/p3.0-attack-loop",
+  claimSite: "2026-06-04-engine-native-rewrite-roadmap.md P3.0 核心系统接入",
+  claim: "真实领域系统(7)接入 kernel 跑通攻击/浮空/输入/双向战斗端到端",
+  truthSite: "src/engine/kernel/systems/ 领域 system + Actor 组件 + 4 端到端测试",
+  truth: `${domainPresent}/7 domain systems, actor-components=${actorHasComponents}, ${loopTests}/4 e2e tests`,
+  drift: (domainPresent === 7 && actorHasComponents && loopTests === 4)
+    ? null
+    : `P3.0 退化:期望 7 领域系统 + Actor 组件(含 intent) + 4 端到端测试,实得 ${domainPresent}/7 components=${actorHasComponents} tests=${loopTests}/4`,
+});
+
 // ── 评估 drift ──────────────────────────────────────────────────────────
 
 for (const c of checks) {

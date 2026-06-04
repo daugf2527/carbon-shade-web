@@ -1,5 +1,7 @@
 /// <reference lib="webworker" />
 
+import { Fnv1aPrng } from "../kernel/Fnv1aPrng.js";
+
 export interface InputSnapshot {
   readonly frame: number;
   readonly tickTimestampMs: number;
@@ -26,25 +28,6 @@ export type WorkerOutbound =
   | { readonly type: "ready" }
   | { readonly type: "snapshot"; readonly snapshot: StateSnapshot }
   | { readonly type: "error"; readonly message: string };
-
-// FNV-1a 32-bit deterministic PRNG
-class Fnv1aPrng {
-  private state: number;
-  constructor(seed: number) {
-    // Mix seed into FNV offset basis (2166136261)
-    this.state = (2166136261 ^ (seed & 0xffffffff)) >>> 0;
-  }
-  next(): number {
-    this.state = Math.imul(this.state ^ (this.state >>> 16), 0x45d9f3b) >>> 0;
-    this.state = Math.imul(this.state ^ (this.state >>> 16), 0x45d9f3b) >>> 0;
-    this.state = (this.state ^ (this.state >>> 16)) >>> 0;
-    return this.state / 0x100000000;
-  }
-  nextU32(): number {
-    this.next();
-    return this.state;
-  }
-}
 
 const TICK_MS = 1000 / 60;
 

@@ -1,11 +1,14 @@
 /**
  * AirbornePhysicsSystem.ts — Gravity integration for launched actors (Phase 4 T4.6)
  *
- * Y axis = vertical height. Gravity = -1800 px/s².
+ * Y axis = vertical height. Gravity = DNF truth value (game units/s², ≈ px/s²).
  * Landing when y <= 0.
  */
 
-const GRAVITY = -1800; // px/s²
+import { DNF_PHYSICS_CONSTANTS } from "../../data/official/dnfPhysicsConstants.js";
+
+// Truth-sourced: PVF /sqr/dnf_enum_header.nut defaultGravityAccel (-1500), not a hardcoded guess.
+const GRAVITY = DNF_PHYSICS_CONSTANTS.defaultGravityAccel; // game units/s²
 
 export interface AirborneState {
   active: boolean;
