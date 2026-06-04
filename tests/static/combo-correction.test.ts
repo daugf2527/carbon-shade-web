@@ -27,7 +27,15 @@ stand.runTicks(9);
 assert.equal(standTarget.comboCorrection.standGauge, 420, "standing light hit should add the clean-room stand correction value");
 clearCombatLocks(stand);
 placeTarget(stand);
-stand.requestAction(stand.player, "attack3");
+// Isolate the accumulation probe: PVF truth routing now sends swordman normal
+// attacks through real hit reactions (attack1 hit_down, attack3 hit_lift_up→launch),
+// so a chained second hit would land on a knocked-down/airborne target. Reset the
+// target to a clean standing state to keep this a unit test of the standGauge math.
+standTarget.reactionState = "none";
+// dashattack is the stand-bucket heavy probe: attackLevel 2 → standHeavyBonus (180),
+// and its hit_horizon reaction stays in the stand bucket. attack3 was the old probe
+// but PVF truth now makes it a launcher (aerial bucket), so it no longer feeds standGauge.
+stand.requestAction(stand.player, "dashattack");
 stand.runTicks(14);
 assert.equal(standTarget.comboCorrection.standGauge, 1020, "heavy standing hit should include the stand heavy bonus");
 assert.ok(standTarget.comboCorrection.hitRecoveryGauge > 0, "normal hitstun should advance hit recovery correction");

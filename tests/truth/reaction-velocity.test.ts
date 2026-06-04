@@ -45,7 +45,7 @@ function createMockDecision(): HitDecision {
   } as HitDecision;
 }
 
-// Test 1: attack3 (slot 0, launch=0) → no Y velocity
+// Test 1: attack3 (slot 0, launch=0/pushBack=0) → launch profile fallback
 {
   const resolver = new ReactionResolver();
   const target = createMockActor();
@@ -54,11 +54,9 @@ function createMockDecision(): HitDecision {
 
   resolver.apply(target, "launch", decision, attacker, 0);
 
-  const attack3 = SWORDMAN_ATTACKS.attack3 as any;
-  const slot0 = SWORDMAN_WEAPON_HIT_INFO[0];
-  const expectedY = attack3.liftUp.value * slot0.launch; // 300 * 0 = 0
-  assert.equal(target.velocity.y, expectedY, "attack3 slot 0 launch=0 → velocityY=0");
-  console.log("✓ Test 1: attack3 no launch");
+  assert.ok(target.velocity.y > 0, `attack3 launch should fall back to profile velocityY, got ${target.velocity.y}`);
+  assert.ok(target.velocity.x > 0, `attack3 launch should fall back to profile velocityX, got ${target.velocity.x}`);
+  console.log("✓ Test 1: attack3 launch fallback");
 }
 
 // Test 2: chargecrashfinish (slot 3, pushBack=0.2) → X velocity

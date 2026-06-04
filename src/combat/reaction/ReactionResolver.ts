@@ -38,8 +38,17 @@ const MIN_WEIGHT_FACTOR = 0.1;
 
 export class ReactionResolver {
   resolve(_target: Actor, decision: HitDecision, attacker?: Actor): ReactionKind {
-    // Armor override takes precedence
-    if (decision.armorDecision?.finalReaction) return decision.armorDecision.finalReaction;
+    // Armor override takes precedence ONLY when armor actually intervened.
+    // ArmorResolver always fills finalReaction (defaults to the passed-through
+    // rawReaction), so a non-empty value alone does NOT mean armor acted — that
+    // would let the hitbox-derived rawReaction silently shadow PVF reaction
+    // routing (F8: attack3 hit_lift_up was being overridden to light_stagger).
+    // Real armor intervention is signalled by controlBlocked, or by the armor /
+    // combo-correction sentinels (armor_feedback_only / downed via forceStand).
+    const armor = decision.armorDecision;
+    if (armor && (armor.controlBlocked || armor.finalReaction === "armor_feedback_only" || armor.finalReaction === "downed")) {
+      return armor.finalReaction;
+    }
 
     // Try to route from PVF truth data (swordman-attacks.json)
     const actionName = attacker?.currentAction?.actionName;
@@ -91,8 +100,10 @@ export class ReactionResolver {
     if (reaction === "launch") {
       target.position.x += (decision?.hitbox.impactSnapX ?? 4) * facingScale;
       if (pvfVelocity) {
-        target.velocity.y = Math.max(target.velocity.y, pvfVelocity.y / target.comboCorrection.launchResistance);
-        target.velocity.x = pvfVelocity.x;
+        const velocityY = pvfVelocity.y !== 0 ? pvfVelocity.y : profile.launchVelocityY;
+        const velocityX = pvfVelocity.x !== 0 ? pvfVelocity.x : profile.knockbackX * facingScale;
+        target.velocity.y = Math.max(target.velocity.y, velocityY / target.comboCorrection.launchResistance);
+        target.velocity.x = velocityX;
       } else {
         target.velocity.y = Math.max(target.velocity.y, profile.launchVelocityY / target.comboCorrection.launchResistance);
         target.velocity.x = profile.knockbackX * facingScale;

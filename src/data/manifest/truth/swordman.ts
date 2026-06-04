@@ -10873,6 +10873,6 @@ export const SWORDMAN_TRUTH: JobTruth = {
  * Extracted from .atk files via sync-atk-to-truth.mjs
  * Stage 3 Phase C - T-C.3
  */
-export { default as SWORDMAN_ATTACKS } from "./swordman-attacks.json";
+export { default as SWORDMAN_ATTACKS } from "./swordman-attacks.json" with { type: "json" };
 
 export default SWORDMAN_TRUTH;
