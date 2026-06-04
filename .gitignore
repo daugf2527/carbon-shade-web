@@ -46,3 +46,6 @@ src/engine/schema/carbon-shade/
 
 # Third-party tool cache (reasonix command output cache)
 .reasonix/
+
+# Local CodeGraph index
+.codegraph/

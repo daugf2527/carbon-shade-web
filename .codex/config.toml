@@ -1,0 +1,9 @@
+[mcp_servers.playwright]
+command = "cmd"
+args = ["/c", "npx", "-y", "@playwright/mcp@latest", "--headless", "--isolated", "--browser", "chromium", "--output-dir", "C:/Users/newwo/.codex/playwright-mcp-output"]
+cwd = "D:/carbon-shade-web"
+
+[mcp_servers.serena]
+command = "cmd"
+args = ["/c", "serena", "start-mcp-server", "--context", "claude-code", "--project-from-cwd"]
+cwd = "D:/carbon-shade-web"

@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+@C:/Users/newwo/.cc-switch/agent-policy/COMMON.md
+
 ## Project identity
 
 **Carbon Shade / 碳影** — DNF-style 2.5D combat prototype. Engineering name: **Combat Lab**.
