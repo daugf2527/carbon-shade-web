@@ -12,6 +12,7 @@ import { DebugLayer } from "./layers/DebugLayer.js";
 import { getCombatSpriteSpec, _debugLastPlayerSprite, type SpriteSpec } from "./SpriteFrameLibrary.js";
 import { getRuntimeEvidenceCollector, recordKernelCombatEvidence } from "../runtime/evidence/RuntimeEvidenceCollector.js";
 import { TouchControls } from "./TouchControls.js";
+import { InputRecorder } from "../combat/replay/InputRecorder.js";
 
 interface ActorSnapshot {
   id: string;
@@ -113,6 +114,8 @@ export class CombatScene extends Phaser.Scene {
   private readonly actorViews = new Map<string, ActorView>();
   private readonly gameplayKeys = new Set(["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "KeyA", "KeyS", "KeyD", "KeyF", "KeyG", "KeyH", "KeyX", "KeyJ", "KeyZ", "KeyK", "KeyC", "KeyL", "Space", "F5", "F6", "F7", "F8", "F9"]);
   private touchControls: TouchControls | null = null;
+  private readonly inputRecorder = new InputRecorder();
+  private recIndicator: Phaser.GameObjects.Text | null = null;
 
   constructor() {
     super("combat");
@@ -136,6 +139,7 @@ export class CombatScene extends Phaser.Scene {
 
     this.cameraController.bind(this.cameras.main, () => this.kernel.player.position.x);
     this.touchControls = new TouchControls(this, this.kernel);
+    this.createRecIndicator();
 
     window.addEventListener("keydown", this.handleKeyDown);
     window.addEventListener("keyup", this.handleKeyUp);
@@ -161,6 +165,11 @@ export class CombatScene extends Phaser.Scene {
     this.lastTickCostMs = performance.now() - tickStart;
     if (this.lastTickCostMs > this._stats.peakTickCostMs) this._stats.peakTickCostMs = this.lastTickCostMs;
 
+    // Input recording/replay tick
+    if (this.inputRecorder.isReplaying()) {
+      this.inputRecorder.tickReplay(this.kernel);
+    }
+
     // F1: FPS regression tracking
     const fps = this.game.loop.actualFps ?? 0;
     this.fpsSamples.push(fps);
@@ -184,6 +193,7 @@ export class CombatScene extends Phaser.Scene {
 
     this.refresh();
     this.updateDnfDebugOverlay();
+    this.updateRecIndicator();
   }
 
   runScenario(): void {
@@ -939,13 +949,52 @@ export class CombatScene extends Phaser.Scene {
       ? Object.entries(snapshot.scenario).map(([key, value]) => `${value ? "PASS" : "FAIL"} ${key}`).join(" | ")
       : "n/a";
 
-    this.setTextIfChanged(this.debugText, [
+    const lines: string[] = [
       `Tick: ${snapshot.tick} | Events: ${snapshot.eventCount} | Actors: ${snapshot.performance.actorCount}`,
-      `Player: ${player ? `${player.action ?? "stay"} @ x=${player.pos.x.toFixed(1)} facing=${player.facing ?? "?"}` : "missing"}`,
-      `LastHit: ${snapshot.lastHit.actionName ?? "-"} ${snapshot.lastHit.finalReaction ?? ""} dmg=${snapshot.lastHit.finalDamage ?? 0}`,
-      `Scenario: ${scenario}`,
-      `TickCost: ${(snapshot.performance.tickCostMs ?? 0).toFixed(1)}ms | Pool: ${snapshot.performance.poolStatus}`,
-    ]);
+    ];
+
+    if (player) {
+      const actionName = player.action ?? "stay";
+      const localFrame = (player as any).localFrame ?? 0;
+      const actionDef = getAction(actionName);
+      const totalFrames = actionDef?.totalFrames ?? 0;
+      const frameProgress = totalFrames > 0 ? `${localFrame}/${totalFrames}` : `${localFrame}`;
+      const lockedFacing = (player as any).lockedFacing ?? player.facing;
+
+      lines.push(`Player: ${actionName} [${frameProgress}] facing=${player.facing} locked=${lockedFacing}`);
+
+      const kernelPlayer = this.kernel.actors.find(a => a.id === "player");
+      if (kernelPlayer) {
+        const vx = kernelPlayer.velocity.x.toFixed(1);
+        const vy = kernelPlayer.velocity.y.toFixed(1);
+        const vz = kernelPlayer.velocity.z.toFixed(1);
+        lines.push(`Velocity: x=${vx} y=${vy} z=${vz} | Pos: x=${player.pos.x.toFixed(1)} y=${player.pos.y.toFixed(1)} z=${player.pos.z.toFixed(1)}`);
+      }
+
+      const reactionState = player.reaction !== "none" ? player.reaction : "-";
+      const reactionFrames = kernelPlayer?.handfeel?.reactionRemaining ?? 0;
+      const reactionInfo = reactionState !== "-" ? `${reactionState} (${reactionFrames}f)` : reactionState;
+      lines.push(`Reaction: ${reactionInfo} | Locomotion: ${player.locomotion ?? "idle"}`);
+    } else {
+      lines.push(`Player: missing`);
+    }
+
+    const lastHit = snapshot.lastHit;
+    if (lastHit.tick > 0 && snapshot.tick - lastHit.tick < 120) {
+      const hpColor = (lastHit.hpAfter ?? 0) < 1000 ? "#ff4444" : "#ffffff";
+      const hitInfo = `${lastHit.actionName ?? "-"} → ${lastHit.finalReaction ?? "?"} | dmg=${lastHit.finalDamage ?? 0} HP=${lastHit.hpAfter ?? "?"}`;
+      lines.push(`LastHit: ${hitInfo}`);
+      if (lastHit.hpAfter !== undefined && lastHit.hpAfter < 1000) {
+        this.debugText.setColor(hpColor);
+      }
+    } else {
+      lines.push(`LastHit: -`);
+    }
+
+    lines.push(`Scenario: ${scenario}`);
+    lines.push(`TickCost: ${(snapshot.performance.tickCostMs ?? 0).toFixed(1)}ms | Pool: ${snapshot.performance.poolStatus}`);
+
+    this.setTextIfChanged(this.debugText, lines);
   }
 
   private syncPlayerFeedback(): void {
@@ -986,13 +1035,46 @@ export class CombatScene extends Phaser.Scene {
       this.reset();
       return;
     }
+    if (event.code === "F7") {
+      event.preventDefault();
+      this.toggleRecording();
+      return;
+    }
+    if (event.code === "F8") {
+      event.preventDefault();
+      this.replayLastRecording();
+      return;
+    }
+    if (event.code === "F9") {
+      event.preventDefault();
+      this.exportRecording();
+      return;
+    }
+
+    // 回放时禁用用户输入
+    if (this.inputRecorder.isReplaying()) return;
+
     this.kernel.inputState.keyDown(event.code, event.repeat);
     this.kernel.socd.trackPress(event.code);
+
+    // 录制输入事件
+    if (this.inputRecorder.isRecording()) {
+      this.inputRecorder.recordInput(this.kernel.tickCount, "keydown", event.code);
+    }
   };
 
   private handleKeyUp = (event: GameplayKeyEvent): void => {
     if (this.gameplayKeys.has(event.code)) event.preventDefault();
+
+    // 回放时禁用用户输入
+    if (this.inputRecorder.isReplaying()) return;
+
     this.kernel.inputState.keyUp(event.code);
+
+    // 录制输入事件
+    if (this.inputRecorder.isRecording()) {
+      this.inputRecorder.recordInput(this.kernel.tickCount, "keyup", event.code);
+    }
   };
 
   private handleBlur = (): void => {
@@ -1085,5 +1167,93 @@ export class CombatScene extends Phaser.Scene {
       btn.on("pointerup", fn);
       x += w + 6;
     }
+  }
+
+  private createRecIndicator(): void {
+    this.recIndicator = this.add.text(1820, 10, "", {
+      fontFamily: "monospace",
+      fontSize: "18px",
+      fontStyle: "bold",
+      color: "#ffffff",
+      backgroundColor: "#dc2626",
+      padding: { x: 8, y: 4 },
+    }).setScrollFactor(0).setDepth(1000).setVisible(false);
+  }
+
+  private updateRecIndicator(): void {
+    if (!this.recIndicator) return;
+
+    if (this.inputRecorder.isRecording()) {
+      this.recIndicator.setText("● REC");
+      this.recIndicator.setBackgroundColor("#dc2626");
+      this.recIndicator.setVisible(true);
+    } else if (this.inputRecorder.isReplaying()) {
+      const progress = this.inputRecorder.getReplayProgress();
+      this.recIndicator.setText(`▶ REPLAY ${(progress * 100).toFixed(0)}%`);
+      this.recIndicator.setBackgroundColor("#2563eb");
+      this.recIndicator.setVisible(true);
+    } else {
+      this.recIndicator.setVisible(false);
+    }
+  }
+
+  private toggleRecording(): void {
+    if (this.inputRecorder.isRecording()) {
+      const recording = this.inputRecorder.stopRecording(this.kernel);
+      if (recording) {
+        console.log(`[CombatScene] 录制完成: ${recording.duration} 帧, ${recording.inputs.length} 个输入事件`);
+      }
+    } else {
+      if (this.inputRecorder.isReplaying()) {
+        console.warn("[CombatScene] 回放中，无法开始录制");
+        return;
+      }
+      this.inputRecorder.startRecording(this.kernel);
+      console.log("[CombatScene] 开始录制");
+    }
+  }
+
+  private replayLastRecording(): void {
+    if (this.inputRecorder.isRecording()) {
+      console.warn("[CombatScene] 录制中，无法开始回放");
+      return;
+    }
+
+    if (this.inputRecorder.isReplaying()) {
+      this.inputRecorder.stopReplay();
+      console.log("[CombatScene] 停止回放");
+      return;
+    }
+
+    const recording = this.inputRecorder.getCurrentRecording();
+    if (!recording) {
+      console.warn("[CombatScene] 没有可回放的录制");
+      return;
+    }
+
+    const success = this.inputRecorder.startReplay(this.kernel);
+    if (success) {
+      console.log(`[CombatScene] 开始回放: ${recording.duration} 帧`);
+    }
+  }
+
+  private exportRecording(): void {
+    const json = this.inputRecorder.exportToJson();
+    if (!json) {
+      console.warn("[CombatScene] 没有可导出的录制");
+      return;
+    }
+
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `input-recording-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    console.log("[CombatScene] 录制已导出");
   }
 }
