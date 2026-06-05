@@ -25,19 +25,22 @@ export class AnimationSystem implements EngineSystem {
     for (const actor of ctx.actors) {
       if (!actor.animationPlayer.isPlaying) continue;
       const finished = actor.animationPlayer.update(ctx.tickMs);
-      if (finished && actor.fsm.state === ActorState.ATTACK) {
-        actor.fsm.update({
-          tick: ctx.tickCount,
-          hp: actor.hp,
-          maxHp: actor.stats.hpMax,
-          inputAttack: false,
-          hitReceived: false,
-          knockedDown: false,
-          launchedAirborne: false,
-          animationDone: true,
-          targetInRange: false,
-          targetInSight: false,
-        });
+      if (finished) {
+        actor.currentActionName = null;
+        if (actor.fsm.state === ActorState.ATTACK) {
+          actor.fsm.update({
+            tick: ctx.tickCount,
+            hp: actor.hp,
+            maxHp: actor.stats.hpMax,
+            inputAttack: false,
+            hitReceived: false,
+            knockedDown: false,
+            launchedAirborne: false,
+            animationDone: true,
+            targetInRange: false,
+            targetInSight: false,
+          });
+        }
       }
     }
   }

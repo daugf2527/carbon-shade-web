@@ -141,7 +141,7 @@ export class CombatScene extends Phaser.Scene {
     this.defineActions(actions);
 
     // Register domain systems in phase order (kernel sorts, insertion order is tiebreaker)
-    this.kernel.registerSystem(new InputSystem(actions));       // INPUT phase: reads intent → requests actions
+    this.kernel.registerSystem(new InputSystem(actions, "attack1"));       // INPUT phase: reads intent → requests actions
     this.kernel.registerSystem(actions);                         // INPUT phase: dispatches pending requests
     this.kernel.registerSystem(new EnemyAISystem(actions));     // AI phase: enemy decision → request
     this.kernel.registerSystem(new AnimationSystem());          // ANIMATE phase: advance frames
