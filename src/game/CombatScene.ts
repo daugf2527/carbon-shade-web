@@ -510,12 +510,14 @@ export class CombatScene extends Phaser.Scene {
       const name = p.actionName ?? "unknown";
       s.actionsUsed[name] = (s.actionsUsed[name] ?? 0) + 1;
     });
-    this.kernel.bus.on("ActorDead", event => {
+    this.kernel.bus.on("ActorDied", event => {
       const p = event.payload as { actorId?: string };
       const id = p.actorId ?? "unknown";
       s.deaths[id] = (s.deaths[id] ?? 0) + 1;
     });
-    // StatusApplied — engine doesn't emit this yet (P4), keep stub
+    // StatusApplied — engine doesn't emit this yet (P4).
+    // IMPORTANT: emit端 (combat StatusEffectSystem) payload 字段是 `type` 不是 `kind`。
+    // P4 实装读 payload 时用 `payload.type` (StatusEffectType)，不用 `payload.kind`。
     this.kernel.bus.on("StatusApplied", _event => { /* P4 */ });
   }
 

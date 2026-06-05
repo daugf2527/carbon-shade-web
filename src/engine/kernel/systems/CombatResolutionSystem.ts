@@ -139,7 +139,7 @@ export class CombatResolutionSystem implements EngineSystem {
           tick: ctx.tickCount,
         });
         if (defender.isDead) {
-          ctx.bus.emit("ActorDead", {
+          ctx.bus.emit("ActorDied", {
             targetActorId: defender.id,
             actorId: defender.id,
             tick: ctx.tickCount,
