@@ -120,3 +120,26 @@ engine 新增 tick-based MP 资源池 + 技能冷却(区别于旧 `core/SkillRes
 **确定性**：MP(`mp.toFixed(3)`)+ cooldown fingerprint 折进 `computeStateHash`(cooldown 仅非空时追加),replay 可复现。MP regen 是 tick-based 分数累加(非墙钟 ready-at 时间戳)。技能消耗走 `requestSkill` 队列(ActionSystem 式 FIFO),CombatScene 已注册 ResourceSystem;按键→requestSkill+requestAction 的输入接线属后续(scene 层)。
 
 > **测试基建附记**：`tick-benchmark` 改用 `process.cpuUsage()`(CPU 时间)替代墙钟——static-test runner 并发跑 ~100 子进程,墙钟在满核争用下抖动(实测中位 656us vs 空载 225us)。CPU 时间只计本进程实际算的周期,对调度争用免疫,是"per-tick 成本是否回归"的正确度量。
+
+## 八、03-Monster/AI：sight/attackDelay 真值化（2026-06-06）
+
+EnemyAISystem 原跑硬编码 `DEFAULT_CFG`(sightRange 200 / attackDelay 60 tick,代码内显式标注 "to be read from mob shard in P4")。本次接 goblin .mob shard 真值。守护:`tests/static/engine-monster-ai-truth.test.ts`(A1-A5)+ consistency `maturity/p4-engine-monster-ai`。
+
+**真值来源**:
+| 字段 | 来源 | 置信度 | goblin 实测 |
+|---|---|---|---|
+| sightRange | `mob.sight.value` | **PVF tier1**(无 requiresManualVerification)| 300px |
+| attackDelayTicks | `mob.attackDelay.value`(ms)→ tick | PVF tier3 | 3000ms → 180 tick |
+| attackRange | **local_baseline** | — | 80px(无干净 PVF 标量,真实打击距在 attack .ani attackBoxes 几何里;mob.widthBox=[40,10] 是体宽非打击距,诚实标注) |
+
+**实装**:`core/MonsterAIConfig.ts`(aiConfigFromMobShard 解析 + aiConfigFromGoblinTruth 镜像)+ per-actor `Actor.aiConfig` + EnemyAISystem 读 `actor.aiConfig ?? DEFAULT`(删除 static DEFAULT_CFG)+ CombatScene grunt 接 aiConfigFromGoblinTruth(create+reset 两路径)。
+
+| 测试 | 验证 | 实测 |
+|---|---|---|
+| A1 | shard 解析 sight/attackDelay + ms→tick + 缺字段安全回退 | 300 / 180 / 缺→default |
+| A2 | goblin truth = sight 300 / attackDelay 180 tick | ✓ |
+| A3 | sight 真值驱动 chase(可区分 default)| 250px 处 truth(300)追,default(200)idle |
+| A4 | attackDelay 真值驱动节奏 | truth 180→2 次攻击 vs default 60→6 次(360 tick)|
+| A5 | 同 seed+config → 同 attack-tick 序列 | 攻击于 tick 2/182/362 |
+
+**回归**:engine-two-way-fight 不变(其 grunt 无 aiConfig → 回退 DEFAULT_MONSTER_AI_CONFIG = 旧 200/80/60 硬编码值,行为等价)。**诚实边界**:attackRange 仍是 local_baseline(PVF 无标量),warlike roll(命中概率)仍 P4 defer(EnemyAISystem 注释已标),weight/hitRecovery 真值已可得但当前 AI 决策未消费(留后续)。

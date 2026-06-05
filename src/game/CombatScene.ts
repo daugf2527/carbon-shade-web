@@ -13,6 +13,7 @@ import { InputRecorder } from "../combat/replay/InputRecorder.js";
 // Engine imports (P3.1 — runtime switch from CombatKernel to EngineKernel)
 import { EngineKernel } from "../engine/kernel/EngineKernel.js";
 import { Actor, statsFromPlayerShard, statsFromGoblinTruth } from "../engine/core/Actor.js";
+import { aiConfigFromGoblinTruth } from "../engine/core/MonsterAIConfig.js";
 import { SWORDMAN_TRUTH } from "../data/manifest/truth/swordman.js";
 import type { AniDef } from "../engine/core/AnimationPlayer.js";
 import { ActionSystem } from "../engine/kernel/systems/ActionSystem.js";
@@ -180,6 +181,7 @@ export class CombatScene extends Phaser.Scene {
     // grunt = goblin PVF-truth stats: hpMax 70→46 (×65%), atk 10→8 (×75%), def 5→4 (×80%).
     // base (GOBLIN_BASE) is local_baseline; the category modifiers are real PVF truth (goblinthrower.mob).
     const grunt = new Actor("grunt", "monster", statsFromGoblinTruth());
+    grunt.aiConfig = aiConfigFromGoblinTruth(); // 03-AI: PVF sight 300px / attackDelay 3000ms→180 ticks
     grunt.x = 780;
     this.kernel.addActor(grunt, false);
 
@@ -318,6 +320,7 @@ export class CombatScene extends Phaser.Scene {
     // mirrors create()'s grunt truth (statsFromGoblinTruth) so reset() can never reintroduce the
     // old hardcoded baseline if grunt is ever missing.
     const gruntActor = new Actor("grunt", "monster", this.kernel.actors.find(a => a.id === "grunt")?.stats ?? statsFromGoblinTruth());
+    gruntActor.aiConfig = this.kernel.actors.find(a => a.id === "grunt")?.aiConfig ?? aiConfigFromGoblinTruth();
     gruntActor.x = 780;
     this.kernel.reset([{ actor: playerActor, isPlayer: true }, { actor: gruntActor }]);
     this.bindFeedbackHandlers();

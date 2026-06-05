@@ -15,6 +15,7 @@
  *   P3.0 warlike roll: defer — always attack if in range+ready.
  */
 import { ActorState } from "../../core/ActorStateMachine.js";
+import { DEFAULT_MONSTER_AI_CONFIG } from "../../core/MonsterAIConfig.js";
 import type { EngineContext } from "../EngineContext.js";
 import type { EngineSystem } from "../EngineSystem.js";
 import type { ActionSystem } from "./ActionSystem.js";
@@ -30,12 +31,8 @@ export class EnemyAISystem implements EngineSystem {
   setAttackAction(actorId: string, actionName: string): void {
     this.actionNames.set(actorId, actionName);
   }
-  // Default config (P3.0 hardcoded — to be read from mob shard via parseAIConfig in P4).
-  private static readonly DEFAULT_CFG = {
-    sightRange: 200,
-    attackRange: 80,
-    attackDelayTicks: 60, // ~1s between attacks
-  };
+  // AI tuning is now read per-actor from actor.aiConfig (03-Monster/AI truth wiring); monsters
+  // without a config fall back to DEFAULT_MONSTER_AI_CONFIG (the historical hardcode).
 
   constructor(private readonly actions: ActionSystem) {}
 
@@ -48,7 +45,7 @@ export class EnemyAISystem implements EngineSystem {
       if (state === ActorState.DEAD || state === ActorState.HIT || state === ActorState.DOWN) continue;
 
       const dist = Math.abs(actor.x - player.x);
-      const cfg = EnemyAISystem.DEFAULT_CFG;
+      const cfg = actor.aiConfig ?? DEFAULT_MONSTER_AI_CONFIG;
 
       if (dist <= cfg.attackRange) {
         actor.intent = { attack: false, dir: 0 };

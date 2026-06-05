@@ -5,6 +5,7 @@
 import { ActorState, ActorStateMachine } from "./ActorStateMachine.js";
 import type { AirborneState } from "./AirbornePhysicsSystem.js";
 import { AnimationPlayer } from "./AnimationPlayer.js";
+import type { MonsterAIConfig } from "./MonsterAIConfig.js";
 import type { ReactionState } from "./ReactionResolver.js";
 import { CooldownLedger } from "./ResourcePool.js";
 import type { ActiveStatus } from "./StatusEffects.js";
@@ -149,6 +150,9 @@ export class Actor {
   /** Per-actor skill cooldown ledger (08-Resource). Tick-based; ResourceSystem decrements it
    *  each frame and trySpendForSkill starts entries. MP itself is the `mp` field above. */
   readonly cooldowns = new CooldownLedger();
+  /** Monster AI config (03-Monster/AI). PVF-truth sight/attackDelay; read by EnemyAISystem.
+   *  Undefined for the player + monsters with no shard config (EnemyAISystem falls back). */
+  aiConfig?: MonsterAIConfig;
   /** Frame input intent (P3.0). Written by the scene/recorder/AI; read by InputSystem.
    *  Decoupled from CombatScene's BrowserInputState — engine only sees abstract intent. */
   intent: ActorIntent = { attack: false, dir: 0 };

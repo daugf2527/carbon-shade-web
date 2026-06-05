@@ -587,6 +587,28 @@ checks.push({
     : `08-Resource 退化:期望 纯逻辑+ResourceSystem(LOGIC)+MP/cd 折进 hash,实得 pure=${resourcePure} system=${resourceSysWired} mpInHash=${mpInHash}`,
 });
 
+// 25. 03-Monster/AI 真值化 — EnemyAISystem 读 mob shard sight/attackDelay(非硬编码 DEFAULT_CFG)
+const aiConfigSrc = readTextSafe(join(ROOT, "src/engine/core/MonsterAIConfig.ts")) || "";
+const enemyAiSrc = readTextSafe(join(ROOT, "src/engine/kernel/systems/EnemyAISystem.ts")) || "";
+const aiConfigParse = /export function aiConfigFromMobShard/.test(aiConfigSrc)
+  && /mob\.sight/.test(aiConfigSrc) && /mob\.attackDelay/.test(aiConfigSrc);
+// EnemyAISystem must read per-actor aiConfig (not the removed static DEFAULT_CFG hardcode).
+const aiReadsConfig = /actor\.aiConfig \?\? DEFAULT_MONSTER_AI_CONFIG/.test(enemyAiSrc)
+  && !/private static readonly DEFAULT_CFG/.test(enemyAiSrc);
+// CombatScene wires goblin truth onto the grunt.
+const sceneSrcAi = readTextSafe(join(ROOT, "src/game/CombatScene.ts")) || "";
+const aiWiredInScene = /aiConfigFromGoblinTruth\(\)/.test(sceneSrcAi);
+checks.push({
+  name: "maturity/p4-engine-monster-ai",
+  claimSite: "03-Monster/AI (22-system-field-matrix 系统C) + changelog",
+  claim: "EnemyAISystem 从硬编码 DEFAULT_CFG 改为读 mob shard sight/attackDelay 真值 + scene 接线",
+  truthSite: "src/engine/core/MonsterAIConfig.ts + kernel/systems/EnemyAISystem.ts + CombatScene.ts",
+  truth: `parse=${aiConfigParse}, readsConfig=${aiReadsConfig}, sceneWired=${aiWiredInScene}`,
+  drift: (aiConfigParse && aiReadsConfig && aiWiredInScene)
+    ? null
+    : `03-AI 退化:期望 shard 解析 + EnemyAISystem 读 aiConfig(无 DEFAULT_CFG 硬编码)+ scene 接线,实得 parse=${aiConfigParse} reads=${aiReadsConfig} scene=${aiWiredInScene}`,
+});
+
 // ── 评估 drift ──────────────────────────────────────────────────────────
 for (const c of checks) {
   if (c.drift !== undefined) {
