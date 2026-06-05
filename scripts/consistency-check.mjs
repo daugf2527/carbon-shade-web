@@ -534,8 +534,31 @@ checks.push({
     : `P3.1 退化:期望 scene→EngineKernel + 场景 API + bus 订阅 + 外围适配,实得 scene=${sceneUsesEngineKernel} api=${kernelHasSceneApi} bus=${busHasSubscribe} peripherals=${peripheralsAdapted}`,
 });
 
-// ── 评估 drift ──────────────────────────────────────────────────────────
+// 23. P3 收尾成熟度 — EngineKernel scenario/replay 从 stub 变真值实装
+const scenarioBoolsSrc = readTextSafe(join(ROOT, "src/engine/core/ScenarioBooleans.ts")) || "";
+const scenarioBoolCount = (scenarioBoolsSrc.match(/Observed:\s*boolean/g) || []).length;
+// runDeterministicScenario must return the booleans type, NOT the old `{ booleans: {} }` stub.
+const scenarioImpl = /runDeterministicScenario\(\):\s*EngineScenarioBooleans/.test(engineKernelSrc)
+  && !/return \{ booleans: \{\} \}/.test(engineKernelSrc);
+// replay.export must build a real payload, NOT the old `export: () => null` stub.
+const replayImpl = /finalStateHash:\s*this\._lastStateHash/.test(engineKernelSrc)
+  && !/export:\s*\(\)\s*=>\s*null/.test(engineKernelSrc);
+// CombatResolutionSystem must wire scenario observation on hit.
+const combatResSrc = readTextSafe(join(ROOT, "src/engine/kernel/systems/CombatResolutionSystem.ts")) || "";
+const scenarioWired = /ctx\.scenario\.normalHitObserved\s*=\s*true/.test(combatResSrc)
+  && /ctx\.scenario\.launchObserved\s*=\s*true/.test(combatResSrc);
+checks.push({
+  name: "maturity/p3-engine-scenario-replay",
+  claimSite: "transient-purring-matsumoto.md B 组 + changelog P3 收尾",
+  claim: "scenario(7 bool)/replay/runDeterministicScenario 真值实装(非空 stub)+ 命中接线",
+  truthSite: "src/engine/core/ScenarioBooleans.ts + EngineKernel.ts + CombatResolutionSystem.ts",
+  truth: `bools=${scenarioBoolCount}/7, scenarioImpl=${scenarioImpl}, replayImpl=${replayImpl}, wired=${scenarioWired}`,
+  drift: (scenarioBoolCount === 7 && scenarioImpl && replayImpl && scenarioWired)
+    ? null
+    : `P3 收尾退化:期望 7 bool + runDeterministicScenario/replay 实装 + 命中接线,实得 bools=${scenarioBoolCount}/7 scenario=${scenarioImpl} replay=${replayImpl} wired=${scenarioWired}`,
+});
 
+// ── 评估 drift ──────────────────────────────────────────────────────────
 for (const c of checks) {
   if (c.drift !== undefined) {
     c.ok = c.drift === null;

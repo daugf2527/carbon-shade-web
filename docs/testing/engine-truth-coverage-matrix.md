@@ -51,3 +51,31 @@ swordman-attacks.json (damageBonus/hitReaction/liftUp/causesDown)
 ```
 
 **damageBonus 语义判定**（关键，无第一证据，从数据反推）：combat 从未消费 damageBonus（grep 0 命中），故无同项目第一证据可镜像。shard 内存在负值（weaponcombolight1=-40）→ 排除 `value/100` 解释（会得负伤害）→ 锁定 `1 + value/100`（-40%→×0.6）。标 `requiresManualVerification`，待客户端实测核验系数叠加方式。
+
+## 五、P3 收尾：scenario/replay 确定性真值化（2026-06-06）
+
+EngineKernel 的 3 个 stub（`runDeterministicScenario` / `scenario` / `replay`）从返回空 `{}`/`null` 升级为真值实装。守护：`tests/static/engine-scenario-replay.test.ts`(S1-S6) + `consistency-check` 的 `maturity/p3-engine-scenario-replay`。
+
+**确定性承诺**（engine 对 combat 的核心增益，现可自证）：
+
+| 测试 | 验证 | 实测 |
+|---|---|---|
+| S2 | attack1 命中 → `normalHitObserved` | true |
+| S3 | attack3 `hit_lift_up` → airborne → `launchObserved` | true（vy=300×weightFactor≈164） |
+| S4 | `replay.export()` 有效 | 28 帧 / finalStateHash 非空 / metadata 镜像 |
+| S5 | 同 seed → 同 finalStateHash | 28 帧逐帧一致 |
+| S6 | 不同 seed → 不同 finalStateHash | seed 42 vs 99 发散（PRNG 折进 hash） |
+
+**scenario 7 boolean 诚实覆盖**（engine 当前只有 player+grunt+5 action，能观测 2/7）：
+
+| boolean | 状态 | 缺口原因 |
+|---|---|---|
+| `normalHitObserved` | ✅ 可观测 | attack1 命中 |
+| `launchObserved` | ✅ 可观测 | attack3 hit_lift_up → airborne |
+| `ragingFuryMultiHitObserved` | ❌ P4 | engine 无多段 super action |
+| `armorHitObserved` | ❌ P4 | engine 无 boss/super-armor actor |
+| `buildingArmorBlockedControlObserved` | ❌ P4 | engine 无 building actor |
+| `bleedObserved` | ❌ P4 | engine 无 StatusEffectSystem/DOT |
+| `quickReboundObserved` | ❌ P4 | engine 无 quick-rebound 机制 |
+
+**架构边界**：`runDeterministicScenario()` 不造世界（无 `new Actor`/无系统装配），只在已装配 kernel 上脚本化 player + 首个非 player actor，守"kernel 是纯容器"原则。browser:smoke 的 boss/building/bleed reference 场景仍需 P4 补 actor 后才能解封（见 `tests/browser/combat-smoke.spec.ts` skip 注释）。

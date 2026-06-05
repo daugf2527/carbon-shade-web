@@ -326,19 +326,27 @@ function assertMacroHealth(results: Results, actorSnapshots: any[], eventSummary
 
 // ── Main test ──
 //
-// ⚠ P3.1-BROKEN (2026-06-05): SKIPPED — 63 断言中 46 个依赖 EngineKernel 的 3 个
-//   stub: runDeterministicScenario() / scenario / replay（src/engine/kernel/EngineKernel.ts
-//   ~L269-280 全返回空 {}/null）。P3.1 切到 EngineKernel 时这些 reference-frame 场景
-//   （boss/building/imp super-armor、bleed DOT、replay hash 链）尚未接线，故 chain1-7
-//   大面积 fail。这是 P3.1 引擎切换的已知遗留债，非测量范式问题。
+// ⚠ PARTIALLY-BLOCKED (updated 2026-06-06): still SKIPPED, but the skip reason has
+//   NARROWED. P3 收尾 实装了 EngineKernel 的 scenario/replay/runDeterministicScenario
+//   (不再是返回空 {}/null 的 stub — 见 src/engine/kernel/EngineKernel.ts +
+//   tests/static/engine-scenario-replay.test.ts S1-S6)。normal_hit + launch 两类
+//   reference 场景现已可观测且确定性可复现。
 //
-//   TODO(P4): 修复路径 —
-//     1. EngineKernel.runDeterministicScenario() 实装多敌人 reference 场景
-//        (boss/building/dummy/imp + super-armor/phase 标记)
-//     2. scenario getter 暴露 normal_hit/multi_hit/launch/armor_hit/building_armor 场景标记
-//     3. replay getter 接 ReplayRecorder 导出 (build/schema/final-state/manifest hash)
-//     4. bleed/DOT status 系统接线 (chain5)
-//   修完把 test.skip 改回 test，重新校验 63 断言。
+//   仍 SKIP 的真实原因(结构性,非 stub 假空):63 断言中依赖 boss/building/imp
+//   super-armor、bleed DOT、quick-rebound 的 chain 需要 engine 尚无的 actor/系统
+//   (P4),engine 只有 player+grunt+5 swordman action,这些场景根本无法触发。
+//   且本 spec 硬编码 headless:false(playwright.config.ts),自主回路(headless)跑不了,
+//   解封会制造一个无法自验、且 boss/building 段必红的 CI gate。
+//
+//   解封前置(P4):
+//     1. engine 增 boss/building/imp actor + super-armor/phase 标记
+//     2. runDeterministicScenario() 扩 multi-hit/armor/building/bleed 子场景
+//        (当前只脚本化 attack1 normalHit + attack3 launch,见 EngineKernel)
+//     3. StatusEffectSystem(bleed DOT)接线(chain5)
+//     4. quick-rebound 机制
+//   补齐后把 test.skip 改回 test,重新校验 63 断言。
+//   scenario/replay 已实装的 2/7 boolean 覆盖 + 确定性承诺见
+//   docs/testing/engine-truth-coverage-matrix.md 第五节。
 test.skip("combat scene boots, runs deterministic scenario, and validates all combat chains", async ({ page }, testInfo) => {
   test.setTimeout(90_000); // 90s — Phaser boot can be slow in CI
   const diagnostics = attachDiagnostics(page);
