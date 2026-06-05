@@ -11,6 +11,7 @@
  */
 
 import type { Actor } from "../core/Actor.js";
+import type { EngineScenarioBooleans } from "../core/ScenarioBooleans.js";
 import type { Fnv1aPrng } from "./Fnv1aPrng.js";
 import type { IDataStore } from "./systems/DataStoreSystem.js";
 import type { IMath } from "./systems/MathSystem.js";
@@ -46,6 +47,14 @@ export interface EngineContext {
 
   /** World boundary (P3.1 — engine doesn't enforce this; provided for render/scene consumers). */
   readonly worldBounds?: { readonly xMin: number; readonly xMax: number; readonly zMin: number; readonly zMax: number };
+
+  /**
+   * Deterministic-scenario observation flags (P3 收尾). Systems flip the booleans they
+   * observe during `runDeterministicScenario()` (e.g. CombatResolutionSystem sets
+   * normalHitObserved / launchObserved on hit). Undefined on bare contexts that don't
+   * run scenarios; the kernel always provides a live object.
+   */
+  readonly scenario?: EngineScenarioBooleans;
 
   // ── P2b cross-cutting services (undefined until the matching system is registered) ──
   readonly math?: IMath;

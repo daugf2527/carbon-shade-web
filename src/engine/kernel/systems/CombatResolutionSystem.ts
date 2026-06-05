@@ -120,6 +120,14 @@ export class CombatResolutionSystem implements EngineSystem {
           flags = {};
         }
         defender.reaction = applyHitReaction(defender, flags, dmg, ctx.tickCount);
+        // Scenario observation (P3 收尾): flip the booleans this hit demonstrates. ctx.scenario
+        // is a live object on the kernel (undefined only on bare test contexts). Any landed hit
+        // proves normalHit; an airborne reaction proves launch. The other 5 flags need actors/
+        // systems the engine lacks (P4 gaps — see ScenarioBooleans.ts) and are never set here.
+        if (ctx.scenario) {
+          ctx.scenario.normalHitObserved = true;
+          if (defender.reaction?.kind === "airborne") ctx.scenario.launchObserved = true;
+        }
         ctx.bus.emit("HitConfirmed", {
           attackerId: attacker.id,
           defenderId: defender.id,

@@ -13,8 +13,10 @@
  */
 
 import type { Actor } from "../core/Actor.js";
+import { ActorState } from "../core/ActorStateMachine.js";
 import type { Tickable } from "../core/GameLoop.js";
 import type { ReactionState } from "../core/ReactionResolver.js";
+import { freshScenarioBooleans, type EngineScenarioBooleans } from "../core/ScenarioBooleans.js";
 import type { EngineContext, EngineEvent, EngineEventBus, EngineEventHandler } from "./EngineContext.js";
 import type { EngineSystem } from "./EngineSystem.js";
 import { Fnv1aPrng } from "./Fnv1aPrng.js";
@@ -28,6 +30,23 @@ import type { ITime } from "./systems/TimeSystem.js";
 import type { ITimer } from "./systems/TimerSystem.js";
 
 // ── Helpers ──
+
+/** One recorded tick of the deterministic replay (B4 — lightweight ReplayRecorder). */
+export interface EngineReplayFrame {
+  readonly tick: number;
+  readonly stateHash: string;
+  readonly eventCount: number;
+}
+
+/** Replay export payload (consumed by RuntimeEvidenceCollector.recordKernelCombatEvidence). */
+export interface EngineReplayExport {
+  readonly version: string;
+  readonly frameCount: number;
+  readonly frames: readonly EngineReplayFrame[];
+  readonly finalStateHash: string;
+  /** Mirrors combat replay metadata so RuntimeEvidenceCollector reads finalStateHash uniformly. */
+  readonly metadata: { readonly finalStateHash: string };
+}
 
 /** Map engine ReactionState.kind → combat-style reaction label for snapshot consumers. */
 function reactionKindToLabel(reaction: ReactionState | null): string {
@@ -105,6 +124,13 @@ export class EngineKernel implements EngineContext, Tickable {
   // Per-tick stateHash
   private _lastStateHash = "";
 
+  // Deterministic-scenario observation flags (B3). Systems flip the booleans they observe
+  // during runDeterministicScenario(); always a live object so ctx.scenario is never undefined.
+  private _scenario: EngineScenarioBooleans = freshScenarioBooleans();
+
+  // Lightweight replay record (B4). One frame pushed at the end of every tick().
+  private _replayFrames: EngineReplayFrame[] = [];
+
   /** World boundary (P3.1 — hardcoded, same as combat kernel default). */
   readonly worldBounds = { xMin: 96, xMax: 2730, zMin: -180, zMax: 180 };
 
@@ -124,6 +150,13 @@ export class EngineKernel implements EngineContext, Tickable {
     }
 
     this._lastStateHash = this.computeStateHash();
+
+    // B4: record this tick's deterministic fingerprint (pure-derived — no new randomness).
+    this._replayFrames.push({
+      tick: this._tickCount,
+      stateHash: this._lastStateHash,
+      eventCount: this._bus.archive.length,
+    });
   }
 
   onLargeDelta?(_deltaMs: number): void {
@@ -152,6 +185,8 @@ export class EngineKernel implements EngineContext, Tickable {
     this._player = null;
     this._tickCount = 0;
     this._bus = new SimpleEventBus();
+    this._scenario = freshScenarioBooleans();
+    this._replayFrames = [];
     // Clear cross-cutting system state (timers, script vars, clock) on scene switch.
     for (const sys of this._systems) sys.reset?.();
     for (const { actor, isPlayer } of actors) this.addActor(actor, isPlayer ?? false);
@@ -256,7 +291,7 @@ export class EngineKernel implements EngineContext, Tickable {
       actors,
       lastHit: { actionName: null, finalReaction: null, targetActorId: null, damage: 0 },
       eventCount: this._bus.archive.length,
-      scenario: undefined,
+      scenario: this._scenario,
       performance: {
         actorCount: this._actors.length,
         eventArchiveSize: this._bus.archive.length,
@@ -266,17 +301,79 @@ export class EngineKernel implements EngineContext, Tickable {
     };
   }
 
-  /** Stub for combat's runDeterministicScenario (P3.1 — engine has no reference frames yet). */
-  runDeterministicScenario(): { booleans: Record<string, boolean> } {
-    return { booleans: {} };
+  /**
+   * Run a fixed scripted attack sequence on the ALREADY-ASSEMBLED kernel and return the
+   * observed scenario booleans. Mirrors combat's CombatKernel.runDeterministicScenario()
+   * (src/combat/kernel/CombatKernel.ts:672) but stays within the engine's "kernel is a pure
+   * container" boundary: it does NOT build the world (no `new Actor`, no system wiring) — it
+   * scripts the player + first non-player actor that the scene/test already registered, using
+   * only public surface (requestAction + tick + actor field writes).
+   *
+   * Preconditions (satisfied by CombatScene.create() and the scenario test's buildScene):
+   *   - an ActionSystem is registered with "attack1" and "attack3" defined
+   *   - a player actor + ≥1 target actor are registered
+   *
+   * Honestly observable today: normalHitObserved (attack1 lands) + launchObserved
+   * (attack3 hit_lift_up → airborne). The other 5 booleans require actors/systems the engine
+   * does not have yet (documented P4 gaps in ScenarioBooleans.ts) and stay false.
+   */
+  runDeterministicScenario(): EngineScenarioBooleans {
+    const player = this._player;
+    const target = this._actors.find((a) => a.id !== player?.id) ?? null;
+    if (!player || !target) return this._scenario; // nothing to script — return all-false
+
+    // Sub-scenario 1 — normal hit: attack1 (hit_down, causesDown=false → plain HIT).
+    this.scriptAttack(player, target, "attack1", 12);
+    // Sub-scenario 2 — launch: attack3 (hit_lift_up → airborne). Needs target alive (airborne
+    // is only set when defender.hp>0), so reuse the same freshly-revived target.
+    this.scriptAttack(player, target, "attack3", 16);
+
+    return this._scenario;
   }
 
-  /** Stub getters for runtime evidence collector compatibility. */
-  get scenario(): Record<string, unknown> {
-    return {};
+  /**
+   * Revive + reposition the target in the player's strike range, fire one action, and tick
+   * until the action's animation has fully played out (maxTicks bound). Helper for
+   * runDeterministicScenario — keeps each sub-scenario isolated (target starts clean every time).
+   */
+  private scriptAttack(player: Actor, target: Actor, action: string, maxTicks: number): void {
+    // Revive the target so a prior sub-scenario's damage can't leave it dead (dead actors are
+    // skipped by CombatResolutionSystem and never launch). Full HP + clean reaction/airborne/FSM.
+    target.hp = target.stats.hpMax;
+    target.reaction = null;
+    target.airborne = null;
+    target.y = 0;
+    target.fsm.force(ActorState.IDLE, this._tickCount);
+    // Place the target just in front of the (right-facing) player so the attackBox overlaps the
+    // target's body box. Player attackBoxes span local x∈[0,boxW]; DEFAULT_BODY_BOX spans ±20.
+    player.facing = 1;
+    target.x = player.x + 30;
+    target.z = 0;
+
+    this.requestAction(player.id, action);
+    for (let i = 0; i < maxTicks; i++) this.tick();
   }
-  get replay(): { export?: () => unknown } {
-    return { export: () => null };
+
+  /** Observed scenario flags (live object; systems flip booleans during runDeterministicScenario). */
+  get scenario(): EngineScenarioBooleans {
+    return this._scenario;
+  }
+
+  /**
+   * Lightweight replay handle (B4). `export()` returns the per-tick stateHash trail recorded
+   * since construction/reset — same shape RuntimeEvidenceCollector.recordKernelCombatEvidence
+   * consumes. Determinism: same seed + same scripted input → identical finalStateHash.
+   */
+  get replay(): { export: () => EngineReplayExport } {
+    return {
+      export: (): EngineReplayExport => ({
+        version: "0.1-engine",
+        frameCount: this._replayFrames.length,
+        frames: this._replayFrames.slice(),
+        finalStateHash: this._lastStateHash,
+        metadata: { finalStateHash: this._lastStateHash },
+      }),
+    };
   }
 
   // ── Determinism ──
