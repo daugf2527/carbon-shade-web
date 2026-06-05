@@ -1,8 +1,10 @@
 import Phaser from "phaser";
-import type { CombatKernel } from "../../combat/kernel/CombatKernel.js";
-import { getAction } from "../../combat/actions/FrameDataAction.js";
-import { actorHurtRect, pushRect } from "../../combat/util/geometry.js";
-import type { Rect2D5 } from "../../combat/types.js";
+import type { EngineKernel } from "../../engine/kernel/EngineKernel.js";
+import type { Actor } from "../../engine/core/Actor.js";
+import type { AniBox } from "../../engine/core/AnimationPlayer.js";
+
+/** Default body damage box (matches CombatResolutionSystem.DEFAULT_BODY_BOX) for actors with no animation. */
+const DEFAULT_BODY_BOX: AniBox = { x1: -20, y1: 0, z1: -20, x2: 20, y2: 80, z2: 20 };
 
 export class DebugLayer {
   private readonly hitboxGraphics: Phaser.GameObjects.Graphics;
@@ -42,7 +44,8 @@ export class DebugLayer {
     return this.boxesVisible;
   }
 
-  sync(kernel: CombatKernel): void {
+  // ── P3.1: adapted to EngineKernel (engine events are flat; Actor uses x/y/z + animationPlayer) ──
+  sync(kernel: EngineKernel): void {
     const archiveSize = kernel.bus.archive.length;
     if (archiveSize < this.lastArchiveSize) {
       this.lastArchiveSize = 0;
@@ -51,8 +54,9 @@ export class DebugLayer {
 
     const now = this.scene.time.now;
     for (const event of kernel.bus.archive.slice(this.lastArchiveSize)) {
-      if (event.type === "HitConfirmed" && event.targetActorId) {
-        this.flashUntil.set(event.targetActorId, now + 80);
+      if (event.type === "HitConfirmed") {
+        const defenderId = (event.payload as { defenderId?: string }).defenderId;
+        if (defenderId) this.flashUntil.set(defenderId, now + 80);
       }
     }
     this.lastArchiveSize = archiveSize;
@@ -70,27 +74,27 @@ export class DebugLayer {
     if (!this.visible) return;
 
     for (const actor of kernel.actors) {
-      const hurt = actor.hurtBoxes[0];
-      if (hurt) {
-        const rect = actorHurtRect(actor.position, hurt);
-        const projected = this.projectRect(rect, 0x60a5fa);
-        this.strokeRect(this.hurtboxGraphics, projected, 0x3b82f6, actor.flags.dead ? 0.12 : 0.35, 1);
+      // Hurtboxes: current frame's damageBoxes, or default body box.
+      const frame = actor.animationPlayer.currentFrame;
+      const dmgBoxes = frame?.damageBoxes?.length ? frame.damageBoxes : [DEFAULT_BODY_BOX];
+      for (const box of dmgBoxes) {
+        const rect = this.projectLocalBox(actor, box);
+        this.strokeRect(this.hurtboxGraphics, rect, 0x3b82f6, actor.isDead ? 0.12 : 0.35, 1);
       }
 
-      const push = pushRect(actor.position, actor.pushBox.w, actor.pushBox.d);
-      const pushProjected = this.projectPushRect(push);
-      this.strokeRect(this.pushboxGraphics, pushProjected, 0x22c55e, actor.flags.dead ? 0.12 : 0.28, 1);
+      // Pushbox: engine has no pushBox concept — draw a simple ground footprint.
+      const pushRect = this.projectPushFootprint(actor);
+      this.strokeRect(this.pushboxGraphics, pushRect, 0x22c55e, actor.isDead ? 0.12 : 0.28, 1);
 
-      const action = actor.currentAction ? getAction(actor.currentAction.actionName) : null;
-      if (action && actor.currentAction && !actor.flags.dead) {
-        for (const hitbox of action.active) {
-          if (actor.currentAction.localFrame < hitbox.start || actor.currentAction.localFrame > hitbox.end) continue;
-          const query = kernel.hitResolver.buildQuery(kernel.tickCount, actor, hitbox);
-          const projected = this.projectRect(query.box, 0xef4444);
-          this.strokeRect(this.hitboxGraphics, projected, 0xef4444, 0.65, 2);
+      // Hitboxes: engine returns world-space attack boxes for the current frame.
+      if (!actor.isDead) {
+        for (const wb of kernel.debugHitBoxes(actor.id)) {
+          const rect = this.projectWorldBox(wb.x, wb.y, wb.w, wb.h);
+          this.strokeRect(this.hitboxGraphics, rect, 0xef4444, 0.65, 2);
         }
       }
 
+      // Hit flash
       const flashUntil = this.flashUntil.get(actor.id);
       if (flashUntil && flashUntil > now) {
         const body = this.projectActorBody(actor);
@@ -110,19 +114,41 @@ export class DebugLayer {
     this.flashUntil.clear();
   }
 
-  private projectActorBody(actor: CombatKernel["actors"][number]): { x: number; y: number; w: number; h: number } {
-    const baseY = this.groundLineY + actor.position.z - actor.position.y;
-    return { x: actor.position.x - 16, y: baseY - 48, w: 32, h: 48 };
+  // ── Projection helpers (engine: x=horizontal, y=height-up, z=depth ~0) ──
+
+  private actorZ(actor: Actor): number {
+    return (actor as Actor & { z?: number }).z ?? 0;
   }
 
-  private projectPushRect(rect: Rect2D5): { x: number; y: number; w: number; h: number } {
-    const screenY = this.groundLineY + rect.z;
-    return { x: rect.x - rect.w / 2, y: screenY - Math.max(12, rect.d) / 2, w: rect.w, h: Math.max(12, rect.d) };
+  private projectActorBody(actor: Actor): { x: number; y: number; w: number; h: number } {
+    const baseY = this.groundLineY + this.actorZ(actor) - actor.y;
+    return { x: actor.x - 16, y: baseY - 48, w: 32, h: 48 };
   }
 
-  private projectRect(rect: Rect2D5, _color: number): { x: number; y: number; w: number; h: number } {
-    const screenY = this.groundLineY + rect.z - rect.y;
-    return { x: rect.x - rect.w / 2, y: screenY - rect.h / 2, w: rect.w, h: rect.h };
+  /** Local AniBox (around actor origin) → screen rect. Facing flips horizontal extent. */
+  private projectLocalBox(actor: Actor, box: AniBox): { x: number; y: number; w: number; h: number } {
+    const sign = actor.facing === -1 ? -1 : 1;
+    const lx1 = box.x1 * sign;
+    const lx2 = box.x2 * sign;
+    const worldXMin = actor.x + Math.min(lx1, lx2);
+    const worldW = Math.abs(lx2 - lx1);
+    const yLo = Math.min(box.y1, box.y2);
+    const yHi = Math.max(box.y1, box.y2);
+    const screenTop = this.groundLineY + this.actorZ(actor) - actor.y - yHi;
+    return { x: worldXMin, y: screenTop, w: worldW, h: yHi - yLo };
+  }
+
+  /** World-space attack box {x,y,w,h} (x=left, y=bottom in world height-up) → screen rect. */
+  private projectWorldBox(x: number, y: number, w: number, h: number): { x: number; y: number; w: number; h: number } {
+    const screenTop = this.groundLineY - (y + h);
+    return { x, y: screenTop, w, h };
+  }
+
+  private projectPushFootprint(actor: Actor): { x: number; y: number; w: number; h: number } {
+    const width = actor.id === "boss" ? 68 : 36;
+    const depth = 18;
+    const screenY = this.groundLineY + this.actorZ(actor);
+    return { x: actor.x - width / 2, y: screenY - depth / 2, w: width, h: depth };
   }
 
   private strokeRect(graphics: Phaser.GameObjects.Graphics, rect: { x: number; y: number; w: number; h: number }, color: number, alpha: number, lineWidth: number): void {

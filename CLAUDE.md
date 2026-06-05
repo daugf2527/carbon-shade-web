@@ -40,6 +40,9 @@ PVF --pipe--> dnf-extract (C++) --> PvfDocument[] --> 7 parsers in dispatch + 3 
 | `npm run audit:verify` | Re-check agent audit claims against cited file:line |
 | `npm run closed-loop:status` | Closed-loop workflow state machine status |
 | `npm run browser:smoke` | Playwright browser test (CI only, needs dev server + display) |
+| `npm run browser:qa` | Playwright combat QA suite (`tests/browser/combat-qa.spec.ts`, needs dev server) |
+| `npm run legacy:test` | Legacy test placeholder (disabled, 0 cases) |
+| `npm run test:loop` | Watch-mode test loop (`scripts/test-loop.mjs`) |
 | `npm run baseline` | Stage 1 sample baseline (98 curated files, ~6s) |
 | `npm run baseline:pve` | Stage 1 PVE-full baseline (8794 character + skill files, ~10min) |
 | `npm run validate:sprites` | Validate sprite manifest integrity |

@@ -513,6 +513,27 @@ checks.push({
     : `P3.0 退化:期望 7 领域系统 + Actor 组件(含 intent) + 4 端到端测试,实得 ${domainPresent}/7 components=${actorHasComponents} tests=${loopTests}/4`,
 });
 
+// 22. P3.1 运行时切换成熟度 — EngineKernel 是 CombatScene 的运行时主线(非 CombatKernel)
+const combatSceneSrc = readTextSafe(join(ROOT, "src/game/CombatScene.ts")) || "";
+const sceneUsesEngineKernel = /new EngineKernel\(/.test(combatSceneSrc) && !/new CombatKernel\(/.test(combatSceneSrc);
+const engineKernelSrc = readTextSafe(join(ROOT, "src/engine/kernel/EngineKernel.ts")) || "";
+const kernelHasSceneApi = /requestAction\(/.test(engineKernelSrc) && /debugSnapshot\(/.test(engineKernelSrc) && /debugHitBoxes\(/.test(engineKernelSrc);
+const engineCtxSrc = readTextSafe(join(ROOT, "src/engine/kernel/EngineContext.ts")) || "";
+const busHasSubscribe = /\bon\(type:/.test(engineCtxSrc) && /readonly archive/.test(engineCtxSrc);
+// Peripherals adapted (no CombatKernel import in any of the 3 wired components)
+const peripheralsAdapted = ["src/game/TouchControls.ts", "src/combat/replay/InputRecorder.ts", "src/game/layers/DebugLayer.ts"]
+  .every((p) => !/CombatKernel/.test(readTextSafe(join(ROOT, p)) || "CombatKernel"));
+checks.push({
+  name: "maturity/p3.1-runtime-switch",
+  claimSite: "2026-06-04-engine-native-rewrite-roadmap.md P3.1 运行时切换",
+  claim: "CombatScene 跑 EngineKernel(非 CombatKernel) + kernel 暴露场景 API + bus 可订阅 + 外围 3 组件适配",
+  truthSite: "src/game/CombatScene.ts + EngineKernel scene API + EngineEventBus.on/archive + 外围组件无 CombatKernel import",
+  truth: `scene-uses-engine=${sceneUsesEngineKernel}, kernel-scene-api=${kernelHasSceneApi}, bus-subscribe=${busHasSubscribe}, peripherals-adapted=${peripheralsAdapted}`,
+  drift: (sceneUsesEngineKernel && kernelHasSceneApi && busHasSubscribe && peripheralsAdapted)
+    ? null
+    : `P3.1 退化:期望 scene→EngineKernel + 场景 API + bus 订阅 + 外围适配,实得 scene=${sceneUsesEngineKernel} api=${kernelHasSceneApi} bus=${busHasSubscribe} peripherals=${peripheralsAdapted}`,
+});
+
 // ── 评估 drift ──────────────────────────────────────────────────────────
 
 for (const c of checks) {

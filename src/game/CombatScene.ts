@@ -1,11 +1,8 @@
 // @ts-nocheck
 import Phaser from "phaser";
-import { getAction } from "../combat/actions/FrameDataAction.js";
 import type { DebugSnapshot } from "../combat/debug/DebugOverlay.js";
-import { CombatKernel } from "../combat/kernel/CombatKernel.js";
 import { FixedStepSimulation } from "../combat/kernel/FixedStepSimulation.js";
 import { CameraController } from "./CameraController.js";
-import { bindCameraFeedbackHandlers } from "./CameraFeedbackHandlers.js";
 import { AudioUnlockGate } from "./audio/AudioUnlockGate.js";
 import { DnfLayeredSprite } from "./DnfLayeredSprite.js";
 import { DebugLayer } from "./layers/DebugLayer.js";
@@ -13,6 +10,17 @@ import { getCombatSpriteSpec, _debugLastPlayerSprite, type SpriteSpec } from "./
 import { getRuntimeEvidenceCollector, recordKernelCombatEvidence } from "../runtime/evidence/RuntimeEvidenceCollector.js";
 import { TouchControls } from "./TouchControls.js";
 import { InputRecorder } from "../combat/replay/InputRecorder.js";
+// Engine imports (P3.1 — runtime switch from CombatKernel to EngineKernel)
+import { EngineKernel } from "../engine/kernel/EngineKernel.js";
+import { Actor } from "../engine/core/Actor.js";
+import type { AniDef } from "../engine/core/AnimationPlayer.js";
+import { ActionSystem } from "../engine/kernel/systems/ActionSystem.js";
+import { InputSystem } from "../engine/kernel/systems/InputSystem.js";
+import { AnimationSystem } from "../engine/kernel/systems/AnimationSystem.js";
+import { CombatResolutionSystem } from "../engine/kernel/systems/CombatResolutionSystem.js";
+import { HitstunSystem } from "../engine/kernel/systems/HitstunSystem.js";
+import { AirborneSystem } from "../engine/kernel/systems/AirborneSystem.js";
+import { EnemyAISystem } from "../engine/kernel/systems/EnemyAISystem.js";
 
 interface ActorSnapshot {
   id: string;
@@ -47,7 +55,7 @@ interface ActorView {
   state: Phaser.GameObjects.Text;
 }
 
-type CombatLabRuntime = { scene?: CombatScene; kernel?: CombatKernel; kernelReady?: boolean };
+type CombatLabRuntime = { scene?: CombatScene; kernel?: EngineKernel; kernelReady?: boolean };
 type GameplayKeyEvent = { code: string; repeat: boolean; preventDefault(): void };
 
 interface CombatStats {
@@ -85,7 +93,7 @@ function makeCombatStats(tick: number): CombatStats {
 }
 
 export class CombatScene extends Phaser.Scene {
-  kernel!: CombatKernel;
+  kernel!: EngineKernel;
   simulation!: FixedStepSimulation;
   private cameraController!: CameraController;
   private debugLayer!: DebugLayer;
@@ -122,8 +130,37 @@ export class CombatScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.kernel = new CombatKernel({ enableReplay: true });
-    this.simulation = new FixedStepSimulation(this.kernel);
+    // ── P3.1: EngineKernel replaces CombatKernel ──
+    this.kernel = new EngineKernel(42);
+
+    // Register cross-cutting systems first (some domain systems depend on them)
+    // (P2b systems: Math/DataStore/Timer/Time/Predicate — not needed for basic combat loop)
+
+    // Wire action→animation bridge
+    const actions = new ActionSystem();
+    this.defineActions(actions);
+
+    // Register domain systems in phase order (kernel sorts, insertion order is tiebreaker)
+    this.kernel.registerSystem(new InputSystem(actions));       // INPUT phase: reads intent → requests actions
+    this.kernel.registerSystem(actions);                         // INPUT phase: dispatches pending requests
+    this.kernel.registerSystem(new EnemyAISystem(actions));     // AI phase: enemy decision → request
+    this.kernel.registerSystem(new AnimationSystem());          // ANIMATE phase: advance frames
+    this.kernel.registerSystem(new CombatResolutionSystem());   // DETECTION phase: hit→damage→reaction
+    this.kernel.registerSystem(new HitstunSystem());            // RECOVERY phase: tick hitstun
+    this.kernel.registerSystem(new AirborneSystem());           // PHYSICS phase: gravity + ground
+
+    // Create actors with baseline stats (browser env — no filesystem shard loading).
+    // Stats match verification/baseline-shards values: swordman hp=180, goblin hp=70.
+    const playerActor = new Actor("player", "player", { hpMax: 180, mpMax: 100, moveSpeed: 300, physicalAttack: 45, physicalDefense: 20 });
+    playerActor.x = 390;
+    this.kernel.addActor(playerActor, true);
+
+    const grunt = new Actor("grunt", "monster", { hpMax: 70, mpMax: 0, moveSpeed: 300, physicalAttack: 10, physicalDefense: 5 });
+    grunt.x = 780;
+    this.kernel.addActor(grunt, false);
+
+    // ── FixedStepSimulation unchanged (P3.1: EngineKernel satisfies TickableKernel via structural typing) ──
+    this.simulation = new FixedStepSimulation(this.kernel as unknown as import("../combat/kernel/FixedStepSimulation.js").TickableKernel);
     this.cameraController = new CameraController(this.worldWidth, this.worldHeight);
     this.debugLayer = new DebugLayer(this, this.groundLineY);
     this.audioGate = (this.game.registry.get("audioGate") as AudioUnlockGate | undefined) ?? null;
@@ -137,7 +174,7 @@ export class CombatScene extends Phaser.Scene {
     this.createHudOverlay();
     this.createDebugOverlay();
 
-    this.cameraController.bind(this.cameras.main, () => this.kernel.player.position.x);
+    this.cameraController.bind(this.cameras.main, () => this.kernel.player.x);
     this.touchControls = new TouchControls(this, this.kernel);
     this.createRecIndicator();
 
@@ -156,6 +193,53 @@ export class CombatScene extends Phaser.Scene {
     this.recordRuntimeEvidence();
 
     this.refresh();
+  }
+
+  /** Register action→animation mappings for the engine ActionSystem (P3.1). */
+  private defineActions(actions: ActionSystem): void {
+    // ── Helper: simple attack animation with hitbox on the middle frame ──
+    const attack = (frames: number, hitFrame: number, boxW = 50, boxH = 80): AniDef => {
+      const result: AniDef["frames"] = [];
+      for (let i = 0; i < frames; i++) {
+        result.push({
+          index: i,
+          delay: 1000 / 60,
+          attackBoxes: i === hitFrame ? [{ x1: 0, y1: 0, z1: -30, x2: boxW, y2: boxH, z2: 30 }] : [],
+          damageBoxes: [],
+        });
+      }
+      return { framesCount: frames, loop: false, frames: result };
+    };
+    // ── Helper: non-attack animation (no hitboxes) ──
+    const idle = (frames = 1): AniDef => ({
+      framesCount: frames,
+      loop: frames === 1,
+      frames: Array.from({ length: frames }, (_, i) => ({
+        index: i, delay: 1000 / 60, attackBoxes: [], damageBoxes: [],
+      })),
+    });
+
+    // Basic attacks
+    actions.define("attack1", attack(4, 1));
+    actions.define("attack2", attack(5, 2, 55, 85));
+    actions.define("attack3", attack(6, 3, 60, 90));
+    actions.define("dashattack", attack(4, 2, 65, 80));
+    actions.define("jumpattack", attack(5, 2, 50, 70));
+
+    // Movement / utility
+    actions.define("stay", idle(1));
+    actions.define("move", idle(2));
+    actions.define("Backstep", idle(2));
+    actions.define("QuickRebound", idle(2));
+
+    // Frenzy skills (placeholder — same structure as basic attacks, larger hitboxes)
+    actions.define("FrenzyBasic1", attack(5, 2, 60, 85));
+    actions.define("FrenzyBasic2", attack(5, 2, 65, 90));
+    actions.define("FrenzyBasic3", attack(6, 3, 70, 95));
+    actions.define("UpwardSlash", attack(5, 2, 55, 100));
+    actions.define("MountainousWheel", attack(6, 3, 75, 90));
+    actions.define("RagingFury", attack(8, 4, 80, 100));
+    actions.define("Bloodlust", attack(6, 3, 70, 95));
   }
 
   update(_time: number, delta: number): void {
@@ -203,7 +287,12 @@ export class CombatScene extends Phaser.Scene {
   }
 
   reset(): void {
-    this.kernel.reset();
+    // P3.1: EngineKernel.reset() takes actors array to reconstruct roster
+    const playerActor = new Actor("player", "player", this.kernel.player.stats);
+    playerActor.x = 390;
+    const gruntActor = new Actor("grunt", "monster", this.kernel.actors.find(a => a.id === "grunt")?.stats ?? { hpMax: 70, mpMax: 0, moveSpeed: 300, physicalAttack: 10, physicalDefense: 5 });
+    gruntActor.x = 780;
+    this.kernel.reset([{ actor: playerActor, isPlayer: true }, { actor: gruntActor }]);
     this.bindFeedbackHandlers();
     this.simulation.resume();
     this.simulation.setSlowMotion(1);
@@ -315,45 +404,41 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private bindFeedbackHandlers(): void {
+    // ── P3.1: engine events are flat — all fields inside event.payload ──
     this.kernel.bus.on("ReactionApplied", event => {
-      if (event.targetActorId !== "player") return;
-      const payload = event.payload as { finalReaction?: string };
-      const reaction = payload.finalReaction ?? "";
+      const p = event.payload as { targetActorId?: string; finalReaction?: string };
+      if (p.targetActorId !== "player") return;
+      const reaction = p.finalReaction ?? "";
       if (reaction === "launch" || reaction === "knockback" || reaction === "heavy_stagger") {
         this.cameraController.shake(0.6, 100);
       }
     });
 
     this.kernel.bus.on("HitConfirmed", event => {
-      const decision = event.payload as { hitbox?: { id?: string; baseDamage?: number; hitType?: string }; armorDecision?: { controlBlocked?: boolean } };
-      if (decision.armorDecision?.controlBlocked) {
-        this.audioGate?.playHit("armor");
-        return;
+      const p = event.payload as { attackerId?: string; defenderId?: string; dmg?: number };
+      // Camera flash on player hit or dealing heavy damage
+      if (p.defenderId === "player") {
+        this.cameraController.flash(0xffffff, 0.12, 60);
       }
-      if (event.sourceActorId === "player" && decision.hitbox?.id === "rf_shock") this.spawnRagingFuryShockwaveVfx();
-      else if (event.sourceActorId === "player" && decision.hitbox?.id?.startsWith("rf_pillar_")) this.spawnRagingFuryPillarVfx(event.targetActorId, decision.hitbox.id);
-      if (decision.hitbox?.id?.startsWith("upslash")) {
-        this.audioGate?.playHit("uppercut");
-      } else if (decision.hitbox?.id?.startsWith("rf_")) {
-        this.audioGate?.playHit("burst");
-      } else if ((decision.hitbox?.baseDamage ?? 0) >= 30) {
-        this.audioGate?.playHit("heavy");
-      } else if (event.sourceActorId === "player" && this.kernel.player.buffs.some(buff => buff.type === "frenzy")) {
-        this.audioGate?.playHit("berserk");
-      } else {
-        this.audioGate?.playHit("light");
+      // Audio fallback: engine doesn't expose hitbox ids yet, use damage magnitude
+      const dmg = p.dmg ?? 0;
+      if (p.attackerId === "player") {
+        if (dmg >= 30) this.audioGate?.playHit("heavy");
+        else this.audioGate?.playHit("light");
       }
     });
 
-    bindCameraFeedbackHandlers(this.kernel.bus, this.cameraController);
+    // Camera feedback on heavy reactions (P3.1: handled inline, not via CameraShakeRequested)
+    // bindCameraFeedbackHandlers removed — engine doesn't emit CameraShakeRequested/CameraFlashRequested
 
     this.kernel.bus.on("DamageNumberRequested", event => {
-      if (!event.targetActorId) return;
-      const actor = this.kernel.actors.find(candidate => candidate.id === event.targetActorId);
+      const p = event.payload as { actorId?: string; amount?: number };
+      if (!p.actorId) return;
+      const actor = this.kernel.actors.find(candidate => candidate.id === p.actorId);
       if (!actor) return;
-      const baseY = this.groundLineY + actor.position.z - actor.position.y;
-      const amount = (event.payload as { amount?: number }).amount ?? 0;
-      const damageText = this.add.text(actor.position.x, baseY - 138, `-${amount}`, {
+      const baseY = this.groundLineY + ((actor as Actor & { z?: number }).z ?? 0) - actor.y;
+      const amount = p.amount ?? 0;
+      const damageText = this.add.text(actor.x, baseY - 138, `-${amount}`, {
         fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
         fontSize: "26px",
         color: "#ef4444",
@@ -372,81 +457,21 @@ export class CombatScene extends Phaser.Scene {
       });
     });
 
-    this.kernel.bus.on("GrabAttached", event => {
-      if (!event.targetActorId) return;
-      const actor = this.kernel.actors.find(candidate => candidate.id === event.targetActorId);
-      if (!actor) return;
-      this.spawnBloodlustAttachVfx(actor.position.x, this.groundLineY + actor.position.z - actor.position.y - 34);
-    });
-
-    this.kernel.bus.on("VfxRequested", event => {
-      const actorId = event.targetActorId ?? event.sourceActorId;
-      if (!actorId) return;
-      const actor = this.kernel.actors.find(candidate => candidate.id === actorId);
-      if (!actor) return;
-      const payload = event.payload as { vfx?: string };
-      const baseY = this.groundLineY + actor.position.z - actor.position.y;
-      const x = actor.position.x;
-      const y = baseY - 32;
-
-      if (payload.vfx === "armor_spark") {
-        const effect = this.add.graphics().setDepth(255).setScrollFactor(1);
-        effect.lineStyle(6, 0xfbbf24, 0.96);
-        effect.beginPath();
-        effect.moveTo(x - 27, y);
-        effect.lineTo(x + 27, y);
-        effect.moveTo(x, y - 27);
-        effect.lineTo(x, y + 27);
-        effect.moveTo(x - 19, y - 19);
-        effect.lineTo(x + 19, y + 19);
-        effect.moveTo(x - 19, y + 19);
-        effect.lineTo(x + 19, y - 19);
-        effect.strokePath();
-        this.fadeGraphics(effect, 140, 1.4);
-      } else if (payload.vfx === "bloodlust_eruption") {
-        this.spawnBloodlustEruptionVfx(x, y, false);
-      } else if (payload.vfx === "bloodlust_whiff_eruption") {
-        this.spawnBloodlustEruptionVfx(x, y, true);
-      } else {
-        const effect = this.add.graphics().setDepth(255).setScrollFactor(1);
-        effect.lineStyle(6, 0xffffff, 0.96);
-        effect.beginPath();
-        effect.moveTo(x - 27, y - 3);
-        effect.lineTo(x + 30, y - 27);
-        effect.moveTo(x - 24, y + 12);
-        effect.lineTo(x + 27, y - 9);
-        effect.lineStyle(3, 0xef4444, 0.92);
-        effect.moveTo(x - 6, y + 18);
-        effect.lineTo(x + 36, y + 3);
-        effect.strokePath();
-        this.fadeGraphics(effect, 140, 1.4);
-      }
-    });
+    // GrabAttached / VfxRequested — engine doesn't emit these yet (P4), keep stub handlers
+    this.kernel.bus.on("GrabAttached", _event => { /* P4 */ });
+    this.kernel.bus.on("VfxRequested", _event => { /* P4 */ });
   }
 
   private bindStatsListeners(): void {
     const s = this._stats;
     this.kernel.bus.on("HitConfirmed", event => {
-      const payload = event.payload as {
-        hitbox?: { baseDamage?: number; id?: string };
-        armorDecision?: { controlBlocked?: boolean; reactionOverride?: string };
-        finalDamage?: number;
-      };
-      const isArmor = payload.armorDecision?.reactionOverride === "armor_feedback_only"
-        || payload.armorDecision?.controlBlocked;
-      const dmg = payload.finalDamage ?? payload.hitbox?.baseDamage ?? 0;
-      const action = (event.payload as { actionName?: string }).actionName ?? "unknown";
-      const target = event.targetActorId ?? "unknown";
-      if (event.sourceActorId === "player") {
-        if (isArmor) {
-          s.armorBlocks++;
-        } else {
-          s.hits++;
-          s.totalDamageDealt += dmg;
-          s.damageByAction[action] = (s.damageByAction[action] ?? 0) + dmg;
-          s.hitsByAction[action] = (s.hitsByAction[action] ?? 0) + 1;
-          s.damageToTarget[target] = (s.damageToTarget[target] ?? 0) + dmg;
-        }
+      const p = event.payload as { attackerId?: string; defenderId?: string; dmg?: number };
+      const dmg = p.dmg ?? 0;
+      const target = p.defenderId ?? "unknown";
+      if (p.attackerId === "player") {
+        s.hits++;
+        s.totalDamageDealt += dmg;
+        s.damageToTarget[target] = (s.damageToTarget[target] ?? 0) + dmg;
       } else {
         s.totalDamageReceived += dmg;
       }
@@ -455,20 +480,20 @@ export class CombatScene extends Phaser.Scene {
       const reaction = (event.payload as { finalReaction?: string }).finalReaction ?? "unknown";
       s.reactionCounts[reaction] = (s.reactionCounts[reaction] ?? 0) + 1;
     });
-    this.kernel.bus.on("ActionEntered", event => {
-      if (event.targetActorId !== "player" && event.sourceActorId !== "player") return;
-      const name = (event.payload as { actionName?: string }).actionName ?? "unknown";
+    // P3.1: engine emits "ActionStarted" (not "ActionEntered")
+    this.kernel.bus.on("ActionStarted", event => {
+      const p = event.payload as { actorId?: string; actionName?: string };
+      if (p.actorId !== "player") return;
+      const name = p.actionName ?? "unknown";
       s.actionsUsed[name] = (s.actionsUsed[name] ?? 0) + 1;
     });
-    this.kernel.bus.on("ActorDead" as any, event => {
-      const id = event.targetActorId ?? (event.payload as { actorId?: string }).actorId ?? "unknown";
+    this.kernel.bus.on("ActorDead", event => {
+      const p = event.payload as { actorId?: string };
+      const id = p.actorId ?? "unknown";
       s.deaths[id] = (s.deaths[id] ?? 0) + 1;
     });
-    this.kernel.bus.on("StatusApplied" as any, event => {
-      if (event.sourceActorId !== "player") return;
-      const kind = (event.payload as { kind?: string }).kind ?? "unknown";
-      s.statusApplied[kind] = (s.statusApplied[kind] ?? 0) + 1;
-    });
+    // StatusApplied — engine doesn't emit this yet (P4), keep stub
+    this.kernel.bus.on("StatusApplied", _event => { /* P4 */ });
   }
 
   printStats(): void {
@@ -480,7 +505,7 @@ export class CombatScene extends Phaser.Scene {
       : "n/a";
     const actors = this.kernel.actors;
     const hpSnapshot = Object.fromEntries(
-      actors.map(a => [a.id, `${a.resources.hp}/${a.resources.maxHp}`])
+      actors.map(a => [a.id, `${a.hp}/${a.stats.hpMax}`])
     );
     const hitRate = s.hits + s.armorBlocks > 0
       ? ((s.hits / (s.hits + s.armorBlocks)) * 100).toFixed(0) + "%"
@@ -721,11 +746,10 @@ export class CombatScene extends Phaser.Scene {
 
       view.weapon.clear();
       if (isPlayer && actor.action && !spriteSpec) {
-        const action = getAction(actor.action as Parameters<typeof getAction>[0]);
         const isAttackAction = ["attack1", "attack2", "attack3", "dashattack", "jumpattack", "FrenzyBasic1", "FrenzyBasic2", "FrenzyBasic3", "UpwardSlash", "MountainousWheel", "RagingFury", "Bloodlust"].includes(actor.action);
         if (isAttackAction) {
           const localFrame = actor.localFrame ?? 0;
-          const active = action.active.some(box => localFrame >= box.start && localFrame <= box.end);
+          const active = localFrame >= 1 && localFrame <= 3; // P3.1: simplified active frame check (engine AniDef hitboxes on frames 1-4)
           const frenzyColor = frenzy ? 0xef4444 : 0xd1d5db;
           const attackFacing = actor.lockedFacing ?? facing;
           const facingSign = attackFacing === "left" ? -1 : 1;
@@ -956,23 +980,21 @@ export class CombatScene extends Phaser.Scene {
     if (player) {
       const actionName = player.action ?? "stay";
       const localFrame = (player as any).localFrame ?? 0;
-      const actionDef = getAction(actionName);
-      const totalFrames = actionDef?.totalFrames ?? 0;
-      const frameProgress = totalFrames > 0 ? `${localFrame}/${totalFrames}` : `${localFrame}`;
+      // P3.1: engine has no FrameDataAction registry; show frame count from animationPlayer
+      const frameProgress = `${localFrame}`;
       const lockedFacing = (player as any).lockedFacing ?? player.facing;
 
       lines.push(`Player: ${actionName} [${frameProgress}] facing=${player.facing} locked=${lockedFacing}`);
 
       const kernelPlayer = this.kernel.actors.find(a => a.id === "player");
       if (kernelPlayer) {
-        const vx = kernelPlayer.velocity.x.toFixed(1);
-        const vy = kernelPlayer.velocity.y.toFixed(1);
-        const vz = kernelPlayer.velocity.z.toFixed(1);
-        lines.push(`Velocity: x=${vx} y=${vy} z=${vz} | Pos: x=${player.pos.x.toFixed(1)} y=${player.pos.y.toFixed(1)} z=${player.pos.z.toFixed(1)}`);
+        // P3.1: engine Actor has no velocity field — show position only
+        lines.push(`Pos: x=${player.pos.x.toFixed(1)} y=${player.pos.y.toFixed(1)} z=${player.pos.z.toFixed(1)}`);
       }
 
       const reactionState = player.reaction !== "none" ? player.reaction : "-";
-      const reactionFrames = kernelPlayer?.handfeel?.reactionRemaining ?? 0;
+      // P3.1: engine Actor has reaction.remainingTicks instead of handfeel.reactionRemaining
+      const reactionFrames = (kernelPlayer as any)?.reaction?.remainingTicks ?? 0;
       const reactionInfo = reactionState !== "-" ? `${reactionState} (${reactionFrames}f)` : reactionState;
       lines.push(`Reaction: ${reactionInfo} | Locomotion: ${player.locomotion ?? "idle"}`);
     } else {
@@ -1051,13 +1073,30 @@ export class CombatScene extends Phaser.Scene {
       return;
     }
 
-    // 回放时禁用用户输入
+    // Disable user input during replay
     if (this.inputRecorder.isReplaying()) return;
 
-    this.kernel.inputState.keyDown(event.code, event.repeat);
-    this.kernel.socd.trackPress(event.code);
+    // ── P3.1: write directly to actor.intent instead of kernel.inputState ──
+    const player = this.kernel.player;
+    if (!player) return;
+    switch (event.code) {
+      case "ArrowLeft":  player.intent = { ...player.intent, dir: -1 }; break;
+      case "ArrowRight": player.intent = { ...player.intent, dir: 1 }; break;
+      case "KeyX":
+      case "KeyJ":       player.intent = { ...player.intent, attack: true }; break;
+      case "KeyC":       this.kernel.requestAction("player", "Backstep"); break;
+      case "KeyZ":       this.kernel.requestAction("player", "QuickRebound"); break;
+      case "KeyS":       this.kernel.requestAction("player", "FrenzyBasic1"); break;
+      case "KeyD":       this.kernel.requestAction("player", "FrenzyBasic2"); break;
+      case "KeyF":       this.kernel.requestAction("player", "FrenzyBasic3"); break;
+      case "KeyA":       this.kernel.requestAction("player", "UpwardSlash"); break;
+      case "KeyG":       this.kernel.requestAction("player", "MountainousWheel"); break;
+      case "KeyH":       this.kernel.requestAction("player", "RagingFury"); break;
+      case "KeyK":       this.kernel.requestAction("player", "Bloodlust"); break;
+      default: break;
+    }
 
-    // 录制输入事件
+    // Record input event for replay
     if (this.inputRecorder.isRecording()) {
       this.inputRecorder.recordInput(this.kernel.tickCount, "keydown", event.code);
     }
@@ -1066,25 +1105,41 @@ export class CombatScene extends Phaser.Scene {
   private handleKeyUp = (event: GameplayKeyEvent): void => {
     if (this.gameplayKeys.has(event.code)) event.preventDefault();
 
-    // 回放时禁用用户输入
+    // Disable user input during replay
     if (this.inputRecorder.isReplaying()) return;
 
-    this.kernel.inputState.keyUp(event.code);
+    // ── P3.1: clear intent on key release ──
+    const player = this.kernel.player;
+    if (!player) return;
+    switch (event.code) {
+      case "ArrowLeft":
+      case "ArrowRight":
+        player.intent = { ...player.intent, dir: 0 };
+        break;
+      case "KeyX":
+      case "KeyJ":
+        player.intent = { ...player.intent, attack: false };
+        break;
+      default: break;
+    }
 
-    // 录制输入事件
+    // Record input event for replay
     if (this.inputRecorder.isRecording()) {
       this.inputRecorder.recordInput(this.kernel.tickCount, "keyup", event.code);
     }
   };
 
   private handleBlur = (): void => {
-    this.kernel.inputState.clearAll();
+    // P3.1: clear player intent on blur
+    const player = this.kernel.player;
+    if (player) player.intent = { attack: false, dir: 0 };
   };
 
   private handleVisibilityChange = (): void => {
     if (document.hidden) {
       this.simulation.pause();
-      this.kernel.inputState.clearAll();
+      const player = this.kernel.player;
+      if (player) player.intent = { attack: false, dir: 0 };
       return;
     }
     this.simulation.resume();
@@ -1134,24 +1189,24 @@ export class CombatScene extends Phaser.Scene {
       `action: ${d.action || "-"}  reaction: ${d.reaction || "none"}`,
       `locomotion: ${d.locomotion || "idle"}  tick: ${d.tick}`,
       `dnf: ${d.dnfAction}  frame: ${d.frameKey}`,
-      `pos: x=${player.position.x.toFixed(0)} y=${player.position.y.toFixed(0)} z=${player.position.z.toFixed(1)}`,
+      `pos: x=${player.x.toFixed(0)} y=${player.y.toFixed(0)} z=${((player as Actor & { z?: number }).z ?? 0).toFixed(1)}`,
     ];
     this.dnfDebugText.setText(lines);
   }
 
   private createDnfTestButtons(): void {
     const actions: Array<{ label: string; fn: () => void }> = [
-      { label: "Stay", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "stay" as any, "debug"); } },
-      { label: "Walk→", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "move" as any, "debug", "right"); } },
-      { label: "Run→", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "dash" as any, "debug", "right"); } },
-      { label: "Atk1", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "attack1" as any, "debug"); } },
-      { label: "Atk2", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "attack2" as any, "debug"); } },
-      { label: "Atk3", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "attack3" as any, "debug"); } },
-      { label: "Jump", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "jump" as any, "debug"); } },
-      { label: "Backstep", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "Backstep" as any, "debug"); } },
-      { label: "UpSlash", fn: () => { this.kernel.requestAction(this.kernel.actors[0]!, "UpwardSlash" as any, "debug"); } },
-      { label: "Hit", fn: () => { const p = this.kernel.actors[0]!; p.reactionState = "light_stagger" as any; p.handfeel.reactionRemaining = 20; } },
-      { label: "Down", fn: () => { const p = this.kernel.actors[0]!; p.reactionState = "downed" as any; p.handfeel.downRemaining = 60; } },
+      { label: "Stay", fn: () => { this.kernel.requestAction("player", "stay"); } },
+      { label: "Walk→", fn: () => { const p = this.kernel.player; p.intent = { ...p.intent, dir: 1 }; } },
+      { label: "Run→", fn: () => { const p = this.kernel.player; p.intent = { ...p.intent, dir: 1 }; } },
+      { label: "Atk1", fn: () => { this.kernel.requestAction("player", "attack1"); } },
+      { label: "Atk2", fn: () => { this.kernel.requestAction("player", "attack2"); } },
+      { label: "Atk3", fn: () => { this.kernel.requestAction("player", "attack3"); } },
+      { label: "Jump", fn: () => { this.kernel.requestAction("player", "jumpattack"); } },
+      { label: "Backstep", fn: () => { this.kernel.requestAction("player", "Backstep"); } },
+      { label: "UpSlash", fn: () => { this.kernel.requestAction("player", "UpwardSlash"); } },
+      { label: "Hit", fn: () => { const p = this.kernel.player; p.reaction = { active: true, remainingTicks: 20, kind: "hit" }; } },
+      { label: "Down", fn: () => { const p = this.kernel.player; p.reaction = { active: true, remainingTicks: 60, kind: "down" }; } },
     ];
     const startX = 10;
     const y = 95;

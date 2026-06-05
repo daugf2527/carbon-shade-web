@@ -1,5 +1,4 @@
-import type { Actor } from "../types.js";
-import type { CombatKernel } from "../kernel/CombatKernel.js";
+import type { EngineKernel } from "../../engine/kernel/EngineKernel.js";
 
 /** 单个输入事件（按键按下或释放） */
 export interface InputEvent {
@@ -66,7 +65,7 @@ export class InputRecorder {
   }
 
   /** 开始录制 */
-  startRecording(kernel: CombatKernel): void {
+  startRecording(kernel: EngineKernel): void {
     if (this.recording) return;
 
     this.recording = true;
@@ -78,7 +77,7 @@ export class InputRecorder {
   }
 
   /** 停止录制 */
-  stopRecording(kernel: CombatKernel): InputRecording | null {
+  stopRecording(kernel: EngineKernel): InputRecording | null {
     if (!this.recording) return null;
 
     this.recording = false;
@@ -114,7 +113,7 @@ export class InputRecorder {
   }
 
   /** 开始回放 */
-  startReplay(kernel: CombatKernel, recording?: InputRecording): boolean {
+  startReplay(kernel: EngineKernel, recording?: InputRecording): boolean {
     const rec = recording ?? this.currentRecording;
     if (!rec) {
       console.warn("[InputRecorder] 没有可回放的录制");
@@ -146,7 +145,7 @@ export class InputRecorder {
   }
 
   /** 回放输入（在每帧调用） */
-  tickReplay(kernel: CombatKernel): void {
+  tickReplay(kernel: EngineKernel): void {
     if (!this.replaying) return;
 
     const relativeTick = kernel.tickCount - this.replayStartTick;
@@ -157,12 +156,8 @@ export class InputRecorder {
 
       if (input.tick > relativeTick) break; // 还没到时间
 
-      // 应用输入
-      if (input.type === "keydown") {
-        kernel.inputState.keyDown(input.code);
-      } else {
-        kernel.inputState.keyUp(input.code);
-      }
+      // P3.1: 应用输入到 player.intent / requestAction（取代 inputState）
+      this.applyReplayInput(kernel, input.type, input.code);
 
       this.nextInputIndex++;
     }
@@ -171,6 +166,33 @@ export class InputRecorder {
     if (this.nextInputIndex >= this.replayInputs.length) {
       console.log(`[InputRecorder] 回放完成 @ tick ${kernel.tickCount}`);
       this.stopReplay();
+    }
+  }
+
+  /** P3.1: 把录制的输入码翻译成 engine ActorIntent / requestAction。 */
+  private applyReplayInput(kernel: EngineKernel, type: "keydown" | "keyup", code: string): void {
+    const player = kernel.player;
+    if (!player) return;
+    if (type === "keydown") {
+      switch (code) {
+        case "ArrowLeft":  player.intent = { ...player.intent, dir: -1 }; break;
+        case "ArrowRight": player.intent = { ...player.intent, dir: 1 }; break;
+        case "KeyX":
+        case "KeyJ":       player.intent = { ...player.intent, attack: true }; break;
+        case "KeyC":       kernel.requestAction("player", "Backstep"); break;
+        case "KeyZ":       kernel.requestAction("player", "QuickRebound"); break;
+        case "KeyA":       kernel.requestAction("player", "UpwardSlash"); break;
+        case "KeyK":       kernel.requestAction("player", "Bloodlust"); break;
+        default: break;
+      }
+    } else {
+      switch (code) {
+        case "ArrowLeft":
+        case "ArrowRight": player.intent = { ...player.intent, dir: 0 }; break;
+        case "KeyX":
+        case "KeyJ":       player.intent = { ...player.intent, attack: false }; break;
+        default: break;
+      }
     }
   }
 
@@ -207,43 +229,51 @@ export class InputRecorder {
   }
 
   /** 捕获初始场景状态 */
-  private captureInitialState(kernel: CombatKernel): InitialSceneState {
+  private captureInitialState(kernel: EngineKernel): InitialSceneState {
     const player = kernel.player;
 
     return {
-      playerPosition: { ...player.position },
-      playerHp: player.resources.hp,
-      playerFacing: player.facing,
+      playerPosition: { x: player.x, y: player.y, z: player.z },
+      playerHp: player.hp,
+      playerFacing: player.facing === 1 ? "right" : "left",
       enemies: kernel.actors
-        .filter(a => a.faction === "enemy" && !a.flags.dead)
+        .filter(a => a.kind === "monster" && !a.isDead)
         .map(a => ({
           id: a.id,
-          type: a.type,
-          position: { ...a.position },
-          hp: a.resources.hp,
-          facing: a.facing,
+          type: a.kind,
+          position: { x: a.x, y: a.y, z: a.z },
+          hp: a.hp,
+          facing: a.facing === 1 ? "right" : "left",
         })),
     };
   }
 
   /** 恢复初始场景状态 */
-  private restoreInitialState(kernel: CombatKernel, state: InitialSceneState): void {
-    // 重置 kernel
-    kernel.reset();
-
-    // 恢复玩家状态
+  private restoreInitialState(kernel: EngineKernel, state: InitialSceneState): void {
+    // P3.1: engine reset() rebuilds the roster; here we restore existing actors' fields
+    // directly (replay starts from current scene, only positions/hp/facing reset).
     const player = kernel.player;
-    player.position = { ...state.playerPosition };
-    player.resources.hp = state.playerHp;
-    player.facing = state.playerFacing;
+    player.x = state.playerPosition.x;
+    player.y = state.playerPosition.y;
+    player.z = state.playerPosition.z;
+    player.hp = state.playerHp;
+    player.facing = state.playerFacing === "right" ? 1 : -1;
+    player.intent = { attack: false, dir: 0 };
+    player.reaction = null;
+    player.airborne = null;
 
     // 恢复敌人状态
     for (const enemyState of state.enemies) {
       const enemy = kernel.actors.find(a => a.id === enemyState.id);
       if (enemy) {
-        enemy.position = { ...enemyState.position };
-        enemy.resources.hp = enemyState.hp;
-        enemy.facing = enemyState.facing;
+        enemy.x = enemyState.position.x;
+        enemy.y = enemyState.position.y;
+        enemy.z = enemyState.position.z;
+        enemy.hp = enemyState.hp;
+        enemy.facing = enemyState.facing === "right" ? 1 : -1;
+        enemy.intent = { attack: false, dir: 0 };
+        enemy.reaction = null;
+        enemy.airborne = null;
       }
     }
   }

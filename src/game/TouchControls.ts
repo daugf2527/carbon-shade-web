@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { CombatKernel } from "../combat/kernel/CombatKernel.js";
+import type { EngineKernel } from "../engine/kernel/EngineKernel.js";
 
 const DIR_KEYS = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"] as const;
 const DIR_PAIRS = {
@@ -15,7 +15,7 @@ function isTouchDevice(): boolean {
 
 export class TouchControls {
   private scene: Phaser.Scene;
-  private kernel: CombatKernel;
+  private kernel: EngineKernel;
   private joystickBase: Phaser.GameObjects.Graphics;
   private joystickThumb: Phaser.GameObjects.Graphics;
   private joystickCenter = { x: 200, y: 870 };
@@ -33,7 +33,7 @@ export class TouchControls {
     pointerId: number | null;
   }> = [];
 
-  constructor(scene: Phaser.Scene, kernel: CombatKernel) {
+  constructor(scene: Phaser.Scene, kernel: EngineKernel) {
     this.scene = scene;
     this.kernel = kernel;
 
@@ -102,6 +102,33 @@ export class TouchControls {
     gfx.strokeCircle(x, y, radius);
   }
 
+  // ── P3.1: translate input codes to engine ActorIntent (replaces inputState/socd) ──
+  private applyCodeDown(code: string): void {
+    const player = this.kernel.player;
+    if (!player) return;
+    switch (code) {
+      case "ArrowLeft":  player.intent = { ...player.intent, dir: -1 }; break;
+      case "ArrowRight": player.intent = { ...player.intent, dir: 1 }; break;
+      case "KeyX":
+      case "KeyJ":       player.intent = { ...player.intent, attack: true }; break;
+      case "KeyK":       this.kernel.requestAction("player", "Bloodlust"); break;
+      case "KeyC":       this.kernel.requestAction("player", "Backstep"); break;
+      default: break;
+    }
+  }
+
+  private applyCodeUp(code: string): void {
+    const player = this.kernel.player;
+    if (!player) return;
+    switch (code) {
+      case "ArrowLeft":
+      case "ArrowRight": player.intent = { ...player.intent, dir: 0 }; break;
+      case "KeyX":
+      case "KeyJ":       player.intent = { ...player.intent, attack: false }; break;
+      default: break;
+    }
+  }
+
   private handlePointerDown = (pointer: Phaser.Input.Pointer): void => {
     const dx = pointer.x - this.joystickCenter.x;
     const dy = pointer.y - this.joystickCenter.y;
@@ -120,8 +147,7 @@ export class TouchControls {
       const bdy = pointer.y - btn.y;
       if (Math.sqrt(bdx * bdx + bdy * bdy) < btn.radius + 20 && btn.pointerId === null) {
         btn.pointerId = pointer.id;
-        this.kernel.inputState.keyDown(btn.code);
-        this.kernel.socd.trackPress(btn.code);
+        this.applyCodeDown(btn.code);
         return;
       }
     }
@@ -144,7 +170,7 @@ export class TouchControls {
     for (const btn of this.buttons) {
       if (pointer.id === btn.pointerId) {
         btn.pointerId = null;
-        this.kernel.inputState.keyUp(btn.code);
+        this.applyCodeUp(btn.code);
         return;
       }
     }
@@ -184,14 +210,13 @@ export class TouchControls {
     // Release directions no longer held
     for (const dir of this.heldDirs) {
       if (!newDirs.has(dir)) {
-        this.kernel.inputState.keyUp(dir);
+        this.applyCodeUp(dir);
       }
     }
     // Press new directions
     for (const dir of newDirs) {
       if (!this.heldDirs.has(dir)) {
-        this.kernel.inputState.keyDown(dir);
-        this.kernel.socd.trackPress(dir);
+        this.applyCodeDown(dir);
       }
     }
     this.heldDirs = newDirs;
@@ -199,7 +224,7 @@ export class TouchControls {
 
   private releaseAllDirs(): void {
     for (const dir of this.heldDirs) {
-      this.kernel.inputState.keyUp(dir);
+      this.applyCodeUp(dir);
     }
     this.heldDirs.clear();
   }
