@@ -563,6 +563,30 @@ checks.push({
     : `P3/09 退化:期望 7 bool + scenario/replay 实装 + 命中接线 + bleed DOT 接线,实得 bools=${scenarioBoolCount}/7 scenario=${scenarioImpl} replay=${replayImpl} hit=${scenarioWired} bleed=${bleedWired}`,
 });
 
+// 24. 08-Resource 成熟度 — tick-based MP regen + cooldown 接入 kernel(对称 09-Status)
+const resourcePoolSrc = readTextSafe(join(ROOT, "src/engine/core/ResourcePool.ts")) || "";
+const resourceSysSrc = readTextSafe(join(ROOT, "src/engine/kernel/systems/ResourceSystem.ts")) || "";
+const resourcePure = /export function regenMp/.test(resourcePoolSrc)
+  && /export function cooldownMsToTicks/.test(resourcePoolSrc)
+  && /class CooldownLedger/.test(resourcePoolSrc)
+  && /export function trySpendForSkill/.test(resourcePoolSrc);
+const resourceSysWired = /class ResourceSystem/.test(resourceSysSrc)
+  && /phase = "LOGIC"/.test(resourceSysSrc)
+  && /requestSkill\(/.test(resourceSysSrc);
+// MP must fold into the kernel stateHash (tick-based determinism, not the legacy wall-clock class).
+const engineKernelSrcR = readTextSafe(join(ROOT, "src/engine/kernel/EngineKernel.ts")) || "";
+const mpInHash = /mp=\$\{a\.mp\.toFixed/.test(engineKernelSrcR) && /a\.cooldowns\.fingerprint\(\)/.test(engineKernelSrcR);
+checks.push({
+  name: "maturity/p4-engine-resource",
+  claimSite: "08-Resource (engine-native-rewrite-roadmap.md) + changelog",
+  claim: "MP regen+cooldown tick-based 确定性化接入 kernel(纯逻辑+ResourceSystem+stateHash 折叠)",
+  truthSite: "src/engine/core/ResourcePool.ts + kernel/systems/ResourceSystem.ts + EngineKernel.computeStateHash",
+  truth: `pure=${resourcePure}, system=${resourceSysWired}, mpInHash=${mpInHash}`,
+  drift: (resourcePure && resourceSysWired && mpInHash)
+    ? null
+    : `08-Resource 退化:期望 纯逻辑+ResourceSystem(LOGIC)+MP/cd 折进 hash,实得 pure=${resourcePure} system=${resourceSysWired} mpInHash=${mpInHash}`,
+});
+
 // ── 评估 drift ──────────────────────────────────────────────────────────
 for (const c of checks) {
   if (c.drift !== undefined) {

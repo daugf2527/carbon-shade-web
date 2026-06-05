@@ -94,3 +94,29 @@ engine 新增 tick-based bleed DOT(区别于旧 `core/StatusEffectSystem.ts` 墙
 | T4 | 同 seed+序列 → 同 hp trail + finalStateHash | 逐帧一致 |
 
 **确定性**：DOT 是 tick-based(非墙钟),`statusFingerprint` 折进 `computeStateHash`(仅在 status 非空时追加,对无 status 的既有 replay 零哈希影响),replay 可复现。**死亡处理**:DOT 致死 force FSM DEAD + 清 statusEffects(death_clear 策略)+ emit ActorDied,与命中致死同事件流。
+
+## 七、08-Resource：MP regen + cooldown 确定性真值化（2026-06-06）
+
+engine 新增 tick-based MP 资源池 + 技能冷却(区别于旧 `core/SkillResource.ts` 墙钟未接线类):per-actor `Actor.mp` + `Actor.cooldowns(CooldownLedger)` + 纯逻辑 `core/ResourcePool.ts` + kernel `ResourceSystem`(phase LOGIC,早于后续阶段→技能查询见最新 MP/CD)。守护:`tests/static/engine-resource.test.ts`(R1-R5)+ consistency `maturity/p4-engine-resource`。
+
+**真值来源**(PVF tier1,实物验证):
+| 字段 | 来源 | swordman 实测 |
+|---|---|---|
+| mpMax | `chr.growth.mpMax.values[lv]` | base 140 |
+| mpRegenSpeed | `chr.growth.mpRegenSpeed.values[lv]` | base 50（单位 mp/min,22-system field-matrix）|
+| consumeMp | `skills[id].consumeMp.baseMp` | icewave 27 |
+| cooldown | `skills[id].coolTime.dungeonMs` | icewave 7000ms |
+
+唯一 engine 算术 = regen 单位换算:50 mp/min ÷ 60 ÷ 60 = 0.01389 mp/tick;cooldown ms→tick 用 ceil(7000ms→420 tick,永不提前就绪)。
+
+| 测试 | 验证 | 实测 |
+|---|---|---|
+| R1 | mp/min→mp/tick 换算 + 回复封顶 | 0.01389 mp/tick,1min→50mp,封顶 mpMax |
+| R2 | cooldown ms→tick(ceil)+ 倒计时就绪 | 7000ms→420 tick |
+| R3 | trySpend 仅在够 MP 且 CD 就绪才扣 | MP 不足/CD 中均拒绝,零副作用 |
+| R4 | kernel 集成:requestSkill 触发/哑火 + MP 回复 | SkillFired/SkillFizzled 事件,MP 随时间回升 |
+| R5 | 同 seed+序列 → 同 mp trail + finalStateHash | 逐帧一致 |
+
+**确定性**：MP(`mp.toFixed(3)`)+ cooldown fingerprint 折进 `computeStateHash`(cooldown 仅非空时追加),replay 可复现。MP regen 是 tick-based 分数累加(非墙钟 ready-at 时间戳)。技能消耗走 `requestSkill` 队列(ActionSystem 式 FIFO),CombatScene 已注册 ResourceSystem;按键→requestSkill+requestAction 的输入接线属后续(scene 层)。
+
+> **测试基建附记**：`tick-benchmark` 改用 `process.cpuUsage()`(CPU 时间)替代墙钟——static-test runner 并发跑 ~100 子进程,墙钟在满核争用下抖动(实测中位 656us vs 空载 225us)。CPU 时间只计本进程实际算的周期,对调度争用免疫,是"per-tick 成本是否回归"的正确度量。

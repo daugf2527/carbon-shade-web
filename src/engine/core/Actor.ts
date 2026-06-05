@@ -6,6 +6,7 @@ import { ActorState, ActorStateMachine } from "./ActorStateMachine.js";
 import type { AirborneState } from "./AirbornePhysicsSystem.js";
 import { AnimationPlayer } from "./AnimationPlayer.js";
 import type { ReactionState } from "./ReactionResolver.js";
+import { CooldownLedger } from "./ResourcePool.js";
 import type { ActiveStatus } from "./StatusEffects.js";
 
 export type ActorKind = "player" | "monster";
@@ -22,6 +23,9 @@ export interface ActorStats {
   readonly moveSpeed: number;
   readonly physicalAttack: number;
   readonly physicalDefense: number;
+  /** MP regenerated per MINUTE (PVF chr.growth.mpRegenSpeed; 08-Resource). Omit/0 = no regen
+   *  (monsters, test dummies). Optional so inline ActorStats constructions stay terse. */
+  readonly mpRegenSpeed?: number;
 }
 
 /** Extract level-1 base value from a growth array field. */
@@ -48,6 +52,7 @@ export function statsFromPlayerShard(chr: Record<string, unknown>): ActorStats {
     moveSpeed: scalarVal(chr.moveSpeed as never),
     physicalAttack: growthBase(growth?.physicalAttack),
     physicalDefense: growthBase(growth?.physicalDefense),
+    mpRegenSpeed: growthBase(growth?.mpRegenSpeed), // PVF mp/min (swordman base 50)
   };
 }
 
@@ -67,6 +72,7 @@ const GOBLIN_BASE: ActorStats = {
   moveSpeed: 300,
   physicalAttack: 10,
   physicalDefense: 5,
+  mpRegenSpeed: 0, // monsters don't regen MP
 };
 
 /**
@@ -106,6 +112,7 @@ export function statsFromMonsterShard(mob: Record<string, unknown>): ActorStats 
     moveSpeed: scalarVal(mob.moveSpeed as never),
     physicalAttack: applyEntry(GOBLIN_BASE.physicalAttack, cat["equipment_physical_attack"]),
     physicalDefense: applyEntry(GOBLIN_BASE.physicalDefense, cat["equipment_physical_defense"]),
+    mpRegenSpeed: 0, // monsters don't regen MP
   };
 }
 
@@ -139,6 +146,9 @@ export class Actor {
   /** Active DOT/status effects (09-Status). Per-actor work state like reaction/airborne;
    *  written by StatusSystem (apply on hit + tick DOT). Empty when no status active. */
   statusEffects: ActiveStatus[] = [];
+  /** Per-actor skill cooldown ledger (08-Resource). Tick-based; ResourceSystem decrements it
+   *  each frame and trySpendForSkill starts entries. MP itself is the `mp` field above. */
+  readonly cooldowns = new CooldownLedger();
   /** Frame input intent (P3.0). Written by the scene/recorder/AI; read by InputSystem.
    *  Decoupled from CombatScene's BrowserInputState — engine only sees abstract intent. */
   intent: ActorIntent = { attack: false, dir: 0 };

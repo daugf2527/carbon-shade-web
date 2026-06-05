@@ -23,6 +23,7 @@ import { HitstunSystem } from "../engine/kernel/systems/HitstunSystem.js";
 import { AirborneSystem } from "../engine/kernel/systems/AirborneSystem.js";
 import { EnemyAISystem } from "../engine/kernel/systems/EnemyAISystem.js";
 import { StatusSystem } from "../engine/kernel/systems/StatusSystem.js";
+import { ResourceSystem } from "../engine/kernel/systems/ResourceSystem.js";
 
 interface ActorSnapshot {
   id: string;
@@ -151,6 +152,7 @@ export class CombatScene extends Phaser.Scene {
     this.kernel.registerSystem(new HitstunSystem());            // RESOLVE phase: tick hitstun
     this.kernel.registerSystem(new AirborneSystem());           // CLEANUP phase: gravity + ground
     this.kernel.registerSystem(new StatusSystem());             // CLEANUP phase: bleed DOT (09-Status)
+    this.kernel.registerSystem(new ResourceSystem());           // LOGIC phase: MP regen + cooldown (08-Resource)
 
     // Create actors with PVF-truth-driven stats (browser env — truth comes from compiled-in
     // SWORDMAN_TRUTH const + mirrored GOBLIN_TRUTH, not filesystem shard loading).

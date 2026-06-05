@@ -111,6 +111,7 @@ export class EngineKernel implements EngineContext, Tickable {
   private _actionSystem: ActionSystem | null = null;
   private _combatResolutionSystem: CombatResolutionSystem | null = null;
   private _statusSystem: { requestBleed(actorId: string): void } | null = null;
+  private _resourceSystem: { requestSkill(actorId: string, skillId: string, mpCost: number, cooldownMs: number): void } | null = null;
   private _prng: Fnv1aPrng;
   private _bus: SimpleEventBus;
 
@@ -206,6 +207,7 @@ export class EngineKernel implements EngineContext, Tickable {
     if (system.name === "Action") this._actionSystem = system as unknown as ActionSystem;
     if (system.name === "CombatResolution") this._combatResolutionSystem = system as unknown as CombatResolutionSystem;
     if (system.name === "Status") this._statusSystem = system as unknown as { requestBleed(actorId: string): void };
+    if (system.name === "Resource") this._resourceSystem = system as unknown as { requestSkill(actorId: string, skillId: string, mpCost: number, cooldownMs: number): void };
     // Keep sorted by phase so insertion order is irrelevant.
     this._systems.sort((a, b) => phaseIndex(a.phase) - phaseIndex(b.phase));
   }
@@ -266,6 +268,12 @@ export class EngineKernel implements EngineContext, Tickable {
   /** Queue a bleed status on an actor (09-Status). Delegates to StatusSystem; no-op if unregistered. */
   requestBleed(actorId: string): void {
     this._statusSystem?.requestBleed(actorId);
+  }
+
+  /** Queue a skill spend (08-Resource): deduct MP + start cooldown if affordable + ready.
+   *  Delegates to ResourceSystem; no-op if unregistered. cost/cooldown from skill truth data. */
+  requestSkill(actorId: string, skillId: string, mpCost: number, cooldownMs: number): void {
+    this._resourceSystem?.requestSkill(actorId, skillId, mpCost, cooldownMs);
   }
 
   /** Return world-space hitboxes for an actor's current attack frame (debug visualization). */
@@ -406,10 +414,15 @@ export class EngineKernel implements EngineContext, Tickable {
   private computeStateHash(): string {
     const parts: string[] = [`t=${this._tickCount}`];
     for (const a of this._actors) {
-      // Status fingerprint appended only when active → zero hash impact for status-free actors
-      // (existing non-bleed replays hash identically), full DOT fidelity when bleed is present.
+      // Status + cooldown fingerprints appended only when active → zero hash impact for
+      // status-free / cooldown-free actors (existing replays hash identically), full fidelity
+      // when present. MP folded as a fixed-precision term (08-Resource regen is fractional).
       const st = statusFingerprint(a);
-      parts.push(`${a.id}:hp=${a.hp},st=${a.fsm.state},y=${a.y.toFixed(3)}${st ? `,status=${st}` : ""}`);
+      const cd = a.cooldowns.fingerprint();
+      parts.push(
+        `${a.id}:hp=${a.hp},mp=${a.mp.toFixed(3)},st=${a.fsm.state},y=${a.y.toFixed(3)}` +
+        `${st ? `,status=${st}` : ""}${cd ? `,cd=${cd}` : ""}`,
+      );
     }
     // Fold cross-cutting system snapshots (timers, script vars, clock) into the hash
     // so their mutable state participates in replay determinism.
