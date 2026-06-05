@@ -7,19 +7,19 @@
  * does not import combat types).
  *
  * `runDeterministicScenario()` runs a fixed scripted sequence and flips the
- * booleans it can OBSERVE; systems set them during tick (see CombatResolutionSystem).
+ * booleans it can OBSERVE; systems set them during tick (see CombatResolutionSystem + StatusSystem).
  *
- * ── HONEST COVERAGE (2026-06-05, P3 收尾) ────────────────────────────────────────
- * engine currently has only player + grunt actors and 5 swordman actions. It can
- * genuinely observe 2 of the 7 flags; the other 5 require actors/systems engine
- * does not have yet and are documented P4 gaps (kept in the type for forward-compat
- * + uniform overlay with combat, but never set true by the engine scenario):
+ * ── HONEST COVERAGE (updated 2026-06-06, 09-Status) ──────────────────────────────
+ * engine currently has player + grunt actors, 5 swordman actions, and a bleed DOT StatusSystem.
+ * It can genuinely observe 3 of the 7 flags; the other 4 require actors/systems engine does not
+ * have yet and are documented P4 gaps (kept in the type for forward-compat + uniform overlay
+ * with combat, but never set true by the engine scenario):
  *   ✅ normalHitObserved           — any hit lands (attack1 → grunt)
  *   ✅ launchObserved              — airborne reaction (attack3 liftUp → grunt)
+ *   ✅ bleedObserved               — bleed DOT deals damage (StatusSystem, 09-Status)
  *   ❌ ragingFuryMultiHitObserved  — engine has no multi-hit super action (P4)
  *   ❌ armorHitObserved            — engine has no boss/super-armor actor (P4)
  *   ❌ buildingArmorBlockedControlObserved — engine has no building actor (P4)
- *   ❌ bleedObserved               — engine has no StatusEffectSystem / DOT (P4)
  *   ❌ quickReboundObserved        — engine has no quick-rebound mechanic (P4)
  */
 

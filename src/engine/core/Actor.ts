@@ -6,6 +6,7 @@ import { ActorState, ActorStateMachine } from "./ActorStateMachine.js";
 import type { AirborneState } from "./AirbornePhysicsSystem.js";
 import { AnimationPlayer } from "./AnimationPlayer.js";
 import type { ReactionState } from "./ReactionResolver.js";
+import type { ActiveStatus } from "./StatusEffects.js";
 
 export type ActorKind = "player" | "monster";
 
@@ -135,6 +136,9 @@ export class Actor {
   reaction: ReactionState | null = null;
   /** Active airborne (launch) physics state; null when grounded. P3.0 per-actor work state. */
   airborne: AirborneState | null = null;
+  /** Active DOT/status effects (09-Status). Per-actor work state like reaction/airborne;
+   *  written by StatusSystem (apply on hit + tick DOT). Empty when no status active. */
+  statusEffects: ActiveStatus[] = [];
   /** Frame input intent (P3.0). Written by the scene/recorder/AI; read by InputSystem.
    *  Decoupled from CombatScene's BrowserInputState — engine only sees abstract intent. */
   intent: ActorIntent = { attack: false, dir: 0 };

@@ -547,15 +547,20 @@ const replayImpl = /finalStateHash:\s*this\._lastStateHash/.test(engineKernelSrc
 const combatResSrc = readTextSafe(join(ROOT, "src/engine/kernel/systems/CombatResolutionSystem.ts")) || "";
 const scenarioWired = /ctx\.scenario\.normalHitObserved\s*=\s*true/.test(combatResSrc)
   && /ctx\.scenario\.launchObserved\s*=\s*true/.test(combatResSrc);
+// 09-Status: StatusSystem must exist (tick-based, kernel-integrated) and wire bleedObserved.
+const statusSysSrc = readTextSafe(join(ROOT, "src/engine/kernel/systems/StatusSystem.ts")) || "";
+const bleedWired = /ctx\.scenario\.bleedObserved\s*=\s*true/.test(statusSysSrc)
+  && /class StatusSystem/.test(statusSysSrc)
+  && /phase = "CLEANUP"/.test(statusSysSrc);
 checks.push({
   name: "maturity/p3-engine-scenario-replay",
-  claimSite: "transient-purring-matsumoto.md B 组 + changelog P3 收尾",
-  claim: "scenario(7 bool)/replay/runDeterministicScenario 真值实装(非空 stub)+ 命中接线",
-  truthSite: "src/engine/core/ScenarioBooleans.ts + EngineKernel.ts + CombatResolutionSystem.ts",
-  truth: `bools=${scenarioBoolCount}/7, scenarioImpl=${scenarioImpl}, replayImpl=${replayImpl}, wired=${scenarioWired}`,
-  drift: (scenarioBoolCount === 7 && scenarioImpl && replayImpl && scenarioWired)
+  claimSite: "transient-purring-matsumoto.md B 组 + 09-Status + changelog",
+  claim: "scenario(7 bool)/replay/runDeterministicScenario 真值实装 + 命中接线 + bleed DOT 接线",
+  truthSite: "src/engine/core/ScenarioBooleans.ts + EngineKernel.ts + CombatResolutionSystem.ts + StatusSystem.ts",
+  truth: `bools=${scenarioBoolCount}/7, scenarioImpl=${scenarioImpl}, replayImpl=${replayImpl}, hitWired=${scenarioWired}, bleedWired=${bleedWired}`,
+  drift: (scenarioBoolCount === 7 && scenarioImpl && replayImpl && scenarioWired && bleedWired)
     ? null
-    : `P3 收尾退化:期望 7 bool + runDeterministicScenario/replay 实装 + 命中接线,实得 bools=${scenarioBoolCount}/7 scenario=${scenarioImpl} replay=${replayImpl} wired=${scenarioWired}`,
+    : `P3/09 退化:期望 7 bool + scenario/replay 实装 + 命中接线 + bleed DOT 接线,实得 bools=${scenarioBoolCount}/7 scenario=${scenarioImpl} replay=${replayImpl} hit=${scenarioWired} bleed=${bleedWired}`,
 });
 
 // ── 评估 drift ──────────────────────────────────────────────────────────

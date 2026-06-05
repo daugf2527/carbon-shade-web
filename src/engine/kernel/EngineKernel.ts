@@ -17,6 +17,7 @@ import { ActorState } from "../core/ActorStateMachine.js";
 import type { Tickable } from "../core/GameLoop.js";
 import type { ReactionState } from "../core/ReactionResolver.js";
 import { freshScenarioBooleans, type EngineScenarioBooleans } from "../core/ScenarioBooleans.js";
+import { statusFingerprint } from "../core/StatusEffects.js";
 import type { EngineContext, EngineEvent, EngineEventBus, EngineEventHandler } from "./EngineContext.js";
 import type { EngineSystem } from "./EngineSystem.js";
 import { Fnv1aPrng } from "./Fnv1aPrng.js";
@@ -109,6 +110,7 @@ export class EngineKernel implements EngineContext, Tickable {
   private _systems: EngineSystem[] = [];
   private _actionSystem: ActionSystem | null = null;
   private _combatResolutionSystem: CombatResolutionSystem | null = null;
+  private _statusSystem: { requestBleed(actorId: string): void } | null = null;
   private _prng: Fnv1aPrng;
   private _bus: SimpleEventBus;
 
@@ -203,6 +205,7 @@ export class EngineKernel implements EngineContext, Tickable {
     // Capture domain systems for public API delegation (P3.1).
     if (system.name === "Action") this._actionSystem = system as unknown as ActionSystem;
     if (system.name === "CombatResolution") this._combatResolutionSystem = system as unknown as CombatResolutionSystem;
+    if (system.name === "Status") this._statusSystem = system as unknown as { requestBleed(actorId: string): void };
     // Keep sorted by phase so insertion order is irrelevant.
     this._systems.sort((a, b) => phaseIndex(a.phase) - phaseIndex(b.phase));
   }
@@ -260,6 +263,11 @@ export class EngineKernel implements EngineContext, Tickable {
     this._actionSystem?.request(actorId, actionName);
   }
 
+  /** Queue a bleed status on an actor (09-Status). Delegates to StatusSystem; no-op if unregistered. */
+  requestBleed(actorId: string): void {
+    this._statusSystem?.requestBleed(actorId);
+  }
+
   /** Return world-space hitboxes for an actor's current attack frame (debug visualization). */
   debugHitBoxes(actorId: string): Array<{ x: number; y: number; w: number; h: number; color: number }> {
     return this._combatResolutionSystem?.debugHitBoxes(this, actorId) ?? [];
@@ -314,8 +322,9 @@ export class EngineKernel implements EngineContext, Tickable {
    *   - a player actor + ≥1 target actor are registered
    *
    * Honestly observable today: normalHitObserved (attack1 lands) + launchObserved
-   * (attack3 hit_lift_up → airborne). The other 5 booleans require actors/systems the engine
-   * does not have yet (documented P4 gaps in ScenarioBooleans.ts) and stay false.
+   * (attack3 hit_lift_up → airborne) + bleedObserved (when a StatusSystem is registered).
+   * The other 4 booleans require actors/systems the engine does not have yet (documented P4
+   * gaps in ScenarioBooleans.ts) and stay false.
    */
   runDeterministicScenario(): EngineScenarioBooleans {
     const player = this._player;
@@ -327,6 +336,18 @@ export class EngineKernel implements EngineContext, Tickable {
     // Sub-scenario 2 — launch: attack3 (hit_lift_up → airborne). Needs target alive (airborne
     // is only set when defender.hp>0), so reuse the same freshly-revived target.
     this.scriptAttack(player, target, "attack3", 16);
+    // Sub-scenario 3 — bleed DOT: only when a StatusSystem is registered (else honestly skipped,
+    // bleedObserved stays false). Revive the target, queue bleed, tick past one DOT interval.
+    if (this._statusSystem) {
+      target.hp = target.stats.hpMax;
+      target.reaction = null;
+      target.airborne = null;
+      target.statusEffects.length = 0;
+      target.fsm.force(ActorState.IDLE, this._tickCount);
+      this._statusSystem.requestBleed(target.id);
+      // tickIntervalTicks=30 → tick past one interval (+queue-apply frame) so DOT fires once.
+      for (let i = 0; i < 34; i++) this.tick();
+    }
 
     return this._scenario;
   }
@@ -385,7 +406,10 @@ export class EngineKernel implements EngineContext, Tickable {
   private computeStateHash(): string {
     const parts: string[] = [`t=${this._tickCount}`];
     for (const a of this._actors) {
-      parts.push(`${a.id}:hp=${a.hp},st=${a.fsm.state},y=${a.y.toFixed(3)}`);
+      // Status fingerprint appended only when active → zero hash impact for status-free actors
+      // (existing non-bleed replays hash identically), full DOT fidelity when bleed is present.
+      const st = statusFingerprint(a);
+      parts.push(`${a.id}:hp=${a.hp},st=${a.fsm.state},y=${a.y.toFixed(3)}${st ? `,status=${st}` : ""}`);
     }
     // Fold cross-cutting system snapshots (timers, script vars, clock) into the hash
     // so their mutable state participates in replay determinism.

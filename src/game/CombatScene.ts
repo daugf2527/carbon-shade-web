@@ -22,6 +22,7 @@ import { CombatResolutionSystem } from "../engine/kernel/systems/CombatResolutio
 import { HitstunSystem } from "../engine/kernel/systems/HitstunSystem.js";
 import { AirborneSystem } from "../engine/kernel/systems/AirborneSystem.js";
 import { EnemyAISystem } from "../engine/kernel/systems/EnemyAISystem.js";
+import { StatusSystem } from "../engine/kernel/systems/StatusSystem.js";
 
 interface ActorSnapshot {
   id: string;
@@ -147,8 +148,9 @@ export class CombatScene extends Phaser.Scene {
     this.kernel.registerSystem(new EnemyAISystem(actions));     // AI phase: enemy decision → request
     this.kernel.registerSystem(new AnimationSystem());          // ANIMATE phase: advance frames
     this.kernel.registerSystem(new CombatResolutionSystem());   // DETECTION phase: hit→damage→reaction
-    this.kernel.registerSystem(new HitstunSystem());            // RECOVERY phase: tick hitstun
-    this.kernel.registerSystem(new AirborneSystem());           // PHYSICS phase: gravity + ground
+    this.kernel.registerSystem(new HitstunSystem());            // RESOLVE phase: tick hitstun
+    this.kernel.registerSystem(new AirborneSystem());           // CLEANUP phase: gravity + ground
+    this.kernel.registerSystem(new StatusSystem());             // CLEANUP phase: bleed DOT (09-Status)
 
     // Create actors with PVF-truth-driven stats (browser env — truth comes from compiled-in
     // SWORDMAN_TRUTH const + mirrored GOBLIN_TRUTH, not filesystem shard loading).

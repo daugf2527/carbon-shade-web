@@ -24,6 +24,7 @@ import { AnimationSystem } from "../../src/engine/kernel/systems/AnimationSystem
 import { CombatResolutionSystem } from "../../src/engine/kernel/systems/CombatResolutionSystem.js";
 import { HitstunSystem } from "../../src/engine/kernel/systems/HitstunSystem.js";
 import { AirborneSystem } from "../../src/engine/kernel/systems/AirborneSystem.js";
+import { StatusSystem } from "../../src/engine/kernel/systems/StatusSystem.js";
 
 const ROOT = process.cwd();
 const swShard = JSON.parse(readFileSync(join(ROOT, "verification/baseline-shards/players/swordman.json"), "utf-8"));
@@ -61,6 +62,7 @@ function buildScenarioKernel(seed: number): EngineKernel {
   kernel.registerSystem(new CombatResolutionSystem());
   kernel.registerSystem(new HitstunSystem());
   kernel.registerSystem(new AirborneSystem());
+  kernel.registerSystem(new StatusSystem());        // 09-Status: enables the bleed sub-scenario
   return kernel;
 }
 
@@ -71,10 +73,11 @@ function buildScenarioKernel(seed: number): EngineKernel {
   assert.ok(scenario && typeof scenario === "object", "S1: returns a ScenarioBooleans object");
   assert.equal(scenario.normalHitObserved, true, "S2: attack1 landed a normal hit");
   assert.equal(scenario.launchObserved, true, "S3: attack3 hit_lift_up launched the target airborne");
-  // The 5 unimplemented flags stay honestly false (engine has no boss/building/bleed/rebound/multi-hit).
+  assert.equal(scenario.bleedObserved, true, "S3b: bleed DOT observed (09-Status StatusSystem)");
+  // The 4 unimplemented flags stay honestly false (engine has no boss/building/rebound/multi-hit).
   assert.equal(scenario.armorHitObserved, false, "S1b: armorHit not observable (P4 gap)");
-  assert.equal(scenario.bleedObserved, false, "S1b: bleed not observable (P4 gap)");
-  console.log("S1-S3 OK: scenario observed normalHit + launch (5 P4-gap flags stay false)");
+  assert.equal(scenario.quickReboundObserved, false, "S1b: quickRebound not observable (P4 gap)");
+  console.log("S1-S3 OK: scenario observed normalHit + launch + bleed (4 P4-gap flags stay false)");
 }
 
 // ── S4: replay export is valid ──
