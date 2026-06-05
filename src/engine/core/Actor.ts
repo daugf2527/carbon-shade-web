@@ -88,6 +88,7 @@ export class Actor {
   mp: number;
   x = 0;
   y = 0;
+  z = 0; // 2.5D depth coordinate (0 = neutral plane)
   facing = 1; // 1 = right, -1 = left
 
   /** Active hit-reaction (hitstun) state; null when not in hitstun. P3.0 per-actor work state (like fsm). */
@@ -97,6 +98,10 @@ export class Actor {
   /** Frame input intent (P3.0). Written by the scene/recorder/AI; read by InputSystem.
    *  Decoupled from CombatScene's BrowserInputState — engine only sees abstract intent. */
   intent: ActorIntent = { attack: false, dir: 0 };
+  /** Current action name set by ActionSystem on play. Read by render layer for sprite selection. */
+  currentActionName: string | null = null;
+  /** Active buff list (P3.1 placeholder — engine has no buff system yet). */
+  buffs: Array<{ type: string; stacks: number; expiresAtTick: number }> = [];
 
   constructor(id: string, kind: ActorKind, stats: ActorStats) {
     this.id = id;

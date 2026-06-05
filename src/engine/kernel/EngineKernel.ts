@@ -14,23 +14,63 @@
 
 import type { Actor } from "../core/Actor.js";
 import type { Tickable } from "../core/GameLoop.js";
-import type { EngineContext, EngineEventBus } from "./EngineContext.js";
+import type { ReactionState } from "../core/ReactionResolver.js";
+import type { EngineContext, EngineEvent, EngineEventBus, EngineEventHandler } from "./EngineContext.js";
 import type { EngineSystem } from "./EngineSystem.js";
 import { Fnv1aPrng } from "./Fnv1aPrng.js";
 import { phaseIndex, type SystemPhase } from "./SystemPhase.js";
+import type { ActionSystem } from "./systems/ActionSystem.js";
+import type { CombatResolutionSystem } from "./systems/CombatResolutionSystem.js";
 import type { IDataStore } from "./systems/DataStoreSystem.js";
 import type { IMath } from "./systems/MathSystem.js";
 import type { IPredicate } from "./systems/PredicateSystem.js";
 import type { ITime } from "./systems/TimeSystem.js";
 import type { ITimer } from "./systems/TimerSystem.js";
 
-// ── Simple event bus (skeleton — full implementation in P2) ──
+// ── Helpers ──
+
+/** Map engine ReactionState.kind → combat-style reaction label for snapshot consumers. */
+function reactionKindToLabel(reaction: ReactionState | null): string {
+  if (!reaction) return "none";
+  switch (reaction.kind) {
+    case "hit": return "light_stagger";
+    case "down": return "downed";
+    case "airborne": return "launch";
+    default: return "none";
+  }
+}
+
+// ── Simple event bus (with subscriber support for render/debug consumers) ──
 
 class SimpleEventBus implements EngineEventBus {
-  readonly archive: Array<{ type: string; tick: number; payload: unknown }> = [];
+  private _archive: EngineEvent[] = [];
+  private _handlers = new Map<string, Set<EngineEventHandler>>();
+
+  get archive(): readonly EngineEvent[] {
+    return this._archive;
+  }
 
   emit(type: string, payload: unknown): void {
-    this.archive.push({ type, tick: this._tick, payload });
+    const event: EngineEvent = { type, tick: this._tick, payload };
+    this._archive.push(event);
+    // Notify matching subscribers synchronously.
+    const handlers = this._handlers.get(type);
+    if (handlers) {
+      for (const h of handlers) h(event);
+    }
+  }
+
+  on(type: string, handler: EngineEventHandler): void {
+    let set = this._handlers.get(type);
+    if (!set) {
+      set = new Set();
+      this._handlers.set(type, set);
+    }
+    set.add(handler);
+  }
+
+  off(type: string, handler: EngineEventHandler): void {
+    this._handlers.get(type)?.delete(handler);
   }
 
   private _tick = 0;
@@ -48,6 +88,8 @@ export class EngineKernel implements EngineContext, Tickable {
   private _actors: Actor[] = [];
   private _player: Actor | null = null;
   private _systems: EngineSystem[] = [];
+  private _actionSystem: ActionSystem | null = null;
+  private _combatResolutionSystem: CombatResolutionSystem | null = null;
   private _prng: Fnv1aPrng;
   private _bus: SimpleEventBus;
 
@@ -62,6 +104,9 @@ export class EngineKernel implements EngineContext, Tickable {
 
   // Per-tick stateHash
   private _lastStateHash = "";
+
+  /** World boundary (P3.1 — hardcoded, same as combat kernel default). */
+  readonly worldBounds = { xMin: 96, xMax: 2730, zMin: -180, zMax: 180 };
 
   constructor(seed: number = 0) {
     this._prng = new Fnv1aPrng(seed);
@@ -120,6 +165,9 @@ export class EngineKernel implements EngineContext, Tickable {
     if (system.provides) {
       (this._services as Record<string, unknown>)[system.provides] = system;
     }
+    // Capture domain systems for public API delegation (P3.1).
+    if (system.name === "Action") this._actionSystem = system as unknown as ActionSystem;
+    if (system.name === "CombatResolution") this._combatResolutionSystem = system as unknown as CombatResolutionSystem;
     // Keep sorted by phase so insertion order is irrelevant.
     this._systems.sort((a, b) => phaseIndex(a.phase) - phaseIndex(b.phase));
   }
@@ -168,6 +216,67 @@ export class EngineKernel implements EngineContext, Tickable {
   // Exposed for tests / debug snapshot consumers.
   get lastStateHash(): string {
     return this._lastStateHash;
+  }
+
+  // ── Public API (P3.1 — runtime consumers) ──
+
+  /** Request an actor perform an action. Delegates to ActionSystem. */
+  requestAction(actorId: string, actionName: string): void {
+    this._actionSystem?.request(actorId, actionName);
+  }
+
+  /** Return world-space hitboxes for an actor's current attack frame (debug visualization). */
+  debugHitBoxes(actorId: string): Array<{ x: number; y: number; w: number; h: number; color: number }> {
+    return this._combatResolutionSystem?.debugHitBoxes(this, actorId) ?? [];
+  }
+
+  /** Produce a render-oriented snapshot of the current tick (equivalent to combat's debugSnapshot). */
+  debugSnapshot(tickCostMs?: number): Record<string, unknown> {
+    const actors = this._actors.map((a) => ({
+      id: a.id,
+      hp: a.hp,
+      maxHp: a.stats.hpMax,
+      pos: { x: a.x, y: a.y, z: (a as Actor & { z?: number }).z ?? 0 },
+      reaction: reactionKindToLabel(a.reaction),
+      action: a.currentActionName,
+      dead: a.isDead,
+      facing: a.facing === 1 ? "right" : "left",
+      lockedFacing: undefined as string | undefined,
+      locomotion: undefined as string | undefined,
+      hitFlashRemaining: 0,
+      visualRecoilRemaining: 0,
+      visualRecoilX: 0,
+      visualRecoilZ: 0,
+      buffs: a.buffs,
+      localFrame: a.animationPlayer.currentFrame?.index ?? 0,
+      status: [] as unknown[],
+    }));
+    return {
+      tick: this._tickCount,
+      actors,
+      lastHit: { actionName: null, finalReaction: null, targetActorId: null, damage: 0 },
+      eventCount: this._bus.archive.length,
+      scenario: undefined,
+      performance: {
+        actorCount: this._actors.length,
+        eventArchiveSize: this._bus.archive.length,
+        poolStatus: "ok",
+        tickCostMs,
+      },
+    };
+  }
+
+  /** Stub for combat's runDeterministicScenario (P3.1 — engine has no reference frames yet). */
+  runDeterministicScenario(): { booleans: Record<string, boolean> } {
+    return { booleans: {} };
+  }
+
+  /** Stub getters for runtime evidence collector compatibility. */
+  get scenario(): Record<string, unknown> {
+    return {};
+  }
+  get replay(): { export?: () => unknown } {
+    return { export: () => null };
   }
 
   // ── Determinism ──

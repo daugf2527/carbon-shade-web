@@ -1,10 +1,21 @@
 import { assert } from "./test-utils.js";
 import { InputRecorder } from "../../src/combat/replay/InputRecorder.js";
-import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+import { EngineKernel } from "../../src/engine/kernel/EngineKernel.js";
+import { Actor } from "../../src/engine/core/Actor.js";
+
+// P3.1: InputRecorder now drives EngineKernel (was CombatKernel before runtime switch).
+function buildKernel(): EngineKernel {
+  const kernel = new EngineKernel(0);
+  const player = new Actor("player", "player", { hpMax: 180, mpMax: 100, moveSpeed: 300, physicalAttack: 45, physicalDefense: 20 });
+  kernel.addActor(player, true);
+  const grunt = new Actor("grunt", "monster", { hpMax: 70, mpMax: 0, moveSpeed: 300, physicalAttack: 10, physicalDefense: 5 });
+  kernel.addActor(grunt, false);
+  return kernel;
+}
 
 export function testInputRecorderBasics(): void {
   const recorder = new InputRecorder();
-  const kernel = new CombatKernel({ enableReplay: false });
+  const kernel = buildKernel();
 
   // 初始状态
   assert(!recorder.isRecording(), "初始状态不应该在录制");
@@ -31,7 +42,7 @@ export function testInputRecorderBasics(): void {
 
 export function testInputRecorderReplay(): void {
   const recorder = new InputRecorder();
-  const kernel = new CombatKernel({ enableReplay: false });
+  const kernel = buildKernel();
 
   // 录制
   recorder.startRecording(kernel);
@@ -53,7 +64,7 @@ export function testInputRecorderReplay(): void {
 
 export function testInputRecorderExportImport(): void {
   const recorder = new InputRecorder();
-  const kernel = new CombatKernel({ enableReplay: false });
+  const kernel = buildKernel();
 
   // 录制
   recorder.startRecording(kernel);
@@ -76,12 +87,12 @@ export function testInputRecorderExportImport(): void {
 
 export function testInputRecorderInitialState(): void {
   const recorder = new InputRecorder();
-  const kernel = new CombatKernel({ enableReplay: false });
+  const kernel = buildKernel();
 
-  // 修改玩家状态
-  kernel.player.position.x = 500;
-  kernel.player.position.z = 20;
-  kernel.player.resources.hp = 800;
+  // 修改玩家状态 (P3.1: engine Actor uses flat x/y/z + hp)
+  kernel.player.x = 500;
+  kernel.player.z = 20;
+  kernel.player.hp = 800;
 
   // 录制
   recorder.startRecording(kernel);

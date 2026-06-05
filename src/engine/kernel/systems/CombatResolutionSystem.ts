@@ -20,6 +20,7 @@ import { launchAirborne } from "../../core/AirbornePhysicsSystem.js";
 import { calcPhysicalDamage } from "../../core/DamageFormula.js";
 import { detectHit } from "../../core/HitDetection.js";
 import { applyHitReaction } from "../../core/ReactionResolver.js";
+import type { ReactionState } from "../../core/ReactionResolver.js";
 import type { EngineContext } from "../EngineContext.js";
 import type { EngineSystem } from "../EngineSystem.js";
 
@@ -77,11 +78,56 @@ export class CombatResolutionSystem implements EngineSystem {
           dmg,
           tick: ctx.tickCount,
         });
+        // P3.1: emit render-oriented events for scene consumers.
+        ctx.bus.emit("DamageNumberRequested", {
+          actorId: defender.id,
+          amount: dmg,
+          tick: ctx.tickCount,
+        });
+        const reactionLabel = reactionKindToCombatLabel(defender.reaction);
+        ctx.bus.emit("ReactionApplied", {
+          targetActorId: defender.id,
+          finalReaction: reactionLabel,
+          tick: ctx.tickCount,
+        });
+        if (defender.isDead) {
+          ctx.bus.emit("ActorDead", {
+            targetActorId: defender.id,
+            actorId: defender.id,
+            tick: ctx.tickCount,
+          });
+        }
       }
     }
   }
 
   reset(): void {
     this.hitGroups.clear();
+  }
+
+  /** Return world-space attack hitboxes for a given actor (debug visualization, P3.1). */
+  debugHitBoxes(ctx: EngineContext, actorId: string): Array<{ x: number; y: number; w: number; h: number; color: number }> {
+    const actor = ctx.actors.find((a) => a.id === actorId);
+    if (!actor) return [];
+    const frame = actor.animationPlayer.currentFrame;
+    if (!frame?.attackBoxes?.length) return [];
+    return frame.attackBoxes.map((box) => {
+      const x1 = actor.x + Math.min(box.x1, box.x2);
+      const y1 = actor.y + Math.min(box.y1, box.y2);
+      const x2 = actor.x + Math.max(box.x1, box.x2);
+      const y2 = actor.y + Math.max(box.y1, box.y2);
+      return { x: x1, y: y1, w: x2 - x1, h: y2 - y1, color: 0xef4444 };
+    });
+  }
+}
+
+/** Map engine ReactionState.kind → combat-style reaction label for scene consumers. */
+function reactionKindToCombatLabel(reaction: ReactionState | null): string {
+  if (!reaction) return "none";
+  switch (reaction.kind) {
+    case "airborne": return "launch";
+    case "hit": return "light_stagger";
+    case "down": return "downed";
+    default: return "none";
   }
 }

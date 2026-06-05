@@ -61,6 +61,7 @@ export class ActionSystem implements EngineSystem {
       if (!anim) continue;
 
       actor.animationPlayer.play(anim);
+      actor.currentActionName = actionName;
       // Drive FSM into ATTACK so it doesn't accept a new action mid-swing.
       actor.fsm.update({
         tick: ctx.tickCount,

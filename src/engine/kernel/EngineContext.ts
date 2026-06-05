@@ -18,9 +18,22 @@ import type { IPredicate } from "./systems/PredicateSystem.js";
 import type { ITime } from "./systems/TimeSystem.js";
 import type { ITimer } from "./systems/TimerSystem.js";
 
-/** Minimal event bus interface (P1 skeleton — full bus in P4). */
+/** Event shape passed to bus subscribers. */
+export interface EngineEvent {
+  readonly type: string;
+  readonly tick: number;
+  readonly payload: unknown;
+}
+
+/** Event handler callback signature. */
+export type EngineEventHandler = (event: EngineEvent) => void;
+
+/** Event bus interface — emit + subscribe + archive for render/debug consumers. */
 export interface EngineEventBus {
   emit(type: string, payload: unknown): void;
+  on(type: string, handler: EngineEventHandler): void;
+  off(type: string, handler: EngineEventHandler): void;
+  readonly archive: readonly EngineEvent[];
 }
 
 export interface EngineContext {
@@ -30,6 +43,9 @@ export interface EngineContext {
   readonly player: Actor;
   readonly prng: Fnv1aPrng;
   readonly bus: EngineEventBus;
+
+  /** World boundary (P3.1 — engine doesn't enforce this; provided for render/scene consumers). */
+  readonly worldBounds?: { readonly xMin: number; readonly xMax: number; readonly zMin: number; readonly zMax: number };
 
   // ── P2b cross-cutting services (undefined until the matching system is registered) ──
   readonly math?: IMath;
