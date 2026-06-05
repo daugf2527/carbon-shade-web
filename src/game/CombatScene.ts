@@ -12,7 +12,8 @@ import { TouchControls } from "./TouchControls.js";
 import { InputRecorder } from "../combat/replay/InputRecorder.js";
 // Engine imports (P3.1 — runtime switch from CombatKernel to EngineKernel)
 import { EngineKernel } from "../engine/kernel/EngineKernel.js";
-import { Actor } from "../engine/core/Actor.js";
+import { Actor, statsFromPlayerShard, statsFromGoblinTruth } from "../engine/core/Actor.js";
+import { SWORDMAN_TRUTH } from "../data/manifest/truth/swordman.js";
 import type { AniDef } from "../engine/core/AnimationPlayer.js";
 import { ActionSystem } from "../engine/kernel/systems/ActionSystem.js";
 import { InputSystem } from "../engine/kernel/systems/InputSystem.js";
@@ -149,13 +150,32 @@ export class CombatScene extends Phaser.Scene {
     this.kernel.registerSystem(new HitstunSystem());            // RECOVERY phase: tick hitstun
     this.kernel.registerSystem(new AirborneSystem());           // PHYSICS phase: gravity + ground
 
-    // Create actors with baseline stats (browser env — no filesystem shard loading).
-    // Stats match verification/baseline-shards values: swordman hp=180, goblin hp=70.
-    const playerActor = new Actor("player", "player", { hpMax: 180, mpMax: 100, moveSpeed: 300, physicalAttack: 45, physicalDefense: 20 });
+    // Create actors with PVF-truth-driven stats (browser env — truth comes from compiled-in
+    // SWORDMAN_TRUTH const + mirrored GOBLIN_TRUTH, not filesystem shard loading).
+    // SOT: verification/baseline-shards/players/swordman.json (.chr) → src/data/manifest/truth/swordman.ts
+    //
+    // statsFromPlayerShard reads chr.growth.{hpMax,physicalDefense,...}.values[0] = level-1 PVF base:
+    //   hpMax=180, mpMax=140, physicalDefense=7.5 (all real PVF base).
+    // Two fields are deliberately OVERRIDDEN off the raw base — see truth-coverage-matrix.md:
+    //   - physicalAttack: PVF base=7.5, LV70-sum=82.8 (ActorFactory's accumulation method). Either
+    //     true value collapses playability: base 7.5 → 7 dmg/hit (7 hits to kill a goblin); LV70 83
+    //     → 81 dmg/hit but the goblin side has no PVF absolute base to match, so it one-shots. 45 is
+    //     the "effective atk" placeholder that keeps the 2-hit-kill feel until a level+equipment
+    //     model exists (P4/Stage4 gap).
+    //   - moveSpeed: PVF value 850 is unit "%xSPEED_VALUE_DEFAULT" (a percent), not px/s; the engine
+    //     does not consume stats.moveSpeed anyway. Keep px-baseline 300 to avoid a wrong-unit value.
+    const playerStats = {
+      ...statsFromPlayerShard(SWORDMAN_TRUTH.chr as unknown as Record<string, unknown>),
+      physicalAttack: 45, // effective-atk placeholder; PVF base=7.5 / LV70-sum=82.8, needs level+equipment model (P4/Stage4 gap)
+      moveSpeed: 300,     // px baseline; PVF moveSpeed=850 is %xSPEED_VALUE_DEFAULT (percent), engine does not consume moveSpeed
+    };
+    const playerActor = new Actor("player", "player", playerStats);
     playerActor.x = 390;
     this.kernel.addActor(playerActor, true);
 
-    const grunt = new Actor("grunt", "monster", { hpMax: 70, mpMax: 0, moveSpeed: 300, physicalAttack: 10, physicalDefense: 5 });
+    // grunt = goblin PVF-truth stats: hpMax 70→46 (×65%), atk 10→8 (×75%), def 5→4 (×80%).
+    // base (GOBLIN_BASE) is local_baseline; the category modifiers are real PVF truth (goblinthrower.mob).
+    const grunt = new Actor("grunt", "monster", statsFromGoblinTruth());
     grunt.x = 780;
     this.kernel.addActor(grunt, false);
 
@@ -290,7 +310,10 @@ export class CombatScene extends Phaser.Scene {
     // P3.1: EngineKernel.reset() takes actors array to reconstruct roster
     const playerActor = new Actor("player", "player", this.kernel.player.stats);
     playerActor.x = 390;
-    const gruntActor = new Actor("grunt", "monster", this.kernel.actors.find(a => a.id === "grunt")?.stats ?? { hpMax: 70, mpMax: 0, moveSpeed: 300, physicalAttack: 10, physicalDefense: 5 });
+    // player/grunt reuse their live stats (PVF-truth, inherited from create()). The fallback
+    // mirrors create()'s grunt truth (statsFromGoblinTruth) so reset() can never reintroduce the
+    // old hardcoded baseline if grunt is ever missing.
+    const gruntActor = new Actor("grunt", "monster", this.kernel.actors.find(a => a.id === "grunt")?.stats ?? statsFromGoblinTruth());
     gruntActor.x = 780;
     this.kernel.reset([{ actor: playerActor, isPlayer: true }, { actor: gruntActor }]);
     this.bindFeedbackHandlers();

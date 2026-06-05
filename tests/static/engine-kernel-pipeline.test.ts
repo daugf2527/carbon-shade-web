@@ -62,7 +62,7 @@ function freshKernel(seed = 42): { kernel: EngineKernel; sw: Actor; gob: Actor }
         // Find active reaction on actor (we track via fsm state)
         if (actor.fsm.state === ActorState.HIT || actor.fsm.state === ActorState.DOWN || actor.fsm.state === ActorState.AIRBORNE) {
           // Use a dummy reaction — in real pipeline this is stored per-actor
-          const dummyReaction: ReactionState = { active: true, remainingTicks: 1, kind: "hit" };
+          const dummyReaction: ReactionState = { active: true, remainingTicks: 1, kind: "hit", launchVy: 0 };
           tickReaction(actor, dummyReaction, ctx.tickCount);
         }
       }

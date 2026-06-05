@@ -50,13 +50,44 @@ export function statsFromPlayerShard(chr: Record<string, unknown>): ActorStats {
   };
 }
 
-// Goblin base stats (level-1 reference values from DNF wiki / local_baseline)
+/**
+ * Goblin base stats — **local_baseline**, NOT PVF-derived (requiresManualVerification).
+ *
+ * PVF monster/goblin/*.mob carries NO absolute hp/atk/def numbers: mob.hpMax is null and
+ * only `abilityCategory` percent modifiers (op="*"/"+") are extractable. The absolute base
+ * an archetype's category multiplies against lives in DNF.exe, not PVF — so these numbers are
+ * a hand-tuned reference, the documented gap per CLAUDE.md's "已知缺口" rule. This object is
+ * the `base` input to statsFromMonsterShard; abilityCategory (the multiplier) is the real
+ * PVF truth, the base is the placeholder.
+ */
 const GOBLIN_BASE: ActorStats = {
   hpMax: 70,
   mpMax: 0,
   moveSpeed: 300,
   physicalAttack: 10,
   physicalDefense: 5,
+};
+
+/**
+ * Goblin abilityCategory — **mirrored** from verification/baseline-shards/monsters/goblin.json
+ * (sourceRef: pvf:monster/goblin/goblinthrower.mob). The percent modifiers ARE PVF-extracted
+ * truth (extractorVersion v2.0.0); only the base they apply to (GOBLIN_BASE) is local_baseline.
+ *
+ * Inline because goblin has no TS truth SOT (unlike swordman.ts) and the browser cannot load
+ * verification/ JSON (not in the Vite bundle). This is a controlled, audit-tracked temporary
+ * mirror — replace with `import { GOBLIN_TRUTH } from ".../truth/goblin.js"` once that SOT lands.
+ * Applied: hp 70→46 (×65%), atk 10→8 (×75%), def 5→4 (×80%). moveSpeed 350 (PVF, engine
+ * does not consume moveSpeed yet — see CombatScene wiring notes).
+ */
+const GOBLIN_TRUTH = {
+  abilityCategory: {
+    value: {
+      "hp max": { op: "*" as const, value: 65 },
+      equipment_physical_attack: { op: "*" as const, value: 75 },
+      equipment_physical_defense: { op: "*" as const, value: 80 },
+    },
+  },
+  moveSpeed: { values: [350, 350] },
 };
 
 export function statsFromMonsterShard(mob: Record<string, unknown>): ActorStats {
@@ -75,6 +106,15 @@ export function statsFromMonsterShard(mob: Record<string, unknown>): ActorStats 
     physicalAttack: applyEntry(GOBLIN_BASE.physicalAttack, cat["equipment_physical_attack"]),
     physicalDefense: applyEntry(GOBLIN_BASE.physicalDefense, cat["equipment_physical_defense"]),
   };
+}
+
+/**
+ * Convenience: goblin stats from the mirrored GOBLIN_TRUTH category (PVF truth modifiers over
+ * local_baseline GOBLIN_BASE). Wires statsFromMonsterShard at the CombatScene instantiation
+ * point without requiring browser-side shard loading. Returns {hpMax:46, atk:8, def:4, moveSpeed:350}.
+ */
+export function statsFromGoblinTruth(): ActorStats {
+  return statsFromMonsterShard(GOBLIN_TRUTH as unknown as Record<string, unknown>);
 }
 
 export class Actor {

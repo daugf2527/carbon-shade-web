@@ -16,18 +16,43 @@
  * Determinism: actor iteration follows registration order (stable); no Math.random.
  */
 import type { AniBox } from "../../core/AnimationPlayer.js";
-import { launchAirborne } from "../../core/AirbornePhysicsSystem.js";
 import { calcPhysicalDamage } from "../../core/DamageFormula.js";
 import { detectHit } from "../../core/HitDetection.js";
 import { applyHitReaction } from "../../core/ReactionResolver.js";
-import type { ReactionState } from "../../core/ReactionResolver.js";
+import type { ReactionState, AtkFlags, HitReaction } from "../../core/ReactionResolver.js";
 import type { EngineContext } from "../EngineContext.js";
 import type { EngineSystem } from "../EngineSystem.js";
+// PVF truth tables (Wave 2, 2026-06-05): per-action atk facts + per-weapon-class hit info.
+// swordman-attacks.json lives under src/ (always bundled); weaponHitInfo rides the baseline
+// shard, imported the same static-JSON way combat's ReactionResolver does (Vite bundles it).
+import SWORDMAN_ATTACKS from "../../../data/manifest/truth/swordman-attacks.json" with { type: "json" };
+import SWORDMAN_DATA from "../../../../verification/baseline-shards/players/swordman.json" with { type: "json" };
 
 /** Default body damage box when a defender has no current animation (idle proxy). */
 const DEFAULT_BODY_BOX: readonly AniBox[] = [
   { x1: -20, y1: 0, z1: -20, x2: 20, y2: 80, z2: 20 },
 ];
+
+/**
+ * Action → weaponHitInfo slot routing (D9=B hardcoded path, mirrored from combat
+ * ReactionResolver WEAPON_SLOT_ROUTING). Default slot 0. Phase E: derive per-weapon truth.
+ */
+const WEAPON_SLOT_ROUTING: Record<string, number> = {
+  attack1: 0, attack2: 0, attack3: 0, dashattack: 0, jumpattack: 0,
+  hardattack: 3, chargecrash: 3, chargecrashfinish: 3,
+};
+
+interface AtkTruth {
+  damageBonus: { value: number } | null;
+  hitReaction?: string;
+  liftUp?: { value: number };
+  causesDown?: boolean;
+  attackLevel?: number;
+}
+const ATTACKS = SWORDMAN_ATTACKS as unknown as Record<string, AtkTruth>;
+const WEAPON_HIT_INFO = SWORDMAN_DATA.chr.weaponHitInfo as unknown as Array<{
+  launch: number; pushBack: number; damageScalePct: number;
+}>;
 
 export class CombatResolutionSystem implements EngineSystem {
   readonly name = "CombatResolution";
@@ -60,18 +85,41 @@ export class CombatResolutionSystem implements EngineSystem {
         );
         if (!hit) continue;
         group.add(defender.id);
+        const actionName = attacker.currentActionName;
+        const atk = actionName ? ATTACKS[actionName] : undefined;
+        const slot = (actionName && WEAPON_SLOT_ROUTING[actionName]) ?? 0;
+        const weaponInfo = WEAPON_HIT_INFO[slot];
+        // Damage (PVF truth): atkBonus = 1 + damageBonus%/100 (null → 1.0). Negative bonus like
+        // attack1 -15% → 0.85 reduces; NOT value/100 which would make negatives go negative.
+        // requiresManualVerification: % semantics inferred from negative values present in the
+        // shard (combat never consumed damageBonus, so there is no first-evidence to mirror).
+        const atkBonus = atk?.damageBonus == null ? 1.0 : 1 + atk.damageBonus.value / 100;
+        const damageScalePct = weaponInfo?.damageScalePct ?? 100;
         const dmg = calcPhysicalDamage({
           attackerPhysAtk: attacker.stats.physicalAttack,
-          atkBonus: 1.0,
+          atkBonus,
           defenderPhysDef: defender.stats.physicalDefense,
+          damageScalePct,
         });
-        // liftUp attack (anim.liftVy > 0) launches the defender airborne.
+        // Reaction (PVF truth): route from atk hitReaction; fall back to AniDef attackLiftVy for
+        // synthetic animations carrying no swordman actionName. applyHitReaction sets
+        // defender.airborne internally (cohesive with hp/fsm), so no separate launchAirborne here.
         const liftVy = attacker.animationPlayer.attackLiftVy;
-        const flags = liftVy > 0 ? { liftUp: true } : {};
-        defender.reaction = applyHitReaction(defender, flags, dmg, ctx.tickCount);
-        if (liftVy > 0 && !defender.isDead) {
-          defender.airborne = launchAirborne(liftVy, defender.y);
+        let flags: AtkFlags;
+        if (atk?.hitReaction) {
+          flags = {
+            hitReaction: atk.hitReaction as HitReaction,
+            liftUpValue: atk.liftUp?.value,
+            causesDown: atk.causesDown,
+            attackLevel: atk.attackLevel,
+            weaponLaunch: weaponInfo?.launch,
+          };
+        } else if (liftVy > 0) {
+          flags = { liftUp: true, liftUpValue: liftVy };
+        } else {
+          flags = {};
         }
+        defender.reaction = applyHitReaction(defender, flags, dmg, ctx.tickCount);
         ctx.bus.emit("HitConfirmed", {
           attackerId: attacker.id,
           defenderId: defender.id,
@@ -126,8 +174,9 @@ function reactionKindToCombatLabel(reaction: ReactionState | null): string {
   if (!reaction) return "none";
   switch (reaction.kind) {
     case "airborne": return "launch";
-    case "hit": return "light_stagger";
     case "down": return "downed";
+    case "stagger": return "light_stagger";
+    case "hit": return "light_stagger";
     default: return "none";
   }
 }
