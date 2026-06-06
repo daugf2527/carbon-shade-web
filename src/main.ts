@@ -37,3 +37,14 @@ const game = new Phaser.Game({
 game.registry.set("directScene", directScene);
 
 Object.assign(window as typeof window, { combatLab: runtime.combatLab, combatLabGame: game });
+
+// ── 轻量全局错误捕获（黑屏排查遗留）─────────────────────────────────────────────
+// 把未捕获的 JS 错误打到 console.error，便于排查启动/渲染问题。不渲染任何 DOM（不挡画面）。
+// 早先的可视诊断 HUD 已移除（黑屏确认是浏览器加载中间态，非游戏 bug）。
+window.addEventListener("error", (e) => {
+  console.error("[combatLab uncaught]", e.message, e.error?.stack ?? "");
+});
+window.addEventListener("unhandledrejection", (e) => {
+  console.error("[combatLab unhandledrejection]", e.reason);
+});
+
