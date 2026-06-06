@@ -24,6 +24,15 @@ const ROOT = process.cwd();
 const schemaDir = join(ROOT, "src/engine/schema");
 assert.ok(existsSync(schemaDir), `src/engine/schema/ does not exist`);
 
+// flatc output is gitignored — skip if generated dir doesn't exist (CI without flatc)
+const genDir = join(schemaDir, "carbon-shade");
+if (!existsSync(genDir)) {
+  console.log(
+    `four-way-consistency-fbs-compiled: SKIP — generated dir ${genDir} not found (run npm run compile:schema)`,
+  );
+  process.exit(0);
+}
+
 const fbsFiles = readdirSync(schemaDir).filter((f) => f.endsWith(".fbs"));
 
 // 递归扫 schemaDir 下所有生成的 .ts (flatc 按 namespace 分子目录)

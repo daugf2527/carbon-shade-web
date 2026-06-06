@@ -7,14 +7,22 @@
  */
 
 import { strict as assert } from 'node:assert';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import * as flatbuffers from 'flatbuffers';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, '..', '..');
+
+// .bin files are gitignored build products — skip on CI where they don't exist
+const BIN_DIR = path.join(ROOT, 'public', 'assets');
+if (!existsSync(BIN_DIR) || !existsSync(path.join(ROOT, 'src', 'engine', 'schema', 'carbon-shade'))) {
+  console.log('shard-loader-bin: SKIP — .bin files or generated FlatBuffers types not present (run npm run compile:schema && npm run compile:assets)');
+  process.exit(0);
+}
+
+import * as flatbuffers from 'flatbuffers';
 
 // Import ShardLoader
 const { ShardLoader } = await import(pathToFileURL(path.join(ROOT, 'src', 'engine', 'loader', 'ShardLoader.js')).href);
