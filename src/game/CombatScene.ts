@@ -184,7 +184,9 @@ export class CombatScene extends Phaser.Scene {
     // base (GOBLIN_BASE) is local_baseline; the category modifiers are real PVF truth (goblinthrower.mob).
     const grunt = new Actor("grunt", "monster", statsFromGoblinTruth());
     grunt.aiConfig = aiConfigFromGoblinTruth(); // 03-AI: PVF sight 300px / attackDelay 3000ms→180 ticks
-    grunt.x = 780;
+    // 站位：player x=390，攻击盒达 player.x+50/60；grunt 受击盒 ±20，grunt.x≤460 才命中。
+    // 440 让玩家原地按 Atk1/2/3 即可打中 grunt（移动系统 02-Move 仍 P4 未做，无法走位贴近）。
+    grunt.x = 440;
     this.kernel.addActor(grunt, false);
 
     // ── FixedStepSimulation unchanged (P3.1: EngineKernel satisfies TickableKernel via structural typing) ──
@@ -323,7 +325,7 @@ export class CombatScene extends Phaser.Scene {
     // old hardcoded baseline if grunt is ever missing.
     const gruntActor = new Actor("grunt", "monster", this.kernel.actors.find(a => a.id === "grunt")?.stats ?? statsFromGoblinTruth());
     gruntActor.aiConfig = this.kernel.actors.find(a => a.id === "grunt")?.aiConfig ?? aiConfigFromGoblinTruth();
-    gruntActor.x = 780;
+    gruntActor.x = 440; // 与 create() 一致：贴近玩家攻击范围（grunt.x≤460 才被普攻命中）
     this.kernel.reset([{ actor: playerActor, isPlayer: true }, { actor: gruntActor }]);
     this.bindFeedbackHandlers();
     this.simulation.resume();
