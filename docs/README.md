@@ -41,6 +41,7 @@ Documents that accurately describe the present codebase and actively maintained 
 | `engineering/architecture-overview.md` | Current layer map for Combat Lab and evidence tiers |
 | `engineering/architecture-improvement-plan.md` | Current architecture refactor plan for Combat Lab 0.4+ |
 | `engineering/art-asset-pipeline-spec.md` | Art asset pipeline specification for protagonist sprite generation |
+| `changelog/2026-06-06-engine-truth-wiring-batch.md` | Engine 真值化批次：09-Status/08-Resource/03-AI/hitstun/水平击退 + scenario·replay/D 组/cancel-window（11 commit）|
 | `changelog/fix6-normalized-sprite-pipeline.md` | Current rendering pipeline: normalized fixed-cell spritesheets |
 | `planning/04-gap-and-roadmap-v0.1.md` | Living roadmap with updated completion percentages |
 | `planning/dfo-combat-implementation-backlog.md` | P0/P1 complete, P2 partially complete |
