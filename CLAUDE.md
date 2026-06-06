@@ -115,10 +115,20 @@ src/dnf-native-combat/data/
 src/data/official/  dnfPhysicsConstants.ts + dnfEnumTables.ts (shared shard sources)
 tools/dnf-porting-src/  C++ extractor (~3500 lines .cpp, 48 audit findings tracked)
 
+src/engine/  (ACTIVE 运行时主线 — P3.1 后 CombatScene 跑 EngineKernel,替换 FROZEN src/combat):
+├── kernel/         EngineKernel (确定性 tick 编排 + per-tick stateHash) + SystemPhase/Fnv1aPrng
+│   └── systems/    16 EngineSystem: 领域 Animation/CombatResolution/Hitstun/Airborne/Knockback/Status/EnemyAI
+│                    + 桥接 Action/Input/SkillInput + 横切 Math/DataStore/Timer/Time/Predicate/Resource
+├── core/           Actor + 纯逻辑: DamageFormula/ReactionResolver/AirbornePhysics/KnockbackPhysics/
+│                    StatusEffects/ResourcePool/CancelWindow/MonsterAIConfig/weaponTimelineFlattener/...
+├── input/          InputCommand (SOCD) + CommandMatcher (skill 指令序列, tick-based)
+└── 真值化: 04/05/07/08/09/03 + hitstun + 水平击退 运行时 PVF 真值驱动; skill-action infra
+     (command+cancelWindow) 接活。真值覆盖详见 docs/testing/engine-truth-coverage-matrix.md
+
 master branch (FROZEN):
-src/combat/         Pure TS combat kernel (FrameDataAction, HitResolver2D5, DamageFormula, ...)
-src/game/           Phaser 3 rendering layer (scenes, render adapter, camera, audio)
-src/data/manifest/  actions/default.json (38 actions), damage/, status/, ai/
+src/combat/         Pure TS combat kernel (FrameDataAction, HitResolver2D5, DamageFormula, ...) — engine 蓝本,只读
+src/game/           Phaser 3 rendering layer (scenes, render adapter, camera, audio) — CombatScene 现跑 EngineKernel
+src/data/manifest/  actions/default.json (38 actions), damage/, status/, ai/, truth/(swordman.ts/swordman-attacks.json)
 src/main.ts         Phaser bootstrap (1920×1080, Scale.FIT)
 ```
 
