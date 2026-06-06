@@ -207,12 +207,12 @@ test.describe.serial("测量仪器 QC", () => {
     const s = computeStats(values);
     report("D: reset 后第二拳伤害", s);
     console.log(
-      `[QC] >>> 期望恒定 = 公式真值 calcPhysicalDamage(45,5)=44。` +
+      `[QC] >>> 期望恒定 = engine 真值 34 (attack1 damageBonus -15% → atkBonus 0.85)。` +
         ` spread>0 → reset 未清场(serial 污染根)；恒为 0 → 攻击没结算(命中/步进 bug)`,
     );
 
-    // reset 确定性 + 手动步进 → 伤害必须恒定，且等于公式真值 44（堵"恒 0 假绿"）
+    // reset 确定性 + 手动步进 → 伤害必须恒定，且等于 engine 真值 34（堵"恒 0 假绿"）
     expect(s.stable, `reset 应确定性清场，实测伤害 ${s.min}~${s.max}`).toBe(true);
-    expect(s.min, `第二拳应正常结算 44 伤害，实测 ${s.min}`).toBe(44);
+    expect(s.min, `第二拳应正常结算 34 伤害，实测 ${s.min}`).toBe(34);
   });
 });

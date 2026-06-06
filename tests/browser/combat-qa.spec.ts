@@ -15,7 +15,7 @@ import {
  *
  * 测量范式（标定见 measurement-instrument-qc.spec.ts）：
  *   - 确定性量（帧数/伤害/受击状态）：lib/deterministic-measure 手动步进，零抖动。
- *     断言用精确值（帧=4 / 伤害=44 / reaction="hit"）。
+ *     断言用精确值（帧=4 / attack1 伤害=34 / reaction="hit"，Wave2 真值，被 static test 守护）。
  *   - 实时量（FPS）：保留真实 RAF 驱动 + 墙钟采样——这类量本就该用真实渲染帧率测。
  *
  * P4-gated 测试 skip 并注明原因——引擎尚无对应系统。
@@ -90,7 +90,7 @@ test.describe.serial("2. 普通攻击测试", () => {
   test("2.2 Attack 伤害计算", async ({ page }) => {
     test.setTimeout(30000);
 
-    // 手动步进测量：calcPhysicalDamage(45atk, 5def) = 44（QC-D 标定恒定 44）
+    // 手动步进测量：attack1 真值伤害 34（Wave2: damageBonus -15% → atkBonus 0.85, grunt def4, slot0 scale90%）
     const m = await measureAttack(page, {
       attackerId: "player",
       defenderId: "grunt",
@@ -100,12 +100,12 @@ test.describe.serial("2. 普通攻击测试", () => {
 
     console.log(`[Damage] damage=${m.damage}, reaction=${m.defenderReaction}, dead=${m.defenderDead}`);
 
-    // 精确断言：单次 attack1 命中造成 44 伤害（45*（1-5/205) 取整）。
-    expect(m.damage).toBe(44);
+    // 精确断言：单次 attack1 命中造成 34 伤害（被 engine-damage-truth static test 守护）。
+    expect(m.damage).toBe(34);
   });
 
   test("2.3 Whiff cancel 窗口", async () => {
-    test.skip(true, "P4: engine 尚无 cancel 系统 (ActionSystem 只做 INTERRUPTIBLE 检查, 无可取消窗口)");
+    test.skip(true, "P4: ActionSystem 已支持 cancelWindow 取消链(skill-action §3)，但场景里的基础攻击 shard 无 cancelWindow，且 command→skill 输入未接入 CombatScene。whiff cancel 待 skill action 入场景");
   });
 });
 
@@ -134,13 +134,13 @@ test.describe.serial("3. 受击反应测试", () => {
     console.log(`[Light Stagger] reaction=${m.defenderReaction}, damage=${m.damage}, dead=${m.defenderDead}`);
 
     // 精确断言：grunt 受击后 reaction.kind === "hit"（轻硬直）。
-    // grunt 70hp，单拳 44 伤害不致死 → 应停在 hit reaction，非 dead。
+    // grunt 46hp，attack1 34 伤害不致死 → 应停在 hit reaction，非 dead。
     expect(m.defenderReaction).toBe("hit");
     expect(m.defenderDead).toBe(false);
   });
 
   test("3.2 Launch 高度", async () => {
-    test.skip(true, "P4: engine AniDef 默认无 liftVy, attack3 无浮空效果。需等 .atk liftUp 数据接线");
+    test.skip(true, "attack3 hit_lift_up→airborne reaction 已 Wave2 接线(combat-flows S-attack3 断言 reaction=airborne)。但 launch 高度需存活目标(applyHitReaction 仅 hp>0 设 airborne 物理)，而 attack3 48 伤害秒杀 46hp grunt → 测 y 轨迹需更高血量目标，待场景支持");
   });
 
   test("3.3 Down 状态", async () => {

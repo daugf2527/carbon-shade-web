@@ -52,12 +52,12 @@ test.describe.serial("③ 逐帧轨迹", () => {
     // 真值：step0 请求未处理 → action=null
     expect(trace[0].action, "step0 请求入队未 tick").toBeNull();
 
-    // 真值：step1 即推进到 frameIdx=1，attackBox 开启，命中扣血(70→26)，进 hit reaction
+    // 真值：step1 即推进到 frameIdx=1，attackBox 开启，命中扣血(46→12)，进 hit reaction
     const s1 = trace[1];
     expect(s1.action).toBe("attack1");
     expect(s1.frameIdx, "attack1 hitFrame = index 1").toBe(1);
     expect(s1.attackBoxes, "hitFrame 出 1 个 attackBox").toBe(1);
-    expect(s1.defenderHp, "命中在 step1 完成扣血 70-44=26").toBe(26);
+    expect(s1.defenderHp, "命中在 step1 完成扣血 46-34=12").toBe(12);
     expect(s1.defenderReaction).toBe("hit");
 
     // 真值：hitbox 只在 step1 出现一次（hitGroup 单次命中），step2+ 关闭
@@ -83,13 +83,15 @@ test.describe.serial("① 多场景横向", () => {
     await ensureSceneReady(page);
   });
 
-  // 探查实测真值表：action → {帧数, 伤害, reaction}
+  // 探查实测真值表：action → {帧数, 伤害, reaction}。伤害 = measureAttack 实际扣血(受 grunt 46hp clamp)。
+  // 2026-06-06 重标定：Wave2(b01024b) damageBonus 真值化后伤害差异化、reaction 按各 action hitReaction
+  // 分化。被 engine-damage-truth / engine-reaction-truth static test 守护。grunt: hp46 def4 (statsFromGoblinTruth)。
   const SCENARIOS: Array<{ action: string; ticks: number; damage: number; reaction: string }> = [
-    { action: "attack1", ticks: 4, damage: 44, reaction: "hit" },
-    { action: "attack2", ticks: 5, damage: 44, reaction: "hit" },
-    { action: "attack3", ticks: 6, damage: 44, reaction: "hit" },
-    { action: "dashattack", ticks: 4, damage: 44, reaction: "hit" },
-    { action: "jumpattack", ticks: 5, damage: 44, reaction: "hit" },
+    { action: "attack1", ticks: 4, damage: 34, reaction: "hit" },       // bonus -15% → 34
+    { action: "attack2", ticks: 5, damage: 40, reaction: "stagger" },   // bonus null → 40
+    { action: "attack3", ticks: 6, damage: 46, reaction: "airborne" },  // bonus +20% → 48, clamp 46hp; hit_lift_up
+    { action: "dashattack", ticks: 4, damage: 46, reaction: "stagger" },// bonus +40% → 56, clamp 46hp
+    { action: "jumpattack", ticks: 5, damage: 44, reaction: "down" },   // bonus +10% → 44
   ];
 
   for (const sc of SCENARIOS) {
@@ -115,10 +117,11 @@ test.describe.serial("① 多场景横向", () => {
     });
   }
 
-  test("S-差异化(P4): 浮空/差异化伤害未接线", async () => {
+  test("S-浮空落地链(P4): 累计击倒/起身未接线", async () => {
     test.skip(
       true,
-      "P4: 当前所有 action 伤害同质(44)、无 liftVy。attack3 浮空 + damageBonus 待 .atk 数据接线",
+      "差异化伤害(damageBonus) + attack3 浮空(airborne)已 Wave2 接线(见上方 SCENARIOS)。" +
+        "剩余 P4: 浮空→落地→累计击倒→起身的多段链(AirborneSystem 只 liftVy launch, 无累计击倒)",
     );
   });
 });
@@ -136,7 +139,7 @@ test.describe.serial("② 时序链", () => {
   test("C1. 连击致死链: attack1(硬直) → attack2(死亡)", async ({ page }) => {
     test.setTimeout(30000);
 
-    // 不 reset 连续 3 拳。grunt 70hp，每拳 44 → 第2拳致死，第3拳已死无效。
+    // 不 reset 连续 3 拳。grunt 46hp：attack1 扣 34→12，attack2 扣 12(clamp)致死，第3拳已死无效。
     const steps = await runSequence(page, {
       attackerId: "player",
       defenderId: "grunt",
@@ -152,16 +155,16 @@ test.describe.serial("② 时序链", () => {
       );
     }
 
-    // 第1拳：硬直，未死，HP 70→26
+    // 第1拳：硬直，未死，HP 46→12（attack1 真值伤害 34）
     expect(steps[0].action).toBe("attack1");
-    expect(steps[0].damage).toBe(44);
-    expect(steps[0].defenderHp).toBe(26);
+    expect(steps[0].damage).toBe(34);
+    expect(steps[0].defenderHp).toBe(12);
     expect(steps[0].defenderReaction).toBe("hit");
     expect(steps[0].defenderDead).toBe(false);
 
-    // 第2拳：致死，HP 26→0
+    // 第2拳：致死，HP 12→0（attack2 真值伤害 40，但只能扣到 0，不溢出）
     expect(steps[1].action).toBe("attack2");
-    expect(steps[1].damage).toBe(26); // 只能扣到 0，不溢出
+    expect(steps[1].damage).toBe(12); // 只能扣到 0，不溢出
     expect(steps[1].defenderHp).toBe(0);
     expect(steps[1].defenderDead).toBe(true);
 
