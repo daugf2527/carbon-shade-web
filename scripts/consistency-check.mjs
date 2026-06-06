@@ -647,6 +647,22 @@ checks.push({
     : `D 组退化:期望 flattenWeaponTimeline 纯函数 + AniDef.weaponTimeline + play 接线,实得 flattener=${flattenerPure} play=${playWired}`,
 });
 
+// 28. cancel-window 谓词真值化 — skill cancelWindow PVF 真值解析 + 纯谓词(FSM 接线待后续)
+const cancelWindowSrc = readTextSafe(join(ROOT, "src/engine/core/CancelWindow.ts")) || "";
+const cancelWindowPure = /export function parseCancelWindow/.test(cancelWindowSrc)
+  && /export function isInCancelWindow/.test(cancelWindowSrc)
+  && /cancelWindowStart/.test(cancelWindowSrc) && /cancelWindowDuration/.test(cancelWindowSrc);
+checks.push({
+  name: "maturity/engine-cancel-window",
+  claimSite: "cancel-window 真值化 (skill cancelWindow PVF) + changelog",
+  claim: "skill cancelWindow PVF 真值解析 + 纯谓词 isInCancelWindow/canCancelInto(FSM/skill-action 接线待后续)",
+  truthSite: "src/engine/core/CancelWindow.ts + tests/static/engine-cancel-window.test.ts",
+  truth: `pure=${cancelWindowPure}`,
+  drift: cancelWindowPure
+    ? null
+    : `cancel-window 退化:期望 parseCancelWindow + isInCancelWindow 纯谓词读 cancelWindowStart/Duration 真值,实得 pure=${cancelWindowPure}`,
+});
+
 // ── 评估 drift ──────────────────────────────────────────────────────────
 for (const c of checks) {
   if (c.drift !== undefined) {

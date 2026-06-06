@@ -185,3 +185,28 @@ DNF action 播 body + weapon 双 timeline,weapon timeline 携带 attackBoxes。e
 - **数据缺口**:baseline shard 当前**无 weapon timeline 数据**(16.2% BLOCKED——weapon attackBox PVF 提取不完整;实测 swordman body animations 的 attackBoxes 全空)。故运行时暂无 AniDef 供给 weaponTimeline,flattener 是 **dead-until-data 的休眠机械**。合并逻辑确定性可测,数据流入即生效。
 - **轴映射前置假设(不在 flattener 做)**:combat 与 engine 的 box y/z 轴**相反**(combat y=depth/z=height;engine y=height/z=depth,见 HitDetection.ts)。flattener **不做轴变换**,假设两 timeline 的 box 已是 engine 约定。把 PVF 原始 weapon box 转 engine 约定是**提取管线职责**,上游于本合并——刻意不在数据缺失时引入无法校验的轴映射假设。
 - **范围**:D1 lockstep(同帧延迟,weapon frame i 对齐 body frame i)。真正的独立双帧游标推进(body 帧 3 时 weapon 帧 5)是 Phase 3 渲染层工作,显式 OOS。
+
+## 十一、cancel-window 谓词：skill cancelWindow 真值解析（2026-06-06）
+
+DNF action 有取消窗口(cancel window):动画某帧范围内可取消进其他 action(连招/取消链基础)。skill .skl shard 携带真 PVF 真值(19/205 swordman skills 有),engine 已有 flatbuffers `CancelWindow` schema 但**无运行时逻辑消费**。本次做运行时侧解析 + 纯谓词。守护:`tests/static/engine-cancel-window.test.ts`(C1-C5)+ consistency `maturity/engine-cancel-window`。
+
+**真值来源**(PVF,实物验证 cancelgrabblastblood):
+| 字段 | 来源 | 实测 |
+|---|---|---|
+| startFrame | `skills[id].cancelWindow.cancelWindowStart` | 50 |
+| durationFrames | `.cancelWindowDuration` | 30 |
+| cancelGroup | `.cancelGroup` | 2 |
+| weaponMask | `.cancelWeaponMask` | [0,0,0,1,0,1] |
+| targetSlots | `.cancelTargetSlots` | [3] |
+
+**实装**:`core/CancelWindow.ts` parseCancelWindow(shard→config)+ 纯谓词 isInCancelWindow(半开区间 [start,start+dur))/ canCancelInto / cancelAllowedForWeapon。
+
+| 测试 | 验证 | 实测 |
+|---|---|---|
+| C1 | 解析真实 shard cancelWindow | cancelgrabblastblood start50/dur30/group2/slots[3] |
+| C2 | 半开帧谓词 [50,80) | 49 外 / 50 入 / 79 入 / 80 外 |
+| C3 | targetSlots + weaponMask 谓词 | slot3 可 / slot0 否 |
+| C4 | 无 cancelWindow → null | 不造帧(避免 combo-gauge 式臆测)|
+| C5 | 覆盖 sanity | 恰 19/205 skills 有可解析窗口 |
+
+**⚠️ 诚实接线状态(谓词就位,FSM/skill-action 接线待后续)**:engine 暂无 skill actions(这 19 个 cancel skill 不是 engine action)也无指令序列解析器,故谓词暂未被运行时 FSM 调用——是未来 cancel/combo 系统的可验证地基。**与 D 组同性质**(机械先于数据/接线),**但与已跳过的 06-Combo correction 不同**:cancelWindow 有真 PVF 真值(cancelWindowStart=50 是客户端数据),非手调 gauge 常数。engine 现役的基础攻击(attack1-3)shard 里**无 cancelWindow**,故**不为它们臆造取消帧**(那是 combo-gauge 式 local_baseline 猜测)。
