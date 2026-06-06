@@ -700,6 +700,23 @@ checks.push({
     : `command-matcher 退化:期望 parseCommand + matchCommand + COMMAND_WINDOW_TICKS(tick-based),实得 pure=${cmdMatcherPure}`,
 });
 
+// 31. skill-action infra §2 — SkillInputSystem 把 command 匹配接活(intent→buffer→匹配→skill action)
+const skillInputSrc = readTextSafe(join(ROOT, "src/engine/kernel/systems/SkillInputSystem.ts")) || "";
+const actorSrcSI = readTextSafe(join(ROOT, "src/engine/core/Actor.ts")) || "";
+const skillInputWired = /class SkillInputSystem/.test(skillInputSrc)
+  && /matchCommand\(/.test(skillInputSrc) && /this\.actions\.request\(/.test(skillInputSrc);
+const intentExtended = /commandDir\?:/.test(actorSrcSI) && /button\?:/.test(actorSrcSI);
+checks.push({
+  name: "maturity/skill-action-input-bridge",
+  claimSite: "skill-action infra §2 (command→skill 触发) + changelog",
+  claim: "SkillInputSystem 把 §1 匹配核心接活(Actor.intent 扩 commandDir/button → buffer → 匹配 → ActionSystem.request skill)",
+  truthSite: "src/engine/kernel/systems/SkillInputSystem.ts + Actor.ts (ActorIntent)",
+  truth: `bridge=${skillInputWired}, intentExtended=${intentExtended}`,
+  drift: (skillInputWired && intentExtended)
+    ? null
+    : `skill-input 退化:期望 SkillInputSystem(buffer+matchCommand+request)+ ActorIntent 扩 commandDir/button,实得 bridge=${skillInputWired} intent=${intentExtended}`,
+});
+
 // ── 评估 drift ──────────────────────────────────────────────────────────
 for (const c of checks) {
   if (c.drift !== undefined) {

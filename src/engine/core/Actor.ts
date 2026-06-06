@@ -17,6 +17,11 @@ export type ActorKind = "player" | "monster";
 export interface ActorIntent {
   attack: boolean;
   dir: -1 | 0 | 1;
+  /** Full 4-way command direction this frame (skill-action infra §2). Inline union mirrors
+   *  input/InputCommand DirInput (kept inline to avoid a core→input dependency). Omit → "none". */
+  commandDir?: "left" | "right" | "up" | "down" | "none";
+  /** Skill/buff/jump/attack button pressed this frame (skill-action §2). Mirrors ButtonInput. */
+  button?: "attack" | "skill" | "jump" | "buff" | "none";
 }
 
 export interface ActorStats {
