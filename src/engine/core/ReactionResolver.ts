@@ -9,14 +9,14 @@
  * `calculatePvfVelocity`) but adapted to the engine Actor model.
  *
  * ── ARCHITECTURE BOUNDARY (engine Actor has no velocity tri-axis) ────────────────
- * `src/engine/core/Actor.ts` exposes only x/y/z position, facing, and
- * `airborne: AirborneState | null` (which carries a single vertical `vy`). It has NO
- * `velocity.{x,y,z}` field (combat does). Therefore:
- *   ✅ vertical launch (velocityY)  → mapped to AirborneState.vy via launchAirborne()
- *   ⚠️ horizontal knockback (velocityX = pushAside × pushBack × facing) and depth
- *      knockback (velocityZ) have NO field on the engine Actor and are NOT modelled
- *      here. See "P4 GAP" below. We deliberately do NOT add a velocity field to Actor —
- *      that would break the stateHash determinism contract.
+ * `src/engine/core/Actor.ts` exposes only x/y/z position, facing, and per-actor physics work
+ * states. It has NO `velocity.{x,y,z}` field (combat does). Both launch directions are modelled
+ * via dedicated work states (the proven airborne pattern), NOT a velocity tri-axis:
+ *   ✅ vertical launch (velocityY)   → AirborneState.vy   via launchAirborne()  (actor.y in hash)
+ *   ✅ horizontal knockback (velocityX) → KnockbackState.vx via applyKnockback() (actor.x in hash)
+ *   ⚠️ depth knockback (velocityZ) is still unmodelled (engine has no z-knockback need yet).
+ * We deliberately do NOT add a velocity tri-axis to Actor — that would risk the stateHash
+ * contract. Adding a knockback WORK STATE (like airborne) does not, since actor.x already exists.
  *
  * ── TRUTH SOURCING ──────────────────────────────────────────────────────────────
  *   hitReaction / liftUp.value / pushAside.value / causesDown  ← swordman-attacks.json
@@ -34,6 +34,7 @@
 import { Actor } from "./Actor.js";
 import { ActorState } from "./ActorStateMachine.js";
 import { launchAirborne } from "./AirbornePhysicsSystem.js";
+import { applyKnockback } from "./KnockbackPhysics.js";
 
 export type HitReaction = "hit_lift_up" | "hit_down" | "hit_horizon" | "none";
 
@@ -51,6 +52,12 @@ export interface AtkFlags {
   readonly attackLevel?: number;
   /** PVF weaponHitInfo[slot].launch coefficient for the routed slot (e.g. slot0=0, slot2=-0.95). */
   readonly weaponLaunch?: number;
+  /** PVF atk `pushAside.value` (px/s horizontal-push magnitude). e.g. attack1=30, attack3=40. */
+  readonly pushAsideValue?: number;
+  /** PVF weaponHitInfo[slot].pushBack coefficient for the routed slot (slot0=0, slot3=0.2). */
+  readonly weaponPushBack?: number;
+  /** Attacker facing (+1 right / -1 left): the defender is pushed away in this direction. */
+  readonly attackerFacing?: number;
 
   // ── Legacy bool path (backward compat with the old stub caller) ────────────────
   /** @deprecated prefer hitReaction. Legacy bool: any lift → airborne. */
@@ -109,6 +116,17 @@ function computeLaunchVy(liftUpValue: number, weaponLaunch: number): number {
   return pvfProduct !== 0 ? pvfProduct : liftUpValue * wf;
 }
 
+/**
+ * Compute horizontal knockback velocity (signed px/s) from PVF truth:
+ *   velocityX = pushAside × pushBack × facing × weightFactor.
+ * UNLIKE computeLaunchVy, we do NOT fall back when pushBack=0 — a 0 pushBack IS the truth that the
+ * attack doesn't push horizontally (basic attacks route to slot0, pushBack=0 → no knockback, zero
+ * regression). Inventing a push there would be local_baseline guessing. Returns 0 → no slide.
+ */
+function computeKnockbackVx(pushAsideValue: number, weaponPushBack: number, attackerFacing: number): number {
+  return pushAsideValue * weaponPushBack * attackerFacing * stubWeightFactor();
+}
+
 /** Route a hitReaction string + causesDown/attackLevel to an engine ReactionKind. */
 function routeFromHitReaction(
   hitReaction: HitReaction,
@@ -160,8 +178,6 @@ export function applyHitReaction(
     : routeFromLegacyBools(flags);
 
   // Vertical launch (velocityY → AirborneState.vy). Only meaningful for airborne.
-  // P4 GAP: engine Actor has no horizontal velocity field; pushAside knockback
-  //         (velocityX = pushAside × pushBack × facing) and velocityZ are unmodelled.
   let launchVy = 0;
   if (kind === "airborne") {
     const liftUpValue = flags.liftUpValue ?? 0;
@@ -172,6 +188,17 @@ export function applyHitReaction(
       // integrator no longer needs its own launchAirborne() call.
       defender.airborne = launchAirborne(launchVy, defender.y);
     }
+  }
+
+  // Horizontal knockback (velocityX → KnockbackState.vx) — twin of the vertical launch above
+  // (P4 GAP now filled). Truth: pushAside × pushBack × facing × weightFactor. pushBack=0 (basic
+  // attacks, slot0) → no slide → zero regression. Applied for grounded reactions (not airborne,
+  // which already carries the actor through the air).
+  if (kind !== "airborne" && defender.hp > 0) {
+    const knockVx = computeKnockbackVx(
+      flags.pushAsideValue ?? 0, flags.weaponPushBack ?? 0, flags.attackerFacing ?? defender.facing,
+    );
+    if (knockVx !== 0) defender.knockback = applyKnockback(knockVx, defender.x);
   }
 
   const ctx = {

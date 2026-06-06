@@ -46,6 +46,7 @@ interface AtkTruth {
   damageBonus: { value: number } | null;
   hitReaction?: string;
   liftUp?: { value: number };
+  pushAside?: { value: number };
   causesDown?: boolean;
   attackLevel?: number;
 }
@@ -113,6 +114,10 @@ export class CombatResolutionSystem implements EngineSystem {
             causesDown: atk.causesDown,
             attackLevel: atk.attackLevel,
             weaponLaunch: weaponInfo?.launch,
+            // Horizontal knockback truth (P4-GAP fill): pushAside × pushBack × attacker facing.
+            pushAsideValue: atk.pushAside?.value,
+            weaponPushBack: weaponInfo?.pushBack,
+            attackerFacing: attacker.facing,
           };
         } else if (liftVy > 0) {
           flags = { liftUp: true, liftUpValue: liftVy };

@@ -22,6 +22,7 @@ import { AnimationSystem } from "../engine/kernel/systems/AnimationSystem.js";
 import { CombatResolutionSystem } from "../engine/kernel/systems/CombatResolutionSystem.js";
 import { HitstunSystem } from "../engine/kernel/systems/HitstunSystem.js";
 import { AirborneSystem } from "../engine/kernel/systems/AirborneSystem.js";
+import { KnockbackSystem } from "../engine/kernel/systems/KnockbackSystem.js";
 import { EnemyAISystem } from "../engine/kernel/systems/EnemyAISystem.js";
 import { StatusSystem } from "../engine/kernel/systems/StatusSystem.js";
 import { ResourceSystem } from "../engine/kernel/systems/ResourceSystem.js";
@@ -152,6 +153,7 @@ export class CombatScene extends Phaser.Scene {
     this.kernel.registerSystem(new CombatResolutionSystem());   // DETECTION phase: hit→damage→reaction
     this.kernel.registerSystem(new HitstunSystem());            // RESOLVE phase: tick hitstun
     this.kernel.registerSystem(new AirborneSystem());           // CLEANUP phase: gravity + ground
+    this.kernel.registerSystem(new KnockbackSystem());          // CLEANUP phase: horizontal knockback slide
     this.kernel.registerSystem(new StatusSystem());             // CLEANUP phase: bleed DOT (09-Status)
     this.kernel.registerSystem(new ResourceSystem());           // LOGIC phase: MP regen + cooldown (08-Resource)
 

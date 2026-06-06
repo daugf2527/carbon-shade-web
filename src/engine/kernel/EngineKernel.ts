@@ -419,9 +419,10 @@ export class EngineKernel implements EngineContext, Tickable {
       // when present. MP folded as a fixed-precision term (08-Resource regen is fractional).
       const st = statusFingerprint(a);
       const cd = a.cooldowns.fingerprint();
+      const kb = a.knockback?.active ? `,kbvx=${a.knockback.vx.toFixed(3)}` : "";
       parts.push(
-        `${a.id}:hp=${a.hp},mp=${a.mp.toFixed(3)},st=${a.fsm.state},y=${a.y.toFixed(3)}` +
-        `${st ? `,status=${st}` : ""}${cd ? `,cd=${cd}` : ""}`,
+        `${a.id}:hp=${a.hp},mp=${a.mp.toFixed(3)},st=${a.fsm.state},x=${a.x.toFixed(3)},y=${a.y.toFixed(3)}` +
+        `${kb}${st ? `,status=${st}` : ""}${cd ? `,cd=${cd}` : ""}`,
       );
     }
     // Fold cross-cutting system snapshots (timers, script vars, clock) into the hash

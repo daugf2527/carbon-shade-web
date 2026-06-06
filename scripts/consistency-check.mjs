@@ -663,6 +663,27 @@ checks.push({
     : `cancel-window 退化:期望 parseCancelWindow + isInCancelWindow 纯谓词读 cancelWindowStart/Duration 真值,实得 pure=${cancelWindowPure}`,
 });
 
+// 29. 水平击退真值化 — KnockbackPhysics 工作状态(镜像 airborne)+ ReactionResolver 接 pushAside 真值
+const knockbackSrc = readTextSafe(join(ROOT, "src/engine/core/KnockbackPhysics.ts")) || "";
+const knockbackSysSrc = readTextSafe(join(ROOT, "src/engine/kernel/systems/KnockbackSystem.ts")) || "";
+const reactionSrcK = readTextSafe(join(ROOT, "src/engine/core/ReactionResolver.ts")) || "";
+const engineKernelSrcK = readTextSafe(join(ROOT, "src/engine/kernel/EngineKernel.ts")) || "";
+const knockbackPure = /export function applyKnockback/.test(knockbackSrc)
+  && /export function tickKnockback/.test(knockbackSrc) && /KNOCKBACK_FRICTION/.test(knockbackSrc);
+const knockbackWired = /class KnockbackSystem/.test(knockbackSysSrc)
+  && /computeKnockbackVx/.test(reactionSrcK) && /pushAsideValue/.test(reactionSrcK);
+const xInHash = /x=\$\{a\.x\.toFixed/.test(engineKernelSrcK);
+checks.push({
+  name: "maturity/engine-knockback",
+  claimSite: "水平击退真值化 (P4-GAP fill, pushAside 真值) + changelog",
+  claim: "水平击退 KnockbackPhysics 工作状态(镜像 airborne,不破 stateHash)+ ReactionResolver 接 pushAside×pushBack 真值 + x 入 hash",
+  truthSite: "src/engine/core/KnockbackPhysics.ts + kernel/systems/KnockbackSystem.ts + ReactionResolver.ts",
+  truth: `pure=${knockbackPure}, wired=${knockbackWired}, xInHash=${xInHash}`,
+  drift: (knockbackPure && knockbackWired && xInHash)
+    ? null
+    : `水平击退退化:期望 KnockbackPhysics 纯逻辑 + ReactionResolver 接 pushAside + x 入 hash,实得 pure=${knockbackPure} wired=${knockbackWired} xInHash=${xInHash}`,
+});
+
 // ── 评估 drift ──────────────────────────────────────────────────────────
 for (const c of checks) {
   if (c.drift !== undefined) {

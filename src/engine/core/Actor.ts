@@ -5,6 +5,7 @@
 import { ActorState, ActorStateMachine } from "./ActorStateMachine.js";
 import type { AirborneState } from "./AirbornePhysicsSystem.js";
 import { AnimationPlayer } from "./AnimationPlayer.js";
+import type { KnockbackState } from "./KnockbackPhysics.js";
 import type { MonsterAIConfig } from "./MonsterAIConfig.js";
 import type { ReactionState } from "./ReactionResolver.js";
 import { CooldownLedger } from "./ResourcePool.js";
@@ -150,6 +151,9 @@ export class Actor {
   reaction: ReactionState | null = null;
   /** Active airborne (launch) physics state; null when grounded. P3.0 per-actor work state. */
   airborne: AirborneState | null = null;
+  /** Active horizontal-knockback slide state; null when not sliding. Mirrors `airborne` —
+   *  KnockbackSystem integrates it and syncs actor.x. (P4-GAP fill, pushAside truth-driven.) */
+  knockback: KnockbackState | null = null;
   /** Active DOT/status effects (09-Status). Per-actor work state like reaction/airborne;
    *  written by StatusSystem (apply on hit + tick DOT). Empty when no status active. */
   statusEffects: ActiveStatus[] = [];

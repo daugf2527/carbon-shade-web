@@ -27,7 +27,7 @@
 
 | 缺口 | 影响 | 归属阶段 | 不修原因 |
 |---|---|---|---|
-| **水平/Z 击退 velocity** | combat 的 velocityX=pushAside×pushBack×facing 在 engine 无字段 | P4 | Actor 加 velocity 三轴会破 stateHash 确定性契约，需专项设计 |
+| ~~**水平/Z 击退 velocity**~~ ✅ **水平已解(2026-06-06,见第十二节)** | ~~velocityX 无字段~~→KnockbackState 工作状态(镜像 airborne,非 velocity 三轴,不破 hash);Z 击退仍未建 | 水平 ✅ / Z 留后续 | 上轮误判"需架构决策":airborne 模式证明加工作状态不破 hash |
 | **physicalAttack 真值 vs 手感** | PVF base=7.5 / LV70-sum=82.8，当前用占位 45 保 2-拳致死手感 | P4/Stage4 | engine 无等级/装备加成模型，直接接真值游戏手感崩（每拳 7 → 10 拳致死） |
 | **goblin mob 绝对 base** | mob shard 只有 abilityCategory 百分比，绝对 base 在 DNF.exe | 已知缺口（CLAUDE.md） | GOBLIN_BASE 标 local_baseline，百分比修正是真值 |
 | ~~**hitstun 真值**~~ ✅ **已解(2026-06-06,见第九节)** | ~~swordman-attacks.json 无 hitstun~~→真值是**受击方** chr/mob.hitRecovery(swordman 600/goblin 500ms)| — | 原判"PVF 不含"有误:attacks 不含,受击方 hitRecovery 含 |
@@ -210,3 +210,26 @@ DNF action 有取消窗口(cancel window):动画某帧范围内可取消进其�
 | C5 | 覆盖 sanity | 恰 19/205 skills 有可解析窗口 |
 
 **⚠️ 诚实接线状态(谓词就位,FSM/skill-action 接线待后续)**:engine 暂无 skill actions(这 19 个 cancel skill 不是 engine action)也无指令序列解析器,故谓词暂未被运行时 FSM 调用——是未来 cancel/combo 系统的可验证地基。**与 D 组同性质**(机械先于数据/接线),**但与已跳过的 06-Combo correction 不同**:cancelWindow 有真 PVF 真值(cancelWindowStart=50 是客户端数据),非手调 gauge 常数。engine 现役的基础攻击(attack1-3)shard 里**无 cancelWindow**,故**不为它们臆造取消帧**(那是 combo-gauge 式 local_baseline 猜测)。
+
+## 十二、水平击退：pushAside 真值驱动（2026-06-06，纠正上轮"架构决策"误判）
+
+ReactionResolver 长期标注 "horizontal knockback velocityX NOT modelled (P4 GAP)",上一轮自主评估把它归为"需架构决策(加 velocity 三轴破 stateHash)"。**复检发现是误判**:engine 的 airborne 不是 velocity 三轴,而是**专门工作状态** `AirborneState{active,vy,y}` 挂 actor。水平击退照搬 = `KnockbackState{active,vx,x}`,actor.x 本就是既有字段——**不破 stateHash,不需架构决策**。教训:判断前查实物(airborne 已有模式),不凭"velocity 三轴"印象下边界判断。守护:`tests/static/engine-knockback.test.ts`(K1-K5)+ consistency `maturity/engine-knockback`。
+
+**真值来源**:
+| 量 | 来源 | 置信度 | 值 |
+|---|---|---|---|
+| pushAside | `atk.pushAside.value` | PVF tier3 | attack1/2=30, attack3=40 px/s |
+| pushBack | `weaponHitInfo[slot].pushBack` | PVF | slot0=0, slot3=0.2 |
+| friction | LOCAL_BASELINE(combat light_stagger)| — | 0.72/tick(PVF 无水平摩擦常数,requiresManualVerification)|
+
+公式 velocityX = pushAside × pushBack × facing × weightFactor(与垂直 launch 同公式族)。**与垂直 launch 的关键区别**:pushBack=0 时**不 fallback**——0 就是"此攻击不水平推"的真值(基础攻击走 slot0 pushBack=0 → 零击退 → **零回归**,实测 combat-loop/two-way-fight 全 PASS),臆造推力是 local_baseline 猜测。
+
+| 测试 | 验证 | 实测 |
+|---|---|---|
+| K1 | 滑行物理:x 推进 + friction 衰减 + 停止 | 120px/s 10 tick 停于 x=6.9 |
+| K2 | 方向由 vx 符号 | +vx→+x / -vx→-x |
+| K3 | pushBack=0 → 无击退(基础攻击零回归)| knockback=null |
+| K4 | pushAside 真值驱动 vx | 30→3.3 / 40→4.4 px/s(attack3>attack1)|
+| K5 | kernel 确定性 + x 入 hash | 同 seed 同轨迹/hash,x= 进 hash |
+
+**实装**:`core/KnockbackPhysics.ts`(KnockbackState + applyKnockback + tickKnockback friction)+ Actor.knockback + `kernel/systems/KnockbackSystem.ts`(CLEANUP 同 airborne)+ ReactionResolver computeKnockbackVx + CombatResolutionSystem 传 pushAside/pushBack/facing 真值 + EngineKernel hash 加 x + knockback fingerprint。**剩余**:Z 深度击退(velocityZ)engine 暂无需求,未建。
