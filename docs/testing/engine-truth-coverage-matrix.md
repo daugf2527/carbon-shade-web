@@ -166,3 +166,22 @@ attack1 无 hitstun 字段(`causesStun` 是 stun **状态**布尔,非硬直时�
 | H4 | fallback + flags 覆盖 | 无 stat→600;flags.hitstunMs 优先 |
 
 **回归**:engine-combat-loop/airborne/two-way-fight 全 PASS(goblin 600→500ms 在松界限内,确定性测试同 config 仍等价)。**意义**:把第三节缺口表里的 "hitstun 真值"(原标 "PVF 不含,诚实保留 600ms local_baseline")**升级为 PVF tier3 真值**——原判断"PVF 不含"有误:attacks 不含,但受击方 chr/mob 的 hitRecovery 含。
+
+## 十、D 组：DualTimeline 攻击盒平铺（2026-06-06）
+
+DNF action 播 body + weapon 双 timeline,weapon timeline 携带 attackBoxes。engine 用单帧游标(`AnimationPlayer.currentFrame.attackBoxes`),故在 `play()` 时把 weapon timeline 的 attackBoxes **按帧索引平铺**进 body 帧。守护:`tests/static/engine-weapon-timeline-flatten.test.ts`(W1-W5)+ consistency `maturity/d-weapon-timeline-flatten`。
+
+**实装**:`core/weaponTimelineFlattener.ts` 纯函数 `flattenWeaponTimeline(body, weapon)`(按 index 合并 attackBoxes,帧数不等时 weapon 超出帧追加 / body 超出帧透传)+ AniDef 加可选 `weaponTimeline?: readonly AniFrame[]` + `play()` 检测到 weaponTimeline 则一次性平铺(currentFrame 接口不变)+ parseAniDef 前向兼容解析。
+
+| 测试 | 验证 | 实测 |
+|---|---|---|
+| W1 | lockstep 合并:weapon frame i → body frame i 的 attackBoxes | weapon hitbox 进 f1,body damageBox 保留 |
+| W2 | 帧数不等 | weapon 长→追加;body 长→尾帧透传 |
+| W3 | 端到端:纯 weaponTimeline AniDef 命中 | body 全空 attackBox,命中完全来自 weapon(hp 46→39)|
+| W4 | 确定性 | 平铺 anim 逐帧 stateHash 一致 |
+| W5 | no-op 安全 | 无 weaponTimeline 的 AniDef 不变(向后兼容)|
+
+**⚠️ 诚实边界(这是预备件,非"已真值化")**:
+- **数据缺口**:baseline shard 当前**无 weapon timeline 数据**(16.2% BLOCKED——weapon attackBox PVF 提取不完整;实测 swordman body animations 的 attackBoxes 全空)。故运行时暂无 AniDef 供给 weaponTimeline,flattener 是 **dead-until-data 的休眠机械**。合并逻辑确定性可测,数据流入即生效。
+- **轴映射前置假设(不在 flattener 做)**:combat 与 engine 的 box y/z 轴**相反**(combat y=depth/z=height;engine y=height/z=depth,见 HitDetection.ts)。flattener **不做轴变换**,假设两 timeline 的 box 已是 engine 约定。把 PVF 原始 weapon box 转 engine 约定是**提取管线职责**,上游于本合并——刻意不在数据缺失时引入无法校验的轴映射假设。
+- **范围**:D1 lockstep(同帧延迟,weapon frame i 对齐 body frame i)。真正的独立双帧游标推进(body 帧 3 时 weapon 帧 5)是 Phase 3 渲染层工作,显式 OOS。

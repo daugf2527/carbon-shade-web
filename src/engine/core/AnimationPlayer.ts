@@ -5,6 +5,8 @@
  * Emits frame-boundary events for T3.5 FrameEventBus.
  */
 
+import { flattenWeaponTimeline } from "./weaponTimelineFlattener.js";
+
 export interface AniBox {
   readonly x1: number; readonly y1: number; readonly z1: number;
   readonly x2: number; readonly y2: number; readonly z2: number;
@@ -23,6 +25,10 @@ export interface AniDef {
   readonly frames: readonly AniFrame[];
   /** P3.0: launch velocity (px/s up) for liftUp attacks; 0/undefined = grounded attack. */
   readonly liftVy?: number;
+  /** D-group: optional weapon timeline. When present, its per-frame attackBoxes are flattened
+   *  onto `frames` at play() time (DNF body+weapon dual timeline → single engine frame cursor).
+   *  Boxes are assumed already in the engine axis convention (see weaponTimelineFlattener). */
+  readonly weaponTimeline?: readonly AniFrame[];
 }
 
 export type FrameEventKind = "frameEnter" | "frameExit" | "animDone";
@@ -47,7 +53,14 @@ export class AnimationPlayer {
   }
 
   play(anim: AniDef): void {
-    this.anim = anim;
+    // D-group: if the action carries a weapon timeline, flatten its attackBoxes onto the body
+    // frames now so the single frame cursor below exposes them via currentFrame.attackBoxes.
+    if (anim.weaponTimeline && anim.weaponTimeline.length > 0) {
+      const frames = flattenWeaponTimeline(anim.frames, anim.weaponTimeline);
+      this.anim = { framesCount: frames.length, loop: anim.loop, frames, liftVy: anim.liftVy };
+    } else {
+      this.anim = anim;
+    }
     this.frameIdx = 0;
     this.elapsed = 0;
     this.done = false;
@@ -104,16 +117,20 @@ export class AnimationPlayer {
 
 /** Parse animation from shard JSON format. */
 export function parseAniDef(raw: Record<string, unknown>): AniDef {
-  const frames = (raw.frames as Array<Record<string, unknown>>).map((f) => ({
+  const parseFrames = (arr: Array<Record<string, unknown>>): AniFrame[] => arr.map((f) => ({
     index: f.index as number,
     delay: f.delay as number,
     attackBoxes: (f.attackBoxes as AniBox[] | undefined) ?? [],
     damageBoxes: (f.damageBoxes as AniBox[] | undefined) ?? [],
   }));
+  const frames = parseFrames(raw.frames as Array<Record<string, unknown>>);
+  // D-group: optional weapon timeline (forward-compat — baseline shards don't carry it yet).
+  const weaponRaw = raw.weaponTimeline as Array<Record<string, unknown>> | undefined;
   return {
     framesCount: raw.framesCount as number,
     loop: raw.loop as boolean,
     frames,
     liftVy: raw.liftVy as number | undefined,
+    weaponTimeline: weaponRaw ? parseFrames(weaponRaw) : undefined,
   };
 }

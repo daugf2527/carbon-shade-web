@@ -629,6 +629,24 @@ checks.push({
     : `hitstun 退化:期望 ReactionResolver 读 defender.stats.hitRecovery + ActorStats 携带提取,实得 fromStat=${hitstunFromStat} statWired=${hitRecoveryStat}`,
 });
 
+// 27. D-group weapon-timeline flatten — 纯函数 + AnimationPlayer.play 接线(机械就位,数据待流入)
+const flattenerSrc = readTextSafe(join(ROOT, "src/engine/core/weaponTimelineFlattener.ts")) || "";
+const aniPlayerSrc = readTextSafe(join(ROOT, "src/engine/core/AnimationPlayer.ts")) || "";
+const flattenerPure = /export function flattenWeaponTimeline/.test(flattenerSrc)
+  && /Math\.max\(bodyFrames\.length, weaponFrames\.length\)/.test(flattenerSrc);
+const playWired = /weaponTimeline\?: readonly AniFrame\[\]/.test(aniPlayerSrc)
+  && /flattenWeaponTimeline\(anim\.frames, anim\.weaponTimeline\)/.test(aniPlayerSrc);
+checks.push({
+  name: "maturity/d-weapon-timeline-flatten",
+  claimSite: "transient-purring-matsumoto.md D 组 + changelog",
+  claim: "weaponTimeline 平铺纯函数 + AnimationPlayer.play 接线(机械就位,baseline 数据 16.2% BLOCKED 待流入)",
+  truthSite: "src/engine/core/weaponTimelineFlattener.ts + AnimationPlayer.ts",
+  truth: `flattener=${flattenerPure}, playWired=${playWired}`,
+  drift: (flattenerPure && playWired)
+    ? null
+    : `D 组退化:期望 flattenWeaponTimeline 纯函数 + AniDef.weaponTimeline + play 接线,实得 flattener=${flattenerPure} play=${playWired}`,
+});
+
 // ── 评估 drift ──────────────────────────────────────────────────────────
 for (const c of checks) {
   if (c.drift !== undefined) {
