@@ -717,6 +717,22 @@ checks.push({
     : `skill-input 退化:期望 SkillInputSystem(buffer+matchCommand+request)+ ActorIntent 扩 commandDir/button,实得 bridge=${skillInputWired} intent=${intentExtended}`,
 });
 
+// 32. skill-action infra §3 — cancelWindow 谓词接入 ActionSystem 取消链(把 cancel-window 谓词接活)
+const actionSysSrc = readTextSafe(join(ROOT, "src/engine/kernel/systems/ActionSystem.ts")) || "";
+const cancelWired = /isInCancelWindow\(/.test(actionSysSrc)
+  && /cancelWindows/.test(actionSysSrc)
+  && /inCancelWindow/.test(actionSysSrc);
+checks.push({
+  name: "maturity/skill-action-cancel-chain",
+  claimSite: "skill-action infra §3 (cancelWindow→ActionSystem) + changelog",
+  claim: "cancelWindow 谓词接入 ActionSystem gating(cancel 窗口内可取消进新 action,无 cancelWindow 的基础攻击不可取消零回归)",
+  truthSite: "src/engine/kernel/systems/ActionSystem.ts + core/CancelWindow.ts",
+  truth: `cancelWired=${cancelWired}`,
+  drift: cancelWired
+    ? null
+    : `cancel-chain 退化:期望 ActionSystem gating 用 isInCancelWindow + cancelWindows 存储,实得 cancelWired=${cancelWired}`,
+});
+
 // ── 评估 drift ──────────────────────────────────────────────────────────
 for (const c of checks) {
   if (c.drift !== undefined) {

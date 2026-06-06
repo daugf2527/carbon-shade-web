@@ -18,6 +18,7 @@
  */
 import type { AniDef } from "../../core/AnimationPlayer.js";
 import { ActorState } from "../../core/ActorStateMachine.js";
+import { isInCancelWindow, type CancelWindowConfig } from "../../core/CancelWindow.js";
 import type { EngineContext } from "../EngineContext.js";
 import type { EngineSystem } from "../EngineSystem.js";
 
@@ -35,10 +36,15 @@ export class ActionSystem implements EngineSystem {
 
   private registry = new Map<string, AniDef>();
   private pending = new Map<string, string>(); // actorId → actionName
+  // Per-action cancel windows (skill-action infra §3). An action whose current frame is inside its
+  // cancel window can be interrupted by a new request — the DNF cancel/combo chain. Actions without
+  // an entry (e.g. basic attacks, no cancelWindow in the shard) are NOT cancelable (zero regression).
+  private cancelWindows = new Map<string, CancelWindowConfig>();
 
-  /** Register an action's animation. */
-  define(actionName: string, anim: AniDef): void {
+  /** Register an action's animation, optionally with its PVF cancel window (skill cancel chain). */
+  define(actionName: string, anim: AniDef, cancelWindow?: CancelWindowConfig): void {
     this.registry.set(actionName, anim);
+    if (cancelWindow) this.cancelWindows.set(actionName, cancelWindow);
   }
 
   /** Request an actor perform an action next tick (overwrites any prior pending request). */
@@ -54,7 +60,15 @@ export class ActionSystem implements EngineSystem {
       this.pending.delete(actor.id);
 
       if (actor.fsm.state === ActorState.DEAD) continue;
-      const interruptible = INTERRUPTIBLE.has(actor.fsm.state) || !actor.animationPlayer.isPlaying;
+      // Interruptible if: in an interruptible FSM state, OR the prior animation finished, OR the
+      // current action is inside its cancel window (cancel/combo chain — skill-action §3).
+      const current = actor.currentActionName;
+      const cancelCfg = current ? this.cancelWindows.get(current) : undefined;
+      const inCancelWindow = cancelCfg
+        ? isInCancelWindow(cancelCfg, actor.animationPlayer.currentFrame?.index ?? 0)
+        : false;
+      const interruptible =
+        INTERRUPTIBLE.has(actor.fsm.state) || !actor.animationPlayer.isPlaying || inCancelWindow;
       if (!interruptible) continue;
 
       const anim = this.registry.get(actionName);
