@@ -15,7 +15,7 @@ trigger: when user explicitly invokes /closed-loop, OR says "完整闭环走一�
 
 ## What this exists for
 
-H1-H11 unit tests verify CONSISTENCY (parser matches its own fixtures) but
+H1-H15 unit tests verify CONSISTENCY (parser matches its own fixtures) but
 **don't catch semantic / cross-language / file-controlled bugs**. The full
 closed-loop catches what tests can't, and crucially does it with **machine-
 re-verifiable trust between every stage**:
@@ -274,7 +274,7 @@ Audit artifacts:
   <AUDIT_DIR>/ (original + CORE-REVIEW.md)
   <FIXVERIFY_DIR>/ (fix verification)
 
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+Co-Authored-By: Claude <当前会话模型, 如 Opus 4.8> <noreply@anthropic.com>
 ```
 
 Show user the full draft. Wait for "go" / "edit X" / "abort".

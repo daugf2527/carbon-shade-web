@@ -21,7 +21,7 @@ description: "Quick 3-gate pre-check (typecheck/static:test/build). Does NOT cov
 # Gate 1: 类型检查
 npm run typecheck
 
-# Gate 2: 静态测试 (41 tests)
+# Gate 2: 静态测试 (auto-discovered)
 npm run static:test
 
 # Gate 3: 生产构建
@@ -36,7 +36,7 @@ npm run build
 | Gate | 状态 | 耗时 |
 |------|------|------|
 | typecheck | ✅/❌ | Xs |
-| static:test | ✅/❌ (N/41 passed) | Xs |
+| static:test | ✅/❌ (N passed) | Xs |
 | build | ✅/❌ | Xs |
 
 ### 失败详情（如有）

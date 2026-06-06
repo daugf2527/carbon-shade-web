@@ -110,7 +110,7 @@ auto ImgFile::expand() -> void
 		return;
 	}
 
-	fprintf(stderr, " %s : Version %d \n", metaInfo.fileName, header.version);
+	fprintf(stderr, "[LOG] %s : Version %d \n", metaInfo.fileName, header.version);
 
 	switch (header.version) {
 	case 4:
@@ -313,7 +313,7 @@ auto ImgNode::getData() ->const std::vector<uint8_t> &
 		auto err = uncompress(output.data(), &size, input.data(), input.size());
 		if (err != Z_OK)
 		{
-			std::cerr << "uncompess error: " << err << '\n';
+			std::cerr << "[ERROR] uncompress error: " << err << '\n';
 		}
 		input.swap(output);
 		if (format == ARGB_8888) {

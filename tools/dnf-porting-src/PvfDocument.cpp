@@ -124,7 +124,7 @@ auto PvfDocument::unpack() -> void
 			{
 				// Unknown type byte: log once-per-file would be ideal but for now
 				// just skip the next 4 bytes (index) to keep stream synchronized.
-				std::cerr << "Unknown type in pvf node " << (int32_t)type << std::endl;
+				std::cerr << "[ERROR] Unknown type in pvf node " << (int32_t)type << std::endl;
 				reader.read<int32_t>();
 			}
 		}

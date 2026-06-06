@@ -61,11 +61,13 @@ const results = [];
 
 // Gate 1-3: Core verification (fast, blocking)
 results.push(run("typecheck", "npm run typecheck"));
-results.push(run("static:test", "npm run static:test", 300000));
+// static:test runs 107 standalone test processes in parallel; h5 real-PVF probe alone ~197s on dev
+// machines where Script.pvf is present. 420s gives headroom over the ~210s parallel wall-clock.
+results.push(run("static:test", "npm run static:test", 420000));
 results.push(run("build", "npm run build"));
 
 // Gate 4: Circular dependency check
-results.push(run("depcruise-circular", "npx depcruise --no-config --output-type json src"));
+results.push(run("depcruise-circular", "npx depcruise --output-type json src"));
 
 // Gate 5: Unused exports (exits non-zero when findings exist — handled below)
 results.push(run("knip", "npx knip"));
@@ -81,9 +83,29 @@ results.push(runScript("manifest-consumers", "tools/manifest-consumers.mjs"));
 
 // ── Parse and compute summary ──────────────────────────────────────────
 
-// knip exits non-zero when it finds unused exports — treat as informational
+// knip exits non-zero when it finds unused exports — treat as informational with threshold
 const knipResult = results.find(r => r.label === "knip");
-if (knipResult) knipResult.passed = true; // findings ≠ failure
+if (knipResult) {
+  const knipTmp = (knipResult.stdout || "") + (knipResult.stderr || "");
+  const ue = parseInt(knipTmp.match(/Unused exports \((\d+)\)/)?.[1] ?? "0", 10);
+  if (ue > 100) {
+    knipResult.passed = false; // too many unused exports — likely real debt
+  } else {
+    knipResult.passed = true; // prototype phase: tolerate moderate unused exports
+  }
+}
+
+// Gate 6/7/8 post-checks: add basic criteria beyond "didn't crash"
+const eventResult = results.find(r => r.label === "event-trace");
+const etOutput = parseJson(eventResult || {});
+if (eventResult && etOutput?.stats) {
+  const lo = etOutput.stats.listenOnly ?? 0;
+  if (lo > 30) {
+    eventResult.passed = false; // too many orphan listeners — potential dead code
+    eventResult.stderr = (eventResult.stderr || "") + `\n[analyze] listenOnly=${lo} exceeds threshold 30`;
+  }
+}
+
 const allPassed = results.every(r => r.passed);
 
 // Extract key metrics from structured outputs
@@ -122,7 +144,7 @@ const summary = {
   dependency: {
     totalModules: depTotalModules,
     totalDependencies: depTotalDeps,
-    circularDependencies: 0,
+    circularDependencies: depcruiseModules.reduce((n, m) => n + (m.dependencies || []).filter(d => d.circular).length, 0),
     mostDependedOn,
   },
   // Event analysis

@@ -2,7 +2,7 @@
 name: auto-commit-cicd
 description: 自动化代码提交 → 推送 → 创建 PR → CI 监控 → 合并 master 的完整工作流。如果 CI 失败，自动分析错误并修复，最多重试 3 次。
 disable-model-invocation: true
-allowed-tools: Bash, Read, Grep, Glob, Edit, Write
+allowed-tools: Bash, Read, Grep, Glob, Edit, Write, AskUserQuestion
 model: sonnet
 metadata:
   short-description: 自动化 Git 提交、推送、创建 PR、CI 监控与合并工作流（carbon-shade-web 适配版）
@@ -47,8 +47,9 @@ npm run static:test
 - `test-utils.ts` 用 `assert.fail()` → 改成 `throw new Error()`（test-utils 只导出 ok/equal/deepEqual）
 - FrameDataAction 字段访问报错 → 用 double-cast `action as unknown as Record<string, unknown>`
 - import 报 `Cannot find module './foo'` → NodeNext 要求显式 `.js` 扩展名（即使源是 `.ts`）
-- velocity 写入位置违规 → 看 `.claude/hooks/guard-velocity-writes.mjs` 的允许列表
-- Phaser 出现在 `src/combat/` → 看 `guard-phaser-boundary.mjs`；纯内核不可 import phaser
+- 写入 dist/.tmp/verification 等生成目录被拦 → 看 `.claude/hooks/guard-generated-dirs.mjs` 的允许列表
+- lockfile 被意外改动被拦 → 看 `.claude/hooks/guard-lockfile.mjs`
+- Phaser 出现在 `src/combat/` 或 `src/engine/` → 看 `guard-phaser-boundary.mjs`；纯内核不可 import phaser
 
 ### Step 3: 提交改动
 
@@ -92,7 +93,7 @@ type(scope): 简要描述
 
 更详细说明（如需要）。
 
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+Co-Authored-By: Claude <当前会话模型, 如 Opus 4.8> <noreply@anthropic.com>
 EOF
 )"
 ```
@@ -192,7 +193,7 @@ git add <修复的文件>
 git commit -m "$(cat <<'EOF'
 fix(ci): <简要描述>
 
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+Co-Authored-By: Claude <当前会话模型, 如 Opus 4.8> <noreply@anthropic.com>
 EOF
 )"
 git push origin <current-branch>

@@ -13,7 +13,7 @@ Active branch: `dnf-native` (master frozen 2026-05-21).
 
 | Stage | 内容 | 状态 |
 |-------|------|------|
-| Stage 1 | PVF 数据提取管线 (EXTRACT→PARSE→VALIDATE→LOAD→EXPORT) | ✅ **完成** (2026-05-30) — 8808 文件 0 错误，refIntegrity 99.1%，16 shards。T1.9 (Ani/Nut/Img dispatch) + T1.10 (full-PVF 压测) 全部通过 |
+| Stage 1 | PVF 数据提取管线 (EXTRACT→PARSE→VALIDATE→LOAD→EXPORT) | ✅ **完成** (2026-05-30) — 8808 文件 0 错误，refIntegrity 99.1%，17 shards。T1.9 (Ani/Nut/Img dispatch) + T1.10 (full-PVF 压测) 全部通过 |
 | Stage 2 | 22-system DNF 原生引擎层（[field-matrix](docs/engineering/22-system-field-matrix.md), [roadmap](docs/planning/2026-05-27-stage2-roadmap.md)） | ✅ **完成** (2026-05-30) — Phase 0-5 全部完成。CombatKernel 命中→伤害→受击→HP 闭环，ReplayRecorder stateHash 确定性验证，CombatScene 最小可玩版本（HP bar + swordman + 3 种哥布林）。76 静态测试全绿，M3 里程碑达成 |
 | Stage 3 | 真值驱动重构（[roadmap](docs/planning/2026-05-30-stage3-truth-driven-refactor.md), [changelog](docs/changelog/2026-05-31-stage3-phase-bcd.md)） | ✅ **完成** (2026-05-31) — Phase A-D 完成。**Phase A**: 武器 ani 入 shard + TS truth SOT + 砍 default.json + ActorFactory PVF 真值 + DamageFormula 修正。**Phase B**: 11 个 beamsword 等级提取 + DualTimelineAction 双 timeline 类型 + HitResolutionSystem 从 weapon timeline 读取 attackBoxes（覆盖率 16.2%，BLOCKED）。**Phase C**: Reaction 文档补全（H2.1 slot 路由 + H3.1 weight factor）+ 81 个 attacks 提取 + ReactionResolver 真值驱动（resolve() 从 atk.hitReaction 路由 + apply() 接入 PVF 公式，D9=B stub 系数）。**Phase D**: Bundle 决策（接受 2.0MB）+ 文档更新。**核心成果：Reaction 真值驱动**（velocityY = liftUp × launch × weightFactor）。19 个新 truth 测试，M7 里程碑达成|
 

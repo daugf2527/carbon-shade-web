@@ -69,10 +69,14 @@ rootMotion: { frames: lunge([frameNumbers], dx, dz) }
 
 ### Step 6: 注册 Action
 
+**新主线 (src/engine/)**:
+1. 在 `src/engine/core/` 下对应模块注册 action（DualTimelineAction 格式）
+2. 确保 weapon timeline 真值来自 PVF shard
+
+**旧架构 (src/combat/, FROZEN 仅供参考)**:
 1. 在 `src/combat/types.ts` 的 `ActionName` 类型中添加新名称
 2. 在 `src/combat/actions/FrameDataAction.ts` 中定义完整 action
-3. 在 `src/data/actions/` 对应文件中注册到 manifest
-4. 确保 `fieldProvenance` 使用正确的 provenance 函数
+3. 确保 `fieldProvenance` 使用正确的 provenance 函数
 
 ### Step 7: 验证
 

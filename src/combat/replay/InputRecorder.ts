@@ -1,3 +1,6 @@
+// ⚠️ ARCH(P4): combat→engine 反向依赖。InputRecorder 物理上在 src/combat/(FROZEN) 但驱动新
+// 主线 EngineKernel——迁移过渡产物。此处仅 type-only import(无运行时耦合)。P4 迁移收尾时应
+// 整体挪入 src/engine/ 或 src/game/。在此之前 .dependency-cruiser.cjs 用 warn 级规则追踪,不阻断。
 import type { EngineKernel } from "../../engine/kernel/EngineKernel.js";
 
 /** 单个输入事件（按键按下或释放） */

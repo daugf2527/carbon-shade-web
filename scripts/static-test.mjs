@@ -1,5 +1,6 @@
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 const root=process.cwd();
 const compiledRoot = path.join(root,'.tmp','test-js');
@@ -17,10 +18,36 @@ const tests = walk(path.join(compiledRoot, 'tests', 'static'), '.test.js');
 let truthTests = [];
 try { truthTests = walk(path.join(compiledRoot, 'tests', 'truth'), '.test.js'); } catch { /* truth dir optional */ }
 const jsTests = walk(path.join(root, 'tests', 'static-js'), '.test.mjs');
-let passed=true; const results=[];
-for(const file of tests){ const r=spawnSync(process.execPath,[file],{cwd:root,encoding:'utf8'}); const ok=r.status===0; results.push({file:path.relative(compiledRoot,file),passed:ok,stdout:r.stdout,stderr:r.stderr,status:r.status ?? 1}); if(!ok) passed=false; }
-for(const file of truthTests){ const r=spawnSync(process.execPath,[file],{cwd:root,encoding:'utf8'}); const ok=r.status===0; results.push({file:path.relative(compiledRoot,file),passed:ok,stdout:r.stdout,stderr:r.stderr,status:r.status ?? 1}); if(!ok) passed=false; }
-for(const file of jsTests){ const r=spawnSync(process.execPath,[file],{cwd:root,encoding:'utf8'}); const ok=r.status===0; results.push({file:path.relative(root,file),passed:ok,stdout:r.stdout,stderr:r.stderr,status:r.status ?? 1}); if(!ok) passed=false; }
+// Each test file is a standalone Node process (no disk writes, no shared state) → safe to run in parallel.
+const queue = [
+  ...tests.map(f => ({ file: f, label: path.relative(compiledRoot, f) })),
+  ...truthTests.map(f => ({ file: f, label: path.relative(compiledRoot, f) })),
+  ...jsTests.map(f => ({ file: f, label: path.relative(root, f) })),
+];
+
+function runOne({ file, label }) {
+  return new Promise(resolve => {
+    const child = spawn(process.execPath, [file], { cwd: root });
+    let stdout = '', stderr = '';
+    child.stdout.on('data', d => { stdout += d; });
+    child.stderr.on('data', d => { stderr += d; });
+    child.on('close', status => resolve({ file: label, passed: status === 0, stdout, stderr, status: status ?? 1 }));
+    child.on('error', err => resolve({ file: label, passed: false, stdout, stderr: stderr + String(err), status: 1 }));
+  });
+}
+
+const CONCURRENCY = Math.max(2, Math.min(8, os.cpus()?.length ?? 4));
+const results = [];
+let next = 0;
+async function worker() {
+  while (next < queue.length) {
+    const item = queue[next++];
+    results.push(await runOne(item));
+  }
+}
+await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+results.sort((a, b) => a.file.localeCompare(b.file)); // stable, order-independent report
+const passed = results.every(r => r.passed);
 const payload = {passed, command:'node scripts/run-tsc.mjs -p tsconfig.test.json && node .tmp/test-js/tests/static/*.test.js && node tests/static-js/*.test.mjs', status:passed?0:1, results};
 mkdirSync(path.join(root,'.tmp'),{recursive:true}); writeFileSync(path.join(root,'.tmp','static-test-results.json'),JSON.stringify(payload,null,2));
 if(!passed){ console.error(JSON.stringify(payload,null,2)); process.exit(1); }

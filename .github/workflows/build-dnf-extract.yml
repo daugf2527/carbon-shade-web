@@ -33,6 +33,13 @@ jobs:
       - name: Test --help
         run: tools/dnf-porting-src/build/dnf-extract.exe --help
 
+      - name: Test error handling (non-zero exit on missing PVF)
+        shell: pwsh
+        run: |
+          tools/dnf-porting-src/build/dnf-extract.exe --pvf C:\nonexistent.pvf --file foo.ani
+          if ($LASTEXITCODE -eq 0) { Write-Error "expected non-zero exit on missing PVF, got 0"; exit 1 }
+          Write-Host "OK: missing PVF exits $LASTEXITCODE"
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -64,6 +71,13 @@ jobs:
       - name: Test --help
         run: tools/dnf-porting-src/build/dnf-extract --help
 
+      - name: Test error handling (non-zero exit on missing PVF)
+        run: |
+          if tools/dnf-porting-src/build/dnf-extract --pvf /nonexistent.pvf --file foo.ani; then
+            echo "ERROR: expected non-zero exit on missing PVF, got 0"; exit 1
+          fi
+          echo "OK: missing PVF exits non-zero"
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -94,6 +108,13 @@ jobs:
 
       - name: Test --help
         run: tools/dnf-porting-src/build/dnf-extract --help
+
+      - name: Test error handling (non-zero exit on missing PVF)
+        run: |
+          if tools/dnf-porting-src/build/dnf-extract --pvf /nonexistent.pvf --file foo.ani; then
+            echo "ERROR: expected non-zero exit on missing PVF, got 0"; exit 1
+          fi
+          echo "OK: missing PVF exits non-zero"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

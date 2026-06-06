@@ -1,7 +1,17 @@
 #!/bin/sh
-# carbon pre-commit — fast type/static gate only. Full analyze runs on pre-push.
+# carbon pre-commit — fast type/static gate + secret scan. Full analyze runs on pre-push.
 # Bypass with: git commit --no-verify (use sparingly).
 set -e
+
+# Secret/credential scan
+SECRETS=$(git diff --cached --name-only | grep -iE '\.env$|\.env\.|secret|credential|\.pem$|\.key$' || true)
+if [ -n "$SECRETS" ]; then
+  echo "[pre-commit] BLOCKED: staged files may contain secrets:"
+  echo "$SECRETS"
+  echo "[pre-commit] If intentional, use: git commit --no-verify"
+  exit 1
+fi
+
 echo "[pre-commit] typecheck..."
 npm run typecheck
 echo "[pre-commit] static:test..."

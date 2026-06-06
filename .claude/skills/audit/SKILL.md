@@ -13,7 +13,7 @@ trigger: when user asks "audit X", "deep check X", or "agent 扫一下 X"
 
 # /audit — Agent audit with mandatory verification
 
-**Why this exists**: H1-H11 static tests verify **consistency** (parser produces
+**Why this exists**: H1-H15 static tests verify **consistency** (parser produces
 expected output for given input), not **truth**. Real bugs (iconv UB, GlobalTable
 UAF, NutExtractor "unknown" sentinel, 6-int hitbox semantics confusion) keep
 slipping past those tests. They get caught by ad-hoc multi-agent audits — but

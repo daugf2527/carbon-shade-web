@@ -330,7 +330,7 @@ auto PvfReader::mapping() -> void
 		PvfString::split(kv.first, "/", out);
 		dfsCreateNode(kv.second, &root, out, 0);
 	}
-	std::cerr << "mapping over"<<std::endl;
+	std::cerr << "[LOG] mapping over"<<std::endl;
 	loaded = true;
 }
 
@@ -558,7 +558,7 @@ auto PvfReader::decryptString(const std::unique_ptr<uint8_t[]>& buffer, int32_t 
 				}
 				else 
 				{
-					std::cerr << "Unknown type in pvf node ��"<< type << std::endl;
+					std::cerr << "[ERROR] Unknown type in pvf node "<< type << std::endl;
 				}
 			}
 		}
