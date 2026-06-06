@@ -609,6 +609,26 @@ checks.push({
     : `03-AI 退化:期望 shard 解析 + EnemyAISystem 读 aiConfig(无 DEFAULT_CFG 硬编码)+ scene 接线,实得 parse=${aiConfigParse} reads=${aiReadsConfig} scene=${aiWiredInScene}`,
 });
 
+// 26. hitstun 真值化 — ReactionResolver 读受击方 stats.hitRecovery(非硬编码 DEFAULT_HITSTUN_MS)
+const reactionResolverSrc = readTextSafe(join(ROOT, "src/engine/core/ReactionResolver.ts")) || "";
+const actorSrcH = readTextSafe(join(ROOT, "src/engine/core/Actor.ts")) || "";
+// applyHitReaction must source hitstun from the defender stat (DEFAULT only as fallback).
+const hitstunFromStat = /defender\.stats\.hitRecovery \?\? DEFAULT_HITSTUN_MS/.test(reactionResolverSrc);
+// ActorStats must carry hitRecovery + both extractors must populate it.
+const hitRecoveryStat = /hitRecovery\?: number/.test(actorSrcH)
+  && /hitRecovery: growthBase\(growth\?\.hitRecovery\)/.test(actorSrcH)
+  && /hitRecovery: scalarVal\(mob\.hitRecovery/.test(actorSrcH);
+checks.push({
+  name: "maturity/p4-engine-hitstun",
+  claimSite: "hitstun 真值化 (22-system field-matrix 受击硬直) + changelog",
+  claim: "ReactionResolver hitstun 从死值 DEFAULT_HITSTUN_MS 改为读受击方 stats.hitRecovery 真值",
+  truthSite: "src/engine/core/ReactionResolver.ts + Actor.ts (ActorStats.hitRecovery + 提取)",
+  truth: `fromStat=${hitstunFromStat}, statWired=${hitRecoveryStat}`,
+  drift: (hitstunFromStat && hitRecoveryStat)
+    ? null
+    : `hitstun 退化:期望 ReactionResolver 读 defender.stats.hitRecovery + ActorStats 携带提取,实得 fromStat=${hitstunFromStat} statWired=${hitRecoveryStat}`,
+});
+
 // ── 评估 drift ──────────────────────────────────────────────────────────
 for (const c of checks) {
   if (c.drift !== undefined) {

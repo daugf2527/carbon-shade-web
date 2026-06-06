@@ -30,7 +30,7 @@
 | **水平/Z 击退 velocity** | combat 的 velocityX=pushAside×pushBack×facing 在 engine 无字段 | P4 | Actor 加 velocity 三轴会破 stateHash 确定性契约，需专项设计 |
 | **physicalAttack 真值 vs 手感** | PVF base=7.5 / LV70-sum=82.8，当前用占位 45 保 2-拳致死手感 | P4/Stage4 | engine 无等级/装备加成模型，直接接真值游戏手感崩（每拳 7 → 10 拳致死） |
 | **goblin mob 绝对 base** | mob shard 只有 abilityCategory 百分比，绝对 base 在 DNF.exe | 已知缺口（CLAUDE.md） | GOBLIN_BASE 标 local_baseline，百分比修正是真值 |
-| **hitstun 真值** | swordman-attacks.json 无 hitstun 字段，保留 600ms local_baseline | — | PVF 不含，诚实保留非伪装真值化 |
+| ~~**hitstun 真值**~~ ✅ **已解(2026-06-06,见第九节)** | ~~swordman-attacks.json 无 hitstun~~→真值是**受击方** chr/mob.hitRecovery(swordman 600/goblin 500ms)| — | 原判"PVF 不含"有误:attacks 不含,受击方 hitRecovery 含 |
 | **真 hitGroup id** | per-attacker dedup 是 P3.0 占位 | P4 | 需接 .atk hitGroup 数据 |
 | **crit/element** | DamageFormula 常量 1.0 | Stage4 | API 不覆盖 |
 | **moveSpeed 单位** | PVF moveSpeed=850 是 %xSPEED_VALUE_DEFAULT 百分比非 px/s | — | engine 暂不消费 stats.moveSpeed |
@@ -143,3 +143,26 @@ EnemyAISystem 原跑硬编码 `DEFAULT_CFG`(sightRange 200 / attackDelay 60 tick
 | A5 | 同 seed+config → 同 attack-tick 序列 | 攻击于 tick 2/182/362 |
 
 **回归**:engine-two-way-fight 不变(其 grunt 无 aiConfig → 回退 DEFAULT_MONSTER_AI_CONFIG = 旧 200/80/60 硬编码值,行为等价)。**诚实边界**:attackRange 仍是 local_baseline(PVF 无标量),warlike roll(命中概率)仍 P4 defer(EnemyAISystem 注释已标),weight/hitRecovery 真值已可得但当前 AI 决策未消费(留后续)。
+
+## 九、hitstun 真值化：受击方 hitRecovery 驱动（2026-06-06）
+
+ReactionResolver 原用 `DEFAULT_HITSTUN_MS=600`(标 "local_baseline — swordman-attacks.json has no hitstun field")。**真值修正**:hitstun 不是攻击方属性而是**受击方属性**——swordman `chr.growth.hitRecovery` base=600ms（死值其实就是它）/ goblin `mob.hitRecovery`=500ms。守护:`tests/static/engine-hitstun-truth.test.ts`(H1-H4)+ consistency `maturity/p4-engine-hitstun`。
+
+**真值来源**:
+| 受击方 | 字段 | 置信度 | 值 |
+|---|---|---|---|
+| swordman | `chr.growth.hitRecovery.values[0]` | PVF | 600ms（= 旧死值,玩家行为不变）|
+| goblin | `mob.hitRecovery.values[0]` | PVF tier3 | 500ms（怪物恢复更快,真值驱动变化）|
+
+attack1 无 hitstun 字段(`causesStun` 是 stun **状态**布尔,非硬直时长)→ 确认 hitstun 归属受击方,非攻击。
+
+**实装**:ActorStats 加 `hitRecovery?: number` + statsFromPlayerShard(growth.hitRecovery)/statsFromMonsterShard(mob.hitRecovery)/GOBLIN_TRUTH 镜像提取;ReactionResolver `hitstunMs = flags.hitstunMs ?? defender.stats.hitRecovery ?? DEFAULT_HITSTUN_MS`(DEFAULT 降为最终 fallback)。
+
+| 测试 | 验证 | 实测 |
+|---|---|---|
+| H1 | stat 来源 | swordman 600ms / goblin 500ms |
+| H2 | 反应用受击方 hitRecovery | goblin 500ms→30tick |
+| H3 | 受击方区分 | 500ms 比 600ms 先恢复(tick31 fast 清 slow 未清)|
+| H4 | fallback + flags 覆盖 | 无 stat→600;flags.hitstunMs 优先 |
+
+**回归**:engine-combat-loop/airborne/two-way-fight 全 PASS(goblin 600→500ms 在松界限内,确定性测试同 config 仍等价)。**意义**:把第三节缺口表里的 "hitstun 真值"(原标 "PVF 不含,诚实保留 600ms local_baseline")**升级为 PVF tier3 真值**——原判断"PVF 不含"有误:attacks 不含,但受击方 chr/mob 的 hitRecovery 含。

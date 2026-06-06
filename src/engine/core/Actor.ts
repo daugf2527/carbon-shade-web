@@ -27,6 +27,9 @@ export interface ActorStats {
   /** MP regenerated per MINUTE (PVF chr.growth.mpRegenSpeed; 08-Resource). Omit/0 = no regen
    *  (monsters, test dummies). Optional so inline ActorStats constructions stay terse. */
   readonly mpRegenSpeed?: number;
+  /** Hit-stun duration in ms when this actor is hit (PVF: swordman chr.growth.hitRecovery base
+   *  600ms, goblin mob.hitRecovery 500ms). Read by ReactionResolver. Omit → DEFAULT_HITSTUN_MS. */
+  readonly hitRecovery?: number;
 }
 
 /** Extract level-1 base value from a growth array field. */
@@ -54,6 +57,7 @@ export function statsFromPlayerShard(chr: Record<string, unknown>): ActorStats {
     physicalAttack: growthBase(growth?.physicalAttack),
     physicalDefense: growthBase(growth?.physicalDefense),
     mpRegenSpeed: growthBase(growth?.mpRegenSpeed), // PVF mp/min (swordman base 50)
+    hitRecovery: growthBase(growth?.hitRecovery),   // PVF hit-stun ms (swordman base 600)
   };
 }
 
@@ -96,6 +100,7 @@ const GOBLIN_TRUTH = {
     },
   },
   moveSpeed: { values: [350, 350] },
+  hitRecovery: { values: [500, 500] }, // PVF mob.hitRecovery ms (goblinthrower.mob, tier3)
 };
 
 export function statsFromMonsterShard(mob: Record<string, unknown>): ActorStats {
@@ -114,6 +119,7 @@ export function statsFromMonsterShard(mob: Record<string, unknown>): ActorStats 
     physicalAttack: applyEntry(GOBLIN_BASE.physicalAttack, cat["equipment_physical_attack"]),
     physicalDefense: applyEntry(GOBLIN_BASE.physicalDefense, cat["equipment_physical_defense"]),
     mpRegenSpeed: 0, // monsters don't regen MP
+    hitRecovery: scalarVal(mob.hitRecovery as never) || undefined, // PVF mob.hitRecovery ms (goblin 500)
   };
 }
 

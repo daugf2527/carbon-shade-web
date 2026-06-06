@@ -62,7 +62,7 @@ export interface AtkFlags {
   readonly hitstunMs?: number;
 }
 
-const DEFAULT_HITSTUN_MS = 600; // local_baseline — swordman-attacks.json has no hitstun field
+const DEFAULT_HITSTUN_MS = 600; // fallback only — real hitstun = defender.stats.hitRecovery (PVF)
 const TICK_MS = 1000 / 60;
 
 // ── PVF velocity stub coefficients (D9=B stub, ported verbatim from combat) ──────
@@ -147,7 +147,12 @@ export function applyHitReaction(
 ): ReactionState {
   defender.hp = Math.max(0, defender.hp - damage);
 
-  const hitstunTicks = Math.round((flags.hitstunMs ?? DEFAULT_HITSTUN_MS) / TICK_MS);
+  // Hitstun duration = the DEFENDER's hit-recovery (PVF truth: swordman chr.growth.hitRecovery
+  // base 600ms, goblin mob.hitRecovery 500ms — hitstun is a property of who's hit, not the attack;
+  // swordman-attacks.json carries no hitstun field). flags.hitstunMs overrides (synthetic anims);
+  // DEFAULT_HITSTUN_MS is the final fallback for actors with no hitRecovery stat.
+  const hitstunMs = flags.hitstunMs ?? defender.stats.hitRecovery ?? DEFAULT_HITSTUN_MS;
+  const hitstunTicks = Math.round(hitstunMs / TICK_MS);
 
   // Route: prefer PVF hitReaction string; fall back to legacy bools for old callers.
   const kind: ReactionKind = flags.hitReaction
