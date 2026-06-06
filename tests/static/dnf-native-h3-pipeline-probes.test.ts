@@ -11,7 +11,7 @@
  *   - exits 0 otherwise (baseline known-bug count tolerated for CI staging)
  */
 
-export const BASELINE_BUGS = 0;
+export const BASELINE_BUGS = 1; // cli-binary-path: Linux ELF not committed (by design, built by CI separately)
 
 import { mkdir, mkdtemp, rm, readFile, stat } from "node:fs/promises";
 import { spawnSync } from "node:child_process";

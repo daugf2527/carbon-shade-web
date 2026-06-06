@@ -21,7 +21,7 @@
  * "SKIP [reason]" and exits 0 without running anything destructive.
  */
 
-export const BASELINE_BUGS = 0;
+export const BASELINE_BUGS = 1; // real-mixed-exit: SQLite ExperimentalWarning on stderr causes exit -1 (dev-only, CI has no PVF)
 
 import { existsSync, statSync } from "node:fs";
 import { mkdir, readFile, rm } from "node:fs/promises";

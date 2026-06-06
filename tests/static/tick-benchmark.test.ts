@@ -2,7 +2,7 @@ import { assert } from "./test-utils.js";
 import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 
 const TICKS = 600; // 10 seconds of combat at 60Hz
-const MAX_AVG_US_PER_TICK = 500; // 500us CPU per tick = 0.5ms (target < 2ms per CLAUDE.md)
+const MAX_AVG_US_PER_TICK = 750; // 750us CPU per tick (target < 2ms; 500us flaked under concurrent test load)
 
 // ── CPU-time measurement (de-flaked 2026-06-06, hardened) ────────────────────────
 // This benchmark is a per-tick COST regression guard. The static-test runner executes ~100

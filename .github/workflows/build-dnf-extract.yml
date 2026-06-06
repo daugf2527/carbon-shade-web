@@ -39,6 +39,7 @@ jobs:
           tools/dnf-porting-src/build/dnf-extract.exe --pvf C:\nonexistent.pvf --file foo.ani
           if ($LASTEXITCODE -eq 0) { Write-Error "expected non-zero exit on missing PVF, got 0"; exit 1 }
           Write-Host "OK: missing PVF exits $LASTEXITCODE"
+          exit 0
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
