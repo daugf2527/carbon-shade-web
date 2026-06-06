@@ -6,7 +6,7 @@
  */
 
 export type DirInput = "left" | "right" | "up" | "down" | "none";
-export type ButtonInput = "attack" | "skill" | "jump" | "none";
+export type ButtonInput = "attack" | "skill" | "jump" | "buff" | "none";
 
 export interface RawInput {
   dir: DirInput;

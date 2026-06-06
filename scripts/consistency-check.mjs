@@ -684,6 +684,22 @@ checks.push({
     : `水平击退退化:期望 KnockbackPhysics 纯逻辑 + ReactionResolver 接 pushAside + x 入 hash,实得 pure=${knockbackPure} wired=${knockbackWired} xInHash=${xInHash}`,
 });
 
+// 30. skill-action infra §1 — tick-based command 匹配核心(命令序列 PVF 真值解析 + 匹配)
+const cmdMatcherSrc = readTextSafe(join(ROOT, "src/engine/input/CommandMatcher.ts")) || "";
+const cmdMatcherPure = /export function parseCommand/.test(cmdMatcherSrc)
+  && /export function matchCommand/.test(cmdMatcherSrc)
+  && /COMMAND_WINDOW_TICKS/.test(cmdMatcherSrc);
+checks.push({
+  name: "maturity/skill-action-command-matcher",
+  claimSite: "skill-action infra §1 (skill command PVF) + changelog",
+  claim: "tick-based command 序列解析(, 序列/& 同时)+ 匹配纯逻辑(命令窗口 tick 化,非墙钟 InputCommand)",
+  truthSite: "src/engine/input/CommandMatcher.ts + tests/static/engine-command-matcher.test.ts",
+  truth: `pure=${cmdMatcherPure}`,
+  drift: cmdMatcherPure
+    ? null
+    : `command-matcher 退化:期望 parseCommand + matchCommand + COMMAND_WINDOW_TICKS(tick-based),实得 pure=${cmdMatcherPure}`,
+});
+
 // ── 评估 drift ──────────────────────────────────────────────────────────
 for (const c of checks) {
   if (c.drift !== undefined) {
