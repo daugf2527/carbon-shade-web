@@ -29,6 +29,7 @@ export class MovementSystem implements EngineSystem {
     for (const actor of ctx.actors) {
       if (actor.isDead) continue;
       if (!MOBILE_STATES.has(actor.fsm.state)) continue;
+      if (actor.airborne?.active) continue;
       const dir = actor.intent.dir;
       if (dir === 0) continue;
       actor.x += dir * actor.stats.moveSpeed * dt;

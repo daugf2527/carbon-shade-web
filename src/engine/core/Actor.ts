@@ -36,6 +36,9 @@ export interface ActorStats {
   /** Hit-stun duration in ms when this actor is hit (PVF: swordman chr.growth.hitRecovery base
    *  600ms, goblin mob.hitRecovery 500ms). Read by ReactionResolver. Omit → DEFAULT_HITSTUN_MS. */
   readonly hitRecovery?: number;
+  /** Jump launch velocity (PVF chr.jumpPower, swordman=430, unit ambiguous — see truth-coverage-matrix).
+   *  Omit/0 → actor cannot jump. Monsters generally don't jump. */
+  readonly jumpPower?: number;
 }
 
 /** Extract level-1 base value from a growth array field. */
@@ -64,6 +67,7 @@ export function statsFromPlayerShard(chr: Record<string, unknown>): ActorStats {
     physicalDefense: growthBase(growth?.physicalDefense),
     mpRegenSpeed: growthBase(growth?.mpRegenSpeed), // PVF mp/min (swordman base 50)
     hitRecovery: growthBase(growth?.hitRecovery),   // PVF hit-stun ms (swordman base 600)
+    jumpPower: scalarVal(chr.jumpPower as never),   // PVF launch velocity (swordman 430)
   };
 }
 
