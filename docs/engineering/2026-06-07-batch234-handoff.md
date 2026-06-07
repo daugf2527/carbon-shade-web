@@ -19,10 +19,17 @@
 | Batch | 内容 | 状态 |
 |-------|------|------|
 | 1 | 枚举折叠真值修 | ✅ 结论**跳过**（attackLevel PVF 0/81 没提取，伪真值修不做；causesDown 已用对，击退物理已在） |
-| 2 | hitstop 命中停帧 | ✅ **完成** (commit `83a0abe`) — 4 测试补注册 HitStopSystem，115 静态全绿 0 回归，diag 已删 |
-| 3 | superArmor + i-frame | ⬜ pending（蓝本+步骤见 §4） |
-| 4 | combo counter | ⬜ pending（§5） |
-| 5 | slot 路由 + 字段清理 | ⬜ pending（§6） |
+| 2 | hitstop 命中停帧 | ✅ **完成** (commit `83a0abe`，已推 CI 绿) — 4 测试补注册 HitStopSystem，diag 已删 |
+| 3 | superArmor + i-frame | ✅ **完成** (3a `cd0fec8` armor + 3b `633e8e2` i-frame 统一 invulnerableUntilTick) |
+| 4 | combo counter | ✅ **完成** (`e47a3fd` ComboPressure 压力衰减，命名避开现有 snap ComboCorrection) |
+| 5 | slot 路由 + 字段清理 | ✅ **完成** (`1c07f70` 确认 slot 路由 L3 数据缺，未消费字段登记 scope 外) |
+| 6 | route-B 实测真值 harness | ⏸️ **需用户决策**（搭 DNF 客户端抓帧逆向 launch/hitstun 真值系数，plan 决策点#1）—— 暂跳过 |
+
+> **2026-06-07 续会话完成 Batch 2-5（route-A 全部）**：所有 local_baseline 机制移植落地，每 Batch 独立
+> commit + pre-commit(typecheck+static) + 手动 analyze 8 门绿。118 静态测试全绿 0 回归。Batch 2 已推 CI 绿；
+> 3a/3b/4/5 共 4 commit 本地完成，因网络瞬时故障(直连 reset + 47890 上游不通)未推，已挂 Monitor 自动重推。
+> Batch 6 是 route-B(实测真值)，plan 明确"需用户确认是否搭 DNF 客户端 harness"，按诚实纪律暂跳过等决策。
+
 
 ## 2. ⚠️ 全局诚实纪律（必守，前几轮踩过坑）
 - hitstop/armor/combo 的**数值**全是 **local_baseline**（DNF.exe 硬编码，PVF 拿不到）。commit/注释**不准写"真值化"**，只能写"机制移植，值 local_baseline + requiresManualVerification"。
