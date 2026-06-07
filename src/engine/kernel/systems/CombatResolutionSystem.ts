@@ -114,9 +114,10 @@ export class CombatResolutionSystem implements EngineSystem {
         const atkBonus = atk?.damageBonus == null ? 1.0 : 1 + atk.damageBonus.value / 100;
         const damageScalePct = weaponInfo?.damageScalePct ?? 100;
         const baseDmg = calcPhysicalDamage({
-          attackerPhysAtk: attacker.stats.physicalAttack,
+          // Equipment (C2): flat weapon-atk / armor-def fold into the damage totals (local_baseline).
+          attackerPhysAtk: attacker.stats.physicalAttack + attacker.equipment.weaponPhysAtk,
           atkBonus,
-          defenderPhysDef: defender.stats.physicalDefense,
+          defenderPhysDef: defender.stats.physicalDefense + defender.equipment.armorPhysDef,
           damageScalePct,
         });
         // Combo decay (Batch 4): repeated hits on the same target do less damage. damageScale reflects

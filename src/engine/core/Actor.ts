@@ -6,6 +6,7 @@ import { ActorState, ActorStateMachine } from "./ActorStateMachine.js";
 import type { AirborneState } from "./AirbornePhysicsSystem.js";
 import { type ArmorProfile, NONE_ARMOR } from "./ArmorProfile.js";
 import { type ComboState, createComboState } from "./ComboPressure.js";
+import { type EquipmentStats, NO_EQUIPMENT } from "./Equipment.js";
 import { AnimationPlayer } from "./AnimationPlayer.js";
 import type { KnockbackState } from "./KnockbackPhysics.js";
 import type { MonsterAIConfig } from "./MonsterAIConfig.js";
@@ -209,6 +210,9 @@ export class Actor {
   /** Combo pressure (Batch 4): per-defender — repeated hits raise the gauge, reducing this target's
    *  damage taken (damageScale) + launch (launchResistance). Decayed by ComboSystem. local_baseline. */
   combo: ComboState = createComboState();
+  /** Equipment stat bonus (Stage 4C-C2): flat weapon-atk / armor-def folded into the damage chain.
+   *  Default NO_EQUIPMENT (no bonus) → zero regression. local_baseline values (no item parser). */
+  equipment: EquipmentStats = NO_EQUIPMENT;
   /** Active buff list (P3.1 placeholder — engine has no buff system yet). */
   buffs: Array<{ type: string; stacks: number; expiresAtTick: number }> = [];
 
