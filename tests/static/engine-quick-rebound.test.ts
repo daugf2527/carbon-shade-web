@@ -42,7 +42,7 @@ function makeKernel(): { kernel: EngineKernel; downSystem: DownSystem } {
 
   assert.equal(p.fsm.state, ActorState.IDLE, "Q1 quick rebound → IDLE");
   assert.equal(p.reaction, null, "Q1 reaction cleared");
-  assert.ok(p.hitImmune, "Q1 getup immunity active");
+  assert.ok(p.isInvulnerable(k.tickCount), "Q1 getup immunity active");
   console.log("Q1 OK: quick rebound → instant IDLE + immunity");
 }
 
@@ -54,7 +54,7 @@ function makeKernel(): { kernel: EngineKernel; downSystem: DownSystem } {
   p.intent = { attack: false, dir: 0, quickRebound: true };
   k.tick();
   assert.equal(p.fsm.state, ActorState.IDLE, "Q2 already IDLE, stays IDLE");
-  assert.ok(!p.hitImmune, "Q2 no immunity (wasn't down)");
+  assert.ok(!p.isInvulnerable(k.tickCount), "Q2 no immunity (wasn't down)");
   console.log("Q2 OK: quickRebound ignored when not DOWN");
 }
 
@@ -96,7 +96,7 @@ function makeKernel(): { kernel: EngineKernel; downSystem: DownSystem } {
     k.tick();
     p.intent = { attack: false, dir: 0, quickRebound: true };
     k.tick();
-    return `${p.fsm.state}_immune=${p.hitImmune}`;
+    return `${p.fsm.state}_immune=${p.isInvulnerable(k.tickCount)}`;
   }
   assert.equal(runRebound(), runRebound(), "Q4 determinism");
   console.log("Q4 OK: quick rebound deterministic");

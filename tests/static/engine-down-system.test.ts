@@ -42,7 +42,7 @@ function makeKernel(): { kernel: EngineKernel; downSystem: DownSystem } {
   return { kernel: k, downSystem: ds };
 }
 
-// D1: getup immunity — after DOWN→IDLE transition, hitImmune is set
+// D1: getup immunity — after DOWN→IDLE transition, the actor is i-framed
 {
   const { kernel: k, downSystem: ds } = makeKernel();
   const enemy = k.actors.find(a => a.id === "grunt")!;
@@ -55,7 +55,7 @@ function makeKernel(): { kernel: EngineKernel; downSystem: DownSystem } {
   enemy.fsm.force(ActorState.IDLE, k.tickCount);
   k.tick(); // DownSystem detects DOWN→IDLE, sets getup immunity
 
-  assert.ok(enemy.hitImmune, "D1 getup immunity active");
+  assert.ok(enemy.isInvulnerable(k.tickCount), "D1 getup immunity active");
   console.log("D1 OK: getup immunity active after standing up");
 }
 
@@ -71,7 +71,7 @@ function makeKernel(): { kernel: EngineKernel; downSystem: DownSystem } {
 
   // Tick 31 times (30 immunity + 1 for the getup tick itself)
   for (let i = 0; i < 31; i++) k.tick();
-  assert.ok(!enemy.hitImmune, "D2 immunity expired after 31 ticks");
+  assert.ok(!enemy.isInvulnerable(k.tickCount), "D2 immunity expired");
   console.log("D2 OK: getup immunity expired after ~30 ticks");
 }
 
@@ -114,16 +114,15 @@ function makeKernel(): { kernel: EngineKernel; downSystem: DownSystem } {
   console.log("D4 OK: down protection granted after 3 consecutive knockdowns");
 }
 
-// D5: hitImmune blocks CombatResolutionSystem hits
+// D5: invulnerableUntilTick is a half-open [now, deadline) i-frame window
 {
   const { kernel: k } = makeKernel();
   const enemy = k.actors.find(a => a.id === "grunt")!;
-  const startHp = enemy.hp;
-
-  enemy.hitImmune = true;
-  // Even if we set up an attack scenario, the immune flag should block
-  assert.equal(enemy.hp, startHp, "D5 immune → no damage");
-  console.log("D5 OK: hitImmune flag is respected (unit-level)");
+  enemy.invulnerableUntilTick = k.tickCount + 10;
+  assert.ok(enemy.isInvulnerable(k.tickCount), "D5 invulnerable inside window");
+  assert.ok(!enemy.isInvulnerable(k.tickCount + 10), "D5 vulnerable at deadline (exclusive)");
+  assert.ok(!enemy.isInvulnerable(k.tickCount + 99), "D5 vulnerable past deadline");
+  console.log("D5 OK: invulnerableUntilTick window half-open [now, deadline)");
 }
 
 console.log("\n✅ DownSystem (Stage 4B-B1) all tests passed");

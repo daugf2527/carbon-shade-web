@@ -193,8 +193,11 @@ export class Actor {
   currentActionName: string | null = null;
   /** Locomotion state for render layer: idle/walk/run. Set by MovementSystem. */
   locomotion: "idle" | "walk" | "run" = "idle";
-  /** Hit immunity flag. Set by DownSystem during getup invincibility. CombatResolutionSystem skips hits. */
-  hitImmune = false;
+  /** Invulnerability deadline (exclusive tick). While tickCount < invulnerableUntilTick the actor is
+   *  i-framed: CombatResolutionSystem skips all hits on it. 0 = vulnerable. Granted by DownSystem
+   *  (getup + quick-rebound) — a unified tick-based i-frame any system can set (Stage 4C Batch 3b,
+   *  replaces the old hitImmune bool). local_baseline durations. */
+  invulnerableUntilTick = 0;
   /** Hit-stop freeze frames remaining (命中停帧). >0 = time paused for this actor: all systems skip
    *  advancing it (animation/movement/gravity/hitstun/DOT/AI). HitStopSystem decrements at tick end.
    *  Per-actor work-state like reaction/airborne; folds into stateHash when >0. local_baseline frames. */
@@ -217,5 +220,10 @@ export class Actor {
 
   get isDead(): boolean {
     return this.hp <= 0;
+  }
+
+  /** True while the actor is i-framed (tickCount < invulnerableUntilTick), so hits are skipped. */
+  isInvulnerable(tick: number): boolean {
+    return tick < this.invulnerableUntilTick;
   }
 }

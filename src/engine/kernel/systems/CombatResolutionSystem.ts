@@ -79,7 +79,7 @@ export class CombatResolutionSystem implements EngineSystem {
       }
       for (const defender of ctx.actors) {
         if (defender.id === attacker.id || defender.isDead) continue;
-        if (defender.hitImmune) continue;
+        if (defender.isInvulnerable(ctx.tickCount)) continue;
         if (group.has(defender.id)) continue; // already hit by this attack
         const defFrame = defender.animationPlayer.currentFrame;
         const dmgBoxes = defFrame?.damageBoxes?.length ? defFrame.damageBoxes : DEFAULT_BODY_BOX;

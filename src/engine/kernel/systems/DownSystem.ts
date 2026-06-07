@@ -33,7 +33,6 @@ const QUICK_REBOUND_COOLDOWN = 300; // ~5s between quick rebounds
 interface DownState {
   downCount: number;
   lastDownTick: number;
-  getupImmunityRemaining: number;
   downProtectionRemaining: number;
   wasDown: boolean;
   lastQuickReboundTick: number;
@@ -48,7 +47,7 @@ export class DownSystem implements EngineSystem {
   private getState(actorId: string): DownState {
     let s = this.states.get(actorId);
     if (!s) {
-      s = { downCount: 0, lastDownTick: -999, getupImmunityRemaining: 0, downProtectionRemaining: 0, wasDown: false, lastQuickReboundTick: -999 };
+      s = { downCount: 0, lastDownTick: -999, downProtectionRemaining: 0, wasDown: false, lastQuickReboundTick: -999 };
       this.states.set(actorId, s);
     }
     return s;
@@ -64,14 +63,8 @@ export class DownSystem implements EngineSystem {
 
       // Tick down protection timer
       if (ds.downProtectionRemaining > 0) ds.downProtectionRemaining--;
-
-      // Tick getup immunity
-      if (ds.getupImmunityRemaining > 0) {
-        ds.getupImmunityRemaining--;
-        actor.hitImmune = true;
-      } else {
-        actor.hitImmune = false;
-      }
+      // getup / quick-rebound i-frames are a tick-deadline (actor.invulnerableUntilTick) that
+      // auto-expires against ctx.tickCount — no per-tick projection needed here (Batch 3b).
 
       // Detect transition INTO down
       if (isDown && !ds.wasDown) {
@@ -94,16 +87,14 @@ export class DownSystem implements EngineSystem {
             actor.reaction = null;
           }
           actor.fsm.force(ActorState.IDLE, tick);
-          ds.getupImmunityRemaining = GETUP_IMMUNITY_TICKS;
-          actor.hitImmune = true;
+          actor.invulnerableUntilTick = tick + GETUP_IMMUNITY_TICKS;
           ctx.bus.emit("QuickRebound", { actorId: actor.id });
         }
       }
 
       // Detect transition OUT of down (getup)
       if (!isDown && ds.wasDown) {
-        ds.getupImmunityRemaining = GETUP_IMMUNITY_TICKS;
-        actor.hitImmune = true;
+        actor.invulnerableUntilTick = tick + GETUP_IMMUNITY_TICKS;
         ctx.bus.emit("ActorGetup", { actorId: actor.id, immunityTicks: GETUP_IMMUNITY_TICKS });
       }
 
