@@ -20,6 +20,7 @@ import { calcPhysicalDamage } from "../../core/DamageFormula.js";
 import { detectHit } from "../../core/HitDetection.js";
 import { applyHitReaction } from "../../core/ReactionResolver.js";
 import { applyHitStop, hitStopFor } from "../../core/HitStop.js";
+import { applyComboFromHit } from "../../core/ComboPressure.js";
 import type { ReactionState, AtkFlags, HitReaction } from "../../core/ReactionResolver.js";
 import type { EngineContext } from "../EngineContext.js";
 import type { EngineSystem } from "../EngineSystem.js";
@@ -106,12 +107,18 @@ export class CombatResolutionSystem implements EngineSystem {
         // shard (combat never consumed damageBonus, so there is no first-evidence to mirror).
         const atkBonus = atk?.damageBonus == null ? 1.0 : 1 + atk.damageBonus.value / 100;
         const damageScalePct = weaponInfo?.damageScalePct ?? 100;
-        const dmg = calcPhysicalDamage({
+        const baseDmg = calcPhysicalDamage({
           attackerPhysAtk: attacker.stats.physicalAttack,
           atkBonus,
           defenderPhysDef: defender.stats.physicalDefense,
           damageScalePct,
         });
+        // Combo decay (Batch 4): repeated hits on the same target do less damage. damageScale reflects
+        // the pressure from hits 1..N-1 (accumulated AFTER applyHitReaction below), so the FIRST hit
+        // lands at scale=1 — single-hit truth tests are byte-identical (only scaled when <1).
+        const dmg = defender.combo.damageScale < 1
+          ? Math.max(1, Math.round(baseDmg * defender.combo.damageScale))
+          : baseDmg;
         // Reaction (PVF truth): route from atk hitReaction; fall back to AniDef attackLiftVy for
         // synthetic animations carrying no swordman actionName. applyHitReaction sets
         // defender.airborne internally (cohesive with hp/fsm), so no separate launchAirborne here.
@@ -135,6 +142,9 @@ export class CombatResolutionSystem implements EngineSystem {
           flags = {};
         }
         defender.reaction = applyHitReaction(defender, flags, dmg, ctx.tickCount);
+        // Combo pressure (Batch 4): fold THIS hit into the defender's gauge so the NEXT hit on it
+        // decays (damage + launch). Per-defender accumulation; ComboSystem (CLEANUP) resets on drop.
+        applyComboFromHit(defender.combo, defender.reaction.kind, atk?.attackLevel ?? 1);
         // Hit-stop (命中停帧): freeze attacker + defender on the hit (local_baseline frames).
         // Defender freeze ≈ 1.5× attacker (DNF victim hangs longer). Armor (Batch 3) caps the
         // freeze: hitting a super-armored/boss/building target gives a shorter "thunk" (cap=3/2/1).

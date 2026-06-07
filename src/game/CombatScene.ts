@@ -30,6 +30,7 @@ import { MovementSystem } from "../engine/kernel/systems/MovementSystem.js";
 import { JumpSystem } from "../engine/kernel/systems/JumpSystem.js";
 import { DownSystem } from "../engine/kernel/systems/DownSystem.js";
 import { HitStopSystem } from "../engine/kernel/systems/HitStopSystem.js";
+import { ComboSystem } from "../engine/kernel/systems/ComboSystem.js";
 import { monsterStatsAtLevel } from "../engine/core/MonsterScaling.js";
 
 interface ActorSnapshot {
@@ -163,6 +164,7 @@ export class CombatScene extends Phaser.Scene {
     this.kernel.registerSystem(new AirborneSystem());           // CLEANUP phase: gravity + ground
     this.kernel.registerSystem(new KnockbackSystem());          // CLEANUP phase: horizontal knockback slide
     this.kernel.registerSystem(new StatusSystem());             // CLEANUP phase: bleed DOT (09-Status)
+    this.kernel.registerSystem(new ComboSystem());              // CLEANUP phase: combo pressure decay (Batch 4)
     this.kernel.registerSystem(new ResourceSystem());           // LOGIC phase: MP regen + cooldown (08-Resource)
     this.kernel.registerSystem(new HitStopSystem());            // FLUSH phase: decrement hit-stop freeze (last)
 

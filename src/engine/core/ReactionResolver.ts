@@ -203,6 +203,9 @@ export function applyHitReaction(
     const liftUpValue = flags.liftUpValue ?? 0;
     const weaponLaunch = flags.weaponLaunch ?? 0;
     launchVy = computeLaunchVy(liftUpValue, weaponLaunch, defender.stats.weight);
+    // Combo (Batch 4): a juggled target resists launch — divide by launchResistance (1 on the first
+    // aerial hit, climbs with airGauge). Single-launch tests have launchResistance=1 → unchanged.
+    launchVy = launchVy / defender.combo.launchResistance;
     if (launchVy > 0 && defender.hp > 0) {
       // Set airborne inside the resolver (cohesive with hp/fsm mutation here) so the
       // integrator no longer needs its own launchAirborne() call.
