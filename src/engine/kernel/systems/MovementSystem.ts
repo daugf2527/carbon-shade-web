@@ -1,21 +1,26 @@
 /**
- * MovementSystem.ts — horizontal + depth + dash movement domain system (Stage 4A).
+ * MovementSystem.ts — horizontal + depth + dash movement domain system (Stage 4A/4C).
  *
- * Reads actor.intent.dir (X axis) and intent.zDir (Z depth axis). Applies
- * stats.moveSpeed as displacement; Z speed halved (DNF convention).
+ * Movement velocity derived from PVF truth (dnfPhysicsConstants.ts):
+ *   xVelocity = xNormalMoveVelocity × chrMoveSpeed / speedValueDefault
+ *   zVelocity = yNormalMoveVelocity × chrMoveSpeed / speedValueDefault
+ *
+ * PVF constants: xNormalMoveVelocity=143, yNormalMoveVelocity=114, speedValueDefault=1000.
+ * Swordman moveSpeed=850 → xVel=121.55 px/s, zVel=96.9 px/s (Z/X ratio = 0.797, not 0.5).
  *
  * Dash: double-tap same horizontal direction within DOUBLE_TAP_WINDOW ticks
- * → speed × DASH_SPEED_RATIO while held. Detection is edge-based: tracks
- * dir transitions (0→±1) as "taps" rather than continuous held state.
+ * → speed × DASH_SPEED_RATIO while held. Detection is edge-based.
  *
  * Phase INPUT, registered AFTER InputSystem (so facing is already updated).
  * Determinism: pure tick-count based, no wall-clock.
  */
 import { ActorState } from "../../core/ActorStateMachine.js";
+import { DNF_PHYSICS_CONSTANTS } from "../../../data/official/dnfPhysicsConstants.js";
 import type { EngineContext } from "../EngineContext.js";
 import type { EngineSystem } from "../EngineSystem.js";
 
-const Z_SPEED_RATIO = 0.5;
+const { xNormalMoveVelocity, yNormalMoveVelocity, speedValueDefault } = DNF_PHYSICS_CONSTANTS;
+
 const DASH_SPEED_RATIO = 1.6;
 const DOUBLE_TAP_WINDOW = 12; // ticks (~200ms at 60Hz)
 
@@ -60,8 +65,6 @@ export class MovementSystem implements EngineSystem {
       const dir = actor.intent.dir;
       const zDir = actor.intent.zDir ?? 0;
       const ds = this.getDash(actor.id);
-
-      // Edge detection: rising edge from 0 to ±1
       const isRisingEdge = dir !== 0 && ds.prevDir === 0;
 
       if (actor.kind === "player") {
@@ -79,11 +82,14 @@ export class MovementSystem implements EngineSystem {
 
       ds.prevDir = dir;
 
-      const speedMul = ds.running ? DASH_SPEED_RATIO : 1;
-      const speed = actor.stats.moveSpeed * speedMul;
+      // PVF truth: velocity = normalVelocity × chrMoveSpeed / speedValueDefault
+      const chrSpeed = actor.stats.moveSpeed; // PVF raw value (e.g. 850 for swordman)
+      const xVel = xNormalMoveVelocity * chrSpeed / speedValueDefault;
+      const zVel = yNormalMoveVelocity * chrSpeed / speedValueDefault;
+      const dashMul = ds.running ? DASH_SPEED_RATIO : 1;
 
-      if (dir !== 0) actor.x += dir * speed * dt;
-      if (zDir !== 0) actor.z += zDir * actor.stats.moveSpeed * Z_SPEED_RATIO * dt;
+      if (dir !== 0) actor.x += dir * xVel * dashMul * dt;
+      if (zDir !== 0) actor.z += zDir * zVel * dashMul * dt;
 
       actor.locomotion = dir === 0 && zDir === 0 ? "idle" : ds.running ? "run" : "walk";
     }

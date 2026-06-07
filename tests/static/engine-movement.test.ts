@@ -11,6 +11,12 @@ import { MovementSystem } from "../../src/engine/kernel/systems/MovementSystem.j
 import { InputSystem } from "../../src/engine/kernel/systems/InputSystem.js";
 import { ActionSystem } from "../../src/engine/kernel/systems/ActionSystem.js";
 import { AnimationSystem } from "../../src/engine/kernel/systems/AnimationSystem.js";
+import { DNF_PHYSICS_CONSTANTS } from "../../src/data/official/dnfPhysicsConstants.js";
+
+const { xNormalMoveVelocity, yNormalMoveVelocity, speedValueDefault } = DNF_PHYSICS_CONSTANTS;
+const MOVE_SPEED = 850; // PVF swordman chr.moveSpeed
+const X_VEL = xNormalMoveVelocity * MOVE_SPEED / speedValueDefault; // 121.55 px/s
+const Z_VEL = yNormalMoveVelocity * MOVE_SPEED / speedValueDefault; // 96.9 px/s
 
 const ATTACK_ANIM: AniDef = {
   framesCount: 4,
@@ -30,7 +36,7 @@ function makeKernel(): { kernel: EngineKernel; actions: ActionSystem } {
   k.registerSystem(new AnimationSystem());
 
   const player = new Actor("player", "player", {
-    hpMax: 180, mpMax: 140, moveSpeed: 300,
+    hpMax: 180, mpMax: 140, moveSpeed: MOVE_SPEED,
     physicalAttack: 45, physicalDefense: 7.5,
   });
   k.addActor(player, true);
@@ -44,7 +50,7 @@ function makeKernel(): { kernel: EngineKernel; actions: ActionSystem } {
   p.x = 100;
   p.intent = { attack: false, dir: 1 };
   k.tick();
-  const expected = 100 + 300 * (1 / 60); // 300 px/s × 1/60 s = 5 px
+  const expected = 100 + X_VEL * (1 / 60);
   assert.ok(
     Math.abs(p.x - expected) < 0.01,
     `M1 move right: expected x≈${expected.toFixed(2)}, got ${p.x.toFixed(2)}`,
@@ -59,7 +65,7 @@ function makeKernel(): { kernel: EngineKernel; actions: ActionSystem } {
   p.x = 200;
   p.intent = { attack: false, dir: -1 };
   k.tick();
-  const expected = 200 - 300 * (1 / 60);
+  const expected = 200 - X_VEL * (1 / 60);
   assert.ok(
     Math.abs(p.x - expected) < 0.01,
     `M2 move left: expected x≈${expected.toFixed(2)}, got ${p.x.toFixed(2)}`,
@@ -102,7 +108,7 @@ function makeKernel(): { kernel: EngineKernel; actions: ActionSystem } {
   p.x = 0;
   p.intent = { attack: false, dir: 1 };
   for (let i = 0; i < 10; i++) k.tick();
-  const expected = 10 * 300 / 60;
+  const expected = 10 * X_VEL / 60;
   assert.ok(
     Math.abs(p.x - expected) < 0.1,
     `M5 10-tick walk: expected x≈${expected.toFixed(1)}, got ${p.x.toFixed(1)}`,
@@ -138,14 +144,14 @@ function makeKernel(): { kernel: EngineKernel; actions: ActionSystem } {
   console.log("M7 OK: dead actor x unchanged");
 }
 
-// M8: Z-axis depth movement — zDir=1 → z increases at half moveSpeed
+// M8: Z-axis depth movement — zDir=1 → z increases at PVF yNormalMoveVelocity rate
 {
   const { kernel: k } = makeKernel();
   const p = k.player;
   p.z = 0;
   p.intent = { attack: false, dir: 0, zDir: 1 };
   k.tick();
-  const expected = 300 * 0.5 / 60; // 2.5 px
+  const expected = Z_VEL / 60;
   assert.ok(
     Math.abs(p.z - expected) < 0.01,
     `M8 z-move: expected z≈${expected.toFixed(2)}, got ${p.z.toFixed(2)}`,
@@ -160,10 +166,10 @@ function makeKernel(): { kernel: EngineKernel; actions: ActionSystem } {
   p.x = 0; p.z = 0;
   p.intent = { attack: false, dir: 1, zDir: -1 };
   for (let i = 0; i < 10; i++) k.tick();
-  const expectedX = 10 * 300 / 60; // 50
-  const expectedZ = -(10 * 300 * 0.5 / 60); // -25
-  assert.ok(Math.abs(p.x - expectedX) < 0.1, `M9 diagonal x: ${p.x.toFixed(1)} vs ${expectedX}`);
-  assert.ok(Math.abs(p.z - expectedZ) < 0.1, `M9 diagonal z: ${p.z.toFixed(1)} vs ${expectedZ}`);
+  const expectedX = 10 * X_VEL / 60;
+  const expectedZ = -(10 * Z_VEL / 60);
+  assert.ok(Math.abs(p.x - expectedX) < 0.1, `M9 diagonal x: ${p.x.toFixed(1)} vs ${expectedX.toFixed(1)}`);
+  assert.ok(Math.abs(p.z - expectedZ) < 0.1, `M9 diagonal z: ${p.z.toFixed(1)} vs ${expectedZ.toFixed(1)}`);
   console.log(`M9 OK: diagonal walk x=${p.x.toFixed(1)} z=${p.z.toFixed(1)}`);
 }
 
@@ -184,7 +190,7 @@ function makeKernel(): { kernel: EngineKernel; actions: ActionSystem } {
   const xBeforeDash = p.x;
   for (let i = 0; i < 5; i++) k.tick();
   const dashDistance = p.x - xBeforeDash;
-  const walkDistance = 5 * 300 / 60; // normal walk distance for 5 ticks
+  const walkDistance = 5 * X_VEL / 60;
   assert.ok(dashDistance > walkDistance * 1.4, `M10 dash faster: ${dashDistance.toFixed(1)} > ${(walkDistance * 1.4).toFixed(1)}`);
   assert.equal(p.locomotion, "run", "M10 locomotion = run");
   console.log(`M10 OK: dash speed ${dashDistance.toFixed(1)}px/5ticks vs walk ${walkDistance.toFixed(1)} (1.6x)`);
@@ -198,8 +204,8 @@ function makeKernel(): { kernel: EngineKernel; actions: ActionSystem } {
   p.intent = { attack: false, dir: 1 };
   for (let i = 0; i < 5; i++) k.tick();
   assert.equal(p.locomotion, "walk", "M11 locomotion = walk (single tap)");
-  const expectedX = 5 * 300 / 60;
-  assert.ok(Math.abs(p.x - expectedX) < 0.1, "M11 walk speed");
+  const expectedX = 5 * X_VEL / 60;
+  assert.ok(Math.abs(p.x - expectedX) < 0.5, "M11 walk speed");
   console.log(`M11 OK: single tap = walk (x=${p.x.toFixed(1)})`);
 }
 

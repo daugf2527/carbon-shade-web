@@ -173,13 +173,10 @@ export class CombatScene extends Phaser.Scene {
     // Two fields are deliberately OVERRIDDEN off the raw base — see truth-coverage-matrix.md:
     //   - physicalAttack: PVF base=7.5, LV70-sum=82.8 (ActorFactory's accumulation method). Either
     // PVF-truth stats at level 70 (target version: pre-Metastasis LV70 cap).
-    // statsFromPlayerShard now evaluates the full chr.growth curve at the given level.
-    // moveSpeed: PVF 850 is %xSPEED_VALUE_DEFAULT (a percent), not px/s; override to px baseline.
+    // statsFromPlayerShard evaluates chr.growth curve; moveSpeed is raw PVF value (850 = 85% of
+    // SPEED_VALUE_DEFAULT 1000). MovementSystem converts to px/s via xNormalMoveVelocity formula.
     const PLAYER_LEVEL = 70;
-    const playerStats = {
-      ...statsFromPlayerShard(SWORDMAN_TRUTH.chr as unknown as Record<string, unknown>, PLAYER_LEVEL),
-      moveSpeed: 300,     // px baseline; PVF moveSpeed=850 is %xSPEED_VALUE_DEFAULT (percent)
-    };
+    const playerStats = statsFromPlayerShard(SWORDMAN_TRUTH.chr as unknown as Record<string, unknown>, PLAYER_LEVEL);
     const playerActor = new Actor("player", "player", playerStats);
     playerActor.x = 390;
     this.kernel.addActor(playerActor, true);
