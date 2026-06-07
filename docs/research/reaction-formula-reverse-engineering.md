@@ -6,6 +6,17 @@
 **前置**: Stage 1 PVF 提取完成 + Stage 3 Phase A/B 真值化完成
 **关键约束**: reaction 物理参数大量是 `tier3` 真值（`unit=ms-or-multiplier`），需要靠**行为反推**而不是字段直读
 
+> ## ⚠️ 2026-06-08 更新：H2/H3 的 weightFactor 假设被 Tier-1 铁证推翻
+> 本文档 **H2/H3 假设 `weightFactor`（weight 参与 launch/击退减免）**，标的是 Tier-3 推测。
+> [`2026-05-21-dnf-air-physics-phase1.md`](2026-05-21-dnf-air-physics-phase1.md) 用 PVF
+> `/sqr/dnf_enum_header.nut` 韩文注释（**Tier-1 铁证，dnf-extract first-evidence**）证明：
+> **`chr.weight` 仅音效分类、不参与物理**（唯一 .nut 引用是 `sq_GetObjectWeight()` 音效判定），
+> 且 **`lift_up`/`push_aside` 是 px/s 力，直接传 `sq_SetCurrentAttacknUpForce/BackForce`**。
+> 按 CLAUDE.md 置信度铁律 **Tier-1 > Tier-3**，engine ReactionResolver 已删 weightFactor：
+> **vy = liftUp 直接**（attack3=300 → 峰高 `300²/(2·1500)` = 30px；旧 weightFactor 下错算成 14px，
+> 即本系列 research 标注的"峰高不合理"根因）。H2 的 `WEIGHT_THRESHOLD`/`MIN_FACTOR` 作废。
+> 守护见 `tests/static/engine-weight-launch.test.ts`（weight 不影响 vy）+ `engine-reaction-truth.test.ts`。
+
 ---
 
 ## 1. 反推目标

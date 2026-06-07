@@ -73,14 +73,12 @@ export interface AtkFlags {
 const DEFAULT_HITSTUN_MS = 600; // fallback only — real hitstun = defender.stats.hitRecovery (PVF)
 const TICK_MS = 1000 / 60;
 
-// ── PVF velocity weight-factor (D9=B partial) ──────
-// weightFactor = max(0.1, 1 - DEFENDER_weight / 150000). The DEFENDER weight is now PVF truth
-// (chr.weight 68000 / mob.weight 45000), passed in per-hit. The THRESHOLD 150000 + the formula
-// SHAPE are still research推测 (reaction-formula-reverse-engineering.md H2, range 100000-200000) —
-// requiresManualVerification. Fallback weight 68000 only when an actor has no weight stat.
-const WEIGHT_THRESHOLD = 150000;
-const MIN_WEIGHT_FACTOR = 0.1;
-const FALLBACK_WEIGHT = 68000; // swordman chr default, used only when defender.stats.weight absent
+// ── weight does NOT participate in launch/knockback physics (Tier-1 TRUTH) ──────
+// PVF /sqr/dnf_enum_header.nut (Korean comments, dnf-extract first-evidence — 2026-05-21 air-physics
+// Phase 1) proves chr.weight is an AUDIO classification key only: its sole .nut reference is
+// sq_GetObjectWeight() for sound selection; it is NOT read by the velocity loop. The earlier
+// weightFactor (reaction-formula H2, Tier-3 推测) is OVERTURNED — launch/knockback use the px/s
+// force directly (lift_up / push_aside → sq_SetCurrentAttacknUpForce/BackForce, also Tier-1).
 
 /** ReactionState.kind: airborne (launch) | down (knockdown) | stagger (hit_horizon) | hit (plain). */
 export type ReactionKind = "hit" | "down" | "airborne" | "stagger";
@@ -93,42 +91,28 @@ export interface ReactionState {
   launchVy: number;
 }
 
-/** weightFactor from DEFENDER weight (PVF truth). Heavier target → smaller factor → launches less.
- *  Threshold/shape still research推测 (D9=B); the weight VALUE is now real PVF per-entity. */
-function weightFactor(defenderWeight: number | undefined): number {
-  const w = defenderWeight && defenderWeight > 0 ? defenderWeight : FALLBACK_WEIGHT;
-  return Math.max(MIN_WEIGHT_FACTOR, 1 - w / WEIGHT_THRESHOLD);
+/**
+ * Compute vertical launch velocity from PVF truth (Tier-1): vy = liftUp × weaponLaunch (px/s).
+ * lift_up is the px/s force passed straight to sq_SetCurrentAttacknUpForce (Korean-comment closure),
+ * so it IS the initial vertical velocity. weaponHitInfo.launch is a per-slot multiplier (slot2=-0.95
+ * downward); every normal swordman combo routes to slot0 (launch=0), so the product is 0 → fall back
+ * to lift_up directly. attack3 liftUp=300 → vy=300 → peak = 300²/(2·1500) = 30px (matches air-physics
+ * Phase 1). NO weightFactor — chr.weight is audio-only (Tier-1); the old factor is overturned.
+ */
+function computeLaunchVy(liftUpValue: number, weaponLaunch: number): number {
+  const pvfProduct = liftUpValue * weaponLaunch;
+  // slot.launch=0 → fall back to lift_up body (truth, px/s), not a hardcoded constant.
+  return pvfProduct !== 0 ? pvfProduct : liftUpValue;
 }
 
 /**
- * Compute vertical launch velocity from PVF truth.
- * Main formula (ported from combat calculatePvfVelocity): vy = liftUp × weaponLaunch × weightFactor.
- *
- * ENGINE-LOCAL FALLBACK: every normal swordman combo routes to weaponHitInfo slot0 whose
- * `launch` is 0 (verified) — so the main formula yields vy=0 for all of them, which would
- * never actually launch the defender. The combat side hides this by falling back to a
- * ReactionProfiles constant (`profile.launchVelocityY`) when the PVF product is 0. The engine
- * has no ReactionProfiles; the honest engine-side equivalent is to fall back to the atk
- * `liftUp.value` itself, which is already a px/s vertical-velocity magnitude (the real driver
- * of launch height) rather than an invented constant. This keeps the formula truth-driven:
- * different liftUp values still produce different vy.
+ * Compute horizontal knockback velocity (signed px/s) from PVF truth (Tier-1):
+ *   velocityX = pushAside × pushBack × facing  (px/s, NO weightFactor — chr.weight is audio-only).
+ * We do NOT fall back when pushBack=0 — a 0 pushBack IS the truth that the attack doesn't push
+ * horizontally (basic attacks route to slot0, pushBack=0 → no knockback, zero regression).
  */
-function computeLaunchVy(liftUpValue: number, weaponLaunch: number, defenderWeight: number | undefined): number {
-  const wf = weightFactor(defenderWeight);
-  const pvfProduct = liftUpValue * weaponLaunch * wf;
-  // slot.launch=0 → fall back to liftUp body (truth, px/s), not a hardcoded constant.
-  return pvfProduct !== 0 ? pvfProduct : liftUpValue * wf;
-}
-
-/**
- * Compute horizontal knockback velocity (signed px/s) from PVF truth:
- *   velocityX = pushAside × pushBack × facing × weightFactor.
- * UNLIKE computeLaunchVy, we do NOT fall back when pushBack=0 — a 0 pushBack IS the truth that the
- * attack doesn't push horizontally (basic attacks route to slot0, pushBack=0 → no knockback, zero
- * regression). Inventing a push there would be local_baseline guessing. Returns 0 → no slide.
- */
-function computeKnockbackVx(pushAsideValue: number, weaponPushBack: number, attackerFacing: number, defenderWeight: number | undefined): number {
-  return pushAsideValue * weaponPushBack * attackerFacing * weightFactor(defenderWeight);
+function computeKnockbackVx(pushAsideValue: number, weaponPushBack: number, attackerFacing: number): number {
+  return pushAsideValue * weaponPushBack * attackerFacing;
 }
 
 /** Route a hitReaction string + causesDown/attackLevel to an engine ReactionKind. */
@@ -202,7 +186,7 @@ export function applyHitReaction(
   if (kind === "airborne") {
     const liftUpValue = flags.liftUpValue ?? 0;
     const weaponLaunch = flags.weaponLaunch ?? 0;
-    launchVy = computeLaunchVy(liftUpValue, weaponLaunch, defender.stats.weight);
+    launchVy = computeLaunchVy(liftUpValue, weaponLaunch);
     // Combo (Batch 4): a juggled target resists launch — divide by launchResistance (1 on the first
     // aerial hit, climbs with airGauge). Single-launch tests have launchResistance=1 → unchanged.
     launchVy = launchVy / defender.combo.launchResistance;
@@ -219,7 +203,7 @@ export function applyHitReaction(
   // which already carries the actor through the air).
   if (kind !== "airborne" && defender.hp > 0 && defender.armorProfile.canBeKnockedBack) {
     const knockVx = computeKnockbackVx(
-      flags.pushAsideValue ?? 0, flags.weaponPushBack ?? 0, flags.attackerFacing ?? defender.facing, defender.stats.weight,
+      flags.pushAsideValue ?? 0, flags.weaponPushBack ?? 0, flags.attackerFacing ?? defender.facing,
     );
     if (knockVx !== 0) defender.knockback = applyKnockback(knockVx, defender.x);
   }

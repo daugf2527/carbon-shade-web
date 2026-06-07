@@ -21,7 +21,9 @@
  * kernel DEFAULT_COMBO_CORRECTION_CONFIG (sourceRef docs/design/tuning-baseline.md). DNF's real
  * combo-correction table is hardcoded in DNF.exe and NOT extractable from PVF.
  */
-import type { ReactionKind } from "./ReactionResolver.js";
+// Reaction kinds this module buckets. Inlined (NOT imported from ReactionResolver) to avoid an
+// Actor → ComboPressure → ReactionResolver → Actor import cycle — same rationale as ArmorProfile.
+type ComboReactionKind = "hit" | "down" | "airborne" | "stagger";
 
 export interface ComboConfig {
   readonly barMax: number;
@@ -76,7 +78,7 @@ function clampGauge(value: number, config: ComboConfig): number {
 }
 
 /** Map an engine ReactionKind to a pressure bucket. */
-export function classifyComboBucket(kind: ReactionKind): "stand" | "aerial" | "down" {
+export function classifyComboBucket(kind: ComboReactionKind): "stand" | "aerial" | "down" {
   if (kind === "airborne") return "aerial";
   if (kind === "down") return "down";
   return "stand"; // hit + stagger
@@ -102,7 +104,7 @@ export function refreshComboDerived(state: ComboState, config: ComboConfig = DEF
  */
 export function applyComboFromHit(
   state: ComboState,
-  kind: ReactionKind,
+  kind: ComboReactionKind,
   attackLevel: number,
   config: ComboConfig = DEFAULT_COMBO_CONFIG,
 ): void {

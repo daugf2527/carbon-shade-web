@@ -10,9 +10,9 @@
  *   ④ different PVF liftUp values produce DIFFERENT vy (proves the truth value entered
  *      the formula and vy is not a constant)
  *
- * vy expectation uses the documented engine fallback (slot0.launch=0 → vy = liftUp × wf,
- * wf = max(0.1, 1 - 68000/150000) ≈ 0.5467). attack3 liftUp=300 → vy=164;
- * weaponcomboshort3 liftUp=400 → vy=218.67. See ReactionResolver.ts computeLaunchVy.
+ * vy = liftUp directly (Tier-1: lift_up is px/s, slot0.launch=0 → fallback to lift_up; chr.weight is
+ * audio-only, NO weightFactor). attack3 liftUp=300 → vy=300 → peak 30px; weaponcomboshort3
+ * liftUp=400 → vy=400. See ReactionResolver.ts computeLaunchVy + air-physics Phase 1.
  *
  * Determinism: pure synchronous calls, no Math.random, no timers.
  */
@@ -34,9 +34,6 @@ function freshDefender(): Actor {
   return new Actor("def", "monster", STATS);
 }
 
-// weightFactor = max(0.1, 1 - 68000/150000) — keep in sync with ReactionResolver stub.
-const WF = Math.max(0.1, 1 - 68000 / 150000);
-
 // ── Test ①: hit_lift_up → airborne kind + airborne.vy > 0 ─────────────────────────
 {
   const def = freshDefender();
@@ -54,11 +51,10 @@ const WF = Math.max(0.1, 1 - 68000 / 150000);
   assert.ok(r.launchVy > 0, `launch should produce positive vy, got ${r.launchVy}`);
   assert.ok(def.airborne !== null, "defender.airborne should be set inside the resolver");
   assert.ok(def.airborne!.vy > 0, `airborne.vy should be > 0, got ${def.airborne!.vy}`);
-  // vy = liftUp(300) × wf (fallback, since slot0 launch=0)
-  const expectedVy = 300 * WF;
+  // vy = liftUp(300) directly (Tier-1: weight audio-only, slot0 launch=0 → fallback to lift_up).
   assert.ok(
-    Math.abs(def.airborne!.vy - expectedVy) < 1e-9,
-    `airborne.vy should equal 300×wf=${expectedVy}, got ${def.airborne!.vy}`,
+    Math.abs(def.airborne!.vy - 300) < 1e-9,
+    `airborne.vy should equal liftUp=300, got ${def.airborne!.vy}`,
   );
   console.log(`✓ ① hit_lift_up → airborne, vy=${def.airborne!.vy}`);
 }
@@ -147,8 +143,8 @@ const WF = Math.max(0.1, 1 - 68000 / 150000);
   );
   // Concretely: 400-truth vy should exceed 300-truth vy.
   assert.ok(rB.launchVy > rA.launchVy, `liftUp=400 should launch higher than liftUp=300`);
-  assert.ok(Math.abs(rA.launchVy - 300 * WF) < 1e-9, `300→${300 * WF}`);
-  assert.ok(Math.abs(rB.launchVy - 400 * WF) < 1e-9, `400→${400 * WF}`);
+  assert.ok(Math.abs(rA.launchVy - 300) < 1e-9, `liftUp 300 → vy 300 (direct)`);
+  assert.ok(Math.abs(rB.launchVy - 400) < 1e-9, `liftUp 400 → vy 400 (direct)`);
   console.log(`✓ ④ truth in formula: liftUp 300→vy ${rA.launchVy}, 400→vy ${rB.launchVy}`);
 }
 
@@ -163,10 +159,10 @@ const WF = Math.max(0.1, 1 - 68000 / 150000);
     50,
     0,
   );
-  const expected = 300 * 0.5 * WF; // main formula, not fallback
+  const expected = 300 * 0.5; // main formula liftUp × weaponLaunch (no weightFactor, weight audio-only)
   assert.ok(
     Math.abs(r.launchVy - expected) < 1e-9,
-    `non-zero weaponLaunch should use main formula 300×0.5×wf=${expected}, got ${r.launchVy}`,
+    `non-zero weaponLaunch should use main formula 300×0.5=${expected}, got ${r.launchVy}`,
   );
   console.log(`✓ ④b weaponLaunch feeds main formula: vy=${r.launchVy}`);
 }
