@@ -29,6 +29,7 @@ import { ResourceSystem } from "../engine/kernel/systems/ResourceSystem.js";
 import { MovementSystem } from "../engine/kernel/systems/MovementSystem.js";
 import { JumpSystem } from "../engine/kernel/systems/JumpSystem.js";
 import { DownSystem } from "../engine/kernel/systems/DownSystem.js";
+import { monsterStatsAtLevel } from "../engine/core/MonsterScaling.js";
 
 interface ActorSnapshot {
   id: string;
@@ -183,9 +184,18 @@ export class CombatScene extends Phaser.Scene {
     playerActor.x = 390;
     this.kernel.addActor(playerActor, true);
 
-    // grunt = goblin PVF-truth stats: hpMax 70→46 (×65%), atk 10→8 (×75%), def 5→4 (×80%).
-    // base (GOBLIN_BASE) is local_baseline; the category modifiers are real PVF truth (goblinthrower.mob).
-    const grunt = new Actor("grunt", "monster", statsFromGoblinTruth());
+    // grunt = goblin scaled to dungeon level using PVF abilityCategory (goblinthrower.mob).
+    // Base curve is local_baseline; abilityCategory modifiers are PVF tier3 truth.
+    const GOBLIN_ABILITY_CATEGORY = {
+      "hp max": { op: "*" as const, value: 65 },
+      "equipment_physical_attack": { op: "*" as const, value: 75 },
+      "equipment_physical_defense": { op: "*" as const, value: 80 },
+    };
+    const gruntStats = {
+      ...monsterStatsAtLevel(PLAYER_LEVEL, GOBLIN_ABILITY_CATEGORY, 350),
+      hitRecovery: 500,  // PVF mob.hitRecovery
+    };
+    const grunt = new Actor("grunt", "monster", gruntStats);
     grunt.aiConfig = aiConfigFromGoblinTruth(); // 03-AI: PVF sight 300px / attackDelay 3000ms→180 ticks
     // 站位：player x=390，攻击盒达 player.x+50/60；grunt 受击盒 ±20，grunt.x≤460 才命中。
     // 440 让玩家原地按 Atk1/2/3 即可打中 grunt（移动系统 02-Move 仍 P4 未做，无法走位贴近）。
