@@ -420,9 +420,10 @@ export class EngineKernel implements EngineContext, Tickable {
       const st = statusFingerprint(a);
       const cd = a.cooldowns.fingerprint();
       const kb = a.knockback?.active ? `,kbvx=${a.knockback.vx.toFixed(3)}` : "";
+      const fz = a.frozenFrames > 0 ? `,fz=${a.frozenFrames}` : "";
       parts.push(
         `${a.id}:hp=${a.hp},mp=${a.mp.toFixed(3)},st=${a.fsm.state},x=${a.x.toFixed(3)},y=${a.y.toFixed(3)}` +
-        `${kb}${st ? `,status=${st}` : ""}${cd ? `,cd=${cd}` : ""}`,
+        `${kb}${fz}${st ? `,status=${st}` : ""}${cd ? `,cd=${cd}` : ""}`,
       );
     }
     // Fold cross-cutting system snapshots (timers, script vars, clock) into the hash

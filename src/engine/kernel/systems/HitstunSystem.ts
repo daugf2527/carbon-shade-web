@@ -19,6 +19,7 @@ export class HitstunSystem implements EngineSystem {
 
   tick(ctx: EngineContext): void {
     for (const actor of ctx.actors) {
+      if (actor.frozenFrames > 0) continue; // hit-stop: hitstun timer pauses while frozen
       const r = actor.reaction;
       if (r?.active) {
         tickReaction(actor, r, ctx.tickCount);

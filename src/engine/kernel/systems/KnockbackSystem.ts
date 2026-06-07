@@ -20,6 +20,7 @@ export class KnockbackSystem implements EngineSystem {
 
   tick(ctx: EngineContext): void {
     for (const actor of ctx.actors) {
+      if (actor.frozenFrames > 0) continue; // hit-stop: knockback slide pauses while frozen
       if (actor.knockback?.active) {
         const stopped = tickKnockback(actor.knockback, ctx.tickMs);
         actor.x = actor.knockback.x;

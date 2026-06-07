@@ -21,6 +21,7 @@ import { EnemyAISystem } from "../../src/engine/kernel/systems/EnemyAISystem.js"
 import { AnimationSystem } from "../../src/engine/kernel/systems/AnimationSystem.js";
 import { CombatResolutionSystem } from "../../src/engine/kernel/systems/CombatResolutionSystem.js";
 import { HitstunSystem } from "../../src/engine/kernel/systems/HitstunSystem.js";
+import { HitStopSystem } from "../../src/engine/kernel/systems/HitStopSystem.js";
 
 const ROOT = process.cwd();
 const swShard = JSON.parse(readFileSync(join(ROOT, "verification/baseline-shards/players/swordman.json"), "utf-8"));
@@ -66,6 +67,7 @@ function buildArena(seed = 42): { kernel: EngineKernel; sw: Actor; gob: Actor } 
   kernel.registerSystem(new AnimationSystem());
   kernel.registerSystem(new CombatResolutionSystem());
   kernel.registerSystem(new HitstunSystem());
+  kernel.registerSystem(new HitStopSystem());
   return { kernel, sw, gob };
 }
 

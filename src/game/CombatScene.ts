@@ -29,6 +29,7 @@ import { ResourceSystem } from "../engine/kernel/systems/ResourceSystem.js";
 import { MovementSystem } from "../engine/kernel/systems/MovementSystem.js";
 import { JumpSystem } from "../engine/kernel/systems/JumpSystem.js";
 import { DownSystem } from "../engine/kernel/systems/DownSystem.js";
+import { HitStopSystem } from "../engine/kernel/systems/HitStopSystem.js";
 import { monsterStatsAtLevel } from "../engine/core/MonsterScaling.js";
 
 interface ActorSnapshot {
@@ -163,6 +164,7 @@ export class CombatScene extends Phaser.Scene {
     this.kernel.registerSystem(new KnockbackSystem());          // CLEANUP phase: horizontal knockback slide
     this.kernel.registerSystem(new StatusSystem());             // CLEANUP phase: bleed DOT (09-Status)
     this.kernel.registerSystem(new ResourceSystem());           // LOGIC phase: MP regen + cooldown (08-Resource)
+    this.kernel.registerSystem(new HitStopSystem());            // FLUSH phase: decrement hit-stop freeze (last)
 
     // Create actors with PVF-truth-driven stats (browser env — truth comes from compiled-in
     // SWORDMAN_TRUTH const + mirrored GOBLIN_TRUTH, not filesystem shard loading).

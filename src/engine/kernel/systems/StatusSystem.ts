@@ -42,6 +42,7 @@ export class StatusSystem implements EngineSystem {
 
     // 2. Tick DOT on every actor; handle death-by-bleed identically to death-by-hit.
     for (const actor of ctx.actors) {
+      if (actor.frozenFrames > 0) continue; // hit-stop: DOT pauses while frozen
       if (actor.isDead || actor.statusEffects.length === 0) continue;
       const dot = tickStatus(actor, ctx.tickCount);
       if (dot <= 0) continue;

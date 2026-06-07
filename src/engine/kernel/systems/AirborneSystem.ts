@@ -24,6 +24,7 @@ export class AirborneSystem implements EngineSystem {
 
   tick(ctx: EngineContext): void {
     for (const actor of ctx.actors) {
+      if (actor.frozenFrames > 0) continue; // hit-stop: gravity pauses while frozen (mid-air freeze)
       if (actor.airborne?.active) {
         const landed = tickAirborne(actor.airborne, ctx.tickMs);
         actor.y = actor.airborne.y;

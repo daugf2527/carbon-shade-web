@@ -39,6 +39,7 @@ export class EnemyAISystem implements EngineSystem {
   tick(ctx: EngineContext): void {
     const player = ctx.player;
     for (const actor of ctx.actors) {
+      if (actor.frozenFrames > 0) continue; // hit-stop: AI pauses while frozen
       if (actor.id === player.id || actor.isDead) continue;
       const state = actor.fsm.state;
       // Dead or in hitstun — cannot act.

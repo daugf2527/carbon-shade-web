@@ -62,6 +62,7 @@ export class MovementSystem implements EngineSystem {
     const tick = ctx.tickCount;
 
     for (const actor of ctx.actors) {
+      if (actor.frozenFrames > 0) { actor.locomotion = "idle"; continue; } // hit-stop: no movement while frozen
       if (actor.isDead) { actor.locomotion = "idle"; continue; }
       if (!MOBILE_STATES.has(actor.fsm.state)) { actor.locomotion = "idle"; continue; }
       if (actor.airborne?.active) { actor.locomotion = "idle"; continue; }

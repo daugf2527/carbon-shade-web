@@ -60,6 +60,7 @@ export class ActionSystem implements EngineSystem {
       this.pending.delete(actor.id);
 
       if (actor.fsm.state === ActorState.DEAD) continue;
+      if (actor.frozenFrames > 0) continue; // hit-stop: cannot start a new action while frozen
       // Interruptible if: in an interruptible FSM state, OR the prior animation finished, OR the
       // current action is inside its cancel window (cancel/combo chain — skill-action §3).
       const current = actor.currentActionName;

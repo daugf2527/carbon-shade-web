@@ -23,6 +23,7 @@ import { ActionSystem } from "../../src/engine/kernel/systems/ActionSystem.js";
 import { AnimationSystem } from "../../src/engine/kernel/systems/AnimationSystem.js";
 import { CombatResolutionSystem } from "../../src/engine/kernel/systems/CombatResolutionSystem.js";
 import { HitstunSystem } from "../../src/engine/kernel/systems/HitstunSystem.js";
+import { HitStopSystem } from "../../src/engine/kernel/systems/HitStopSystem.js";
 import { AirborneSystem } from "../../src/engine/kernel/systems/AirborneSystem.js";
 import { StatusSystem } from "../../src/engine/kernel/systems/StatusSystem.js";
 
@@ -61,6 +62,7 @@ function buildScenarioKernel(seed: number): EngineKernel {
   kernel.registerSystem(new AnimationSystem());
   kernel.registerSystem(new CombatResolutionSystem());
   kernel.registerSystem(new HitstunSystem());
+  kernel.registerSystem(new HitStopSystem());
   kernel.registerSystem(new AirborneSystem());
   kernel.registerSystem(new StatusSystem());        // 09-Status: enables the bleed sub-scenario
   return kernel;

@@ -19,6 +19,7 @@ import type { AniBox } from "../../core/AnimationPlayer.js";
 import { calcPhysicalDamage } from "../../core/DamageFormula.js";
 import { detectHit } from "../../core/HitDetection.js";
 import { applyHitReaction } from "../../core/ReactionResolver.js";
+import { applyHitStop, hitStopFor } from "../../core/HitStop.js";
 import type { ReactionState, AtkFlags, HitReaction } from "../../core/ReactionResolver.js";
 import type { EngineContext } from "../EngineContext.js";
 import type { EngineSystem } from "../EngineSystem.js";
@@ -63,6 +64,7 @@ export class CombatResolutionSystem implements EngineSystem {
 
   tick(ctx: EngineContext): void {
     for (const attacker of ctx.actors) {
+      if (attacker.frozenFrames > 0) continue; // hit-stop: frozen attacker emits no hitbox
       const frame = attacker.animationPlayer.currentFrame;
       const atkBoxes = frame?.attackBoxes ?? [];
       if (atkBoxes.length === 0) {
@@ -126,6 +128,15 @@ export class CombatResolutionSystem implements EngineSystem {
           flags = {};
         }
         defender.reaction = applyHitReaction(defender, flags, dmg, ctx.tickCount);
+        // Hit-stop (命中停帧): freeze attacker + defender on the hit (local_baseline frames).
+        // Defender freeze ≈ 1.5× attacker (DNF victim hangs longer). Armor caps applied in Batch 3.
+        const hs = hitStopFor(actionName);
+        attacker.frozenFrames = applyHitStop(attacker.frozenFrames, hs.frames);
+        defender.frozenFrames = applyHitStop(defender.frozenFrames, Math.round(hs.frames * 1.5));
+        ctx.bus.emit("HitStopStarted", {
+          attackerId: attacker.id, defenderId: defender.id,
+          attackerFrames: hs.frames, defenderFrames: Math.round(hs.frames * 1.5), tick: ctx.tickCount,
+        });
         // Scenario observation (P3 收尾): flip the booleans this hit demonstrates. ctx.scenario
         // is a live object on the kernel (undefined only on bare test contexts). Any landed hit
         // proves normalHit; an airborne reaction proves launch. The other 5 flags need actors/

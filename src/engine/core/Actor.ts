@@ -194,6 +194,10 @@ export class Actor {
   locomotion: "idle" | "walk" | "run" = "idle";
   /** Hit immunity flag. Set by DownSystem during getup invincibility. CombatResolutionSystem skips hits. */
   hitImmune = false;
+  /** Hit-stop freeze frames remaining (命中停帧). >0 = time paused for this actor: all systems skip
+   *  advancing it (animation/movement/gravity/hitstun/DOT/AI). HitStopSystem decrements at tick end.
+   *  Per-actor work-state like reaction/airborne; folds into stateHash when >0. local_baseline frames. */
+  frozenFrames = 0;
   /** Active buff list (P3.1 placeholder — engine has no buff system yet). */
   buffs: Array<{ type: string; stacks: number; expiresAtTick: number }> = [];
 

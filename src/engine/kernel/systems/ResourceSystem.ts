@@ -52,6 +52,7 @@ export class ResourceSystem implements EngineSystem {
 
     // 2. Regen MP + decrement cooldowns for every live actor.
     for (const actor of ctx.actors) {
+      if (actor.frozenFrames > 0) continue; // hit-stop: MP regen + cooldown pause while frozen
       if (actor.isDead) continue;
       const regenSpeed = actor.stats.mpRegenSpeed ?? 0;
       if (regenSpeed > 0 && actor.mp < actor.stats.mpMax) {

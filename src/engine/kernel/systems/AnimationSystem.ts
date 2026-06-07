@@ -23,6 +23,7 @@ export class AnimationSystem implements EngineSystem {
 
   tick(ctx: EngineContext): void {
     for (const actor of ctx.actors) {
+      if (actor.frozenFrames > 0) continue; // hit-stop: frozen actors don't advance animation
       if (!actor.animationPlayer.isPlaying) continue;
       const finished = actor.animationPlayer.update(ctx.tickMs);
       if (finished) {
