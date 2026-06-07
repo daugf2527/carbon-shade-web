@@ -1,25 +1,34 @@
 /**
- * MonsterScaling.ts — monster stat scaling by dungeon level (Stage 4C).
+ * MonsterScaling.ts — monster stat scaling by dungeon level (Stage 4C, truth-path 2026-06-07).
  *
- * DNF monster stats = baseCurve(dungeonLevel) × abilityCategory modifier.
+ * DNF monster stats = CHARACTER_growth(baseLevel) × abilityCategory modifier.
  *
- * PVF provides:
- *   - abilityCategory: per-monster-type percentage/absolute modifiers (PVF tier3)
- *   - mob.level: monster level range [min, max]
- *   - dgn.basisLevel: dungeon reference level
+ * Truth basis (22-system field-matrix.md:245 — "abilityCategory['hp max'] is a percentage
+ * RELATIVE TO CHARACTER HP"). So the per-level base is the CHARACTER growth curve (PVF
+ * chr.growth, fully extracted), NOT an invented curve. abilityCategory % is PVF tier3.
  *
- * PVF does NOT provide:
- *   - The absolute base curve per level (hardcoded in DNF.exe C++)
+ * baseLevel = the dungeon's basisLevel (PVF dgn.basisLevel, e.g. jungle=31) — DNF scales
+ * dungeon monsters to the dungeon's reference level, which is why a LV2-6 goblin in a LV31
+ * dungeon fights at LV31 strength.
  *
- * The base curve below is local_baseline, calibrated so that a LV70 goblin
- * (abilityCategory hp×65%) dies in ~4 basic attacks from a LV70 swordman
- * (physicalAttack=89). requiresManualVerification.
+ * ⚠️ requiresManualVerification (the one remaining approximation): we use the SWORDMAN growth
+ * curve as the generic "character base". DNF actually has a dedicated standard-character ability
+ * template; using swordman growth is a shape-correct PVF approximation until that template is
+ * extracted. The PER-LEVEL mapping caveat from LevelScaling also applies.
  */
+import { statAtLevel } from "./LevelScaling.js";
 
 export interface AbilityCategory {
   readonly "hp max"?: { op: "*" | "+"; value: number };
   readonly "equipment_physical_attack"?: { op: "*" | "+"; value: number };
   readonly "equipment_physical_defense"?: { op: "*" | "+"; value: number };
+}
+
+/** Character base growth curves (PVF chr.growth arrays) used as the monster scaling base. */
+export interface CharacterGrowthBase {
+  readonly hpMax: readonly number[];
+  readonly physicalAttack: readonly number[];
+  readonly physicalDefense: readonly number[];
 }
 
 export interface MonsterStats {
@@ -35,23 +44,21 @@ function applyMod(base: number, mod?: { op: "*" | "+"; value: number }): number 
   return mod.op === "*" ? base * mod.value / 100 : base + mod.value;
 }
 
-// local_baseline base curves — calibrated for ~4-hit-kill on goblin (65% HP)
-// at LV70 with swordman physicalAttack=82.8 (full-sum truth)
-function baseHP(level: number): number { return 50 + level * 6.5; }
-function baseATK(level: number): number { return 5 + level * 0.8; }
-function baseDEF(level: number): number { return 2 + level * 0.15; }
-
 export function monsterStatsAtLevel(
-  dungeonLevel: number,
+  baseLevel: number,
   abilityCategory: AbilityCategory,
+  charGrowth: CharacterGrowthBase,
   moveSpeed = 350,
   weight = 45000, // PVF mob.weight (goblin default); drives launch weightFactor
 ): MonsterStats {
-  const lv = Math.max(1, Math.min(dungeonLevel, 70));
+  const lv = Math.max(1, Math.min(baseLevel, 70));
+  const baseHP = statAtLevel(charGrowth.hpMax, lv);
+  const baseATK = statAtLevel(charGrowth.physicalAttack, lv);
+  const baseDEF = statAtLevel(charGrowth.physicalDefense, lv);
   return {
-    hpMax: Math.round(applyMod(baseHP(lv), abilityCategory["hp max"])),
-    physicalAttack: Math.round(applyMod(baseATK(lv), abilityCategory["equipment_physical_attack"]) * 10) / 10,
-    physicalDefense: Math.round(applyMod(baseDEF(lv), abilityCategory["equipment_physical_defense"]) * 10) / 10,
+    hpMax: Math.round(applyMod(baseHP, abilityCategory["hp max"])),
+    physicalAttack: Math.round(applyMod(baseATK, abilityCategory["equipment_physical_attack"]) * 10) / 10,
+    physicalDefense: Math.round(applyMod(baseDEF, abilityCategory["equipment_physical_defense"]) * 10) / 10,
     moveSpeed,
     weight,
   };

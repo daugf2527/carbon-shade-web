@@ -181,15 +181,27 @@ export class CombatScene extends Phaser.Scene {
     playerActor.x = 390;
     this.kernel.addActor(playerActor, true);
 
-    // grunt = goblin scaled to dungeon level using PVF abilityCategory (goblinthrower.mob).
-    // Base curve is local_baseline; abilityCategory modifiers are PVF tier3 truth.
+    // grunt = goblin scaled by DNF dungeon mechanic: CHARACTER_growth(basisLevel) × abilityCategory%.
+    // abilityCategory = PVF tier3 (goblinthrower.mob); base = swordman chr.growth (PVF, generic
+    // character base approximation); basisLevel = PVF dgn.basisLevel (jungle=31 → "high-level
+    // dungeon" feel: goblin fights at LV31 → HP~321 DEF~30, ~4.5 basic hits). truth-audit §一#4.
+    const DUNGEON_BASIS_LEVEL = 31; // PVF jungle.dgn basisLevel
     const GOBLIN_ABILITY_CATEGORY = {
       "hp max": { op: "*" as const, value: 65 },
       "equipment_physical_attack": { op: "*" as const, value: 75 },
       "equipment_physical_defense": { op: "*" as const, value: 80 },
     };
+    const swGrowth = SWORDMAN_TRUTH.chr.growth as unknown as {
+      hpMax: { values: number[] }; physicalAttack: { values: number[] }; physicalDefense: { values: number[] };
+    };
     const gruntStats = {
-      ...monsterStatsAtLevel(PLAYER_LEVEL, GOBLIN_ABILITY_CATEGORY, 350, 45000), // PVF mob.weight 45000
+      ...monsterStatsAtLevel(
+        DUNGEON_BASIS_LEVEL,
+        GOBLIN_ABILITY_CATEGORY,
+        { hpMax: swGrowth.hpMax.values, physicalAttack: swGrowth.physicalAttack.values, physicalDefense: swGrowth.physicalDefense.values },
+        350,    // PVF mob.moveSpeed
+        45000,  // PVF mob.weight
+      ),
       hitRecovery: 500,  // PVF mob.hitRecovery
     };
     const grunt = new Actor("grunt", "monster", gruntStats);
