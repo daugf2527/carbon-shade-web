@@ -33,6 +33,7 @@
 
 import { Actor } from "./Actor.js";
 import { ActorState } from "./ActorStateMachine.js";
+import type { ArmorProfile } from "./ArmorProfile.js";
 import { launchAirborne } from "./AirbornePhysicsSystem.js";
 import { applyKnockback } from "./KnockbackPhysics.js";
 
@@ -160,6 +161,18 @@ function routeFromLegacyBools(flags: AtkFlags): ReactionKind {
   return "hit";
 }
 
+/**
+ * Downgrade a reaction kind for an armored defender (Stage 4C Batch 3). A super-armored / boss /
+ * building target still TAKES DAMAGE (applied before routing) but its launch/knockdown is
+ * suppressed, folding to a plain HIT. Horizontal knockback is suppressed separately in
+ * applyHitReaction via armorProfile.canBeKnockedBack. Pure — exported for the armor guard test.
+ */
+export function applyArmorToKind(armor: ArmorProfile, kind: ReactionKind): ReactionKind {
+  if (kind === "airborne" && !armor.canBeLaunched) return "hit";
+  if (kind === "down" && !armor.canBeKnockedDown) return "hit";
+  return kind;
+}
+
 export function applyHitReaction(
   defender: Actor,
   flags: AtkFlags,
@@ -176,9 +189,13 @@ export function applyHitReaction(
   const hitstunTicks = Math.round(hitstunMs / TICK_MS);
 
   // Route: prefer PVF hitReaction string; fall back to legacy bools for old callers.
-  const kind: ReactionKind = flags.hitReaction
+  const rawKind: ReactionKind = flags.hitReaction
     ? routeFromHitReaction(flags.hitReaction, flags.causesDown ?? false, flags.attackLevel ?? 1)
     : routeFromLegacyBools(flags);
+  // Armor (Stage 4C Batch 3): super-armor/boss/building suppress launch+knockdown — damage still
+  // landed above; the reaction folds to a plain HIT. defender.armorProfile defaults to NONE_ARMOR,
+  // so unarmored players/grunts are zero-regression.
+  const kind: ReactionKind = applyArmorToKind(defender.armorProfile, rawKind);
 
   // Vertical launch (velocityY → AirborneState.vy). Only meaningful for airborne.
   let launchVy = 0;
@@ -197,7 +214,7 @@ export function applyHitReaction(
   // (P4 GAP now filled). Truth: pushAside × pushBack × facing × weightFactor. pushBack=0 (basic
   // attacks, slot0) → no slide → zero regression. Applied for grounded reactions (not airborne,
   // which already carries the actor through the air).
-  if (kind !== "airborne" && defender.hp > 0) {
+  if (kind !== "airborne" && defender.hp > 0 && defender.armorProfile.canBeKnockedBack) {
     const knockVx = computeKnockbackVx(
       flags.pushAsideValue ?? 0, flags.weaponPushBack ?? 0, flags.attackerFacing ?? defender.facing, defender.stats.weight,
     );

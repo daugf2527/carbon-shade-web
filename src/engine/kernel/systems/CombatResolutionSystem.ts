@@ -129,13 +129,17 @@ export class CombatResolutionSystem implements EngineSystem {
         }
         defender.reaction = applyHitReaction(defender, flags, dmg, ctx.tickCount);
         // Hit-stop (命中停帧): freeze attacker + defender on the hit (local_baseline frames).
-        // Defender freeze ≈ 1.5× attacker (DNF victim hangs longer). Armor caps applied in Batch 3.
+        // Defender freeze ≈ 1.5× attacker (DNF victim hangs longer). Armor (Batch 3) caps the
+        // freeze: hitting a super-armored/boss/building target gives a shorter "thunk" (cap=3/2/1).
         const hs = hitStopFor(actionName);
-        attacker.frozenFrames = applyHitStop(attacker.frozenFrames, hs.frames);
-        defender.frozenFrames = applyHitStop(defender.frozenFrames, Math.round(hs.frames * 1.5));
+        const cap = defender.armorProfile.hitStopCapFrames; // null → no cap (unarmored)
+        const atkFrames = cap == null ? hs.frames : Math.min(hs.frames, cap);
+        const defFrames = cap == null ? Math.round(hs.frames * 1.5) : Math.min(Math.round(hs.frames * 1.5), cap);
+        attacker.frozenFrames = applyHitStop(attacker.frozenFrames, atkFrames);
+        defender.frozenFrames = applyHitStop(defender.frozenFrames, defFrames);
         ctx.bus.emit("HitStopStarted", {
           attackerId: attacker.id, defenderId: defender.id,
-          attackerFrames: hs.frames, defenderFrames: Math.round(hs.frames * 1.5), tick: ctx.tickCount,
+          attackerFrames: atkFrames, defenderFrames: defFrames, tick: ctx.tickCount,
         });
         // Scenario observation (P3 收尾): flip the booleans this hit demonstrates. ctx.scenario
         // is a live object on the kernel (undefined only on bare test contexts). Any landed hit
@@ -144,6 +148,10 @@ export class CombatResolutionSystem implements EngineSystem {
         if (ctx.scenario) {
           ctx.scenario.normalHitObserved = true;
           if (defender.reaction?.kind === "airborne") ctx.scenario.launchObserved = true;
+          // Armor (Batch 3): hitting any armored target (non-none) is an observable armor hit.
+          // Stays false in the default scenario (player+grunt are NONE_ARMOR) — wiring is ready
+          // for when runDeterministicScenario spawns an armored dummy.
+          if (defender.armorProfile.baseType !== "none") ctx.scenario.armorHitObserved = true;
         }
         ctx.bus.emit("HitConfirmed", {
           attackerId: attacker.id,

@@ -17,21 +17,20 @@
 
 export interface HitStopProfile {
   readonly frames: number;          // base freeze frames on a normal hit
-  readonly bossCapFrames: number;   // cap when hitting boss super-armor
-  readonly buildingCapFrames: number; // cap when hitting building armor
 }
 
-/** local_baseline per-action hit-stop (mirrors old kernel attack1=4/attack2=5/attack3=7). */
+/** local_baseline per-action hit-stop (mirrors old kernel attack1=4/attack2=5/attack3=7).
+ *  Armor caps the freeze at hit time via ArmorProfile.hitStopCapFrames (Batch 3) — not stored here. */
 export const HIT_STOP_PROFILES: Record<string, HitStopProfile> = {
-  attack1: { frames: 4, bossCapFrames: 2, buildingCapFrames: 1 },
-  attack2: { frames: 5, bossCapFrames: 2, buildingCapFrames: 1 },
-  attack3: { frames: 7, bossCapFrames: 2, buildingCapFrames: 1 },
-  dashattack: { frames: 5, bossCapFrames: 2, buildingCapFrames: 1 },
-  jumpattack: { frames: 5, bossCapFrames: 2, buildingCapFrames: 1 },
-  hardattack: { frames: 6, bossCapFrames: 2, buildingCapFrames: 1 },
+  attack1: { frames: 4 },
+  attack2: { frames: 5 },
+  attack3: { frames: 7 },
+  dashattack: { frames: 5 },
+  jumpattack: { frames: 5 },
+  hardattack: { frames: 6 },
 };
 
-export const DEFAULT_HIT_STOP: HitStopProfile = { frames: 4, bossCapFrames: 2, buildingCapFrames: 1 };
+export const DEFAULT_HIT_STOP: HitStopProfile = { frames: 4 };
 
 /** Profile for an action name (falls back to DEFAULT). */
 export function hitStopFor(actionName: string | null | undefined): HitStopProfile {
