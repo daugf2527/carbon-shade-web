@@ -24,6 +24,7 @@ const MAX_CONSECUTIVE_DOWNS = 3;
 const GETUP_IMMUNITY_TICKS = 30;    // ~0.5s invincibility after standing
 const DOWN_PROTECTION_TICKS = 180;  // ~3s knockdown immunity after max downs
 const RESET_WINDOW_TICKS = 300;     // ~5s — counter resets if not knocked down
+const QUICK_REBOUND_COOLDOWN = 300; // ~5s between quick rebounds
 
 interface DownState {
   downCount: number;
@@ -31,6 +32,7 @@ interface DownState {
   getupImmunityRemaining: number;
   downProtectionRemaining: number;
   wasDown: boolean;
+  lastQuickReboundTick: number;
 }
 
 export class DownSystem implements EngineSystem {
@@ -42,7 +44,7 @@ export class DownSystem implements EngineSystem {
   private getState(actorId: string): DownState {
     let s = this.states.get(actorId);
     if (!s) {
-      s = { downCount: 0, lastDownTick: -999, getupImmunityRemaining: 0, downProtectionRemaining: 0, wasDown: false };
+      s = { downCount: 0, lastDownTick: -999, getupImmunityRemaining: 0, downProtectionRemaining: 0, wasDown: false, lastQuickReboundTick: -999 };
       this.states.set(actorId, s);
     }
     return s;
@@ -75,6 +77,22 @@ export class DownSystem implements EngineSystem {
           ds.downProtectionRemaining = DOWN_PROTECTION_TICKS;
           ds.downCount = 0;
           ctx.bus.emit("DownProtectionGranted", { actorId: actor.id });
+        }
+      }
+
+      // Quick rebound: while DOWN, intent.quickRebound → force stand up (with cooldown)
+      if (isDown && actor.intent.quickRebound) {
+        if ((tick - ds.lastQuickReboundTick) >= QUICK_REBOUND_COOLDOWN) {
+          ds.lastQuickReboundTick = tick;
+          if (actor.reaction?.active) {
+            actor.reaction.remainingTicks = 0;
+            actor.reaction.active = false;
+            actor.reaction = null;
+          }
+          actor.fsm.force(ActorState.IDLE, tick);
+          ds.getupImmunityRemaining = GETUP_IMMUNITY_TICKS;
+          actor.hitImmune = true;
+          ctx.bus.emit("QuickRebound", { actorId: actor.id });
         }
       }
 

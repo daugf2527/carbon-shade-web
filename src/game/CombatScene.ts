@@ -1129,7 +1129,7 @@ export class CombatScene extends Phaser.Scene {
       case "KeyX":
       case "KeyJ":       player.intent = { ...player.intent, attack: true }; break;
       case "KeyC":       this.kernel.requestAction("player", "Backstep"); break;
-      case "KeyZ":       this.kernel.requestAction("player", "QuickRebound"); break;
+      case "KeyZ":       player.intent = { ...player.intent, quickRebound: true }; break;
       case "KeyS":       this.kernel.requestAction("player", "FrenzyBasic1"); break;
       case "KeyD":       this.kernel.requestAction("player", "FrenzyBasic2"); break;
       case "KeyF":       this.kernel.requestAction("player", "FrenzyBasic3"); break;
@@ -1171,6 +1171,9 @@ export class CombatScene extends Phaser.Scene {
         break;
       case "Space":
         player.intent = { ...player.intent, button: "none" };
+        break;
+      case "KeyZ":
+        player.intent = { ...player.intent, quickRebound: false };
         break;
       default: break;
     }

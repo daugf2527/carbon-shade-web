@@ -183,7 +183,7 @@ export class InputRecorder {
         case "KeyX":
         case "KeyJ":       player.intent = { ...player.intent, attack: true }; break;
         case "KeyC":       kernel.requestAction("player", "Backstep"); break;
-        case "KeyZ":       kernel.requestAction("player", "QuickRebound"); break;
+        case "KeyZ":       player.intent = { ...player.intent, quickRebound: true }; break;
         case "KeyA":       kernel.requestAction("player", "UpwardSlash"); break;
         case "KeyK":       kernel.requestAction("player", "Bloodlust"); break;
         default: break;

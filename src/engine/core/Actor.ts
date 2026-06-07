@@ -19,6 +19,8 @@ export interface ActorIntent {
   dir: -1 | 0 | 1;
   /** Z-axis (depth) direction: -1 up (toward screen back), 0 none, 1 down (toward screen front). Stage 4A. */
   zDir?: -1 | 0 | 1;
+  /** Quick rebound request (Stage 4B-B2). Set by scene on KeyZ while knocked down. */
+  quickRebound?: boolean;
   /** Full 4-way command direction this frame (skill-action infra §2). Inline union mirrors
    *  input/InputCommand DirInput (kept inline to avoid a core→input dependency). Omit → "none". */
   commandDir?: "left" | "right" | "up" | "down" | "none";
