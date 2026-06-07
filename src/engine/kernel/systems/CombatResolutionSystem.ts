@@ -68,22 +68,28 @@ export class CombatResolutionSystem implements EngineSystem {
   readonly name = "CombatResolution";
   readonly phase = "DETECTION" as const;
 
-  private hitGroups = new Map<string, Set<string>>(); // attackerId → defenderIds already hit this attack
+  private hitGroups = new Map<string, Set<string>>(); // "attackerId:action" → defenders already hit by this action's window
 
   tick(ctx: EngineContext): void {
     for (const attacker of ctx.actors) {
       if (attacker.frozenFrames > 0) continue; // hit-stop: frozen attacker emits no hitbox
       const frame = attacker.animationPlayer.currentFrame;
       const atkBoxes = frame?.attackBoxes ?? [];
+      // hitGroup key (B3): attacker + action. True DNF dedup keys off the .atk hitGroup id, which is
+      // NOT in PVF (data-gap, confirmed — the combat kernel synthesizes `${action}_group` for the same
+      // reason). Action-keying is the best available approximation: one hit per defender per action
+      // active window; the window-close reset below re-arms looping/multi-window attacks; canceling
+      // into a new action gets a fresh group. requiresManualVerification (no PVF hitGroup truth).
+      const groupKey = `${attacker.id}:${attacker.currentActionName ?? ""}`;
       if (atkBoxes.length === 0) {
-        // Attack window closed — reset this attacker's hit group.
-        this.hitGroups.delete(attacker.id);
+        // Active window closed — reset this action's hit group (re-arms the next loop/window).
+        this.hitGroups.delete(groupKey);
         continue;
       }
-      let group = this.hitGroups.get(attacker.id);
+      let group = this.hitGroups.get(groupKey);
       if (!group) {
         group = new Set<string>();
-        this.hitGroups.set(attacker.id, group);
+        this.hitGroups.set(groupKey, group);
       }
       for (const defender of ctx.actors) {
         if (defender.id === attacker.id || defender.isDead) continue;
