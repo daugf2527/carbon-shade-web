@@ -189,7 +189,7 @@ export class CombatScene extends Phaser.Scene {
       "equipment_physical_defense": { op: "*" as const, value: 80 },
     };
     const gruntStats = {
-      ...monsterStatsAtLevel(PLAYER_LEVEL, GOBLIN_ABILITY_CATEGORY, 350),
+      ...monsterStatsAtLevel(PLAYER_LEVEL, GOBLIN_ABILITY_CATEGORY, 350, 45000), // PVF mob.weight 45000
       hitRecovery: 500,  // PVF mob.hitRecovery
     };
     const grunt = new Actor("grunt", "monster", gruntStats);

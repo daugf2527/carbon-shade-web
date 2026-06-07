@@ -43,6 +43,10 @@ export interface ActorStats {
   /** Jump launch velocity (PVF chr.jumpPower, swordman=430, unit ambiguous — see truth-coverage-matrix).
    *  Omit/0 → actor cannot jump. Monsters generally don't jump. */
   readonly jumpPower?: number;
+  /** Body weight (PVF chr.weight/mob.weight: swordman 68000, goblin 45000). Drives the launch/knockback
+   *  weightFactor (heavier = harder to launch). NOTE unit is PVF-tagged "audio-only" — its physical
+   *  meaning is research-unconfirmed (requiresManualVerification), but the per-entity VALUE is real PVF. */
+  readonly weight?: number;
 }
 
 /** Extract level-1 base value from a growth array field. */
@@ -74,6 +78,7 @@ export function statsFromPlayerShard(chr: Record<string, unknown>, level = 1): A
     mpRegenSpeed: growth?.mpRegenSpeed ? statAtLevel(growth.mpRegenSpeed.values, level) : 50,
     hitRecovery: growth?.hitRecovery ? statAtLevel(growth.hitRecovery.values, level) : 600,
     jumpPower: scalarVal(chr.jumpPower as never),
+    weight: scalarVal(chr.weight as never),   // PVF chr.weight (swordman 68000)
   };
 }
 
@@ -117,6 +122,7 @@ const GOBLIN_TRUTH = {
   },
   moveSpeed: { values: [350, 350] },
   hitRecovery: { values: [500, 500] }, // PVF mob.hitRecovery ms (goblinthrower.mob, tier3)
+  weight: { value: 45000 }, // PVF mob.weight (goblinthrower.mob, tier3)
 };
 
 export function statsFromMonsterShard(mob: Record<string, unknown>): ActorStats {
@@ -136,6 +142,7 @@ export function statsFromMonsterShard(mob: Record<string, unknown>): ActorStats 
     physicalDefense: applyEntry(GOBLIN_BASE.physicalDefense, cat["equipment_physical_defense"]),
     mpRegenSpeed: 0, // monsters don't regen MP
     hitRecovery: scalarVal(mob.hitRecovery as never) || undefined, // PVF mob.hitRecovery ms (goblin 500)
+    weight: scalarVal(mob.weight as never) || undefined, // PVF mob.weight (goblin 45000)
   };
 }
 

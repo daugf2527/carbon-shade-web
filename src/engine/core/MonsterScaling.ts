@@ -27,6 +27,7 @@ export interface MonsterStats {
   readonly physicalAttack: number;
   readonly physicalDefense: number;
   readonly moveSpeed: number;
+  readonly weight: number;
 }
 
 function applyMod(base: number, mod?: { op: "*" | "+"; value: number }): number {
@@ -35,7 +36,7 @@ function applyMod(base: number, mod?: { op: "*" | "+"; value: number }): number 
 }
 
 // local_baseline base curves — calibrated for ~4-hit-kill on goblin (65% HP)
-// at LV70 with swordman physicalAttack=89
+// at LV70 with swordman physicalAttack=82.8 (full-sum truth)
 function baseHP(level: number): number { return 50 + level * 6.5; }
 function baseATK(level: number): number { return 5 + level * 0.8; }
 function baseDEF(level: number): number { return 2 + level * 0.15; }
@@ -44,6 +45,7 @@ export function monsterStatsAtLevel(
   dungeonLevel: number,
   abilityCategory: AbilityCategory,
   moveSpeed = 350,
+  weight = 45000, // PVF mob.weight (goblin default); drives launch weightFactor
 ): MonsterStats {
   const lv = Math.max(1, Math.min(dungeonLevel, 70));
   return {
@@ -51,5 +53,6 @@ export function monsterStatsAtLevel(
     physicalAttack: Math.round(applyMod(baseATK(lv), abilityCategory["equipment_physical_attack"]) * 10) / 10,
     physicalDefense: Math.round(applyMod(baseDEF(lv), abilityCategory["equipment_physical_defense"]) * 10) / 10,
     moveSpeed,
+    weight,
   };
 }

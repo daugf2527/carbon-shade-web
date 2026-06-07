@@ -9,8 +9,14 @@
 |---|----|---------|------------|
 | 1 | **LevelScaling 等级曲线** | 自创"每段4级 + LV65封顶 + 外推到LV70"，**与 research 文档冲突**（`reaction-formula-reverse-engineering.md:71` 明确全17值累加=LV70）。导致 LV70 physicalAttack 算成 89.0 而非真值 82.8 | `e0f4a4a` |
 | 2 | **moveSpeed** | 硬编码 300 px/s + Z比0.5（猜测），未用已提取的 PVF 公式 | `136a843` |
+| 3 | **weightFactor 用错重量主体** | launch/knockback 的 weightFactor 硬编码 `STUB_TARGET_WEIGHT=68000`（**攻击者** swordman 重量），无论打谁恒等 0.5467。物理上该用**被打者**重量（research line 114 `weightFactor(target)`）。weight 数据 PVF 明明有（goblin mob.weight=45000 / swordman chr.weight=68000），却没接 defender 真实重量 | （本轮） |
 
-**关键教训**：#1 不是"漏标注"，是**编了个与已有 PVF 证据矛盾的公式**。这是最危险的一类——比"明知是猜测"更隐蔽。
+**关键教训**：
+- #1 不是"漏标注"，是**编了个与已有 PVF 证据矛盾的公式**——比"明知是猜测"更隐蔽。
+- #3 是**我第一版审计自己 frame 掉的代价**：初稿把它写成"D9=B stub 已诚实标注，核心公式全诚实"，用"已标注"三个字盖过了"用错重量主体 + 该接没接 PVF 真值"的事实。用户挑战"一点问题没有？我不信"逼出了它。教训：审计员说"全干净"时，99% 是没审到位（CLAUDE.md 危险措辞自审规则）。
+
+修正后：goblin(45000) 被 liftUp=300 打飞 vy 210（轻怪飞更高），swordman(68000) vy 164，行为真区分。守护测试 `engine-weight-launch.test.ts`（W1-W3）防退回。
+**仍是 stub 的部分（诚实保留）**：weightFactor 的阈值 150000 + 公式形状 `1-w/threshold` 仍是 research 推测（区间 100000-200000 中点）；本轮只把"重量 VALUE"真值化（用 defender 真实 PVF 重量替代硬编码攻击者重量）。
 
 ## 二、核心战斗公式核对（亲核，确认诚实）
 
@@ -19,7 +25,7 @@
 | **伤害** `physAtk×atkBonus×weaponScale×(1-def/(def+K))` | atkBonus/damageScalePct=PVF；K=200 标 local_baseline | ✅ 与 combat 一致，标注清晰 |
 | **launch Y** `liftUp×weaponLaunch×weightFactor` | research H2 工作假设 (line 113) | ✅ 代码与文档一字不差，非自创 |
 | **knockback X** `pushAside×pushBack×facing×weightFactor` | research H2 (line 114) | ✅ 同上；pushBack=0 不 fallback（真值） |
-| **weightFactor** `1-weight/150000` | research 推测区间 100000-200000 中点 | ⚠️ D9=B stub，已标 requiresManualVerification |
+| **weightFactor** `1-weight/150000` | weight VALUE 现为 PVF（defender 真实重量）；阈值 150000 + 公式形状仍 research 推测 | ⚠️ 重量主体已修(见§一#3)；阈值仍 stub |
 | **hitstun** = 受击方 hitRecovery | chr/mob.hitRecovery | ✅ PVF tier3 真值 |
 
 ## 三、确认正确的 PVF 真值（之前几天的真值化工作）

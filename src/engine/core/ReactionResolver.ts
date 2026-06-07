@@ -72,13 +72,14 @@ export interface AtkFlags {
 const DEFAULT_HITSTUN_MS = 600; // fallback only — real hitstun = defender.stats.hitRecovery (PVF)
 const TICK_MS = 1000 / 60;
 
-// ── PVF velocity stub coefficients (D9=B stub, ported verbatim from combat) ──────
-// TODO Phase E: replace with real target weight read from entity data + client-measured
-// gravity/launch curves. weightFactor = max(0.1, 1 - targetWeight/150000), targetWeight
-// stubbed at 68000 (swordman chr default) → weightFactor ≈ 0.5467.
+// ── PVF velocity weight-factor (D9=B partial) ──────
+// weightFactor = max(0.1, 1 - DEFENDER_weight / 150000). The DEFENDER weight is now PVF truth
+// (chr.weight 68000 / mob.weight 45000), passed in per-hit. The THRESHOLD 150000 + the formula
+// SHAPE are still research推测 (reaction-formula-reverse-engineering.md H2, range 100000-200000) —
+// requiresManualVerification. Fallback weight 68000 only when an actor has no weight stat.
 const WEIGHT_THRESHOLD = 150000;
 const MIN_WEIGHT_FACTOR = 0.1;
-const STUB_TARGET_WEIGHT = 68000;
+const FALLBACK_WEIGHT = 68000; // swordman chr default, used only when defender.stats.weight absent
 
 /** ReactionState.kind: airborne (launch) | down (knockdown) | stagger (hit_horizon) | hit (plain). */
 export type ReactionKind = "hit" | "down" | "airborne" | "stagger";
@@ -91,9 +92,11 @@ export interface ReactionState {
   launchVy: number;
 }
 
-/** Weight factor stub (D9=B). Phase E: read actual target weight from entity data. */
-function stubWeightFactor(): number {
-  return Math.max(MIN_WEIGHT_FACTOR, 1 - STUB_TARGET_WEIGHT / WEIGHT_THRESHOLD);
+/** weightFactor from DEFENDER weight (PVF truth). Heavier target → smaller factor → launches less.
+ *  Threshold/shape still research推测 (D9=B); the weight VALUE is now real PVF per-entity. */
+function weightFactor(defenderWeight: number | undefined): number {
+  const w = defenderWeight && defenderWeight > 0 ? defenderWeight : FALLBACK_WEIGHT;
+  return Math.max(MIN_WEIGHT_FACTOR, 1 - w / WEIGHT_THRESHOLD);
 }
 
 /**
@@ -109,8 +112,8 @@ function stubWeightFactor(): number {
  * of launch height) rather than an invented constant. This keeps the formula truth-driven:
  * different liftUp values still produce different vy.
  */
-function computeLaunchVy(liftUpValue: number, weaponLaunch: number): number {
-  const wf = stubWeightFactor();
+function computeLaunchVy(liftUpValue: number, weaponLaunch: number, defenderWeight: number | undefined): number {
+  const wf = weightFactor(defenderWeight);
   const pvfProduct = liftUpValue * weaponLaunch * wf;
   // slot.launch=0 → fall back to liftUp body (truth, px/s), not a hardcoded constant.
   return pvfProduct !== 0 ? pvfProduct : liftUpValue * wf;
@@ -123,8 +126,8 @@ function computeLaunchVy(liftUpValue: number, weaponLaunch: number): number {
  * attack doesn't push horizontally (basic attacks route to slot0, pushBack=0 → no knockback, zero
  * regression). Inventing a push there would be local_baseline guessing. Returns 0 → no slide.
  */
-function computeKnockbackVx(pushAsideValue: number, weaponPushBack: number, attackerFacing: number): number {
-  return pushAsideValue * weaponPushBack * attackerFacing * stubWeightFactor();
+function computeKnockbackVx(pushAsideValue: number, weaponPushBack: number, attackerFacing: number, defenderWeight: number | undefined): number {
+  return pushAsideValue * weaponPushBack * attackerFacing * weightFactor(defenderWeight);
 }
 
 /** Route a hitReaction string + causesDown/attackLevel to an engine ReactionKind. */
@@ -182,7 +185,7 @@ export function applyHitReaction(
   if (kind === "airborne") {
     const liftUpValue = flags.liftUpValue ?? 0;
     const weaponLaunch = flags.weaponLaunch ?? 0;
-    launchVy = computeLaunchVy(liftUpValue, weaponLaunch);
+    launchVy = computeLaunchVy(liftUpValue, weaponLaunch, defender.stats.weight);
     if (launchVy > 0 && defender.hp > 0) {
       // Set airborne inside the resolver (cohesive with hp/fsm mutation here) so the
       // integrator no longer needs its own launchAirborne() call.
@@ -196,7 +199,7 @@ export function applyHitReaction(
   // which already carries the actor through the air).
   if (kind !== "airborne" && defender.hp > 0) {
     const knockVx = computeKnockbackVx(
-      flags.pushAsideValue ?? 0, flags.weaponPushBack ?? 0, flags.attackerFacing ?? defender.facing,
+      flags.pushAsideValue ?? 0, flags.weaponPushBack ?? 0, flags.attackerFacing ?? defender.facing, defender.stats.weight,
     );
     if (knockVx !== 0) defender.knockback = applyKnockback(knockVx, defender.x);
   }
