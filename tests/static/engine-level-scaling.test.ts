@@ -19,48 +19,45 @@ const HP = [180, 45, 50, 50, 50, 40, 40, 40, 55, 55, 55, 45, 45, 45, 47.5, 55, 5
   console.log(`L1 OK: LV1 physicalAttack = ${v}`);
 }
 
-// L2: LV5 = base + full segment 1
+// L2: LV5 ≈ base + ~0.93 of segment 1 (4.3125 levels per segment)
 {
   const v = statAtLevel(PA, 5);
-  const expected = 7.5 + 4.8;
+  // growthLevels=4, segment 1 spans 0..4.3125 → covered = min(4, 4.3125) = 4
+  const expected = 7.5 + 4.8 * (4 / 4.3125);
   assert.ok(Math.abs(v - expected) < 0.01, `L2 LV5: ${v} vs ${expected}`);
-  console.log(`L2 OK: LV5 physicalAttack = ${v.toFixed(1)} (7.5 + 4.8)`);
+  console.log(`L2 OK: LV5 physicalAttack = ${v.toFixed(2)} (base + partial seg1)`);
 }
 
-// L3: LV3 = base + 2/4 of segment 1 (interpolation within segment)
+// L3: LV3 = base + 2/4.3125 of segment 1 (interpolation within segment)
 {
   const v = statAtLevel(PA, 3);
-  const expected = 7.5 + 4.8 * (2 / 4);
+  const expected = 7.5 + 4.8 * (2 / 4.3125);
   assert.ok(Math.abs(v - expected) < 0.01, `L3 LV3: ${v} vs ${expected}`);
-  console.log(`L3 OK: LV3 physicalAttack = ${v.toFixed(1)} (mid-segment interpolation)`);
+  console.log(`L3 OK: LV3 physicalAttack = ${v.toFixed(2)} (mid-segment interpolation)`);
 }
 
-// L4: LV65 = full sum of all 17 values
-{
-  const v = statAtLevel(PA, 65);
-  const expected = PA.reduce((a, b) => a + b, 0);
-  assert.ok(Math.abs(v - expected) < 0.01, `L4 LV65 full sum: ${v} vs ${expected}`);
-  console.log(`L4 OK: LV65 physicalAttack = ${v.toFixed(1)} (full 17-segment sum = ${expected})`);
-}
-
-// L5: LV70 = full sum + 5 levels extrapolated from last segment
+// L4: LV70 (cap) = full sum of all 17 values — research doc anchor (hpMax sum=952.5=LV70)
 {
   const v = statAtLevel(PA, 70);
-  const fullSum = PA.reduce((a, b) => a + b, 0);
-  const extraRate = PA[16] / 4;
-  const expected = fullSum + extraRate * 5;
-  assert.ok(Math.abs(v - expected) < 0.01, `L5 LV70 extrapolated: ${v} vs ${expected}`);
-  console.log(`L5 OK: LV70 physicalAttack = ${v.toFixed(1)} (extrapolated from LV65)`);
+  const expected = PA.reduce((a, b) => a + b, 0);
+  assert.ok(Math.abs(v - expected) < 0.01, `L4 LV70 full sum: ${v} vs ${expected}`);
+  console.log(`L4 OK: LV70 physicalAttack = ${v.toFixed(1)} (full 17-value sum = ${expected}, NO extrapolation)`);
 }
 
-// L6: hpMax at LV70
+// L5: LV70 is the cap — no extrapolation beyond full sum
+{
+  const v70 = statAtLevel(PA, 70);
+  const v99 = statAtLevel(PA, 99); // clamped to LV70
+  assert.equal(v70, v99, `L5 LV70 is cap: ${v70} === clamped ${v99}`);
+  console.log(`L5 OK: LV70 capped at full sum ${v70.toFixed(1)} (LV99 clamps to LV70)`);
+}
+
+// L6: hpMax at LV70 = full sum
 {
   const v = statAtLevel(HP, 70);
-  const fullSum = HP.reduce((a, b) => a + b, 0);
-  const extraRate = HP[16] / 4;
-  const expected = fullSum + extraRate * 5;
+  const expected = HP.reduce((a, b) => a + b, 0);
   assert.ok(Math.abs(v - expected) < 0.1, `L6 LV70 hpMax: ${v} vs ${expected}`);
-  console.log(`L6 OK: LV70 hpMax = ${v.toFixed(1)}`);
+  console.log(`L6 OK: LV70 hpMax = ${v.toFixed(1)} (full sum)`);
 }
 
 // L7: statsAtLevel gives all stats
@@ -74,9 +71,10 @@ const HP = [180, 45, 50, 50, 50, 40, 40, 40, 55, 55, 55, 45, 45, 45, 47.5, 55, 5
     hitRecovery: { values: [600, 1.5, 2, 2, 2, 1.5, 1.5, 1.5, 2, 2, 2, 1.5, 2, 2, 2, 3, 3] },
   };
   const s = statsAtLevel(growth, 70);
-  assert.ok(s.physicalAttack > 80, `L7 physicalAttack > 80: ${s.physicalAttack.toFixed(1)}`);
-  assert.ok(s.hpMax > 900, `L7 hpMax > 900: ${s.hpMax.toFixed(1)}`);
-  console.log(`L7 OK: statsAtLevel(70) → atk=${s.physicalAttack.toFixed(1)} hp=${s.hpMax.toFixed(1)} def=${s.physicalDefense.toFixed(1)}`);
+  // LV70 = full sum (research anchor): physicalAttack 82.8, hpMax 952.5
+  assert.ok(Math.abs(s.physicalAttack - 82.8) < 0.1, `L7 physicalAttack=82.8: ${s.physicalAttack.toFixed(1)}`);
+  assert.ok(Math.abs(s.hpMax - 952.5) < 0.1, `L7 hpMax=952.5: ${s.hpMax.toFixed(1)}`);
+  console.log(`L7 OK: statsAtLevel(70) → atk=${s.physicalAttack.toFixed(1)} hp=${s.hpMax.toFixed(1)} def=${s.physicalDefense.toFixed(1)} (full-sum truth)`);
 }
 
 // L8: statsFromPlayerShard with level

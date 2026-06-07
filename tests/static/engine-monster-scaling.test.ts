@@ -29,7 +29,8 @@ const TASKMASTER_CAT = {
 // S2: goblin dies in ~4 hits from LV70 swordman (atk=89)
 {
   const s = monsterStatsAtLevel(70, GOBLIN_CAT);
-  const dmg = 89 - s.physicalDefense;
+  const PLAYER_ATK_LV70 = 82.8; // swordman physicalAttack full-sum truth (LevelScaling)
+  const dmg = PLAYER_ATK_LV70 - s.physicalDefense;
   const hits = s.hpMax / dmg;
   assert.ok(hits >= 2 && hits <= 8, `S2 hits to kill: ${hits.toFixed(1)} (target 3-5)`);
   console.log(`S2 OK: ${hits.toFixed(1)} hits to kill (dmg/hit=${dmg.toFixed(1)})`);

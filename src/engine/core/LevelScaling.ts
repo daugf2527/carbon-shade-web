@@ -1,43 +1,43 @@
 /**
  * LevelScaling.ts — PVF growth curve evaluation (Stage 4C-C1).
  *
- * DNF chr.growth arrays have 17 values:
- *   values[0] = base stat at LV1
- *   values[1..16] = per-segment increment, each segment spans 4 levels
+ * DNF chr.growth arrays have 17 values (PVF truth):
+ *   values[0]    = base stat at LV1
+ *   values[1..16] = 16 cumulative increments that sum to the LV70 (cap) total.
  *
- * Segment 1 covers LV 2-5, segment 2 covers LV 6-9, ..., segment 16 covers LV 62-65.
- * LV 66-70 extrapolates from the last segment's rate.
+ * Cross-check (research/reaction-formula-reverse-engineering.md:71): the full
+ * 17-value sum equals the LV70 stat (swordman hpMax sum 952.5 = LV70). So LV70
+ * returns the full sum — NO extrapolation beyond it.
  *
- * statAtLevel(values, lv) returns the cumulative stat at that level.
+ * ⚠️ requiresManualVerification: the PER-LEVEL mapping (which level each of the 16
+ * increments lands on) is DNF.exe internal logic and is NOT carried in PVF — PVF only
+ * has the 17 raw numbers. We distribute the 16 increments linearly across LV1→LV70
+ * (69 / 16 = 4.3125 levels per increment). Only the LV1 base and LV70 full-sum
+ * endpoints are PVF-anchored; intermediate levels are an interpolation assumption.
  */
 
-const SEGMENT_SIZE = 4;
 const MAX_LEVEL = 70;
 
 export function statAtLevel(values: readonly number[], level: number): number {
   if (!values?.length) return 0;
   if (level <= 1) return values[0];
 
+  const increments = values.length - 1; // 16 for a full growth array
+  if (increments <= 0) return values[0];
+
   const lv = Math.min(level, MAX_LEVEL);
-  const growthLevels = lv - 1;
+  const levelsPerSegment = (MAX_LEVEL - 1) / increments; // 69/16 = 4.3125
+  const growthLevels = lv - 1; // 0..69
   let stat = values[0];
 
   for (let seg = 1; seg < values.length; seg++) {
-    const segStartLevel = (seg - 1) * SEGMENT_SIZE;
-    if (growthLevels <= segStartLevel) break;
-    const covered = Math.min(growthLevels - segStartLevel, SEGMENT_SIZE);
-    stat += values[seg] * (covered / SEGMENT_SIZE);
+    const segStart = (seg - 1) * levelsPerSegment;
+    if (growthLevels <= segStart) break;
+    const covered = Math.min(growthLevels - segStart, levelsPerSegment);
+    stat += values[seg] * (covered / levelsPerSegment);
   }
 
-  // Extrapolate beyond last segment using last segment's rate
-  const lastSegEnd = (values.length - 1) * SEGMENT_SIZE;
-  if (growthLevels > lastSegEnd && values.length > 1) {
-    const extra = growthLevels - lastSegEnd;
-    const lastRate = values[values.length - 1] / SEGMENT_SIZE;
-    stat += lastRate * extra;
-  }
-
-  return stat;
+  return stat; // LV70 → full sum (all increments covered), no extrapolation
 }
 
 export interface LevelStats {
