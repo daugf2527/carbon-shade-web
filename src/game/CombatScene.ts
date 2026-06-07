@@ -28,6 +28,7 @@ import { StatusSystem } from "../engine/kernel/systems/StatusSystem.js";
 import { ResourceSystem } from "../engine/kernel/systems/ResourceSystem.js";
 import { MovementSystem } from "../engine/kernel/systems/MovementSystem.js";
 import { JumpSystem } from "../engine/kernel/systems/JumpSystem.js";
+import { DownSystem } from "../engine/kernel/systems/DownSystem.js";
 
 interface ActorSnapshot {
   id: string;
@@ -156,6 +157,7 @@ export class CombatScene extends Phaser.Scene {
     this.kernel.registerSystem(new AnimationSystem());          // ANIMATE phase: advance frames
     this.kernel.registerSystem(new CombatResolutionSystem());   // DETECTION phase: hit→damage→reaction
     this.kernel.registerSystem(new HitstunSystem());            // RESOLVE phase: tick hitstun
+    this.kernel.registerSystem(new DownSystem());               // RESOLVE phase: knockdown counter + getup immunity
     this.kernel.registerSystem(new AirborneSystem());           // CLEANUP phase: gravity + ground
     this.kernel.registerSystem(new KnockbackSystem());          // CLEANUP phase: horizontal knockback slide
     this.kernel.registerSystem(new StatusSystem());             // CLEANUP phase: bleed DOT (09-Status)
