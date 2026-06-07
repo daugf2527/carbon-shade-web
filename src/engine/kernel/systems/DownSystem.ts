@@ -20,9 +20,13 @@ import { ActorState } from "../../core/ActorStateMachine.js";
 import type { EngineContext } from "../EngineContext.js";
 import type { EngineSystem } from "../EngineSystem.js";
 
+// LOCAL_BASELINE (NOT PVF-derived, requiresManualVerification): DNF knockdown timing is hardcoded
+// in DNF.exe and varies by skill level + target resistance (see docs/research/batch-b-wiki-
+// calibration.md line 191 — Wiki gives no fixed seconds). 180f≈3s matches the wiki "Sleep/downed"
+// duration but confidence is low. These are playable approximations, not extracted truth.
 const MAX_CONSECUTIVE_DOWNS = 3;
 const GETUP_IMMUNITY_TICKS = 30;    // ~0.5s invincibility after standing
-const DOWN_PROTECTION_TICKS = 180;  // ~3s knockdown immunity after max downs
+const DOWN_PROTECTION_TICKS = 180;  // ~3s knockdown immunity after max downs (wiki Sleep=180f)
 const RESET_WINDOW_TICKS = 300;     // ~5s — counter resets if not knocked down
 const QUICK_REBOUND_COOLDOWN = 300; // ~5s between quick rebounds
 

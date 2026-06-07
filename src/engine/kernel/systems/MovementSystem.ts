@@ -21,6 +21,10 @@ import type { EngineSystem } from "../EngineSystem.js";
 
 const { xNormalMoveVelocity, yNormalMoveVelocity, speedValueDefault } = DNF_PHYSICS_CONSTANTS;
 
+// LOCAL_BASELINE (NOT PVF-derived, requiresManualVerification): DNF run-speed multiplier and
+// double-tap window are hardcoded in DNF.exe, not in PVF. 1.6× ≈ classic run feel; 12-tick window
+// ≈ 200ms. Walk/Z velocity IS PVF truth (xNormalMoveVelocity formula above); only the dash
+// MULTIPLIER on top is local_baseline.
 const DASH_SPEED_RATIO = 1.6;
 const DOUBLE_TAP_WINDOW = 12; // ticks (~200ms at 60Hz)
 
