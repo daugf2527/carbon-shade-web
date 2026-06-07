@@ -138,4 +138,33 @@ function makeKernel(): { kernel: EngineKernel; actions: ActionSystem } {
   console.log("M7 OK: dead actor x unchanged");
 }
 
+// M8: Z-axis depth movement — zDir=1 → z increases at half moveSpeed
+{
+  const { kernel: k } = makeKernel();
+  const p = k.player;
+  p.z = 0;
+  p.intent = { attack: false, dir: 0, zDir: 1 };
+  k.tick();
+  const expected = 300 * 0.5 / 60; // 2.5 px
+  assert.ok(
+    Math.abs(p.z - expected) < 0.01,
+    `M8 z-move: expected z≈${expected.toFixed(2)}, got ${p.z.toFixed(2)}`,
+  );
+  console.log(`M8 OK: z-axis move z=${p.z.toFixed(2)} (expected ${expected.toFixed(2)})`);
+}
+
+// M9: simultaneous X + Z movement (diagonal walk)
+{
+  const { kernel: k } = makeKernel();
+  const p = k.player;
+  p.x = 0; p.z = 0;
+  p.intent = { attack: false, dir: 1, zDir: -1 };
+  for (let i = 0; i < 10; i++) k.tick();
+  const expectedX = 10 * 300 / 60; // 50
+  const expectedZ = -(10 * 300 * 0.5 / 60); // -25
+  assert.ok(Math.abs(p.x - expectedX) < 0.1, `M9 diagonal x: ${p.x.toFixed(1)} vs ${expectedX}`);
+  assert.ok(Math.abs(p.z - expectedZ) < 0.1, `M9 diagonal z: ${p.z.toFixed(1)} vs ${expectedZ}`);
+  console.log(`M9 OK: diagonal walk x=${p.x.toFixed(1)} z=${p.z.toFixed(1)}`);
+}
+
 console.log("\n✅ MovementSystem (Stage 4A) all tests passed");

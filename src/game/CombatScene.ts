@@ -1122,6 +1122,8 @@ export class CombatScene extends Phaser.Scene {
     switch (event.code) {
       case "ArrowLeft":  player.intent = { ...player.intent, dir: -1 }; break;
       case "ArrowRight": player.intent = { ...player.intent, dir: 1 }; break;
+      case "ArrowUp":    player.intent = { ...player.intent, zDir: -1 }; break;
+      case "ArrowDown":  player.intent = { ...player.intent, zDir: 1 }; break;
       case "KeyX":
       case "KeyJ":       player.intent = { ...player.intent, attack: true }; break;
       case "KeyC":       this.kernel.requestAction("player", "Backstep"); break;
@@ -1156,6 +1158,10 @@ export class CombatScene extends Phaser.Scene {
       case "ArrowLeft":
       case "ArrowRight":
         player.intent = { ...player.intent, dir: 0 };
+        break;
+      case "ArrowUp":
+      case "ArrowDown":
+        player.intent = { ...player.intent, zDir: 0 };
         break;
       case "KeyX":
       case "KeyJ":
