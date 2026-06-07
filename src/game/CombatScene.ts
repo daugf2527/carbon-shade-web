@@ -26,6 +26,7 @@ import { KnockbackSystem } from "../engine/kernel/systems/KnockbackSystem.js";
 import { EnemyAISystem } from "../engine/kernel/systems/EnemyAISystem.js";
 import { StatusSystem } from "../engine/kernel/systems/StatusSystem.js";
 import { ResourceSystem } from "../engine/kernel/systems/ResourceSystem.js";
+import { MovementSystem } from "../engine/kernel/systems/MovementSystem.js";
 
 interface ActorSnapshot {
   id: string;
@@ -147,6 +148,7 @@ export class CombatScene extends Phaser.Scene {
 
     // Register domain systems in phase order (kernel sorts, insertion order is tiebreaker)
     this.kernel.registerSystem(new InputSystem(actions, "attack1"));       // INPUT phase: reads intent → requests actions
+    this.kernel.registerSystem(new MovementSystem());              // INPUT phase: intent.dir → actor.x displacement
     this.kernel.registerSystem(actions);                         // INPUT phase: dispatches pending requests
     this.kernel.registerSystem(new EnemyAISystem(actions));     // AI phase: enemy decision → request
     this.kernel.registerSystem(new AnimationSystem());          // ANIMATE phase: advance frames
