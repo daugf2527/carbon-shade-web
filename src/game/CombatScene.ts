@@ -171,16 +171,13 @@ export class CombatScene extends Phaser.Scene {
     //   hpMax=180, mpMax=140, physicalDefense=7.5 (all real PVF base).
     // Two fields are deliberately OVERRIDDEN off the raw base — see truth-coverage-matrix.md:
     //   - physicalAttack: PVF base=7.5, LV70-sum=82.8 (ActorFactory's accumulation method). Either
-    //     true value collapses playability: base 7.5 → 7 dmg/hit (7 hits to kill a goblin); LV70 83
-    //     → 81 dmg/hit but the goblin side has no PVF absolute base to match, so it one-shots. 45 is
-    //     the "effective atk" placeholder that keeps the 2-hit-kill feel until a level+equipment
-    //     model exists (P4/Stage4 gap).
-    //   - moveSpeed: PVF value 850 is unit "%xSPEED_VALUE_DEFAULT" (a percent), not px/s; the engine
-    //     does not consume stats.moveSpeed anyway. Keep px-baseline 300 to avoid a wrong-unit value.
+    // PVF-truth stats at level 70 (target version: pre-Metastasis LV70 cap).
+    // statsFromPlayerShard now evaluates the full chr.growth curve at the given level.
+    // moveSpeed: PVF 850 is %xSPEED_VALUE_DEFAULT (a percent), not px/s; override to px baseline.
+    const PLAYER_LEVEL = 70;
     const playerStats = {
-      ...statsFromPlayerShard(SWORDMAN_TRUTH.chr as unknown as Record<string, unknown>),
-      physicalAttack: 45, // effective-atk placeholder; PVF base=7.5 / LV70-sum=82.8, needs level+equipment model (P4/Stage4 gap)
-      moveSpeed: 300,     // px baseline; PVF moveSpeed=850 is %xSPEED_VALUE_DEFAULT (percent), engine does not consume moveSpeed
+      ...statsFromPlayerShard(SWORDMAN_TRUTH.chr as unknown as Record<string, unknown>, PLAYER_LEVEL),
+      moveSpeed: 300,     // px baseline; PVF moveSpeed=850 is %xSPEED_VALUE_DEFAULT (percent)
     };
     const playerActor = new Actor("player", "player", playerStats);
     playerActor.x = 390;

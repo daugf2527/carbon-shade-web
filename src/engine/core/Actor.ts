@@ -61,17 +61,19 @@ function scalarVal(field: { value?: number; values?: number[] } | number | null 
   return 0;
 }
 
-export function statsFromPlayerShard(chr: Record<string, unknown>): ActorStats {
+import { statAtLevel } from "./LevelScaling.js";
+
+export function statsFromPlayerShard(chr: Record<string, unknown>, level = 1): ActorStats {
   const growth = chr.growth as Record<string, { values: number[] }> | undefined;
   return {
-    hpMax: growthBase(growth?.hpMax),
-    mpMax: growthBase(growth?.mpMax),
+    hpMax: growth?.hpMax ? statAtLevel(growth.hpMax.values, level) : 180,
+    mpMax: growth?.mpMax ? statAtLevel(growth.mpMax.values, level) : 140,
     moveSpeed: scalarVal(chr.moveSpeed as never),
-    physicalAttack: growthBase(growth?.physicalAttack),
-    physicalDefense: growthBase(growth?.physicalDefense),
-    mpRegenSpeed: growthBase(growth?.mpRegenSpeed), // PVF mp/min (swordman base 50)
-    hitRecovery: growthBase(growth?.hitRecovery),   // PVF hit-stun ms (swordman base 600)
-    jumpPower: scalarVal(chr.jumpPower as never),   // PVF launch velocity (swordman 430)
+    physicalAttack: growth?.physicalAttack ? statAtLevel(growth.physicalAttack.values, level) : 7.5,
+    physicalDefense: growth?.physicalDefense ? statAtLevel(growth.physicalDefense.values, level) : 7.5,
+    mpRegenSpeed: growth?.mpRegenSpeed ? statAtLevel(growth.mpRegenSpeed.values, level) : 50,
+    hitRecovery: growth?.hitRecovery ? statAtLevel(growth.hitRecovery.values, level) : 600,
+    jumpPower: scalarVal(chr.jumpPower as never),
   };
 }
 
