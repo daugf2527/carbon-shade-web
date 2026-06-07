@@ -179,6 +179,8 @@ export class Actor {
   intent: ActorIntent = { attack: false, dir: 0 };
   /** Current action name set by ActionSystem on play. Read by render layer for sprite selection. */
   currentActionName: string | null = null;
+  /** Locomotion state for render layer: idle/walk/run. Set by MovementSystem. */
+  locomotion: "idle" | "walk" | "run" = "idle";
   /** Active buff list (P3.1 placeholder — engine has no buff system yet). */
   buffs: Array<{ type: string; stacks: number; expiresAtTick: number }> = [];
 

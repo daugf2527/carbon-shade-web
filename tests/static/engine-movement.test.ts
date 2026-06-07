@@ -167,4 +167,56 @@ function makeKernel(): { kernel: EngineKernel; actions: ActionSystem } {
   console.log(`M9 OK: diagonal walk x=${p.x.toFixed(1)} z=${p.z.toFixed(1)}`);
 }
 
+// M10: dash — double-tap right within window → run speed (1.6x)
+{
+  const { kernel: k } = makeKernel();
+  const p = k.player;
+  p.x = 0;
+  // First tap right
+  p.intent = { attack: false, dir: 1 };
+  k.tick(); // tick 1: rising edge, records tap
+  p.intent = { attack: false, dir: 0 };
+  k.tick(); // tick 2: release
+  // Second tap right within window
+  p.intent = { attack: false, dir: 1 };
+  k.tick(); // tick 3: rising edge again, same dir → dash!
+  // Now in dash mode, run 5 more ticks
+  const xBeforeDash = p.x;
+  for (let i = 0; i < 5; i++) k.tick();
+  const dashDistance = p.x - xBeforeDash;
+  const walkDistance = 5 * 300 / 60; // normal walk distance for 5 ticks
+  assert.ok(dashDistance > walkDistance * 1.4, `M10 dash faster: ${dashDistance.toFixed(1)} > ${(walkDistance * 1.4).toFixed(1)}`);
+  assert.equal(p.locomotion, "run", "M10 locomotion = run");
+  console.log(`M10 OK: dash speed ${dashDistance.toFixed(1)}px/5ticks vs walk ${walkDistance.toFixed(1)} (1.6x)`);
+}
+
+// M11: single tap → walk, not dash
+{
+  const { kernel: k } = makeKernel();
+  const p = k.player;
+  p.x = 0;
+  p.intent = { attack: false, dir: 1 };
+  for (let i = 0; i < 5; i++) k.tick();
+  assert.equal(p.locomotion, "walk", "M11 locomotion = walk (single tap)");
+  const expectedX = 5 * 300 / 60;
+  assert.ok(Math.abs(p.x - expectedX) < 0.1, "M11 walk speed");
+  console.log(`M11 OK: single tap = walk (x=${p.x.toFixed(1)})`);
+}
+
+// M12: release direction → dash stops
+{
+  const { kernel: k } = makeKernel();
+  const p = k.player;
+  p.x = 0;
+  // Trigger dash
+  p.intent = { attack: false, dir: 1 }; k.tick();
+  p.intent = { attack: false, dir: 0 }; k.tick();
+  p.intent = { attack: false, dir: 1 }; k.tick(); // dash activated
+  assert.equal(p.locomotion, "run", "M12 running");
+  // Release
+  p.intent = { attack: false, dir: 0 }; k.tick();
+  assert.equal(p.locomotion, "idle", "M12 stopped → idle");
+  console.log("M12 OK: release direction stops dash");
+}
+
 console.log("\n✅ MovementSystem (Stage 4A) all tests passed");
