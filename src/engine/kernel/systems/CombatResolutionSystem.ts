@@ -36,7 +36,14 @@ const DEFAULT_BODY_BOX: readonly AniBox[] = [
 
 /**
  * Action → weaponHitInfo slot routing (D9=B hardcoded path, mirrored from combat
- * ReactionResolver WEAPON_SLOT_ROUTING). Default slot 0. Phase E: derive per-weapon truth.
+ * ReactionResolver WEAPON_SLOT_ROUTING). Default slot 0.
+ *
+ * Batch 5 investigation (2026-06-07): VERIFIED this CANNOT be truth-driven from PVF. The .atk
+ * attack files (swordman-attacks.json) carry hit characteristics (lift up / push aside / damage
+ * reaction / attack direction / elemental property / attackKind) but NO weapon-slot selector and
+ * NO per-attack hitTag — hitTag is a weaponHitInfo ROW property ([cut]/[blow]), not an attack→slot
+ * mapper. The attack→slot table lives in DNF.exe, not PVF (L3 data gap, requiresManualVerification).
+ * This hardcoded map stays the honest D9=B path; do NOT invent a truth-derivation that isn't there.
  */
 const WEAPON_SLOT_ROUTING: Record<string, number> = {
   attack1: 0, attack2: 0, attack3: 0, dashattack: 0, jumpattack: 0,

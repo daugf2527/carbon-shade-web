@@ -134,6 +134,19 @@
 - **slot 路由**：当前 `CombatResolutionSystem.WEAPON_SLOT_ROUTING` 是 hardcoded map（attack1-3→slot0, hardattack→slot3）。真值化需 PVF `hitTag` 决定 slot——但**先查 .atk 有没有提取 hitTag**（AtkParser.ts）。若没有 → 这是 L3（数据缺），保持 hardcoded + 标注，别硬做。
 - **提取未消费字段**：`attackKind`/`stuckbonusOnDamage`/`weightDual`/weaponHitInfo `critOrSimilar`/`hitTag`——多数是 scope 外（crit 系统没做）。逐个评估：有真值用途的接，纯 scope 外的在审计文档登记"已知未消费"即可，不强接。
 
+### ✅ Batch 5 结论 (2026-06-07 调查)
+- **slot 路由 = L3 数据缺，确认无法真值化**：`swordman-attacks.json` 每个 .atk 只有 hit 特征 section
+  (lift up / push aside / damage reaction / attack direction / elemental property / attackKind)，
+  **无 slot 选择器、无 per-attack hitTag**（grep `slot|weaponHit|hitGroup|stuckbonus|weightDual|critOrSimilar` 零命中）。
+  hitTag 是 weaponHitInfo 行属性 `[cut]/[blow]`，不是 attack→slot 映射器。attack→slot 表在 DNF.exe，PVF 拿不到。
+  `WEAPON_SLOT_ROUTING` 保持 hardcoded（D9=B），已在 CombatResolutionSystem 代码注释标注 L3 + requiresManualVerification，不硬做。
+- **未消费字段登记（已知，scope 外）**：
+  - `attackKind`(physic/magic)：已提取未消费——需魔法伤害系统（engine 只有 calcPhysicalDamage），scope 外。
+  - `critOrSimilar`(weaponHitInfo)：未消费——需暴击系统，不存在，scope 外。
+  - `stuckbonus`/`weightDual`：未提取进 attack 真值（grep 零命中），scope 外。
+  - `elemental property`/`attack direction`(.atk section)：未消费——需元素系统/独立方向算，scope 外。
+  - 接入条件：对应系统（魔法伤害/暴击/元素）立项后再接；当前不强接（无系统消费 = 死字段）。
+
 ## 7. 坑速查
 - **推送代理**：FlClash 监听 **47890**（不是默认 7890，git 配置的 7890 是死的）。最稳：`git -c http.proxy= -c https.proxy= -c http.https://github.com.proxy= push --no-verify origin dnf-native`（清空代理直连 + --no-verify 跳过慢 pre-push hook，github 直连国内间歇通，重试 2-3 次）。代码 commit 要过门禁则去掉 --no-verify（pre-push 跑全量 analyze ~3min）。
 - **测试编译**：改 `tests/static/*.test.ts` 后必须 `node scripts/run-tsc.mjs -p tsconfig.test.json` 重编译，再跑 `.tmp/test-js/tests/static/<t>.test.js`。
