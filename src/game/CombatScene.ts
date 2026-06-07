@@ -32,6 +32,7 @@ import { DownSystem } from "../engine/kernel/systems/DownSystem.js";
 import { HitStopSystem } from "../engine/kernel/systems/HitStopSystem.js";
 import { ComboSystem } from "../engine/kernel/systems/ComboSystem.js";
 import { monsterStatsAtLevel } from "../engine/core/MonsterScaling.js";
+import { statsForMonster, aiConfigForMonster } from "../engine/core/monsterTruth.js";
 
 interface ActorSnapshot {
   id: string;
@@ -214,6 +215,19 @@ export class CombatScene extends Phaser.Scene {
     // 440 让玩家原地按 Atk1/2/3 即可打中 grunt（移动系统 02-Move 仍 P4 未做，无法走位贴近）。
     grunt.x = 440;
     this.kernel.addActor(grunt, false);
+
+    // B4 multi-monster (Stage 4B): 2 more PVF-truth enemy types beyond the goblinthrower grunt —
+    // goblin (faster attacker, atk×90) + skeleton (fast mover 700, long sight 350, ×100 stats).
+    // Stats/AI re-extracted from data/Script.pvf monster/*.mob (2026-06-08, see monsterTruth.ts).
+    const monsterGrowth = {
+      hpMax: swGrowth.hpMax.values, physicalAttack: swGrowth.physicalAttack.values, physicalDefense: swGrowth.physicalDefense.values,
+    };
+    for (const [monId, monX] of [["goblin", 520], ["skeleton", 600]] as const) {
+      const mon = new Actor(monId, "monster", statsForMonster(monId, DUNGEON_BASIS_LEVEL, monsterGrowth));
+      mon.aiConfig = aiConfigForMonster(monId); // 03-AI: per-monster PVF sight + attackDelay
+      mon.x = monX;
+      this.kernel.addActor(mon, false);
+    }
 
     // ── FixedStepSimulation unchanged (P3.1: EngineKernel satisfies TickableKernel via structural typing) ──
     this.simulation = new FixedStepSimulation(this.kernel as unknown as import("../combat/kernel/FixedStepSimulation.js").TickableKernel);
