@@ -14,6 +14,7 @@
 
 import type { Actor } from "../core/Actor.js";
 import { ActorState } from "../core/ActorStateMachine.js";
+import { BOSS_SUPER_ARMOR, NONE_ARMOR } from "../core/ArmorProfile.js";
 import type { Tickable } from "../core/GameLoop.js";
 import type { ReactionState } from "../core/ReactionResolver.js";
 import { freshScenarioBooleans, type EngineScenarioBooleans } from "../core/ScenarioBooleans.js";
@@ -356,6 +357,13 @@ export class EngineKernel implements EngineContext, Tickable {
       // tickIntervalTicks=30 → tick past one interval (+queue-apply frame) so DOT fires once.
       for (let i = 0; i < 34; i++) this.tick();
     }
+
+    // Sub-scenario 4 — armor (Batch 3a activation): give the target boss super-armor + hit it.
+    // CombatResolutionSystem flips armorHitObserved on a hit against a non-none armorProfile. Restore
+    // NONE_ARMOR after so the observation is isolated (no leak into the actor's resting state).
+    target.armorProfile = BOSS_SUPER_ARMOR;
+    this.scriptAttack(player, target, "attack1", 12);
+    target.armorProfile = NONE_ARMOR;
 
     return this._scenario;
   }

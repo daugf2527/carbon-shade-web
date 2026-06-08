@@ -76,10 +76,10 @@ function buildScenarioKernel(seed: number): EngineKernel {
   assert.equal(scenario.normalHitObserved, true, "S2: attack1 landed a normal hit");
   assert.equal(scenario.launchObserved, true, "S3: attack3 hit_lift_up launched the target airborne");
   assert.equal(scenario.bleedObserved, true, "S3b: bleed DOT observed (09-Status StatusSystem)");
-  // The 4 unimplemented flags stay honestly false (engine has no boss/building/rebound/multi-hit).
-  assert.equal(scenario.armorHitObserved, false, "S1b: armorHit not observable (P4 gap)");
-  assert.equal(scenario.quickReboundObserved, false, "S1b: quickRebound not observable (P4 gap)");
-  console.log("S1-S3 OK: scenario observed normalHit + launch + bleed (4 P4-gap flags stay false)");
+  // 3 unimplemented flags stay honestly false (no multi-hit super / building-armor block / rebound in scenario).
+  assert.equal(scenario.armorHitObserved, true, "S1b: armorHit observed (boss super-armor sub-scenario, Batch 3a)");
+  assert.equal(scenario.quickReboundObserved, false, "S1b: quickRebound not observable (P4 gap — DownSystem not in scenario kernel)");
+  console.log("S1-S4 OK: scenario observed normalHit + launch + bleed + armorHit (3 P4-gap flags stay false)");
 }
 
 // ── S4: replay export is valid ──
