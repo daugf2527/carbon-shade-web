@@ -18,7 +18,7 @@
 import type { AniBox } from "../../core/AnimationPlayer.js";
 import { calcPhysicalDamage } from "../../core/DamageFormula.js";
 import { detectHit } from "../../core/HitDetection.js";
-import { applyHitReaction } from "../../core/ReactionResolver.js";
+import { applyHitReaction, routeFromHitReaction, routeFromLegacyBools, applyArmorToKind } from "../../core/ReactionResolver.js";
 import { applyHitStop, hitStopFor } from "../../core/HitStop.js";
 import { applyComboFromHit } from "../../core/ComboPressure.js";
 import type { ReactionState, AtkFlags, HitReaction } from "../../core/ReactionResolver.js";
@@ -167,8 +167,8 @@ export class CombatResolutionSystem implements EngineSystem {
         });
         // Scenario observation (P3 收尾): flip the booleans this hit demonstrates. ctx.scenario
         // is a live object on the kernel (undefined only on bare test contexts). Any landed hit
-        // proves normalHit; an airborne reaction proves launch. The other 5 flags need actors/
-        // systems the engine lacks (P4 gaps — see ScenarioBooleans.ts) and are never set here.
+        // proves normalHit; an airborne reaction proves launch. The remaining flags need actors/
+        // systems the engine exercises only in specific sub-scenarios (see ScenarioBooleans.ts).
         if (ctx.scenario) {
           ctx.scenario.normalHitObserved = true;
           if (defender.reaction?.kind === "airborne") ctx.scenario.launchObserved = true;
@@ -176,6 +176,18 @@ export class CombatResolutionSystem implements EngineSystem {
           // Stays false in the default scenario (player+grunt are NONE_ARMOR) — wiring is ready
           // for when runDeterministicScenario spawns an armored dummy.
           if (defender.armorProfile.baseType !== "none") ctx.scenario.armorHitObserved = true;
+          // Building armor (Batch 3a): a control reaction (launch/down) that folds to a plain HIT
+          // because the building can't be launched/knocked down is a BLOCKED control. Re-derive the
+          // would-be raw reaction and check armor downgraded it. Mirrors combat HitResolutionSystem:235
+          // (building_armor + armor_feedback_only + dmg>0). Read-only — scenario flags are not hashed.
+          if (defender.armorProfile.baseType === "building_armor" && dmg > 0) {
+            const rawKind = flags.hitReaction
+              ? routeFromHitReaction(flags.hitReaction, flags.causesDown ?? false, flags.attackLevel ?? 1)
+              : routeFromLegacyBools(flags);
+            if (rawKind !== applyArmorToKind(defender.armorProfile, rawKind)) {
+              ctx.scenario.buildingArmorBlockedControlObserved = true;
+            }
+          }
         }
         ctx.bus.emit("HitConfirmed", {
           attackerId: attacker.id,

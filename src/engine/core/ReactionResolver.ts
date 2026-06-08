@@ -116,7 +116,7 @@ function computeKnockbackVx(pushAsideValue: number, weaponPushBack: number, atta
 }
 
 /** Route a hitReaction string + causesDown/attackLevel to an engine ReactionKind. */
-function routeFromHitReaction(
+export function routeFromHitReaction(
   hitReaction: HitReaction,
   causesDown: boolean,
   attackLevel: number,
@@ -139,7 +139,7 @@ function routeFromHitReaction(
 }
 
 /** Legacy bool routing (old stub caller path; used only when hitReaction absent). */
-function routeFromLegacyBools(flags: AtkFlags): ReactionKind {
+export function routeFromLegacyBools(flags: AtkFlags): ReactionKind {
   if (flags.liftUp) return "airborne";
   if (flags.pushAside) return "down";
   return "hit";

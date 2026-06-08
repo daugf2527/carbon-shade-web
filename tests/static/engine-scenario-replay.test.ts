@@ -78,10 +78,12 @@ function buildScenarioKernel(seed: number): EngineKernel {
   assert.equal(scenario.normalHitObserved, true, "S2: attack1 landed a normal hit");
   assert.equal(scenario.launchObserved, true, "S3: attack3 hit_lift_up launched the target airborne");
   assert.equal(scenario.bleedObserved, true, "S3b: bleed DOT observed (09-Status StatusSystem)");
-  // 2 unimplemented flags stay honestly false (no multi-hit super / building-armor block in scenario).
+  // Only 1 unimplemented flag stays honestly false: ragingFuryMultiHit (engine has no multi-hit super action).
   assert.equal(scenario.armorHitObserved, true, "S1b: armorHit observed (boss super-armor sub-scenario, Batch 3a)");
   assert.equal(scenario.quickReboundObserved, true, "S1c: quickRebound observed (DownSystem sub-scenario, Stage 4B-B1)");
-  console.log("S1-S4 OK: scenario observed normalHit + launch + bleed + armorHit + quickRebound (2 P4-gap flags stay false)");
+  assert.equal(scenario.buildingArmorBlockedControlObserved, true, "S1d: building-armor blocked a lift_up control (Batch 3a sub-scenario 6)");
+  assert.equal(scenario.ragingFuryMultiHitObserved, false, "S1e: ragingFury stays false (no multi-hit super action in engine — honest P4 gap)");
+  console.log("S1-S4 OK: scenario observed normalHit + launch + bleed + armorHit + quickRebound + buildingArmorBlock (1 P4-gap flag stays false)");
 }
 
 // ── S4: replay export is valid ──

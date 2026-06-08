@@ -14,7 +14,7 @@
 
 import type { Actor } from "../core/Actor.js";
 import { ActorState } from "../core/ActorStateMachine.js";
-import { BOSS_SUPER_ARMOR, NONE_ARMOR } from "../core/ArmorProfile.js";
+import { BOSS_SUPER_ARMOR, BUILDING_ARMOR, NONE_ARMOR } from "../core/ArmorProfile.js";
 import type { Tickable } from "../core/GameLoop.js";
 import type { ReactionState } from "../core/ReactionResolver.js";
 import { freshScenarioBooleans, type EngineScenarioBooleans } from "../core/ScenarioBooleans.js";
@@ -366,6 +366,14 @@ export class EngineKernel implements EngineContext, Tickable {
     // NONE_ARMOR after so the observation is isolated (no leak into the actor's resting state).
     target.armorProfile = BOSS_SUPER_ARMOR;
     this.scriptAttack(player, target, "attack1", 12);
+    target.armorProfile = NONE_ARMOR;
+
+    // Sub-scenario 6 — building-armor blocked control (Batch 3a): a building can't be launched, so a
+    // lift_up attack (attack3 → airborne) folds to a plain HIT — a blocked control. The damage still
+    // lands; CombatResolutionSystem flips buildingArmorBlockedControlObserved when armor downgrades
+    // the raw control reaction. Restore NONE_ARMOR after so the observation stays isolated.
+    target.armorProfile = BUILDING_ARMOR;
+    this.scriptAttack(player, target, "attack3", 16);
     target.armorProfile = NONE_ARMOR;
 
     // Sub-scenario 5 — quick rebound (DownSystem activation): knock the target DOWN, then set its
