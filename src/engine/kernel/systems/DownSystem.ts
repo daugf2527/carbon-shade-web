@@ -89,6 +89,9 @@ export class DownSystem implements EngineSystem {
           actor.fsm.force(ActorState.IDLE, tick);
           actor.invulnerableUntilTick = tick + GETUP_IMMUNITY_TICKS;
           ctx.bus.emit("QuickRebound", { actorId: actor.id });
+          // Scenario observation (mirrors CombatResolutionSystem.armorHitObserved): a quick rebound
+          // actually fired. Harmless in live play (flag is read only by the evidence collector).
+          if (ctx.scenario) ctx.scenario.quickReboundObserved = true;
         }
       }
 

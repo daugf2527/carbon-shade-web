@@ -113,6 +113,8 @@ export class EngineKernel implements EngineContext, Tickable {
   private _combatResolutionSystem: CombatResolutionSystem | null = null;
   private _statusSystem: { requestBleed(actorId: string): void } | null = null;
   private _resourceSystem: { requestSkill(actorId: string, skillId: string, mpCost: number, cooldownMs: number): void } | null = null;
+  /** Whether a DownSystem is registered — gates the quick-rebound sub-scenario (else honestly skipped). */
+  private _hasDownSystem = false;
   private _prng: Fnv1aPrng;
   private _bus: SimpleEventBus;
 
@@ -209,6 +211,7 @@ export class EngineKernel implements EngineContext, Tickable {
     if (system.name === "CombatResolution") this._combatResolutionSystem = system as unknown as CombatResolutionSystem;
     if (system.name === "Status") this._statusSystem = system as unknown as { requestBleed(actorId: string): void };
     if (system.name === "Resource") this._resourceSystem = system as unknown as { requestSkill(actorId: string, skillId: string, mpCost: number, cooldownMs: number): void };
+    if (system.name === "Down") this._hasDownSystem = true;
     // Keep sorted by phase so insertion order is irrelevant.
     this._systems.sort((a, b) => phaseIndex(a.phase) - phaseIndex(b.phase));
   }
@@ -364,6 +367,23 @@ export class EngineKernel implements EngineContext, Tickable {
     target.armorProfile = BOSS_SUPER_ARMOR;
     this.scriptAttack(player, target, "attack1", 12);
     target.armorProfile = NONE_ARMOR;
+
+    // Sub-scenario 5 — quick rebound (DownSystem activation): knock the target DOWN, then set its
+    // quickRebound intent and tick once. DownSystem (RESOLVE) sees DOWN + intent → forces IDLE + emits
+    // QuickRebound + flips quickReboundObserved. Guarded by _hasDownSystem so a kernel without a
+    // DownSystem honestly leaves the flag false (InputSystem ignores intent.quickRebound, so this
+    // works identically in the scene and the test). Restore the target to a clean resting state after.
+    if (this._hasDownSystem) {
+      target.hp = target.stats.hpMax;
+      target.reaction = null;
+      target.airborne = null;
+      target.y = 0;
+      target.fsm.force(ActorState.DOWN, this._tickCount);
+      target.intent.quickRebound = true;
+      this.tick();
+      target.intent.quickRebound = false;
+      target.hp = target.stats.hpMax; // DownSystem already forced IDLE; just clear the scripted damage
+    }
 
     return this._scenario;
   }

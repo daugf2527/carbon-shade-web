@@ -24,6 +24,7 @@ import { AnimationSystem } from "../../src/engine/kernel/systems/AnimationSystem
 import { CombatResolutionSystem } from "../../src/engine/kernel/systems/CombatResolutionSystem.js";
 import { HitstunSystem } from "../../src/engine/kernel/systems/HitstunSystem.js";
 import { HitStopSystem } from "../../src/engine/kernel/systems/HitStopSystem.js";
+import { DownSystem } from "../../src/engine/kernel/systems/DownSystem.js";
 import { AirborneSystem } from "../../src/engine/kernel/systems/AirborneSystem.js";
 import { StatusSystem } from "../../src/engine/kernel/systems/StatusSystem.js";
 
@@ -63,6 +64,7 @@ function buildScenarioKernel(seed: number): EngineKernel {
   kernel.registerSystem(new CombatResolutionSystem());
   kernel.registerSystem(new HitstunSystem());
   kernel.registerSystem(new HitStopSystem());
+  kernel.registerSystem(new DownSystem());          // Stage 4B-B1: enables the quick-rebound sub-scenario
   kernel.registerSystem(new AirborneSystem());
   kernel.registerSystem(new StatusSystem());        // 09-Status: enables the bleed sub-scenario
   return kernel;
@@ -76,10 +78,10 @@ function buildScenarioKernel(seed: number): EngineKernel {
   assert.equal(scenario.normalHitObserved, true, "S2: attack1 landed a normal hit");
   assert.equal(scenario.launchObserved, true, "S3: attack3 hit_lift_up launched the target airborne");
   assert.equal(scenario.bleedObserved, true, "S3b: bleed DOT observed (09-Status StatusSystem)");
-  // 3 unimplemented flags stay honestly false (no multi-hit super / building-armor block / rebound in scenario).
+  // 2 unimplemented flags stay honestly false (no multi-hit super / building-armor block in scenario).
   assert.equal(scenario.armorHitObserved, true, "S1b: armorHit observed (boss super-armor sub-scenario, Batch 3a)");
-  assert.equal(scenario.quickReboundObserved, false, "S1b: quickRebound not observable (P4 gap — DownSystem not in scenario kernel)");
-  console.log("S1-S4 OK: scenario observed normalHit + launch + bleed + armorHit (3 P4-gap flags stay false)");
+  assert.equal(scenario.quickReboundObserved, true, "S1c: quickRebound observed (DownSystem sub-scenario, Stage 4B-B1)");
+  console.log("S1-S4 OK: scenario observed normalHit + launch + bleed + armorHit + quickRebound (2 P4-gap flags stay false)");
 }
 
 // ── S4: replay export is valid ──
