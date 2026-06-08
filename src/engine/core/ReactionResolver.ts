@@ -192,8 +192,10 @@ export function applyHitReaction(
     launchVy = launchVy / defender.combo.launchResistance;
     if (launchVy > 0 && defender.hp > 0) {
       // Set airborne inside the resolver (cohesive with hp/fsm mutation here) so the
-      // integrator no longer needs its own launchAirborne() call.
-      defender.airborne = launchAirborne(launchVy, defender.y);
+      // integrator no longer needs its own launchAirborne() call. Capture combo.gravityScale NOW
+      // (reflects prior aerial hits only — launch hit's airGauge accumulates after, in CombatResolution
+      // — so a fresh launch is pure gravity = Batch-6 truth peak; re-launches in a juggle fall faster).
+      defender.airborne = launchAirborne(launchVy, defender.y, defender.combo.gravityScale);
     }
   }
 

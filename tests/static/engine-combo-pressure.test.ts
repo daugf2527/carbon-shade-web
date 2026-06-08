@@ -16,6 +16,7 @@ import {
   classifyComboBucket, tickComboDecay, hasComboPressure,
 } from "../../src/engine/core/ComboPressure.js";
 import { EngineKernel } from "../../src/engine/kernel/EngineKernel.js";
+import { launchAirborne, tickAirborne } from "../../src/engine/core/AirbornePhysicsSystem.js";
 import { AnimationSystem } from "../../src/engine/kernel/systems/AnimationSystem.js";
 import { CombatResolutionSystem } from "../../src/engine/kernel/systems/CombatResolutionSystem.js";
 import { HitstunSystem } from "../../src/engine/kernel/systems/HitstunSystem.js";
@@ -125,6 +126,26 @@ function buildBagScene(seed = 42): { kernel: EngineKernel; def: Actor; dmgs: num
   const s = createComboState();
   assert.equal(s.damageScale, 1, "P7 first hit damageScale=1 (full damage, no combo penalty)");
   console.log("P7 OK: single hit unaffected (damageScale=1) — single-hit truth tests safe");
+}
+
+// P8: gravityScale wiring — combo gravityScale is captured at launch and accelerates fall. A fresh
+// launch (gravityScale=1) is pure gravity → preserves the Batch-6 truth peak; a pre-built combo
+// (juggle, gravityScale↑) falls faster.
+{
+  const TICK = 1000 / 60;
+  const peakOf = (gravityScale: number): number => {
+    const s = launchAirborne(300, 0, gravityScale); // vy=300 (attack3 truth liftUp)
+    let peak = 0;
+    for (let i = 0; i < 180 && s.active; i++) { tickAirborne(s, TICK); if (s.y > peak) peak = s.y; }
+    return peak;
+  };
+  const fresh = peakOf(1);      // fresh launch (combo gravityScale=1) → pure gravity
+  const juggled = peakOf(2.4);  // pre-built combo (airGauge full → gravityScale 2.4) → faster fall
+  // Discrete Euler @60Hz undershoots the analytic 30px (~27.5); the guard is that fresh launch is
+  // pure gravity (gravityScale=1, identical to pre-wiring behavior) and the juggle falls faster.
+  assert.ok(fresh > 26 && fresh < 31, `P8 fresh launch pure-gravity peak (~27.5 discrete / 30 analytic): ${fresh.toFixed(1)}`);
+  assert.ok(juggled < fresh, `P8 juggled (gravityScale 2.4) peaks lower: ${juggled.toFixed(1)} < ${fresh.toFixed(1)}`);
+  console.log(`P8 OK: gravityScale wired — fresh ${fresh.toFixed(1)}px (pure, Batch-6) vs juggled ${juggled.toFixed(1)}px (faster fall)`);
 }
 
 console.log("\n✅ combo pressure (Batch 4) all tests passed");
