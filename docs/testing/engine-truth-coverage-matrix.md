@@ -18,9 +18,9 @@
 |---|---|---|---|---|
 | `swordman-attack1-truth` | attack1 帧数/hitbox/单次命中 | CombatResolutionSystem 命中循环 | 部分（帧/hitbox 已通，hitGroup 是 per-attacker 占位非 .atk id） | 真 hitGroup id |
 | `swordman-full-actions` | shard 形状（14 ani/81 atk/6 weaponHitInfo） | 同 shard，engine 直接消费 | ✅ 数据层共享，无需 engine 专属 | — |
-| `swordman-reaction-formulas` | attack3→launch / slot 路由 / facing velocityX | engine ReactionResolver 路由已等价；**velocityX engine 无字段** | 垂直 launch ✅；**水平 velocityX ❌** | Actor 无 velocity.x（P4） |
+| `swordman-reaction-formulas` | attack3→launch / slot 路由 / facing velocityX | engine ReactionResolver 路由已等价；velocityX 经 KnockbackPhysics 接入 | 垂直 launch ✅；水平 velocityX ✅（KnockbackSystem,x 入 hash） | — |
 | `reaction-routing` | hitReaction→ReactionKind 路由 | `routeFromHitReaction`（engine 版已移植） | ✅ kind 路由等价（engine 把 heavy/light 折成 stagger，downed/knockback 折成 down/hit） | 细分 reaction state（knockback 独立态） |
-| `reaction-velocity` | velocityY=liftUp×launch×wf / velocityX=pushAside×pushBack×wf | `computeLaunchVy`（垂直）已移植，wf stub 照搬 | 垂直 vy ✅；**水平 vx ❌** | Actor 无 velocity.x |
+| `reaction-velocity` | velocityY=liftUp×launch / velocityX=pushAside×pushBack（Batch 6 撤 wf,违背 Tier-1） | `computeLaunchVy`（垂直）+ KnockbackPhysics（水平,x 入 hash）已移植 | 垂直 vy ✅；水平 vx ✅（KnockbackSystem） | — |
 | `hit-resolution-weapon-timeline` | DualTimelineAction 从 weapon timeline 读 attackBoxes | engine 用 AnimationPlayer.currentFrame.attackBoxes | 部分（单 timeline；engine 无 weapon timeline 双轨） | DualTimelineAction 模型 |
 
 ## 三、engine 真值缺口清单（诚实标注，留后续阶段）
@@ -61,24 +61,24 @@ EngineKernel 的 3 个 stub（`runDeterministicScenario` / `scenario` / `replay`
 | 测试 | 验证 | 实测 |
 |---|---|---|
 | S2 | attack1 命中 → `normalHitObserved` | true |
-| S3 | attack3 `hit_lift_up` → airborne → `launchObserved` | true（vy=300×weightFactor≈164） |
-| S4 | `replay.export()` 有效 | 28 帧 / finalStateHash 非空 / metadata 镜像 |
-| S5 | 同 seed → 同 finalStateHash | 28 帧逐帧一致 |
+| S3 | attack3 `hit_lift_up` → airborne → `launchObserved` | true（vy=300 → peak 30px；Batch 6 撤 weightFactor,违背 Tier-1） |
+| S4 | `replay.export()` 有效 | 91 帧 / finalStateHash 非空 / metadata 镜像 |
+| S5 | 同 seed → 同 finalStateHash | 91 帧逐帧一致 |
 | S6 | 不同 seed → 不同 finalStateHash | seed 42 vs 99 发散（PRNG 折进 hash） |
 
-**scenario 7 boolean 诚实覆盖**（engine 现有 player+grunt+5 action + bleed DOT StatusSystem,能观测 3/7）：
+**scenario 7 boolean 诚实覆盖**（engine 现有 player+grunt+5 action + bleed DOT StatusSystem + armor profile 系统(Batch 3a) + DownSystem(Stage 4B-B1),能观测 **6/7**）：
 
-| boolean | 状态 | 缺口原因 |
+| boolean | 状态 | 缺口原因 / 观测点 |
 |---|---|---|
 | `normalHitObserved` | ✅ 可观测 | attack1 命中 |
 | `launchObserved` | ✅ 可观测 | attack3 hit_lift_up → airborne |
 | `bleedObserved` | ✅ 可观测 | bleed DOT 扣血（StatusSystem,09-Status） |
-| `ragingFuryMultiHitObserved` | ❌ P4 | engine 无多段 super action |
-| `armorHitObserved` | ❌ P4 | engine 无 boss/super-armor actor |
-| `buildingArmorBlockedControlObserved` | ❌ P4 | engine 无 building actor |
-| `quickReboundObserved` | ❌ P4 | engine 无 quick-rebound 机制 |
+| `armorHitObserved` | ✅ 可观测 | sub-scenario 4：grunt 临时 BOSS_SUPER_ARMOR + 命中（Batch 3a） |
+| `quickReboundObserved` | ✅ 可观测 | sub-scenario 5：DownSystem 击倒→快速起身（Stage 4B-B1） |
+| `buildingArmorBlockedControlObserved` | ✅ 可观测 | sub-scenario 6：BUILDING_ARMOR + attack3 lift_up 被降级为 HIT（Batch 3a） |
+| `ragingFuryMultiHitObserved` | ❌ P4 | engine 无多段 super action（唯一诚实 gap,需新 feature 非 wiring） |
 
-**架构边界**：`runDeterministicScenario()` 不造世界（无 `new Actor`/无系统装配），只在已装配 kernel 上脚本化 player + 首个非 player actor，守"kernel 是纯容器"原则。browser:smoke 的 boss/building reference 场景仍需 P4 补 actor 后才能解封（见 `tests/browser/combat-smoke.spec.ts` skip 注释）。
+**架构边界**：`runDeterministicScenario()` 不造世界（无 `new Actor`/无系统装配），只在已装配 kernel 上脚本化 player + 首个非 player actor（armor/building 子场景靠临时改 `target.armorProfile` 观测,不另造 actor）,守"kernel 是纯容器"原则。browser:smoke 的 boss/building **视觉** reference 场景仍需后续补带贴图的 actor 才能解封（见 `tests/browser/combat-smoke.spec.ts` skip 注释）。
 
 ## 六、09-Status：bleed DOT 确定性真值化（2026-06-06）
 
@@ -222,7 +222,7 @@ ReactionResolver 长期标注 "horizontal knockback velocityX NOT modelled (P4 G
 | pushBack | `weaponHitInfo[slot].pushBack` | PVF | slot0=0, slot3=0.2 |
 | friction | LOCAL_BASELINE(combat light_stagger)| — | 0.72/tick(PVF 无水平摩擦常数,requiresManualVerification)|
 
-公式 velocityX = pushAside × pushBack × facing × weightFactor(与垂直 launch 同公式族)。**与垂直 launch 的关键区别**:pushBack=0 时**不 fallback**——0 就是"此攻击不水平推"的真值(基础攻击走 slot0 pushBack=0 → 零击退 → **零回归**,实测 combat-loop/two-way-fight 全 PASS),臆造推力是 local_baseline 猜测。
+公式 velocityX = pushAside × pushBack × facing(与垂直 launch 同公式族；Batch 6 撤 weightFactor——weight 仅音效非物理,违背 Tier-1)。**与垂直 launch 的关键区别**:pushBack=0 时**不 fallback**——0 就是"此攻击不水平推"的真值(基础攻击走 slot0 pushBack=0 → 零击退 → **零回归**,实测 combat-loop/two-way-fight 全 PASS),臆造推力是 local_baseline 猜测。
 
 | 测试 | 验证 | 实测 |
 |---|---|---|
