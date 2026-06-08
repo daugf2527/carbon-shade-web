@@ -38,7 +38,14 @@ export interface CharGrowth {
   readonly physicalDefense: number[];
 }
 
-/** 3 PVF-truth monster types (re-extracted 2026-06-08 from monster/<folder>/<name>.mob). */
+/**
+ * 4 PVF-truth monster types (re-extracted 2026-06-08 from monster/<folder>/<name>.mob).
+ *
+ * NOTE (armor provenance, investigated 2026-06-08): NONE of these .mob files carry a "super armor" /
+ * "damage type" / "stiffness" / "bound count" section — scanned goblin/skeleton/spider, all absent.
+ * Super-armor in DNF is NOT a per-monster .mob field (it lives in attack-state / DNF.exe), so the
+ * engine ArmorProfile system stays correctly local_baseline — there is no .mob truth to wire from.
+ */
 export const MONSTER_TRUTH: Record<string, MonsterTruth> = {
   // monster/goblin/goblinthrower.mob — the existing grunt (ranged thrower, slowest attacker).
   goblinthrower: {
@@ -70,6 +77,18 @@ export const MONSTER_TRUTH: Record<string, MonsterTruth> = {
       equipment_physical_defense: { op: "*", value: 100 },
     },
     moveSpeed: 700, weight: 50000, hitRecovery: 800, sightRange: 350, attackDelayMs: 2000,
+  },
+  // monster/spider/spider.mob — tankiest grunt (hp×110), mid mover (400), long hit-recovery (800 like
+  // skeleton) + fast attacker (1500 like goblin). A slow-recovering bruiser: easy to juggle once
+  // launched (long hitRecovery → combo windows), but soaks more hits. Distinct from all three above.
+  spider: {
+    id: "spider",
+    abilityCategory: {
+      "hp max": { op: "*", value: 110 },
+      equipment_physical_attack: { op: "*", value: 100 },
+      equipment_physical_defense: { op: "*", value: 100 },
+    },
+    moveSpeed: 400, weight: 50000, hitRecovery: 800, sightRange: 300, attackDelayMs: 1500,
   },
 };
 

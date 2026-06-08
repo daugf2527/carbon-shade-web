@@ -216,13 +216,14 @@ export class CombatScene extends Phaser.Scene {
     grunt.x = 440;
     this.kernel.addActor(grunt, false);
 
-    // B4 multi-monster (Stage 4B): 2 more PVF-truth enemy types beyond the goblinthrower grunt —
-    // goblin (faster attacker, atk×90) + skeleton (fast mover 700, long sight 350, ×100 stats).
+    // B4 multi-monster (Stage 4B): 3 more PVF-truth enemy types beyond the goblinthrower grunt —
+    // goblin (faster attacker, atk×90) + skeleton (fast mover 700, long sight 350, ×100 stats) +
+    // spider (tankiest hp×110, mid move 400, long hit-recovery 800 — a juggle-friendly bruiser).
     // Stats/AI re-extracted from data/Script.pvf monster/*.mob (2026-06-08, see monsterTruth.ts).
     const monsterGrowth = {
       hpMax: swGrowth.hpMax.values, physicalAttack: swGrowth.physicalAttack.values, physicalDefense: swGrowth.physicalDefense.values,
     };
-    for (const [monId, monX] of [["goblin", 520], ["skeleton", 600]] as const) {
+    for (const [monId, monX] of [["goblin", 520], ["skeleton", 600], ["spider", 680]] as const) {
       const mon = new Actor(monId, "monster", statsForMonster(monId, DUNGEON_BASIS_LEVEL, monsterGrowth));
       mon.aiConfig = aiConfigForMonster(monId); // 03-AI: per-monster PVF sight + attackDelay
       mon.x = monX;

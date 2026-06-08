@@ -30,13 +30,18 @@ const TICK_MS = 1000 / 60;
   const thrower = statsForMonster("goblinthrower", LV, GROWTH);
   const goblin = statsForMonster("goblin", LV, GROWTH);
   const skeleton = statsForMonster("skeleton", LV, GROWTH);
+  const spider = statsForMonster("spider", LV, GROWTH);
   assert.ok(skeleton.hpMax !== goblin.hpMax, `M1 skeleton hp ${skeleton.hpMax} ≠ goblin ${goblin.hpMax} (ability ×100 vs ×70)`);
   assert.ok(goblin.physicalAttack > thrower.physicalAttack, `M1 goblin atk(×90) > thrower(×75): ${goblin.physicalAttack} > ${thrower.physicalAttack}`);
   assert.equal(skeleton.moveSpeed, 700, "M1 skeleton moveSpeed 700 (PVF)");
   assert.equal(goblin.moveSpeed, 300, "M1 goblin moveSpeed 300 (PVF)");
   assert.equal(skeleton.hitRecovery, 800, "M1 skeleton hitRecovery 800 (PVF)");
   assert.equal(goblin.hitRecovery, 500, "M1 goblin hitRecovery 500 (PVF)");
-  console.log(`M1 OK: distinct stats — thrower hp${thrower.hpMax}/atk${thrower.physicalAttack}, goblin hp${goblin.hpMax}/atk${goblin.physicalAttack}, skeleton hp${skeleton.hpMax}/move${skeleton.moveSpeed}`);
+  // spider (4th, hp×110): tankiest hp, mid move 400, long hit-recovery 800.
+  assert.ok(spider.hpMax > skeleton.hpMax, `M1 spider hp(×110) > skeleton(×100): ${spider.hpMax} > ${skeleton.hpMax}`);
+  assert.equal(spider.moveSpeed, 400, "M1 spider moveSpeed 400 (PVF)");
+  assert.equal(spider.hitRecovery, 800, "M1 spider hitRecovery 800 (PVF)");
+  console.log(`M1 OK: distinct stats — thrower hp${thrower.hpMax}/atk${thrower.physicalAttack}, goblin hp${goblin.hpMax}/atk${goblin.physicalAttack}, skeleton hp${skeleton.hpMax}/move${skeleton.moveSpeed}, spider hp${spider.hpMax}/move${spider.moveSpeed}`);
 }
 
 // M2: AI config distinct per monster (sight + attackDelay PVF truth)
@@ -44,12 +49,15 @@ const TICK_MS = 1000 / 60;
   const goblin = aiConfigForMonster("goblin");
   const skeleton = aiConfigForMonster("skeleton");
   const thrower = aiConfigForMonster("goblinthrower");
+  const spider = aiConfigForMonster("spider");
   assert.equal(skeleton.sightRange, 350, "M2 skeleton sight 350");
   assert.equal(goblin.sightRange, 300, "M2 goblin sight 300");
   assert.equal(goblin.attackDelayTicks, Math.round(1500 / TICK_MS), "M2 goblin attackDelay 1500ms → 90 ticks");
   assert.equal(skeleton.attackDelayTicks, Math.round(2000 / TICK_MS), "M2 skeleton attackDelay 2000ms → 120 ticks");
   assert.equal(thrower.attackDelayTicks, Math.round(3000 / TICK_MS), "M2 thrower attackDelay 3000ms → 180 ticks");
-  console.log(`M2 OK: distinct AI — goblin sight300/delay${goblin.attackDelayTicks}, skeleton sight350/delay${skeleton.attackDelayTicks}, thrower delay${thrower.attackDelayTicks}`);
+  assert.equal(spider.sightRange, 300, "M2 spider sight 300");
+  assert.equal(spider.attackDelayTicks, Math.round(1500 / TICK_MS), "M2 spider attackDelay 1500ms → 90 ticks");
+  console.log(`M2 OK: distinct AI — goblin sight300/delay${goblin.attackDelayTicks}, skeleton sight350/delay${skeleton.attackDelayTicks}, thrower delay${thrower.attackDelayTicks}, spider sight300/delay${spider.attackDelayTicks}`);
 }
 
 // M3: integration — goblin + skeleton both fight in one kernel (multi-target hit, distinct truth hp)
