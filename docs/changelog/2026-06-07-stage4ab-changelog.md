@@ -57,8 +57,8 @@ AirborneSystem → KnockbackSystem → StatusSystem → ResourceSystem
 - `ActorIntent.quickRebound?: boolean` — 快速起身请求
 
 ### 跳过项（数据不可得或需用户决策）
-- B3 hitGroup 真值 — 需 dnf-extract C++ 改动
-- B4 多怪物种类 — newmonsters shard 无 attacks/animations
+- B3 hitGroup 真值 — 需 dnf-extract C++ 改动 ← **本会话已做精化**(非全真值,见末节)
+- B4 多怪物种类 — newmonsters shard 无 attacks/animations ← **本会话已完成**(改走 per-monster .mob 真值,4 怪 incl spider,见末节)
 - B5 cancel-window 运行时 — 已在 skill-action infra §3 完成（ActionSystem L66-71）
 
 ## 测试数量变化
@@ -71,3 +71,37 @@ AirborneSystem → KnockbackSystem → StatusSystem → ResourceSystem
 | Stage 4B 后 | 128 |
 
 全部测试全绿，0 回归。CI（Combat Lab CI + Build dnf-extract）全绿。
+
+## Stage 4 续 — 命中真值批次 + B3/B4/C2 + scenario 激活 (2026-06-08)
+
+> 接 `delightful-enchanting-kay.md` 6-Batch 计划 + Stage 4 B3/B4/C2。诚实分级:
+> B4=PVF 真值; B3=精化(数据缺口已确证); C2=框架(值 local_baseline)。
+
+### 命中真值批次 (Batch 2-6)
+| 批次 | 内容 | 真值分级 |
+|------|------|---------|
+| Batch 2 | hit-stop 命中停帧(HitStop.ts + HitStopSystem,attacker/victim 帧档) | local_baseline 帧 |
+| Batch 3a | ArmorProfile 四档(none/super/boss/building,canBeLaunched 等 + hitStopCap) | local_baseline(确证 .mob 无 super-armor 字段) |
+| Batch 3b | i-frame 统一 — `hitImmune` 退役,改 `invulnerableUntilTick` + `isInvulnerable(tick)` tick-deadline | 机制 |
+| Batch 4 | combo pressure(ComboPressure.ts 衰减 damage/launch + gravityScale)+ ComboSystem | local_baseline 配置 |
+| Batch 5 | slot 评估 — weapon slot 路由 L3 标注 | 文档 |
+| Batch 6 | **launch 真值** — 撤 weightFactor(违背 Tier-1:weight 仅音效非物理),vy=liftUp,peak 30px | **Tier-1 更正** |
+
+### 4C 缩放 + B3/B4/C2
+- **B4 多怪物**(真功能,PVF 真值): `monsterTruth.ts` 4 怪(goblinthrower/goblin/skeleton/spider)各自 .mob 真值(abilityCategory/sight/attackDelay/moveSpeed/hitRecovery),CombatScene spawn + AI。改走 per-monster .mob(非 newmonsters shard)绕开"无 attacks/animations"缺口。
+- **B3 hitGroup**(精化,非全真值): hitGroup key per-action(`attackerId:actionName`); .atk 无 hitGroup 字段已确证(数据缺口)。
+- **C2 装备**(框架,local_baseline): `Equipment.ts`(weaponPhysAtk/armorPhysDef)接伤害链,默认空=零回归; 无 item parser,值待校准。
+- LevelScaling/MonsterScaling: 角色 growth × abilityCategory% @ 副本 basisLevel。
+
+### scenario 自验激活 4/7 → 6/7
+| flag | sub-scenario | commit |
+|------|-------------|--------|
+| armorHitObserved | 4: grunt 临时 BOSS_SUPER_ARMOR + 命中 | (本会话早期) |
+| gravityScale wiring | combo 浮空下落加速(Batch 4 follow-up) | `1a7ba33` |
+| spider 第 4 怪 | B4 延伸 + 确证 armor 非 .mob 字段 | `78c77b8` |
+| quickReboundObserved | 5: DownSystem 击倒→快速起身 | `1c12ffb` |
+| buildingArmorBlockedControlObserved | 6: BUILDING_ARMOR + lift_up 降级为 HIT | `5988978` |
+
+剩 `ragingFuryMultiHitObserved` 唯一诚实 gap(需引擎尚无的多段超必杀 action,真 feature 非 wiring)。
+
+全部测试全绿(consistency `code/static-test-count` 校验),EngineKernel 确定性保持。详见 `docs/testing/engine-truth-coverage-matrix.md` 第五节。
