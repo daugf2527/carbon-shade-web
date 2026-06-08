@@ -614,9 +614,10 @@ const reactionResolverSrc = readTextSafe(join(ROOT, "src/engine/core/ReactionRes
 const actorSrcH = readTextSafe(join(ROOT, "src/engine/core/Actor.ts")) || "";
 // applyHitReaction must source hitstun from the defender stat (DEFAULT only as fallback).
 const hitstunFromStat = /defender\.stats\.hitRecovery \?\? DEFAULT_HITSTUN_MS/.test(reactionResolverSrc);
-// ActorStats must carry hitRecovery + both extractors must populate it.
+// ActorStats must carry hitRecovery + both extractors must populate it. Player side is level-aware
+// (statAtLevel over the growth curve, not just base) — a stronger wiring than a flat growthBase.
 const hitRecoveryStat = /hitRecovery\?: number/.test(actorSrcH)
-  && /hitRecovery: growthBase\(growth\?\.hitRecovery\)/.test(actorSrcH)
+  && /hitRecovery: growth\?\.hitRecovery \? statAtLevel\(growth\.hitRecovery\.values/.test(actorSrcH)
   && /hitRecovery: scalarVal\(mob\.hitRecovery/.test(actorSrcH);
 checks.push({
   name: "maturity/p4-engine-hitstun",
