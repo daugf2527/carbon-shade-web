@@ -1,9 +1,9 @@
 # Combat Retirement Audit (2026-06-10)
 
-- 生成时间: 2026-06-10T12:08:43.092Z
+- 生成时间: 2026-06-10T12:22:25.234Z
 - src/combat 文件数: 46
-- 运行时/脚本依赖: 4
-- runtime 分层: type-only=1, runtime-value=2, source-ref=2
+- 运行时/脚本依赖: 3
+- runtime 分层: type-only=1, runtime-value=2, source-ref=1
 - truth 测试依赖: 5
 - static 测试依赖: 36
 - browser 测试依赖: 0
@@ -19,24 +19,6 @@
 ## 运行时/脚本依赖
 
 - `src/data/manifest/sources.ts:1` export const ACTION_MANIFEST_DATA_SOURCE = "src/combat/actions/FrameDataAction.ts#ACTIONS";
-- `src/data/manifest/status/default.json:32` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
-- `src/data/manifest/status/default.json:40` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
-- `src/data/manifest/status/default.json:48` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
-- `src/data/manifest/status/default.json:88` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
-- `src/data/manifest/status/default.json:96` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
-- `src/data/manifest/status/default.json:104` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
-- `src/data/manifest/status/default.json:146` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
-- `src/data/manifest/status/default.json:154` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-burn-splash-baseline",
-- `src/data/manifest/status/default.json:162` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-burn-splash-baseline",
-- `src/data/manifest/status/default.json:170` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
-- `src/data/manifest/status/default.json:178` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
-- `src/data/manifest/status/default.json:218` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
-- `src/data/manifest/status/default.json:226` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
-- `src/data/manifest/status/default.json:234` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
-- `src/data/manifest/status/default.json:257` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-rupture-baseline",
-- `src/data/manifest/status/default.json:265` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-rupture-baseline",
-- `src/data/manifest/status/default.json:273` "sourceRef": "src/combat/kernel/CombatKernel.ts#rupture_incoming_damage",
-- `src/data/manifest/status/default.json:281` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-rupture-baseline",
 - `src/game/CombatScene.ts:3` import type { DebugSnapshot } from "../combat/debug/DebugOverlay.js";
 - `src/game/CombatScene.ts:4` import { FixedStepSimulation } from "../combat/kernel/FixedStepSimulation.js";
 - `src/runtime/data/ActionManifestRuntime.ts:1` import { ACTIONS, loadFromManifest } from "../../combat/actions/FrameDataAction.js";

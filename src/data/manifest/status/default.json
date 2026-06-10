@@ -29,7 +29,7 @@
         "dotDamagePerStack": {
           "sourceType": "local_baseline",
           "confidence": "medium",
-          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "sourceRef": "docs/engineering/status-manifest-baseline-archive-2026-06-10.md#legacy-status-baseline",
           "capturedAt": "2026-05-07",
           "version": "status-manifest-v1",
           "requiresCalibration": true
@@ -37,7 +37,7 @@
         "maxStacks": {
           "sourceType": "local_baseline",
           "confidence": "medium",
-          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "sourceRef": "docs/engineering/status-manifest-baseline-archive-2026-06-10.md#legacy-status-baseline",
           "capturedAt": "2026-05-07",
           "version": "status-manifest-v1",
           "requiresCalibration": true
@@ -45,7 +45,7 @@
         "dispelPolicy": {
           "sourceType": "local_baseline",
           "confidence": "medium",
-          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "sourceRef": "docs/engineering/status-manifest-baseline-archive-2026-06-10.md#legacy-status-baseline",
           "capturedAt": "2026-05-07",
           "version": "status-manifest-v1",
           "requiresCalibration": true
@@ -85,7 +85,7 @@
         "dotDamagePerStack": {
           "sourceType": "local_baseline",
           "confidence": "medium",
-          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "sourceRef": "docs/engineering/status-manifest-baseline-archive-2026-06-10.md#legacy-status-baseline",
           "capturedAt": "2026-05-07",
           "version": "status-manifest-v1",
           "requiresCalibration": true
@@ -93,7 +93,7 @@
         "maxStacks": {
           "sourceType": "local_baseline",
           "confidence": "medium",
-          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "sourceRef": "docs/engineering/status-manifest-baseline-archive-2026-06-10.md#legacy-status-baseline",
           "capturedAt": "2026-05-07",
           "version": "status-manifest-v1",
           "requiresCalibration": true
@@ -101,7 +101,7 @@
         "dispelPolicy": {
           "sourceType": "local_baseline",
           "confidence": "medium",
-          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "sourceRef": "docs/engineering/status-manifest-baseline-archive-2026-06-10.md#legacy-status-baseline",
           "capturedAt": "2026-05-07",
           "version": "status-manifest-v1",
           "requiresCalibration": true
@@ -143,7 +143,7 @@
         "dotDamagePerStack": {
           "sourceType": "local_baseline",
           "confidence": "medium",
-          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "sourceRef": "docs/engineering/status-manifest-baseline-archive-2026-06-10.md#legacy-status-baseline",
           "capturedAt": "2026-05-07",
           "version": "status-manifest-v1",
           "requiresCalibration": true
@@ -151,7 +151,7 @@
         "splashRadius": {
           "sourceType": "local_baseline",
           "confidence": "medium",
-          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-burn-splash-baseline",
+          "sourceRef": "docs/engineering/status-manifest-baseline-archive-2026-06-10.md#legacy-burn-splash-baseline",
           "capturedAt": "2026-05-07",
           "version": "status-manifest-v1",
           "requiresCalibration": true
@@ -159,7 +159,7 @@
         "splashDamagePerStack": {
           "sourceType": "local_baseline",
           "confidence": "medium",
-          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-burn-splash-baseline",
+          "sourceRef": "docs/engineering/status-manifest-baseline-archive-2026-06-10.md#legacy-burn-splash-baseline",
           "capturedAt": "2026-05-07",
           "version": "status-manifest-v1",
           "requiresCalibration": true
@@ -167,7 +167,7 @@
         "maxStacks": {
           "sourceType": "local_baseline",
           "confidence": "medium",
-          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "sourceRef": "docs/engineering/status-manifest-baseline-archive-2026-06-10.md#legacy-status-baseline",
           "capturedAt": "2026-05-07",
           "version": "status-manifest-v1",
           "requiresCalibration": true
@@ -175,7 +175,7 @@
         "dispelPolicy": {
           "sourceType": "local_baseline",
           "confidence": "medium",
-          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "sourceRef": "docs/engineering/status-manifest-baseline-archive-2026-06-10.md#legacy-status-baseline",
           "capturedAt": "2026-05-07",
           "version": "status-manifest-v1",
           "requiresCalibration": true
@@ -215,7 +215,7 @@
         "dotDamagePerStack": {
           "sourceType": "local_baseline",
           "confidence": "medium",
-          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "sourceRef": "docs/engineering/status-manifest-baseline-archive-2026-06-10.md#legacy-status-baseline",
           "capturedAt": "2026-05-07",
           "version": "status-manifest-v1",
           "requiresCalibration": true
@@ -223,7 +223,7 @@
         "maxStacks": {
           "sourceType": "local_baseline",
           "confidence": "medium",
-          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "sourceRef": "docs/engineering/status-manifest-baseline-archive-2026-06-10.md#legacy-status-baseline",
           "capturedAt": "2026-05-07",
           "version": "status-manifest-v1",
           "requiresCalibration": true
@@ -231,7 +231,7 @@
         "dispelPolicy": {
           "sourceType": "local_baseline",
           "confidence": "medium",
-          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+          "sourceRef": "docs/engineering/status-manifest-baseline-archive-2026-06-10.md#legacy-status-baseline",
           "capturedAt": "2026-05-07",
           "version": "status-manifest-v1",
           "requiresCalibration": true
@@ -254,7 +254,7 @@
         "durationFrames": {
           "sourceType": "local_baseline",
           "confidence": "medium",
-          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-rupture-baseline",
+          "sourceRef": "docs/engineering/status-manifest-baseline-archive-2026-06-10.md#legacy-rupture-baseline",
           "capturedAt": "2026-05-07",
           "version": "status-manifest-v1",
           "requiresCalibration": true
@@ -262,7 +262,7 @@
         "maxStacks": {
           "sourceType": "local_baseline",
           "confidence": "medium",
-          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-rupture-baseline",
+          "sourceRef": "docs/engineering/status-manifest-baseline-archive-2026-06-10.md#legacy-rupture-baseline",
           "capturedAt": "2026-05-07",
           "version": "status-manifest-v1",
           "requiresCalibration": true
@@ -270,7 +270,7 @@
         "incomingDirectDamageMultiplierPerStack": {
           "sourceType": "local_baseline",
           "confidence": "medium",
-          "sourceRef": "src/combat/kernel/CombatKernel.ts#rupture_incoming_damage",
+          "sourceRef": "docs/engineering/status-manifest-baseline-archive-2026-06-10.md#rupture-incoming-damage",
           "capturedAt": "2026-05-07",
           "version": "status-manifest-v1",
           "requiresCalibration": true
@@ -278,7 +278,7 @@
         "dispelPolicy": {
           "sourceType": "local_baseline",
           "confidence": "medium",
-          "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-rupture-baseline",
+          "sourceRef": "docs/engineering/status-manifest-baseline-archive-2026-06-10.md#legacy-rupture-baseline",
           "capturedAt": "2026-05-07",
           "version": "status-manifest-v1",
           "requiresCalibration": true

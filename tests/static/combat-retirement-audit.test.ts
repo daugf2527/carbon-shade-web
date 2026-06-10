@@ -52,8 +52,8 @@ assert.equal(
 );
 assert.equal(
   payload.summary.runtimeImportCount,
-  4,
-  "audit should reduce runtime combat coupling to four external files after RenderAdapter moves to runtime debug types",
+  3,
+  "audit should reduce runtime combat coupling to three external files once status manifest provenance stops referencing src/combat",
 );
 assert.ok(
   !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/data/manifest/ai.ts")),
@@ -96,8 +96,12 @@ assert.ok(
   "audit should stop reporting RenderAdapter once DebugSnapshot moves to runtime debug types",
 );
 assert.ok(
-  payload.runtimeImports.some((entry: { kind: string; file: string }) => entry.kind === "source-ref" && entry.file.includes("src/data/manifest/status/default.json")),
-  "audit should classify manifest sourceRef edges separately",
+  !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/data/manifest/status/default.json")),
+  "audit should stop reporting status/default.json once its local-baseline provenance moves to a runtime-neutral archive doc",
+);
+assert.ok(
+  payload.runtimeImports.some((entry: { kind: string; file: string }) => entry.kind === "source-ref" && entry.file.includes("src/data/manifest/sources.ts")),
+  "audit should keep classifying the remaining action-manifest sourceRef edge separately",
 );
 assert.ok(
   payload.runtimeImports.every((entry: { file: string }) => !entry.file.startsWith("src/combat/")),
