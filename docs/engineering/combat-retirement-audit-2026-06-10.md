@@ -1,9 +1,9 @@
 # Combat Retirement Audit (2026-06-10)
 
-- 生成时间: 2026-06-10T12:29:45.018Z
+- 生成时间: 2026-06-10T12:36:51.935Z
 - src/combat 文件数: 46
-- 运行时/脚本依赖: 2
-- runtime 分层: type-only=1, runtime-value=1, source-ref=1
+- 运行时/脚本依赖: 1
+- runtime 分层: type-only=1, runtime-value=1, source-ref=0
 - truth 测试依赖: 5
 - static 测试依赖: 36
 - browser 测试依赖: 0
@@ -18,7 +18,6 @@
 
 ## 运行时/脚本依赖
 
-- `src/data/manifest/sources.ts:1` export const ACTION_MANIFEST_DATA_SOURCE = "src/combat/actions/FrameDataAction.ts#ACTIONS";
 - `src/game/CombatScene.ts:3` import type { DebugSnapshot } from "../combat/debug/DebugOverlay.js";
 - `src/game/CombatScene.ts:4` import { FixedStepSimulation } from "../combat/kernel/FixedStepSimulation.js";
 
@@ -165,7 +164,6 @@
 - `docs/design/stage3-manifest-survey.md:153` | `src/combat/actions/FrameDataAction.ts` | 125–167 | 全部 38 个 | ACTIONS 对象定义（TS 真值源） |
 - `docs/design/stage3-manifest-survey.md:154` | `src/combat/kernel/CombatKernel.ts` | 581 | `"Bloodlust"` | 直接字符串引用 |
 - `docs/design/stage3-manifest-survey.md:179` | `src/combat/replay/ReplayRecorder.ts` | 更新 `dataSources.actions` 默认值（从 JSON 路径改为 TS 模块路径或移除） | 路径字符串硬编码 |
-- `docs/design/stage3-manifest-survey.md:208` 3. 修改 `sources.ts`：常量改为 `"src/combat/actions/FrameDataAction.ts#ACTIONS"`
 - `docs/documentation-audit-overlap-report.md:80` | `training-ground-r1-r2-plan.md` | `training-ground-r3-r4-restoration-plan.md` | 同一训练场倡议的连续阶段，共享架构红线(CombatKernel 不引入 Phaser)、相同验收标准、文件清单重叠 |
 - `docs/engineering/2026-06-07-batch234-handoff.md:107` - `src/combat/armor/ArmorResolver.ts`（13 行核心）：`decide()` 返回 hitStopAllowed / controlBlocked
 - `docs/engineering/2026-06-07-batch234-handoff.md:108` - `src/combat/types.ts:202-213` `ArmorProfile`：`baseType: "none"|"super_armor"|"boss_super_armor"|"building_armor"` + immunities{grab/control/damage} + temporaryFlags{invulnerableUntilTick/getUpArmorUntilTick} + hitStopCapFrames + reactionOverride

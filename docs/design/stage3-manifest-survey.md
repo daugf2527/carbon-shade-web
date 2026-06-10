@@ -205,7 +205,7 @@ assert.equal(computeActionsHash(loaded), computeActionsHash(ACTIONS), "JSON acti
 
 1. 删除 `src/data/manifest/actions/default.json`
 2. 修改 `loader.ts`：`loadActionsManifest()` 改为直接 `return ACTIONS`（保留函数签名，不破坏调用方）
-3. 修改 `sources.ts`：常量改为 `"src/combat/actions/FrameDataAction.ts#ACTIONS"`
+3. 修改 `sources.ts`：常量改为 `"src/runtime/data/ActionManifestRuntime.ts#ACTIONS"`
 4. 修改 `bootActionManifest.ts`：去掉 async 加载，直接 `loadFromManifest(ACTIONS)`
 5. 修改 `ReplayRecorder.ts`：`defaultActionDataSource` 直接用新常量，去掉 `loadedManifestHash` 分支判断
 6. 修改 `manifest-provenance.test.ts`：删除 JSON 结构一致性断言（第 25–31 行），保留 validateManifest(cloneActions()) 断言

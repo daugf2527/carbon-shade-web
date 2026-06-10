@@ -1,5 +1,5 @@
 import { assert } from "./test-utils.js";
-import type { ActionName, FrameDataAction } from "../../src/combat/types.js";
+import type { ActionName, FrameDataAction, StatusProvenanceField } from "../../src/combat/types.js";
 import { ACTIONS, getAction, loadFromManifest } from "../../src/combat/actions/FrameDataAction.js";
 import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";
 import { cloneEnemyTuning, enemyTuning } from "../../src/data/ai/enemyTuning.js";
@@ -37,7 +37,7 @@ function cloneActions(): Record<ActionName, FrameDataAction> {
   const result = await initializeActionManifestForRuntime({ loadActions: async () => runtimeActions });
   assert.equal(getAction("RagingFury").totalFrames, runtimeActions.RagingFury.totalFrames);
   assert.equal(result.manifestHash, computeActionsHash(runtimeActions));
-  assert.equal(result.dataSource, "src/combat/actions/FrameDataAction.ts#ACTIONS");
+  assert.equal(result.dataSource, "src/runtime/data/ActionManifestRuntime.ts#ACTIONS");
   loadFromManifest(loaded);
 }
 
@@ -115,7 +115,7 @@ function cloneActions(): Record<ActionName, FrameDataAction> {
   assert.equal(recorder.metadata.enemyManifestHash, enemyManifestHash);
   assert.equal(recorder.metadata.damageManifestHash, damageManifestHash);
   assert.equal(recorder.metadata.sourcePolicyVersion, SOURCE_POLICY_VERSION);
-  assert.equal(recorder.metadata.dataSources.actions, "src/combat/actions/FrameDataAction.ts#ACTIONS");
+  assert.equal(recorder.metadata.dataSources.actions, "src/runtime/data/ActionManifestRuntime.ts#ACTIONS");
   assert.equal(recorder.metadata.dataSources.status, "src/data/manifest/status/default.json#profiles");
   assert.equal(recorder.metadata.dataSources.ai, "src/data/manifest/ai/enemy-default.json#profiles");
   assert.equal(recorder.metadata.dataSources.damage, "src/data/manifest/damage/classic-profile.json#constants");
@@ -129,15 +129,24 @@ function cloneActions(): Record<ActionName, FrameDataAction> {
     ["attack_down", "bind", "bleed", "burn", "curse", "defense_down", "freeze", "poison", "rupture", "shock", "sleep", "slow", "stone", "stun"],
     "runtime status manifest should include all implemented status profiles"
   );
-  assert.equal(statusManifest.profiles.bleed.fieldProvenance.durationFrames.sourceType, "local_baseline");
-  assert.equal(statusManifest.profiles.bleed.fieldProvenance.tickIntervalFrames.sourceType, "local_baseline");
-  assert.equal(statusManifest.profiles.bleed.fieldProvenance.dotDamagePerStack.sourceType, "local_baseline");
-  assert.equal(statusManifest.profiles.burn.fieldProvenance.splashRadius?.sourceType, "local_baseline");
-  assert.equal(statusManifest.profiles.burn.fieldProvenance.splashDamagePerStack?.sourceType, "local_baseline");
-  assert.equal(statusManifest.profiles.rupture.fieldProvenance.incomingDirectDamageMultiplierPerStack?.sourceType, "local_baseline");
+  // Strict-safe accessor: assert the profile + its field provenance exist (a missing one is a
+  // real test failure, not something to silently `?.` past), then return the sourceType.
+  const sourceTypeOf = (profileId: keyof typeof statusManifest.profiles, field: StatusProvenanceField): string | undefined => {
+    const profile = statusManifest.profiles[profileId];
+    assert.ok(profile, `status profile "${String(profileId)}" must exist`);
+    return profile.fieldProvenance[field]?.sourceType;
+  };
+  assert.equal(sourceTypeOf("bleed", "durationFrames"), "local_baseline");
+  assert.equal(sourceTypeOf("bleed", "tickIntervalFrames"), "local_baseline");
+  assert.equal(sourceTypeOf("bleed", "dotDamagePerStack"), "local_baseline");
+  assert.equal(sourceTypeOf("burn", "splashRadius"), "local_baseline");
+  assert.equal(sourceTypeOf("burn", "splashDamagePerStack"), "local_baseline");
+  assert.equal(sourceTypeOf("rupture", "incomingDirectDamageMultiplierPerStack"), "local_baseline");
 
   const changed = JSON.parse(JSON.stringify(statusManifest)) as typeof statusManifest;
-  changed.profiles.bleed.durationFrames += 1;
+  const changedBleed = changed.profiles.bleed;
+  assert.ok(changedBleed, "bleed profile must exist");
+  changedBleed.durationFrames += 1;
   assert.notEqual(
     computeStatusManifestHash(changed),
     computeStatusManifestHash(statusManifest),
@@ -231,7 +240,9 @@ function profileToTuning(profile: EnemyManifest["profiles"]["grunt"]) {
 {
   const statusManifest = await loadStatusManifest();
   const missing = JSON.parse(JSON.stringify(statusManifest)) as typeof statusManifest;
-  delete missing.profiles.bleed.fieldProvenance.dotDamagePerStack;
+  const missingBleed = missing.profiles.bleed;
+  assert.ok(missingBleed, "bleed profile must exist");
+  delete missingBleed.fieldProvenance.dotDamagePerStack;
   const violations = validateStatusManifest(missing);
   assert.ok(
     violations.some(v => v.path === "profiles.bleed.fieldProvenance.dotDamagePerStack"),
@@ -243,8 +254,12 @@ function profileToTuning(profile: EnemyManifest["profiles"]["grunt"]) {
   for (const sourceType of ["needs_calibration", "experimental"] as const) {
     const statusManifest = await loadStatusManifest();
     const blocked = JSON.parse(JSON.stringify(statusManifest)) as typeof statusManifest;
-    blocked.profiles.burn.fieldProvenance.splashRadius!.sourceType = sourceType;
-    blocked.profiles.burn.fieldProvenance.splashRadius!.requiresCalibration = true;
+    const blockedBurn = blocked.profiles.burn;
+    assert.ok(blockedBurn, "burn profile must exist");
+    const splash = blockedBurn.fieldProvenance.splashRadius;
+    assert.ok(splash, "burn splashRadius provenance must exist");
+    splash.sourceType = sourceType;
+    splash.requiresCalibration = true;
     const violations = validateStatusManifest(blocked);
     assert.ok(
       violations.some(v => v.path === "profiles.burn.fieldProvenance.splashRadius"),

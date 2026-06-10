@@ -29,7 +29,7 @@ assert.ok(Array.isArray(payload.runtimeImports), "runtime import details should 
 assert.ok(payload.summary.runtimeCouplingKinds, "audit payload should include runtime coupling kind summary");
 assert.ok(payload.summary.runtimeCouplingKinds["type-only"] > 0, "audit should classify type-only combat coupling");
 assert.ok(payload.summary.runtimeCouplingKinds["runtime-value"] > 0, "audit should classify runtime-value combat coupling");
-assert.ok(payload.summary.runtimeCouplingKinds["source-ref"] > 0, "audit should classify source-ref combat coupling");
+assert.equal(payload.summary.runtimeCouplingKinds["source-ref"], 0, "audit should report source-ref combat coupling as cleared once action manifest provenance moves to runtime");
 assert.ok(Array.isArray(payload.truthImports), "truth import details should be listed");
 assert.ok(Array.isArray(payload.staticImports), "static import details should be listed");
 assert.ok(Array.isArray(payload.docsMentions), "doc mention details should be listed");
@@ -38,8 +38,8 @@ assert.ok(
   "audit should capture swordman-attack1-truth as a combat-bound truth blocker",
 );
 assert.ok(
-  payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/data/manifest/sources.ts")),
-  "audit should capture runtime/source-manifest combat coupling",
+  !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/data/manifest/sources.ts")),
+  "audit should stop reporting sources.ts once ACTION_MANIFEST_DATA_SOURCE no longer points at src/combat",
 );
 assert.ok(
   payload.runtimeImports.some((entry: { kind: string; file: string }) => entry.kind === "runtime-value" && entry.file.includes("src/game/CombatScene.ts")),
@@ -52,8 +52,8 @@ assert.equal(
 );
 assert.equal(
   payload.summary.runtimeImportCount,
-  2,
-  "audit should reduce runtime combat coupling to two external files once action manifest storage moves into runtime data",
+  1,
+  "audit should reduce runtime combat coupling by file-count to the remaining CombatScene external edge",
 );
 assert.ok(
   !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/data/manifest/ai.ts")),
@@ -99,9 +99,10 @@ assert.ok(
   !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/data/manifest/status/default.json")),
   "audit should stop reporting status/default.json once its local-baseline provenance moves to a runtime-neutral archive doc",
 );
-assert.ok(
-  payload.runtimeImports.some((entry: { kind: string; file: string }) => entry.kind === "source-ref" && entry.file.includes("src/data/manifest/sources.ts")),
-  "audit should keep classifying the remaining action-manifest sourceRef edge separately",
+assert.equal(
+  payload.summary.runtimeCouplingKinds["runtime-value"],
+  1,
+  "audit should shrink runtime-value combat coupling to the remaining CombatScene fixed-step edge",
 );
 assert.ok(
   payload.runtimeImports.every((entry: { file: string }) => !entry.file.startsWith("src/combat/")),
