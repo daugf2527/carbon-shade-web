@@ -8,9 +8,9 @@
 
 ## 矩阵
 
-| 现有 combat truth | 当前绑定对象 | 已有 engine 替身 | 状态 | 下一步迁移 |
+| truth gate | 当前绑定对象 | 已有 engine 替身 | 状态 | 下一步迁移 |
 |---|---|---|---|---|
-| `tests/truth/reaction-routing.test.ts` | `src/combat/reaction/ReactionResolver.ts` | `tests/truth/engine-reaction-truth.test.ts` | 部分覆盖 | 拆成 engine routing-only truth，去掉 combat `ReactionResolver` import |
+| `tests/truth/reaction-routing.test.ts` | `src/engine/core/ReactionResolver.ts` | 同文件（engine routing-only truth） | 已迁移 | 继续让它守 engine `routeFromHitReaction` / `applyArmorToKind`，不再计入 combat truth blocker |
 | `tests/truth/reaction-velocity.test.ts` | `src/combat/reaction/ReactionResolver.ts` | `tests/truth/engine-reaction-truth.test.ts` | 部分覆盖 | 把 velocity 断言迁到 engine `applyHitReaction` / `KnockbackPhysics` 组合路径 |
 | `tests/truth/swordman-attack1-truth.test.ts` | `src/combat/kernel/CombatKernel.ts` | `tests/truth/engine-damage-truth.test.ts` | 缺完整替身 | 需要一个 engine 侧 attack1 端到端 truth，用 EngineKernel 或更小闭环替代 CombatKernel |
 | `tests/truth/swordman-reaction-formulas.test.ts` | `src/combat/kernel/CombatKernel.ts` | `tests/truth/engine-reaction-truth.test.ts` | 缺完整替身 | 需要 engine 侧“动作→命中→reaction kind” truth 闭环，覆盖 attack1 / attack3 / dashattack |
@@ -25,10 +25,9 @@
 
 ## 结论
 
-1. 现在 4 个仍绑 `src/combat/*` 的 truth 里，2 个已经有 engine 层部分替身，2 个没有。
+1. 当前 4 个重点 truth gate 里，`reaction-routing.test.ts` 已经迁到 engine，剩余 3 个仍绑 `src/combat/*`。
 2. 最危险缺口不是单点公式，而是 `CombatKernel` 端到端 truth 还没被 engine 闭环接住。
-3. 明天回来继续 P5 时，优先顺序应是：
-   - `reaction-routing.test.ts`
+3. 下一批优先顺序应是：
    - `reaction-velocity.test.ts`
    - `swordman-reaction-formulas.test.ts`
    - `swordman-attack1-truth.test.ts`

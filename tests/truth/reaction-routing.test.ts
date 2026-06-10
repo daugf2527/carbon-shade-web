@@ -1,115 +1,98 @@
 /**
- * T-C.4: ReactionResolver.resolve() 从 atk.hitReaction 路由
- * 验证 PVF 真值驱动的 reaction 路由逻辑
+ * T-C.4: engine ReactionResolver routing truth
+ *
+ * 这条 truth gate 不再依赖 combat ReactionResolver，而是直接守 engine
+ * `routeFromHitReaction()` / `routeFromLegacyBools()` / `applyArmorToKind()`
+ * 的路由语义。
  */
 
 import assert from "node:assert/strict";
-import { ReactionResolver } from "../../src/combat/reaction/ReactionResolver.js";
-import type { Actor, HitDecision } from "../../src/combat/types.js";
+import { BOSS_SUPER_ARMOR, NONE_ARMOR, SUPER_ARMOR } from "../../src/engine/core/ArmorProfile.js";
+import {
+  applyArmorToKind,
+  routeFromHitReaction,
+  routeFromLegacyBools,
+  type ReactionKind,
+} from "../../src/engine/core/ReactionResolver.js";
 
-// Mock minimal Actor
-function mockActor(actionName: string): Actor {
-  return {
-    id: "test-actor",
-    currentAction: { actionName } as any,
-  } as Actor;
+function route(hitReaction: Parameters<typeof routeFromHitReaction>[0], causesDown: boolean, attackLevel: number): ReactionKind {
+  return routeFromHitReaction(hitReaction, causesDown, attackLevel);
 }
 
-// Mock minimal HitDecision
-function mockDecision(attackLevel: number, canLaunch = false, canKnockdown = false): HitDecision {
-  return {
-    hitbox: {
-      attackLevel,
-      canLaunch,
-      canKnockdown,
-    },
-  } as HitDecision;
-}
-
-const resolver = new ReactionResolver();
-
-// Test 1: hit_lift_up → launch
+// Test 1: attack3 truth => hit_lift_up -> airborne
 {
-  const attacker = mockActor("attack3"); // attack3 is hit_lift_up in swordman-attacks.json
-  const decision = mockDecision(1);
-  const result = resolver.resolve({} as Actor, decision, attacker);
-  assert.equal(result, "launch", "hit_lift_up should route to launch");
+  const result = route("hit_lift_up", true, 1);
+  assert.equal(result, "airborne", "hit_lift_up should route to airborne");
 }
 
-// Test 2: hit_down + causesDown=true → downed
+// Test 2: jumpattack truth => hit_down + causesDown=true -> down
 {
-  const attacker = mockActor("weaponcomboshort3"); // weaponcomboshort3: hit_lift_up + causesDown=true
-  const decision = mockDecision(1);
-  const result = resolver.resolve({} as Actor, decision, attacker);
-  // Note: weaponcomboshort3 is actually hit_lift_up, so it routes to launch
-  // Let's find a real hit_down + causesDown=true example
-  assert.equal(result, "launch", "weaponcomboshort3 is hit_lift_up → launch");
+  const result = route("hit_down", true, 1);
+  assert.equal(result, "down", "hit_down + causesDown=true should route to down");
 }
 
-// Test 3: hit_down + causesDown=false → knockback
+// Test 3: attack1 truth => hit_down + causesDown=false -> hit
 {
-  const attacker = mockActor("attack1"); // attack1 is hit_down + causesDown=false
-  const decision = mockDecision(1);
-  const result = resolver.resolve({} as Actor, decision, attacker);
-  assert.equal(result, "knockback", "hit_down + causesDown=false should route to knockback");
+  const result = route("hit_down", false, 1);
+  assert.equal(result, "hit", "hit_down + causesDown=false should fold to hit on engine surfaces");
 }
 
-// Test 4: hit_horizon + attackLevel>=2 → heavy_stagger
+// Test 4: dashattack truth => hit_horizon + attackLevel>=2 -> stagger
 {
-  const attacker = mockActor("dashattack"); // dashattack is hit_horizon
-  const decision = mockDecision(2);
-  const result = resolver.resolve({} as Actor, decision, attacker);
-  assert.equal(result, "heavy_stagger", "hit_horizon + attackLevel>=2 should route to heavy_stagger");
+  const result = route("hit_horizon", false, 2);
+  assert.equal(result, "stagger", "hit_horizon should route to stagger for heavy attackLevel");
 }
 
-// Test 5: hit_horizon + attackLevel<2 → light_stagger
+// Test 5: hit_horizon + attackLevel<2 still folds to the same engine stagger kind
 {
-  const attacker = mockActor("dashattack");
-  const decision = mockDecision(1);
-  const result = resolver.resolve({} as Actor, decision, attacker);
-  assert.equal(result, "light_stagger", "hit_horizon + attackLevel<2 should route to light_stagger");
+  const result = route("hit_horizon", false, 1);
+  assert.equal(result, "stagger", "hit_horizon should still route to stagger for light attackLevel");
 }
 
-// Test 6: none → none
+// Test 6: none -> hit
 {
-  // Need to find an action with hitReaction="none" - most buff/utility skills
-  // For now, test fallback behavior
-  const attacker = mockActor("unknown-action");
-  const decision = mockDecision(1, false, false);
-  const result = resolver.resolve({} as Actor, decision, attacker);
-  assert.equal(result, "light_stagger", "unknown action should fallback to legacy logic");
+  const result = route("none", false, 1);
+  assert.equal(result, "hit", "none should fold to plain hit");
 }
 
-// Test 7: Fallback when attackId not in SWORDMAN_ATTACKS
+// Test 7: legacy liftUp bool path still works
 {
-  const attacker = mockActor("NonExistentAction");
-  const decision = mockDecision(1, true, false);
-  const result = resolver.resolve({} as Actor, decision, attacker);
-  assert.equal(result, "launch", "fallback should use canLaunch from hitbox");
+  const result = routeFromLegacyBools({ liftUp: true });
+  assert.equal(result, "airborne", "legacy liftUp should still route to airborne");
 }
 
-// Test 8: Fallback with canKnockdown
+// Test 8: legacy pushAside bool path still works
 {
-  const attacker = mockActor("NonExistentAction");
-  const decision = mockDecision(1, false, true);
-  const result = resolver.resolve({} as Actor, decision, attacker);
-  assert.equal(result, "downed", "fallback should use canKnockdown from hitbox");
+  const result = routeFromLegacyBools({ pushAside: true });
+  assert.equal(result, "down", "legacy pushAside should still route to down");
 }
 
-// Test 9: Armor override takes precedence
+// Test 9: armor downgrade takes precedence over routed launch/knockdown kinds
 {
-  const attacker = mockActor("attack3");
-  const decision = mockDecision(1);
-  decision.armorDecision = { finalReaction: "armor_feedback_only" } as any;
-  const result = resolver.resolve({} as Actor, decision, attacker);
-  assert.equal(result, "armor_feedback_only", "armor override should take precedence over PVF routing");
+  assert.equal(
+    applyArmorToKind(BOSS_SUPER_ARMOR, "airborne"),
+    "hit",
+    "boss armor should suppress airborne launch",
+  );
+  assert.equal(
+    applyArmorToKind(SUPER_ARMOR, "down"),
+    "hit",
+    "super armor should suppress knockdown",
+  );
 }
 
-// Test 10: No attacker provided (backward compatibility)
+// Test 10: armor should not downgrade unaffected kinds
 {
-  const decision = mockDecision(2, false, false);
-  const result = resolver.resolve({} as Actor, decision, undefined);
-  assert.equal(result, "heavy_stagger", "should fallback to legacy logic when no attacker");
+  assert.equal(
+    applyArmorToKind(SUPER_ARMOR, "stagger"),
+    "stagger",
+    "stagger should pass through super armor unchanged",
+  );
+  assert.equal(
+    applyArmorToKind(NONE_ARMOR, "airborne"),
+    "airborne",
+    "no armor should preserve the routed kind",
+  );
 }
 
-console.log("✓ All reaction routing tests passed");
+console.log("✓ All engine reaction routing tests passed");

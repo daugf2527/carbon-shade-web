@@ -30,6 +30,11 @@ assert.ok(payload.summary.runtimeCouplingKinds, "audit payload should include ru
 assert.ok(payload.summary.runtimeCouplingKinds["type-only"] > 0, "audit should classify type-only combat coupling");
 assert.ok(payload.summary.runtimeCouplingKinds["runtime-value"] > 0, "audit should classify runtime-value combat coupling");
 assert.equal(payload.summary.runtimeCouplingKinds["source-ref"], 0, "audit should report source-ref combat coupling as cleared once action manifest provenance moves to runtime");
+assert.equal(
+  payload.summary.truthImportCount,
+  3,
+  "audit should shrink combat-bound truth blockers to the remaining three tests after reaction-routing moves to engine",
+);
 assert.ok(Array.isArray(payload.truthImports), "truth import details should be listed");
 assert.ok(Array.isArray(payload.staticImports), "static import details should be listed");
 assert.ok(Array.isArray(payload.docsMentions), "doc mention details should be listed");
@@ -40,6 +45,10 @@ assert.ok(
 assert.ok(
   !payload.truthImports.some((entry: { file: string }) => entry.file.includes("tests/truth/hit-resolution-weapon-timeline.test.ts")),
   "audit should stop reporting hit-resolution-weapon-timeline once the truth gate moves to engine weapon timeline surfaces",
+);
+assert.ok(
+  !payload.truthImports.some((entry: { file: string }) => entry.file.includes("tests/truth/reaction-routing.test.ts")),
+  "audit should stop reporting reaction-routing once the truth gate moves to engine ReactionResolver surfaces",
 );
 assert.ok(
   !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/data/manifest/sources.ts")),

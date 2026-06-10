@@ -24,6 +24,10 @@ for (const needle of requiredRows) {
 assert.ok(source.includes("已有 engine 替身"), "matrix should contain engine-substitute status column");
 assert.ok(source.includes("下一步迁移"), "matrix should contain next-step migration column");
 assert.ok(
+  source.includes("src/engine/core/ReactionResolver.ts"),
+  "matrix should record that reaction-routing now binds to engine ReactionResolver",
+);
+assert.ok(
   source.includes("docs/planning/2026-06-04-engine-native-rewrite-roadmap.md"),
   "matrix should cite the authoritative P5 roadmap",
 );
