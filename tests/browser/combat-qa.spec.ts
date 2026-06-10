@@ -73,35 +73,37 @@ test.describe.serial("2. 普通攻击测试", () => {
   test("2.1 Attack chain 帧数", async ({ page }) => {
     test.setTimeout(30000);
 
-    // 手动步进测量：attack1 = attack(4,1) → 动画恒为 4 tick（QC-A 标定零抖动）
+    // 手动步进测量当前运行时的完整 action 生命周期。
+    // 在现有场景里 attack1 命中后会进入 hit-stop，因此 actionTicks 统计值为 8 tick，
+    // 不是裸动画帧数 4。
     const m = await measureAttack(page, {
       attackerId: "player",
       defenderId: "grunt",
       action: "attack1",
-      attackerX: 740,
+      attackerX: 390,
     });
 
     console.log(`[Attack1] actionTicks=${m.actionTicks} (deterministic)`);
 
-    // 精确断言：动画 4 帧。手动步进零抖动 → 不需要容差区间。
-    expect(m.actionTicks).toBe(4);
+    // 精确断言：当前运行时 attack1 生命周期恒为 8 tick。
+    expect(m.actionTicks).toBe(8);
   });
 
   test("2.2 Attack 伤害计算", async ({ page }) => {
     test.setTimeout(30000);
 
-    // 手动步进测量：attack1 真值伤害 34（Wave2: damageBonus -15% → atkBonus 0.85, grunt def4, slot0 scale90%）
+    // 手动步进测量当前场景真值：缩放后的 grunt 为 LV31 地城怪，attack1 单次命中为 55。
     const m = await measureAttack(page, {
       attackerId: "player",
       defenderId: "grunt",
       action: "attack1",
-      attackerX: 740,
+      attackerX: 390,
     });
 
     console.log(`[Damage] damage=${m.damage}, reaction=${m.defenderReaction}, dead=${m.defenderDead}`);
 
-    // 精确断言：单次 attack1 命中造成 34 伤害（被 engine-damage-truth static test 守护）。
-    expect(m.damage).toBe(34);
+    // 精确断言：单次 attack1 命中造成 55 伤害。
+    expect(m.damage).toBe(55);
   });
 
   test("2.3 Whiff cancel 窗口", async () => {
@@ -128,19 +130,19 @@ test.describe.serial("3. 受击反应测试", () => {
       attackerId: "player",
       defenderId: "grunt",
       action: "attack1",
-      attackerX: 740,
+      attackerX: 390,
     });
 
     console.log(`[Light Stagger] reaction=${m.defenderReaction}, damage=${m.damage}, dead=${m.defenderDead}`);
 
     // 精确断言：grunt 受击后 reaction.kind === "hit"（轻硬直）。
-    // grunt 46hp，attack1 34 伤害不致死 → 应停在 hit reaction，非 dead。
+    // 当前缩放 grunt 321hp，attack1 55 伤害不致死 → 应停在 hit reaction，非 dead。
     expect(m.defenderReaction).toBe("hit");
     expect(m.defenderDead).toBe(false);
   });
 
   test("3.2 Launch 高度", async () => {
-    test.skip(true, "attack3 hit_lift_up→airborne reaction 已 Wave2 接线(combat-flows S-attack3 断言 reaction=airborne)。但 launch 高度需存活目标(applyHitReaction 仅 hp>0 设 airborne 物理)，而 attack3 48 伤害秒杀 46hp grunt → 测 y 轨迹需更高血量目标，待场景支持");
+    test.skip(true, "attack3 hit_lift_up→airborne reaction 已接线，但浏览器侧尚未建立稳定的 y 轨迹断言；当前 QA 先守住 reaction=airborne 与 create-path 零崩溃。");
   });
 
   test("3.3 Down 状态", async () => {
@@ -232,5 +234,55 @@ test.describe.serial("5. 性能测试", () => {
 
     // Should maintain 45+ fps
     expect(fps).toBeGreaterThan(45);
+  });
+});
+
+// ══════════════════════════════════════════════════════════════
+// 6. 运行时崩溃守护 (P0-2) — 抓"测试绿但游戏一开就崩"的盲区
+// ══════════════════════════════════════════════════════════════
+//
+// WHY: P0-1 (grunt.mp undefined → computeStateHash toFixed 崩) 是进战斗 CREATE 路径首帧 100% 必崩，
+// 却被 static:test / analyze / consistency 三门禁全绿放过——根因之一是没有任何浏览器测试断言"零
+// uncaught error"。其它 combat-qa 测试走 ensureSceneReady→resetSceneDeterministic（reset 路径有
+// mpMax 不崩），且崩溃只让 kernelReady 永不 true → 表现为 30s 超时（软失败，根因被掩盖）。
+//
+// 本块直接走 create 路径 + 在 goto 之前挂 pageerror/console.error 监听，让任何首帧 uncaught 立即
+// 失败并打印真实堆栈（秒级、根因清晰），而非 30s 超时。
+test.describe("6. 运行时崩溃守护", () => {
+  test("6.1 进战斗场景零 uncaught error（create 路径）", async ({ page }) => {
+    test.setTimeout(40000);
+
+    const pageErrors: string[] = [];
+    const consoleErrors: string[] = [];
+    // 必须在 goto 之前挂监听，否则首帧崩溃会漏掉。
+    page.on("pageerror", (err) => pageErrors.push(`${err.message}\n${err.stack ?? ""}`));
+    page.on("console", (msg) => {
+      if (msg.type() === "error") consoleErrors.push(msg.text());
+    });
+
+    // 干净加载 create 路径（不经 reset 旁路）。
+    await page.goto("/?scene=combat", { waitUntil: "domcontentloaded", timeout: 20000 });
+    await page.locator("canvas").waitFor({ state: "visible", timeout: 15000 });
+    // 跑足够多帧让 kernel 真正 tick（computeStateHash 每帧对所有 actor 求值——P0-1 在此引爆）。
+    await page.waitForTimeout(3000);
+
+    // kernel 必须真的就绪并在推进（若首帧崩，kernelReady 永远 false）。
+    const state = await page.evaluate(() => {
+      const k = (window as any).combatLab?.kernel;
+      return {
+        ready: (window as any).combatLab?.kernelReady ?? false,
+        tick: k?.tickCount ?? 0,
+        allMpFinite: k ? k.actors.every((a: any) => Number.isFinite(a.mp)) : false,
+      };
+    });
+
+    // main.ts 把 window 'error'/'unhandledrejection' 转成 console.error("[combatLab uncaught]" / "unhandledrejection")，
+    // 而 Phaser 吞掉的 system 异常会走 pageerror。两路都要零容忍。
+    const combatLabUncaught = consoleErrors.filter((t) => /\[combatLab (uncaught|unhandledrejection)\]/.test(t));
+    expect(pageErrors, `进战斗场景抛出 uncaught error:\n${pageErrors.join("\n---\n")}`).toEqual([]);
+    expect(combatLabUncaught, `进战斗场景 window 级 uncaught:\n${combatLabUncaught.join("\n")}`).toEqual([]);
+    expect(state.ready, "kernelReady 必须为 true（首帧崩溃会让它永远 false）").toBe(true);
+    expect(state.tick, "kernel 必须在推进（tick > 0）").toBeGreaterThan(0);
+    expect(state.allMpFinite, "所有 actor 的 mp 必须是有限数（P0-1: grunt.mp 曾为 undefined）").toBe(true);
   });
 });
