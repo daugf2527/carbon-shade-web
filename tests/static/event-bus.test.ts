@@ -1,5 +1,5 @@
 import { assert } from "./test-utils.js";
-import { CombatEventBus, CombatEventPriority } from "../../src/combat/events/CombatEventBus.js";
+import { CombatEventBus, CombatEventPriority } from "../../src/runtime/events/CombatEventBus.js";
 
 const bus = new CombatEventBus();
 const seen:string[]=[];

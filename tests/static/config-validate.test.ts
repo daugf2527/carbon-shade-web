@@ -1,21 +1,26 @@
 import { assert } from "./test-utils.js";
-import { ACTIONS } from "../../src/combat/actions/FrameDataAction.js";
-import type { ActionName, StatusEffectType } from "../../src/combat/types.js";
+import { loadActionsManifest, loadStatusManifest } from "../../src/data/manifest/loader.js";
+
+const ACTIONS = await loadActionsManifest();
+const STATUS_MANIFEST = await loadStatusManifest();
 
 // --- G2: Status Profile Completeness ---
 // 14 status types defined in types.ts. Verify each has a profile or documented gap.
 
-const ALL_STATUS_TYPES: StatusEffectType[] = [
+const ALL_STATUS_TYPES = [
   "bleed", "poison", "shock", "burn", "rupture",
   "stun", "freeze", "stone", "bind", "sleep",
   "slow", "defense_down", "attack_down", "curse",
-];
+] as const;
 
-const IMPLEMENTED_STATUS: StatusEffectType[] = [
+type LocalStatusEffectType = typeof ALL_STATUS_TYPES[number];
+type RuntimeActionName = keyof typeof ACTIONS;
+
+const IMPLEMENTED_STATUS: LocalStatusEffectType[] = [
   "bleed", "poison", "burn", "shock", "rupture",
 ];
 
-const NOT_IMPLEMENTED_STATUS: StatusEffectType[] = [
+const NOT_IMPLEMENTED_STATUS: LocalStatusEffectType[] = [
   "stun", "freeze", "stone", "bind", "sleep",
   "slow", "defense_down", "attack_down", "curse",
 ];
@@ -25,14 +30,16 @@ assert.equal(ALL_STATUS_TYPES.length, 14, "Must have 14 status types defined");
 // Verify implemented types have profiles defined
 for (const t of IMPLEMENTED_STATUS) {
   assert.ok(ALL_STATUS_TYPES.includes(t), `${t} must be in ALL_STATUS_TYPES`);
+  assert.ok(STATUS_MANIFEST.profiles[t], `${t} must exist in status manifest profiles`);
 }
 console.log(`OK: ${IMPLEMENTED_STATUS.length} status types have profiles`);
 
 // Verify non-implemented types are documented
 for (const t of NOT_IMPLEMENTED_STATUS) {
   assert.ok(ALL_STATUS_TYPES.includes(t), `${t} must be in ALL_STATUS_TYPES`);
+  assert.ok(STATUS_MANIFEST.profiles[t], `${t} should still be represented in runtime status manifest profiles`);
 }
-console.log(`OK: ${NOT_IMPLEMENTED_STATUS.length} status types documented as not yet implemented`);
+console.log(`OK: ${NOT_IMPLEMENTED_STATUS.length} status types documented as not yet runtime-complete`);
 
 // Verify the counts add up
 assert.equal(
@@ -50,7 +57,7 @@ const REQUIRED_ACTION_FIELDS = [
   "feedbackProfile", "sourcePolicy",
 ] as const;
 
-const ACTION_NAMES = Object.keys(ACTIONS) as ActionName[];
+const ACTION_NAMES = Object.keys(ACTIONS) as RuntimeActionName[];
 console.log(`\nScanning ${ACTION_NAMES.length} registered actions...`);
 
 for (const name of ACTION_NAMES) {
@@ -142,7 +149,7 @@ console.log(`OK: Tuning baseline values consistent with action definitions`);
 // We verify: (1) all player combat actions are checked, (2) every ACTIONS entry that
 // has active hitboxes is referenced by a known action name pattern.
 
-const PLAYER_COMBAT_ACTIONS: ActionName[] = [
+const PLAYER_COMBAT_ACTIONS: RuntimeActionName[] = [
   "attack1", "attack2", "attack3",
   "FrenzyBasic1", "FrenzyBasic2", "FrenzyBasic3",
   "UpwardSlash", "MountainousWheel", "RagingFury", "Bloodlust",
@@ -150,7 +157,7 @@ const PLAYER_COMBAT_ACTIONS: ActionName[] = [
   "QuickRebound", "Derange", "Diehard",
 ];
 
-const NON_SPRITE_ACTIONS: ActionName[] = [
+const NON_SPRITE_ACTIONS: RuntimeActionName[] = [
   "stay", "move", "dash", "FrenzyToggle", "DebugReset",
   "ForceDownPlayer", "ForceBleed", "SpawnTargets", "RunScreenshotScenario",
   "EnemyBasic",
@@ -164,9 +171,8 @@ for (const name of PLAYER_COMBAT_ACTIONS) {
   );
 }
 
-const allActionNames = new Set(ACTION_NAMES);
-const accounted = new Set([...PLAYER_COMBAT_ACTIONS, ...NON_SPRITE_ACTIONS]);
-const unaccounted = [...allActionNames].filter(n => !accounted.has(n));
+const accounted = new Set<RuntimeActionName>([...PLAYER_COMBAT_ACTIONS, ...NON_SPRITE_ACTIONS]);
+const unaccounted = ACTION_NAMES.filter((name) => !accounted.has(name));
 
 if (unaccounted.length > 0) {
   console.log(`NOTE: ${unaccounted.length} actions not explicitly categorized: ${unaccounted.join(", ")}`);

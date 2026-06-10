@@ -11,7 +11,7 @@ const requiredRows = [
   "tests/static/architecture.test.ts",
   "tests/static/combat-chain-regression.test.ts",
   "tests/static/manifest-provenance.test.ts",
-  "tests/static/config-validate.test.ts",
+  "tests/static/run-detector.test.ts",
 ];
 
 for (const needle of requiredRows) {
@@ -29,6 +29,10 @@ assert.ok(
 assert.ok(
   source.includes("docs/engineering/combat-retirement-audit-2026-06-10.md"),
   "static blocker matrix should cite the retirement audit evidence",
+);
+assert.ok(
+  source.includes("| `data-surface` | 0 |"),
+  "static blocker matrix should show that the data-surface bucket has been cleared",
 );
 
 console.log("p5-static-blocker-matrix: required rows and buckets present");

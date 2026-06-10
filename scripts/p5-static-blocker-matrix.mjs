@@ -142,7 +142,7 @@ function renderMarkdown(audit, rows) {
   lines.push("## 结论");
   lines.push("");
   lines.push("1. static blocker 的真正主阻塞不是零散类型，而是 32 个直接依赖 `CombatKernel` / `FixedStepSimulation` 的 `kernel-shell` 用例。");
-  lines.push("2. `data-surface` 只有 2 个文件，是最便宜的清理层；它们不该和 `CombatKernel` 主迁移耦在一起。");
+  lines.push("2. `data-surface` 已清零，说明动作表/类型/事件壳这层可以独立迁出，不必和 `CombatKernel` 主迁移绑在一起。");
   lines.push("3. `combat-subsystems` 只有 2 个文件，适合在 engine core/system 对等实现补齐后单独迁。");
   lines.push("4. `replay-input` 4 个文件说明 replay / input 工具链仍是 `src/combat/` 删除前的独立尾巴。");
   lines.push("");
