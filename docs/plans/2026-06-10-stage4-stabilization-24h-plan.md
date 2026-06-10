@@ -47,6 +47,21 @@
 | 15h-20h | Full verification run with fallout fixes |
 | 20h-24h | SSOT/changelog sync, checkpoint commit, handoff |
 
+### Dirty-Tree Safety Rules
+
+- This repo is already dirty at plan start. Treat every target file as potentially carrying pre-existing WIP until proven otherwise.
+- Before every staged commit, run:
+
+```bash
+git status --short
+git diff -- <task-files>
+git diff --cached --name-only
+```
+
+- If any target file contains unrelated pre-existing edits, stop and report the conflict instead of staging through it.
+- Use `git add <specific-files>` only. Never use `git add .`.
+- If a verification-only task finds that the intended code is already present and no file changes are needed, skip the commit for that task instead of creating an empty checkpoint.
+
 ---
 
 ### Task 1: Freeze The Stabilization Baseline
@@ -123,6 +138,7 @@ Do not commit in this task. This task only establishes the exact finish line.
 - Ensure runtime uses only `src/engine/replay/InputRecorder.ts`.
 - Remove stale references to the deleted combat replay path from code checks and docs.
 - Make `consistency` inspect the new engine replay path when evaluating P3.1 runtime-switch peripherals.
+- Treat `src/game/CombatScene.ts`, `tests/static/input-recorder.test.ts`, and `src/engine/replay/InputRecorder.ts` as likely-already-migrated; patch only stale references that remain.
 
 **Acceptance points**
 - No repo file references `src/combat/replay/InputRecorder.ts`.
@@ -166,6 +182,8 @@ and
 import { InputRecorder } from "../../src/engine/replay/InputRecorder.js";
 ```
 
+If these imports are already present, do not edit those files just to satisfy the task title.
+
 **Step 4: Update engineering docs**
 
 Replace the old path with the new path in:
@@ -193,27 +211,32 @@ Expected:
 
 **Step 6: Commit**
 
+Before staging, run the dirty-tree safety gate from the global rules and confirm the target files do not carry unrelated WIP.
+
 ```bash
 git add src/game/CombatScene.ts src/engine/replay/InputRecorder.ts tests/static/input-recorder.test.ts scripts/consistency-check.mjs docs/engineering/input-recorder-implementation-summary.md docs/engineering/input-recorder-guide.md
 git commit -m "fix(runtime): finish input recorder engine migration"
 ```
 
+If only `scripts/consistency-check.mjs` and docs changed, stage only those files and keep the same commit theme.
+
 ---
 
-### Task 3: Harden CombatScene Create-Path Crash Guards
+### Task 3: Verify And Close CombatScene Create-Path Crash Guards
 
 **Budget:** 4h
 
 **Files:**
-- Modify: `src/engine/core/MonsterScaling.ts`
-- Modify: `src/engine/kernel/EngineKernel.ts`
-- Test: `tests/static/engine-scene-create-smoke.test.ts`
-- Test: `tests/browser/combat-qa.spec.ts`
+- Reference: `src/engine/core/MonsterScaling.ts`
+- Reference: `src/engine/kernel/EngineKernel.ts`
+- Reference: `tests/static/engine-scene-create-smoke.test.ts`
+- Reference: `tests/browser/combat-qa.spec.ts`
+- Modify only if regression found: the files above
 
 **Functional points**
-- Guarantee monsters built through the exact `CombatScene.create()` path always carry finite MP state.
-- Guard the create path in static tests so regressions fail fast without requiring manual browser testing.
-- Guard the browser create path against uncaught runtime errors and fake-green timeouts.
+- Confirm the current worktree already contains the create-path crash fix and the matching static/browser guards.
+- Re-run the exact guards on the current tree so this task closes as verification, not speculative reimplementation.
+- Patch only if one of the expected guards is missing or regressed.
 
 **Acceptance points**
 - `monsterStatsAtLevel()` returns explicit `mpMax`.
@@ -228,7 +251,7 @@ git commit -m "fix(runtime): finish input recorder engine migration"
 
 **Step 1: Keep monster stats complete**
 
-Target code shape:
+Expected current code shape:
 
 ```ts
 export interface MonsterStats {
@@ -249,7 +272,7 @@ mpMax: 0,
 
 **Step 2: Keep `z` inside the state hash**
 
-Target code shape:
+Expected current code shape:
 
 ```ts
 `${a.id}:hp=${a.hp},mp=${a.mp.toFixed(3)},st=${a.fsm.state},x=${a.x.toFixed(3)},y=${a.y.toFixed(3)},z=${a.z.toFixed(3)}`
@@ -257,7 +280,7 @@ Target code shape:
 
 **Step 3: Guard the exact create path in static test**
 
-Keep or add assertions like:
+Expected current assertions:
 
 ```ts
 assert.ok(Number.isFinite(gruntStats.mpMax));
@@ -268,7 +291,7 @@ assert.ok(threw === null);
 
 **Step 4: Guard the exact create path in browser QA**
 
-Keep or add the zero-uncaught pattern:
+Expected current zero-uncaught pattern:
 
 ```ts
 page.on("pageerror", (err) => pageErrors.push(`${err.message}\n${err.stack ?? ""}`));
@@ -302,27 +325,32 @@ Expected:
 
 **Step 6: Commit**
 
+Only commit if this task actually changed files after verification. Before staging, run the dirty-tree safety gate from the global rules.
+
 ```bash
 git add src/engine/core/MonsterScaling.ts src/engine/kernel/EngineKernel.ts tests/static/engine-scene-create-smoke.test.ts tests/browser/combat-qa.spec.ts
-git commit -m "test(runtime): guard combat scene create path"
+git commit -m "test(runtime): verify combat scene create-path guards"
 ```
+
+If verification is green and no file changed, skip this commit and record the result in the task notes.
 
 ---
 
-### Task 4: Settle Strict-Mode And Nullability Fallout In Touched Code
+### Task 4: Verify Strict-Mode Stabilization And Close Remaining Fallout
 
 **Budget:** 4-5h
 
 **Files:**
-- Modify: `tsconfig.json`
-- Modify: `src/data/manifest/truth/types.ts`
-- Modify: `src/dnf-native-combat/data/parsers/PvfDocumentLoader.ts`
-- Modify: `src/engine/core/Actor.ts`
-- Modify: `src/engine/core/CancelWindow.ts`
-- Modify: `src/engine/core/KnockbackPhysics.ts`
-- Modify: `src/engine/core/MonsterScaling.ts`
-- Modify: `src/engine/core/ReactionResolver.ts`
-- Modify: `src/engine/kernel/systems/CombatResolutionSystem.ts`
+- Reference: `tsconfig.json`
+- Reference: `src/data/manifest/truth/types.ts`
+- Reference: `src/dnf-native-combat/data/parsers/PvfDocumentLoader.ts`
+- Reference: `src/engine/core/Actor.ts`
+- Reference: `src/engine/core/CancelWindow.ts`
+- Reference: `src/engine/core/KnockbackPhysics.ts`
+- Reference: `src/engine/core/MonsterScaling.ts`
+- Reference: `src/engine/core/ReactionResolver.ts`
+- Reference: `src/engine/kernel/systems/CombatResolutionSystem.ts`
+- Modify only if regression found: the files above
 - Test: `tests/smoke/full-pipeline.test.ts`
 - Test: `tests/static/auto-combat.test.ts`
 - Test: `tests/static/manifest-provenance.test.ts`
@@ -333,8 +361,9 @@ git commit -m "test(runtime): guard combat scene create path"
 
 **Functional points**
 - Keep `strict: true` enabled, not temporarily relaxed.
-- Replace unsafe null/undefined assumptions in touched runtime and test code.
-- Make truth/parsing types honest where extracted fields can be `null`.
+- Confirm the current worktree already contains the intended strict-mode/nullability fixes.
+- Replace only the remaining unsafe null/undefined assumptions that are still exposed by `typecheck` or `static:test`.
+- Keep truth/parsing types honest where extracted fields can be `null`.
 - Keep the only explicit suppression narrow and justified (`.mjs` import in browser smoke test).
 
 **Acceptance points**
@@ -345,7 +374,7 @@ git commit -m "test(runtime): guard combat scene create path"
 
 **Step 1: Keep strict mode on**
 
-Required setting:
+Expected current setting:
 
 ```json
 "strict": true
@@ -353,7 +382,7 @@ Required setting:
 
 **Step 2: Make nullable truth fields explicit**
 
-Target shape:
+Expected current shape:
 
 ```ts
 liftUp?: PvfFact<number> | null;
@@ -364,7 +393,7 @@ attackKind?: string | null;
 
 **Step 3: Tighten process and collection typing**
 
-Target shape:
+Expected current shape:
 
 ```ts
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
@@ -401,10 +430,14 @@ Expected:
 
 **Step 6: Commit**
 
+Only commit if this task changed files after verification. Before staging, run the dirty-tree safety gate from the global rules.
+
 ```bash
 git add tsconfig.json src/data/manifest/truth/types.ts src/dnf-native-combat/data/parsers/PvfDocumentLoader.ts src/engine/core/Actor.ts src/engine/core/CancelWindow.ts src/engine/core/KnockbackPhysics.ts src/engine/core/MonsterScaling.ts src/engine/core/ReactionResolver.ts src/engine/kernel/systems/CombatResolutionSystem.ts tests/smoke/full-pipeline.test.ts tests/static/auto-combat.test.ts tests/static/manifest-provenance.test.ts tests/static/runtime-evidence.test.ts tests/truth/reaction-velocity.test.ts tests/truth/swordman-attack1-truth.test.ts tests/browser/combat-smoke.spec.ts
-git commit -m "fix(types): settle strict-mode stabilization fallout"
+git commit -m "fix(types): close remaining strict-mode stabilization fallout"
 ```
+
+If verification is already green and no file changed, skip this commit and roll the result into the next real checkpoint.
 
 ---
 
@@ -415,7 +448,6 @@ git commit -m "fix(types): settle strict-mode stabilization fallout"
 **Files:**
 - Modify: `tests/browser/combat-smoke.spec.ts` (only if fallout appears)
 - Modify: `tests/browser/combat-qa.spec.ts` (only if fallout appears)
-- Modify: `verification/consistency-latest.txt` (only if the repo convention is to refresh committed verification snapshots)
 
 **Functional points**
 - Verify that stabilization holds under real browser/runtime conditions, not only compile-time and static tests.
@@ -458,6 +490,14 @@ Expected:
 - `browser:qa`: active tests green; P4-gated cases remain skipped
 - `consistency`: no repo drift remains
 
+If the branch explicitly wants a refreshed committed snapshot file, do not assume `npm run consistency` writes it. Use the pre-push-hook style command explicitly:
+
+```powershell
+npm run consistency 2>&1 | Tee-Object -FilePath verification/consistency-latest.txt
+```
+
+Only do this if the branch convention really requires committing that snapshot.
+
 **Step 3: If a verification fails, fix immediately before moving on**
 
 Rule:
@@ -468,12 +508,14 @@ Do not proceed to doc sync until browser + static + consistency are all understo
 
 **Step 4: Commit**
 
+Before staging, run the dirty-tree safety gate from the global rules.
+
 ```bash
-git add tests/browser/combat-smoke.spec.ts tests/browser/combat-qa.spec.ts verification/consistency-latest.txt
+git add tests/browser/combat-smoke.spec.ts tests/browser/combat-qa.spec.ts
 git commit -m "test(qa): reverify stage4 stabilization gates"
 ```
 
-If `verification/consistency-latest.txt` is not part of the repo update strategy for this branch, omit it from staging.
+If a refreshed `verification/consistency-latest.txt` was intentionally generated for this branch, add it explicitly in a second `git add` line.
 
 ---
 
@@ -545,6 +587,8 @@ Expected:
 
 **Step 4: Final checkpoint commit**
 
+Before staging, run the dirty-tree safety gate from the global rules.
+
 ```bash
 git add CLAUDE.md docs/testing/engine-truth-coverage-matrix.md docs/changelog/2026-06-10-stage4-stabilization.md
 git commit -m "docs(ssot): sync stage4 stabilization checkpoint"
@@ -575,4 +619,3 @@ git commit -m "docs(ssot): sync stage4 stabilization checkpoint"
 3. `fix(types): settle strict-mode stabilization fallout`
 4. `test(qa): reverify stage4 stabilization gates`
 5. `docs(ssot): sync stage4 stabilization checkpoint`
-
