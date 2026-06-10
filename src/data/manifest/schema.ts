@@ -1,7 +1,7 @@
 // Schema validator for manifest data — validates FrameDataAction JSON manifests
 // at load time, catching structural errors before they hit runtime.
 
-import type { ActionName, FrameDataAction, FrameDataProvenanceField, Provenance, StatusEffectType, StatusManifest, StatusProfile, StatusProvenanceField } from "../../combat/types.js";
+import type { ActionName, FrameDataAction, FrameDataProvenanceField, Provenance, StatusEffectType, StatusManifest, StatusProfile, StatusProvenanceField } from "../../runtime/data/CombatDataTypes.js";
 import type { DamageManifest } from "./hash.js";
 import type { EnemyManifest, EnemyManifestField, EnemyManifestId, EnemyRuntimeProfile } from "./aiTypes.js";
 

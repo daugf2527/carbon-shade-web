@@ -1,9 +1,9 @@
 # Combat Retirement Audit (2026-06-10)
 
-- 生成时间: 2026-06-10T11:55:17.142Z
+- 生成时间: 2026-06-10T12:03:39.932Z
 - src/combat 文件数: 46
-- 运行时/脚本依赖: 8
-- runtime 分层: type-only=6, runtime-value=3, source-ref=2
+- 运行时/脚本依赖: 5
+- runtime 分层: type-only=2, runtime-value=2, source-ref=2
 - truth 测试依赖: 5
 - static 测试依赖: 36
 - browser 测试依赖: 0
@@ -18,10 +18,6 @@
 
 ## 运行时/脚本依赖
 
-- `src/data/manifest/hash.ts:4` import type { FrameDataAction, ActionName, StatusManifest } from "../../combat/types.js";
-- `src/data/manifest/loader.ts:4` import type { FrameDataAction, ActionName, StatusManifest } from "../../combat/types.js";
-- `src/data/manifest/loader.ts:5` import { ACTIONS } from "../../combat/actions/FrameDataAction.js";
-- `src/data/manifest/schema.ts:4` import type { ActionName, FrameDataAction, FrameDataProvenanceField, Provenance, StatusEffectType, StatusManifest, StatusProfile, StatusProvenanceField } from "../../combat/types.js";
 - `src/data/manifest/sources.ts:1` export const ACTION_MANIFEST_DATA_SOURCE = "src/combat/actions/FrameDataAction.ts#ACTIONS";
 - `src/data/manifest/status/default.json:32` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
 - `src/data/manifest/status/default.json:40` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
@@ -41,11 +37,10 @@
 - `src/data/manifest/status/default.json:265` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-rupture-baseline",
 - `src/data/manifest/status/default.json:273` "sourceRef": "src/combat/kernel/CombatKernel.ts#rupture_incoming_damage",
 - `src/data/manifest/status/default.json:281` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-rupture-baseline",
-- `src/game/bootActionManifest.ts:1` import type { ActionName, FrameDataAction } from "../combat/types.js";
-- `src/game/bootActionManifest.ts:2` import { loadFromManifest } from "../combat/actions/FrameDataAction.js";
 - `src/game/CombatScene.ts:3` import type { DebugSnapshot } from "../combat/debug/DebugOverlay.js";
 - `src/game/CombatScene.ts:4` import { FixedStepSimulation } from "../combat/kernel/FixedStepSimulation.js";
 - `src/game/RenderAdapter.ts:1` import type { DebugSnapshot } from "../combat/debug/DebugOverlay.js";
+- `src/runtime/data/ActionManifestRuntime.ts:1` import { ACTIONS, loadFromManifest } from "../../combat/actions/FrameDataAction.js";
 
 ## Truth 测试依赖
 

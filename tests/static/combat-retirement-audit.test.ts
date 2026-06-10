@@ -47,8 +47,13 @@ assert.ok(
 );
 assert.equal(
   payload.summary.runtimeCouplingKinds["type-only"],
-  6,
-  "audit should shrink type-only combat coupling after shared runtime data types are extracted",
+  2,
+  "audit should shrink type-only combat coupling to the remaining debug snapshot edges after manifest action types are extracted",
+);
+assert.equal(
+  payload.summary.runtimeImportCount,
+  5,
+  "audit should reduce runtime combat coupling to five external files after loader and bootActionManifest move behind a runtime action-manifest facade",
 );
 assert.ok(
   !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/data/manifest/ai.ts")),
@@ -63,8 +68,28 @@ assert.ok(
   "audit should stop reporting src/data/official/dnf/physics.ts once provenance types move to runtime types",
 );
 assert.ok(
-  payload.runtimeImports.some((entry: { kind: string; file: string }) => entry.kind === "type-only" && entry.file.includes("src/data/manifest/hash.ts")),
-  "audit should still capture the remaining manifest action-type coupling after the shared data-type extraction",
+  !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/data/manifest/hash.ts")),
+  "audit should stop reporting src/data/manifest/hash.ts once manifest action types move to runtime data types",
+);
+assert.ok(
+  !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/data/manifest/schema.ts")),
+  "audit should stop reporting src/data/manifest/schema.ts once manifest action types move to runtime data types",
+);
+assert.ok(
+  !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/data/manifest/loader.ts")),
+  "audit should stop reporting src/data/manifest/loader.ts once action manifest access moves behind a runtime facade",
+);
+assert.ok(
+  !payload.runtimeImports.some((entry: { file: string; kind: string }) => entry.file.includes("src/game/bootActionManifest.ts") && entry.kind === "type-only"),
+  "audit should stop reporting bootActionManifest as a type-only combat edge once manifest action types move to runtime data types",
+);
+assert.ok(
+  !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/game/bootActionManifest.ts")),
+  "audit should stop reporting bootActionManifest once loadFromManifest moves behind a runtime facade",
+);
+assert.ok(
+  payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/runtime/data/ActionManifestRuntime.ts")),
+  "audit should capture the temporary runtime action-manifest facade while combat action data is still sourced from combat",
 );
 assert.ok(
   payload.runtimeImports.some((entry: { kind: string; file: string }) => entry.kind === "source-ref" && entry.file.includes("src/data/manifest/status/default.json")),

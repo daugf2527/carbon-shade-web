@@ -1,7 +1,7 @@
 // Content-addressable hash for manifest data — deterministic hash of JSON content
 // that replaces hardcoded "combat-schema-v1" in ReplayRecorder.
 
-import type { FrameDataAction, ActionName, StatusManifest } from "../../combat/types.js";
+import type { FrameDataAction, ActionName, StatusManifest } from "../../runtime/data/CombatDataTypes.js";
 import type { EnemyManifest } from "./aiTypes.js";
 
 /**

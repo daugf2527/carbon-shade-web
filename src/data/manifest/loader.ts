@@ -1,8 +1,8 @@
 // Manifest loader — validates runtime manifests against schema, providing
 // a single source of truth for runtime data.
 
-import type { FrameDataAction, ActionName, StatusManifest } from "../../combat/types.js";
-import { ACTIONS } from "../../combat/actions/FrameDataAction.js";
+import type { FrameDataAction, ActionName, StatusManifest } from "../../runtime/data/CombatDataTypes.js";
+import { getDefaultActionManifest } from "../../runtime/data/ActionManifestRuntime.js";
 import { validateEnemyManifest, validateManifest, validateStatusManifest, type ManifestValidationOptions } from "./schema.js";
 import { computeActionsHash, type DamageManifest, computeDamageManifestHash } from "./hash.js";
 import { DEFAULT_ENEMY_MANIFEST } from "./ai.js";
@@ -26,7 +26,7 @@ export async function loadActionsManifest(options: ManifestValidationOptions = {
     assertValidManifest(_cachedActions, options);
     return _cachedActions;
   }
-  const manifest = ACTIONS as Record<ActionName, FrameDataAction>;
+  const manifest = getDefaultActionManifest();
   assertValidManifest(manifest, options);
   _cachedActions = manifest;
   _cachedHash = computeActionsHash(manifest);
