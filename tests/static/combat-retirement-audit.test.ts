@@ -65,6 +65,14 @@ assert.ok(
   payload.docsMentions.some((entry: { file: string }) => entry.file.includes("docs/planning/2026-06-04-engine-native-rewrite-roadmap.md")),
   "audit should capture the P5 roadmap doc as a retirement reference",
 );
+assert.ok(
+  !payload.staticImports.some((entry: { file: string }) => entry.file.includes("tests/static/run-detector.test.ts")),
+  "audit should stop reporting run-detector once it migrates to runtime input surfaces",
+);
+assert.ok(
+  !payload.staticImports.some((entry: { file: string }) => entry.file.includes("tests/static/socd-cleaner.test.ts")),
+  "audit should stop reporting socd-cleaner once it migrates to runtime input surfaces",
+);
 
 console.log(
   `combat-retirement-audit: combatFiles=${payload.summary.combatFileCount} runtime=${payload.summary.runtimeImportCount} truth=${payload.summary.truthImportCount} static=${payload.summary.staticImportCount} docs=${payload.summary.docsMentionCount}`,

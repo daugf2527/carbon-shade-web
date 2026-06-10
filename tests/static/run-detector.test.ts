@@ -1,6 +1,6 @@
 import { assert } from "./test-utils.js";
-import { RunCommandDetector } from "../../src/combat/input/RunCommandDetector.js";
-import type { RawInputFrame } from "../../src/combat/input/BrowserInputState.js";
+import { RunCommandDetector } from "../../src/runtime/input/RunCommandDetector.js";
+import type { RawInputFrame } from "../../src/runtime/input/InputTypes.js";
 
 function frame(tick: number, held: string[] = [], pressed: string[] = [], released: string[] = []): RawInputFrame {
   return {

@@ -1,11 +1,11 @@
 # Combat Retirement Audit (2026-06-10)
 
-- 生成时间: 2026-06-10T11:33:19.627Z
+- 生成时间: 2026-06-10T11:42:14.706Z
 - src/combat 文件数: 46
 - 运行时/脚本依赖: 22
 - runtime 分层: type-only=20, runtime-value=3, source-ref=2
 - truth 测试依赖: 5
-- static 测试依赖: 38
+- static 测试依赖: 36
 - browser 测试依赖: 0
 - 文档引用: 61
 
@@ -128,10 +128,7 @@
 - `tests/static/replay-performance.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 - `tests/static/replay-schema.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 - `tests/static/replay.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/run-detector.test.ts:2` import { RunCommandDetector } from "../../src/combat/input/RunCommandDetector.js";
-- `tests/static/run-detector.test.ts:3` import type { RawInputFrame } from "../../src/combat/input/BrowserInputState.js";
 - `tests/static/schema-hash-freshness.test.ts:2` import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";
-- `tests/static/socd-cleaner.test.ts:2` import { SOCDCleaner } from "../../src/combat/input/SOCDCleaner.js";
 - `tests/static/status-buff.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 - `tests/static/status-profile.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 - `tests/static/tick-benchmark.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
@@ -361,17 +358,15 @@
 - `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:49` | `tests/static/replay-performance.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
 - `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:50` | `tests/static/replay-schema.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
 - `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:51` | `tests/static/replay.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:52` | `tests/static/run-detector.test.ts` | `replay-input` | `import { RunCommandDetector } from "../../src/combat/input/RunCommandDetector.js";`<br>`import type { RawInputFrame } from "../../src/combat/input/BrowserInputState.js";` | P5-B |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:53` | `tests/static/schema-hash-freshness.test.ts` | `replay-input` | `import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";` | P5-B |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:54` | `tests/static/socd-cleaner.test.ts` | `replay-input` | `import { SOCDCleaner } from "../../src/combat/input/SOCDCleaner.js";` | P5-B |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:55` | `tests/static/status-buff.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:56` | `tests/static/status-profile.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:57` | `tests/static/tick-benchmark.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:58` | `tests/static/walk-run-z.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:59` | `tests/static/walk-run.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:63` 1. static blocker 的真正主阻塞不是零散类型，而是 32 个直接依赖 `CombatKernel` / `FixedStepSimulation` 的 `kernel-shell` 用例。
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:64` 2. `data-surface` 已清零，说明动作表/类型/事件壳这层可以独立迁出，不必和 `CombatKernel` 主迁移绑在一起。
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:66` 4. `replay-input` 4 个文件说明 replay / input 工具链仍是 `src/combat/` 删除前的独立尾巴。
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:52` | `tests/static/schema-hash-freshness.test.ts` | `replay-input` | `import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";` | P5-B |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:53` | `tests/static/status-buff.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:54` | `tests/static/status-profile.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:55` | `tests/static/tick-benchmark.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:56` | `tests/static/walk-run-z.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:57` | `tests/static/walk-run.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:61` 1. static blocker 的真正主阻塞不是零散类型，而是 32 个直接依赖 `CombatKernel` / `FixedStepSimulation` 的 `kernel-shell` 用例。
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:62` 2. `data-surface` 已清零，说明动作表/类型/事件壳这层可以独立迁出，不必和 `CombatKernel` 主迁移绑在一起。
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:64` 4. `replay-input` 还剩 2 个文件，说明 replay / input 工具链仍是 `src/combat/` 删除前的独立尾巴。
 - `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:5` - `tests/truth/` 不再把关键真值守在 `src/combat/*`
 - `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:7` - `src/combat/` 删除前，truth gate 可以完全站在 engine 侧
 - `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:13` | `tests/truth/reaction-routing.test.ts` | `src/combat/reaction/ReactionResolver.ts` | `tests/truth/engine-reaction-truth.test.ts` | 部分覆盖 | 拆成 engine routing-only truth，去掉 combat `ReactionResolver` import |

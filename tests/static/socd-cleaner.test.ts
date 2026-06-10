@@ -1,5 +1,5 @@
 import { assert } from "./test-utils.js";
-import { SOCDCleaner } from "../../src/combat/input/SOCDCleaner.js";
+import { SOCDCleaner } from "../../src/runtime/input/SOCDCleaner.js";
 
 // Test 1: No conflict — all directions pass through
 {

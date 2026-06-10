@@ -11,7 +11,7 @@ const requiredRows = [
   "tests/static/architecture.test.ts",
   "tests/static/combat-chain-regression.test.ts",
   "tests/static/manifest-provenance.test.ts",
-  "tests/static/run-detector.test.ts",
+  "tests/static/schema-hash-freshness.test.ts",
 ];
 
 for (const needle of requiredRows) {
@@ -33,6 +33,18 @@ assert.ok(
 assert.ok(
   source.includes("| `data-surface` | 0 |"),
   "static blocker matrix should show that the data-surface bucket has been cleared",
+);
+assert.ok(
+  source.includes("| `replay-input` | 2 |"),
+  "static blocker matrix should show that the replay-input bucket has been reduced to the remaining replay-only blockers",
+);
+assert.ok(
+  !source.includes("tests/static/run-detector.test.ts"),
+  "static blocker matrix should stop listing run-detector once it migrates to runtime input surfaces",
+);
+assert.ok(
+  !source.includes("tests/static/socd-cleaner.test.ts"),
+  "static blocker matrix should stop listing socd-cleaner once it migrates to runtime input surfaces",
 );
 
 console.log("p5-static-blocker-matrix: required rows and buckets present");
