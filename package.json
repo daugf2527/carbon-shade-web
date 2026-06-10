@@ -18,6 +18,7 @@
     "browser:qa": "playwright test tests/browser/combat-qa.spec.ts",
     "test:loop": "node scripts/test-loop.mjs",
     "analyze": "node scripts/analyze.mjs",
+    "audit:combat-retirement": "node scripts/combat-retirement-audit.mjs --output json",
     "completion": "node scripts/completion.mjs",
     "audit:verify": "node scripts/audit-verify.mjs",
     "compile:schema": "node scripts/compile-schema.mjs",

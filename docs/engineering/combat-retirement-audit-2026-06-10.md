@@ -1,0 +1,607 @@
+# Combat Retirement Audit (2026-06-10)
+
+- 生成时间: 2026-06-10T10:41:09.925Z
+- src/combat 文件数: 46
+- 运行时/脚本依赖: 22
+- truth 测试依赖: 5
+- static 测试依赖: 59
+- browser 测试依赖: 0
+- 文档引用: 59
+
+## 结论
+
+- P5 `src/combat/` 退役尚未具备删除条件。
+- 主要阻塞来自四类：运行时源引用、truth 测试、static 测试、文档/SSOT。
+- 这份清单是删 `src/combat/` 前的最小硬证据，不再靠人工 grep 回忆。
+
+## 运行时/脚本依赖
+
+- `src/data/ai/enemyTuning.ts:1` import type { EnemyAIState } from "../../combat/ai/EnemyAIState.js";
+- `src/data/manifest/ai.ts:1` import type { EnemyAIState } from "../../combat/ai/EnemyAIState.js";
+- `src/data/manifest/aiTypes.ts:1` import type { BaseArmorType, Provenance } from "../../combat/types.js";
+- `src/data/manifest/hash.ts:4` import type { FrameDataAction, ActionName, StatusManifest } from "../../combat/types.js";
+- `src/data/manifest/loader.ts:4` import type { FrameDataAction, ActionName, StatusManifest } from "../../combat/types.js";
+- `src/data/manifest/loader.ts:5` import { ACTIONS } from "../../combat/actions/FrameDataAction.js";
+- `src/data/manifest/schema.ts:4` import type { ActionName, FrameDataAction, FrameDataProvenanceField, Provenance, StatusEffectType, StatusManifest, StatusProfile, StatusProvenanceField } from "../../combat/types.js";
+- `src/data/manifest/sources.ts:1` export const ACTION_MANIFEST_DATA_SOURCE = "src/combat/actions/FrameDataAction.ts#ACTIONS";
+- `src/data/manifest/status/default.json:32` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+- `src/data/manifest/status/default.json:40` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+- `src/data/manifest/status/default.json:48` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+- `src/data/manifest/status/default.json:88` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+- `src/data/manifest/status/default.json:96` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+- `src/data/manifest/status/default.json:104` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+- `src/data/manifest/status/default.json:146` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+- `src/data/manifest/status/default.json:154` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-burn-splash-baseline",
+- `src/data/manifest/status/default.json:162` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-burn-splash-baseline",
+- `src/data/manifest/status/default.json:170` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+- `src/data/manifest/status/default.json:178` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+- `src/data/manifest/status/default.json:218` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+- `src/data/manifest/status/default.json:226` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+- `src/data/manifest/status/default.json:234` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-status-baseline",
+- `src/data/manifest/status/default.json:257` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-rupture-baseline",
+- `src/data/manifest/status/default.json:265` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-rupture-baseline",
+- `src/data/manifest/status/default.json:273` "sourceRef": "src/combat/kernel/CombatKernel.ts#rupture_incoming_damage",
+- `src/data/manifest/status/default.json:281` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-rupture-baseline",
+- `src/data/manifest/status.ts:1` import type { StatusEffectType, StatusManifest, StatusProfile } from "../../combat/types.js";
+- `src/data/official/dnf/attacks.ts:8` import type { Provenance } from "../../../combat/types.js";
+- `src/data/official/dnf/characters.ts:13` import type { Provenance } from "../../../combat/types.js";
+- `src/data/official/dnf/physics.ts:11` import type { Provenance } from "../../../combat/types.js";
+- `src/data/official/dnf/swordman/animations.ts:32` import type { Provenance } from "../../../../combat/types.js";
+- `src/data/official/dnf/swordman/attacks.ts:25` import type { Provenance } from "../../../../combat/types.js";
+- `src/data/official/dnf/swordman/cancels.ts:21` import type { Provenance } from "../../../../combat/types.js";
+- `src/data/official/dnf/swordman/chr.ts:21` import type { Provenance } from "../../../../combat/types.js";
+- `src/data/official/dnf/swordman/motions.ts:29` import type { Provenance } from "../../../../combat/types.js";
+- `src/data/official/dnf/swordman/skills.ts:29` import type { Provenance } from "../../../../combat/types.js";
+- `src/data/official/localFrameTuning.ts:15` import type { HitReactionProfile } from "../../combat/types.js";
+- `src/game/bootActionManifest.ts:1` import type { ActionName, FrameDataAction } from "../combat/types.js";
+- `src/game/bootActionManifest.ts:2` import { loadFromManifest } from "../combat/actions/FrameDataAction.js";
+- `src/game/CombatScene.ts:3` import type { DebugSnapshot } from "../combat/debug/DebugOverlay.js";
+- `src/game/CombatScene.ts:4` import { FixedStepSimulation } from "../combat/kernel/FixedStepSimulation.js";
+- `src/game/RenderAdapter.ts:1` import type { DebugSnapshot } from "../combat/debug/DebugOverlay.js";
+
+## Truth 测试依赖
+
+- `tests/truth/hit-resolution-weapon-timeline.test.ts:12` import type { DualTimelineAction, Timeline } from "../../src/combat/types/DualTimelineAction.js";
+- `tests/truth/hit-resolution-weapon-timeline.test.ts:13` import type { ActionName } from "../../src/combat/types.js";
+- `tests/truth/reaction-routing.test.ts:7` import { ReactionResolver } from "../../src/combat/reaction/ReactionResolver.js";
+- `tests/truth/reaction-routing.test.ts:8` import type { Actor, HitDecision } from "../../src/combat/types.js";
+- `tests/truth/reaction-velocity.test.ts:11` import { ReactionResolver } from "../../src/combat/reaction/ReactionResolver.js";
+- `tests/truth/reaction-velocity.test.ts:12` import type { Actor, HitDecision } from "../../src/combat/types.js";
+- `tests/truth/swordman-attack1-truth.test.ts:18` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/truth/swordman-reaction-formulas.test.ts:16` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/truth/swordman-reaction-formulas.test.ts:17` import type { ReactionKind } from "../../src/combat/types.js";
+- `tests/truth/swordman-reaction-formulas.test.ts:18` import type { CombatEvent } from "../../src/combat/events/CombatEventBus.js";
+
+## Static 测试依赖
+
+- `tests/static/action-cancel-probe.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/action-cancel-probe.test.ts:3` import type { ActionName, Actor } from "../../src/combat/types.js";
+- `tests/static/architecture.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/architecture.test.ts:3` import { FixedStepSimulation } from "../../src/combat/kernel/FixedStepSimulation.js";
+- `tests/static/armor.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/auto-combat.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/auto-combat.test.ts:3` import type { ActionName, Actor } from "../../src/combat/types.js";
+- `tests/static/combat-chain-regression.test.ts:2` import type { ActionName, Actor } from "../../src/combat/types.js";
+- `tests/static/combat-chain-regression.test.ts:3` import { createActor } from "../../src/combat/actors/ActorFactory.js";
+- `tests/static/combat-chain-regression.test.ts:4` import { getAction } from "../../src/combat/actions/FrameDataAction.js";
+- `tests/static/combat-chain-regression.test.ts:5` import { HitResolver2D5 } from "../../src/combat/hit/HitResolver2D5.js";
+- `tests/static/combat-chain-regression.test.ts:6` import { HitDecisionResolver } from "../../src/combat/hit/HitDecisionResolver.js";
+- `tests/static/combat-chain-regression.test.ts:7` import { DamageResolver } from "../../src/combat/damage/DamageResolver.js";
+- `tests/static/combat-chain-regression.test.ts:8` import { ReactionResolver } from "../../src/combat/reaction/ReactionResolver.js";
+- `tests/static/combat-chain-regression.test.ts:9` import { StatusEffectSystem } from "../../src/combat/status/StatusEffectSystem.js";
+- `tests/static/combat-chain-regression.test.ts:10` import { CombatEventBus } from "../../src/combat/events/CombatEventBus.js";
+- `tests/static/combo-correction.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/config-validate.test.ts:2` import { ACTIONS } from "../../src/combat/actions/FrameDataAction.js";
+- `tests/static/config-validate.test.ts:3` import type { ActionName, StatusEffectType } from "../../src/combat/types.js";
+- `tests/static/damage-routing.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/death-barrier-multihit.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/death-loop.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/death-loop.test.ts:3` import { CombatEventPriority } from "../../src/combat/events/CombatEventBus.js";
+- `tests/static/debug-actions.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/dfo-replica.test.ts:2` import { getAction } from "../../src/combat/actions/FrameDataAction.js";
+- `tests/static/dfo-replica.test.ts:3` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/dnf-native-h1-parser-probes.test.ts:17` import { parseAtkDocument } from "../../src/dnf-native-combat/data/parsers/AtkParser.js";
+- `tests/static/dnf-native-h1-parser-probes.test.ts:18` import { parseChrDocument } from "../../src/dnf-native-combat/data/parsers/ChrParser.js";
+- `tests/static/dnf-native-h1-parser-probes.test.ts:19` import { parseMobDocument } from "../../src/dnf-native-combat/data/parsers/MobParser.js";
+- `tests/static/dnf-native-h1-parser-probes.test.ts:29` } from "../../src/dnf-native-combat/data/parsers/parserUtils.js";
+- `tests/static/dnf-native-h1-parser-probes.test.ts:30` import type { PvfAttribute, PvfDocument, PvfSection } from "../../src/dnf-native-combat/data/types/PvfDocument.js";
+- `tests/static/dnf-native-h10-etc-parser-probes.test.ts:23` import { parseEtcDocument } from "../../src/dnf-native-combat/data/parsers/EtcParser.js";
+- `tests/static/dnf-native-h10-etc-parser-probes.test.ts:24` import type { PvfDocument } from "../../src/dnf-native-combat/data/types/PvfDocument.js";
+- `tests/static/dnf-native-h11-img-parser-probes.test.ts:16` import { parseImgBinaryDocument } from "../../src/dnf-native-combat/data/parsers/ImgParser.js";
+- `tests/static/dnf-native-h11-img-parser-probes.test.ts:17` import type { ImgBinaryDocument } from "../../src/dnf-native-combat/data/types/ImgDef.js";
+- `tests/static/dnf-native-h12-map-parser-probes.test.ts:29` import { parseMapDocument } from "../../src/dnf-native-combat/data/parsers/MapParser.js";
+- `tests/static/dnf-native-h12-map-parser-probes.test.ts:30` import type { PvfDocument } from "../../src/dnf-native-combat/data/types/PvfDocument.js";
+- `tests/static/dnf-native-h13-validator-probes.test.ts:28` } from "../../src/dnf-native-combat/data/validator.js";
+- `tests/static/dnf-native-h13-validator-probes.test.ts:29` import type { AtkDef } from "../../src/dnf-native-combat/data/types/AtkDef.js";
+- `tests/static/dnf-native-h13-validator-probes.test.ts:30` import type { ChrDef } from "../../src/dnf-native-combat/data/types/ChrDef.js";
+- `tests/static/dnf-native-h13-validator-probes.test.ts:31` import type { MapDef } from "../../src/dnf-native-combat/data/types/MapDef.js";
+- `tests/static/dnf-native-h13-validator-probes.test.ts:32` import type { MobDef } from "../../src/dnf-native-combat/data/types/MobDef.js";
+- `tests/static/dnf-native-h13-validator-probes.test.ts:33` import type { SkillDef } from "../../src/dnf-native-combat/data/types/SklDef.js";
+- `tests/static/dnf-native-h13-validator-probes.test.ts:34` import type { ParsedPvfDocument } from "../../src/dnf-native-combat/data/pipeline/parseStage.js";
+- `tests/static/dnf-native-h13-validator-probes.test.ts:35` import type { ExtractedDocumentProvenance, ParsedFieldProvenance } from "../../src/dnf-native-combat/data/types/Provenance.js";
+- `tests/static/dnf-native-h14-sqlite-probes.test.ts:20` import { importToSqlite } from "../../src/dnf-native-combat/data/importer/SqliteImporter.js";
+- `tests/static/dnf-native-h14-sqlite-probes.test.ts:21` import { validateParsedDocuments } from "../../src/dnf-native-combat/data/validator.js";
+- `tests/static/dnf-native-h14-sqlite-probes.test.ts:22` import { parsePvfDocument } from "../../src/dnf-native-combat/data/pipeline/parseStage.js";
+- `tests/static/dnf-native-h14-sqlite-probes.test.ts:23` import type { PvfDocument } from "../../src/dnf-native-combat/data/types/PvfDocument.js";
+- `tests/static/dnf-native-h15-export-probes.test.ts:26` import { exportRuntimeShards, SHAPE_VERSION, TIMESTAMP_KEYS as SUT_TIMESTAMP_KEYS } from "../../src/dnf-native-combat/data/exporter/RuntimeExporter.js";
+- `tests/static/dnf-native-h15-export-probes.test.ts:27` import type { AtkDef } from "../../src/dnf-native-combat/data/types/AtkDef.js";
+- `tests/static/dnf-native-h15-export-probes.test.ts:28` import type { ChrDef } from "../../src/dnf-native-combat/data/types/ChrDef.js";
+- `tests/static/dnf-native-h15-export-probes.test.ts:29` import type { MobDef } from "../../src/dnf-native-combat/data/types/MobDef.js";
+- `tests/static/dnf-native-h15-export-probes.test.ts:30` import type { SkillDef } from "../../src/dnf-native-combat/data/types/SklDef.js";
+- `tests/static/dnf-native-h15-export-probes.test.ts:31` import type { MapDef } from "../../src/dnf-native-combat/data/types/MapDef.js";
+- `tests/static/dnf-native-h15-export-probes.test.ts:32` import type { DungeonDef } from "../../src/dnf-native-combat/data/types/DgnDef.js";
+- `tests/static/dnf-native-h15-export-probes.test.ts:33` import type { ParsedPvfDocument } from "../../src/dnf-native-combat/data/pipeline/parseStage.js";
+- `tests/static/dnf-native-h15-export-probes.test.ts:34` import type { ExtractedDocumentProvenance, ParsedFieldProvenance } from "../../src/dnf-native-combat/data/types/Provenance.js";
+- `tests/static/dnf-native-h2-loader-probes.test.ts:19` } from "../../src/dnf-native-combat/data/parsers/PvfDocumentLoader.js";
+- `tests/static/dnf-native-h3-pipeline-probes.test.ts:21` import { parsePvfDocument } from "../../src/dnf-native-combat/data/pipeline/parseStage.js";
+- `tests/static/dnf-native-h3-pipeline-probes.test.ts:22` import { runExtractParsePipeline } from "../../src/dnf-native-combat/data/pipeline/pipelineRunner.js";
+- `tests/static/dnf-native-h3-pipeline-probes.test.ts:23` import type { PvfDocument } from "../../src/dnf-native-combat/data/types/PvfDocument.js";
+- `tests/static/dnf-native-h4-schema-audit-probes.test.ts:20` } from "../../src/dnf-native-combat/data/parsers/parserUtils.js";
+- `tests/static/dnf-native-h4-schema-audit-probes.test.ts:21` import { parseMobDocument } from "../../src/dnf-native-combat/data/parsers/MobParser.js";
+- `tests/static/dnf-native-h4-schema-audit-probes.test.ts:22` import { parseChrDocument } from "../../src/dnf-native-combat/data/parsers/ChrParser.js";
+- `tests/static/dnf-native-h4-schema-audit-probes.test.ts:23` import { parseAtkDocument } from "../../src/dnf-native-combat/data/parsers/AtkParser.js";
+- `tests/static/dnf-native-h4-schema-audit-probes.test.ts:28` } from "../../src/dnf-native-combat/data/types/PvfDocument.js";
+- `tests/static/dnf-native-h4-schema-audit-probes.test.ts:32` } from "../../src/dnf-native-combat/data/types/Provenance.js";
+- `tests/static/dnf-native-h4-schema-audit-probes.test.ts:33` import type { ChrDef } from "../../src/dnf-native-combat/data/types/ChrDef.js";
+- `tests/static/dnf-native-h6-skl-parser-probes.test.ts:17` import { parseSklDocument } from "../../src/dnf-native-combat/data/parsers/SklParser.js";
+- `tests/static/dnf-native-h6-skl-parser-probes.test.ts:18` import type { PvfDocument, PvfSection, PvfAttribute } from "../../src/dnf-native-combat/data/types/PvfDocument.js";
+- `tests/static/dnf-native-h7-ani-parser-probes.test.ts:22` import { parseAniDocument } from "../../src/dnf-native-combat/data/parsers/AniParser.js";
+- `tests/static/dnf-native-h7-ani-parser-probes.test.ts:23` import type { AniDocument } from "../../src/dnf-native-combat/data/types/AniDef.js";
+- `tests/static/dnf-native-h8-nut-extractor-probes.test.ts:13` import { extractNutDocument } from "../../src/dnf-native-combat/data/parsers/NutExtractor.js";
+- `tests/static/dnf-native-h8-nut-extractor-probes.test.ts:14` import type { NutTextDocument } from "../../src/dnf-native-combat/data/types/NutDef.js";
+- `tests/static/dnf-native-h9-dgn-parser-probes.test.ts:22` import { parseDgnDocument } from "../../src/dnf-native-combat/data/parsers/DgnParser.js";
+- `tests/static/dnf-native-h9-dgn-parser-probes.test.ts:23` import type { PvfDocument, PvfSection, PvfAttribute } from "../../src/dnf-native-combat/data/types/PvfDocument.js";
+- `tests/static/dnf-native-typed-cell-regression.test.ts:19` import { parseChrDocument } from "../../src/dnf-native-combat/data/parsers/ChrParser.js";
+- `tests/static/dnf-native-typed-cell-regression.test.ts:20` import { parseDgnDocument } from "../../src/dnf-native-combat/data/parsers/DgnParser.js";
+- `tests/static/dnf-native-typed-cell-regression.test.ts:21` import type { PvfDocument } from "../../src/dnf-native-combat/data/types/PvfDocument.js";
+- `tests/static/enemy-ai.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/event-bus.test.ts:2` import { CombatEventBus, CombatEventPriority } from "../../src/combat/events/CombatEventBus.js";
+- `tests/static/fuzz-combat.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/handfeel-fix2.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/hit-shape.test.ts:2` import type { HitBoxFrameWindow } from "../../src/combat/types.js";
+- `tests/static/hit-shape.test.ts:3` import { createActor } from "../../src/combat/actors/ActorFactory.js";
+- `tests/static/hit-shape.test.ts:4` import { HitResolver2D5 } from "../../src/combat/hit/HitResolver2D5.js";
+- `tests/static/hit-shape.test.ts:5` import { HitDecisionResolver } from "../../src/combat/hit/HitDecisionResolver.js";
+- `tests/static/hit-shape.test.ts:6` import { getAction } from "../../src/combat/actions/FrameDataAction.js";
+- `tests/static/input-buffer.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/jump-attack-hit-recoil.test.ts:3` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/jump-attack-z-detailed.test.ts:3` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/jump-attack-z-position.test.ts:3` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/jump-down-movement.test.ts:3` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/jump-hit-down-movement.test.ts:3` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/jump-skill-down-movement.test.ts:3` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/jump-x-cancel-stuck-airborne.test.ts:5` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/manifest-provenance.test.ts:2` import type { ActionName, FrameDataAction, StatusProvenanceField } from "../../src/combat/types.js";
+- `tests/static/manifest-provenance.test.ts:3` import { ACTIONS, getAction, loadFromManifest } from "../../src/combat/actions/FrameDataAction.js";
+- `tests/static/manifest-provenance.test.ts:4` import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";
+- `tests/static/movement-bounds.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/official-api-alignment.test.ts:2` import { getAction } from "../../src/combat/actions/FrameDataAction.js";
+- `tests/static/official-api-alignment.test.ts:3` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/parser-atk.test.ts:4` import { parseAtkDocument } from "../../src/dnf-native-combat/data/parsers/AtkParser.js";
+- `tests/static/parser-atk.test.ts:5` import type { PvfDocument } from "../../src/dnf-native-combat/data/types/PvfDocument.js";
+- `tests/static/parser-chr.test.ts:9` import { parseChrDocument } from "../../src/dnf-native-combat/data/parsers/ChrParser.js";
+- `tests/static/parser-chr.test.ts:10` import type { PvfDocument } from "../../src/dnf-native-combat/data/types/PvfDocument.js";
+- `tests/static/parser-mob.test.ts:3` import { parseMobDocument } from "../../src/dnf-native-combat/data/parsers/MobParser.js";
+- `tests/static/parser-mob.test.ts:4` import type { PvfDocument } from "../../src/dnf-native-combat/data/types/PvfDocument.js";
+- `tests/static/pipeline-extract.test.ts:5` } from "../../src/dnf-native-combat/data/parsers/PvfDocumentLoader.js";
+- `tests/static/pipeline-extract.test.ts:6` import { parsePvfDocument } from "../../src/dnf-native-combat/data/pipeline/parseStage.js";
+- `tests/static/pipeline-extract.test.ts:7` import { runExtractParsePipeline } from "../../src/dnf-native-combat/data/pipeline/pipelineRunner.js";
+- `tests/static/replay-hash.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/replay-hash.test.ts:3` import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";
+- `tests/static/replay-hash.test.ts:4` import { createActor } from "../../src/combat/actors/ActorFactory.js";
+- `tests/static/replay-performance.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/replay-schema.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/replay.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/run-detector.test.ts:2` import { RunCommandDetector } from "../../src/combat/input/RunCommandDetector.js";
+- `tests/static/run-detector.test.ts:3` import type { RawInputFrame } from "../../src/combat/input/BrowserInputState.js";
+- `tests/static/schema-hash-freshness.test.ts:2` import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";
+- `tests/static/socd-cleaner.test.ts:2` import { SOCDCleaner } from "../../src/combat/input/SOCDCleaner.js";
+- `tests/static/status-buff.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/status-profile.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/tick-benchmark.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/walk-run-z.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+- `tests/static/walk-run.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+
+## Browser 测试依赖
+
+(none)
+
+## 文档引用
+
+- `docs/blockers.md:40` 1. Agent 在编写复杂的 CombatKernel 仿真测试时卡住
+- `docs/changelog/2026-05-30-stage3.md:16` **根因**: `DamageFormula.ts` 将 `atkPower=1800` 直接当乘数，公式错误：
+- `docs/changelog/2026-05-30-stage3.md:116` | `src/combat/actors/ActorFactory.ts` | 删硬编码 stat block，改读 swordman-truth（T-A.7） |
+- `docs/changelog/2026-05-30-stage3.md:117` | `src/combat/damage/DamageFormula.ts` | **完全推倒**，新公式（T-A.9） |
+- `docs/changelog/2026-05-31-stage3-phase-bcd.md:75` | `src/combat/types/DualTimelineAction.ts` | 双 timeline 数据结构 |
+- `docs/changelog/2026-05-31-stage3-phase-bcd.md:89` | `src/combat/hit/HitResolutionSystem.ts` | 从 weaponTimeline.frames[].attackBoxes 读取 |
+- `docs/changelog/2026-05-31-stage3-phase-bcd.md:90` | `src/combat/reaction/ReactionResolver.ts` | resolve() 从 atk.hitReaction 路由 + apply() 接入 PVF 公式 |
+- `docs/changelog/2026-05-31-stage3-phase-bcd.md:91` | `src/combat/kernel/CombatKernel.ts` | 传 attacker 参数到 resolve() |
+- `docs/changelog/2026-06-10-stage4-stabilization.md:5` - engineering docs no longer point at deleted `src/combat/replay/InputRecorder.ts`
+- `docs/changelog/handfeel-fix1-notes.md:11` - Fixed the movement gate in `CombatKernel.applyMovementFromHeldInput()`.
+- `docs/changelog/handfeel-fix2-notes.md:18` - `src/combat/types.ts`
+- `docs/changelog/handfeel-fix2-notes.md:23` - `src/combat/motion/LocomotionController.ts`
+- `docs/changelog/handfeel-fix2-notes.md:27` - `src/combat/kernel/CombatKernel.ts`
+- `docs/changelog/handfeel-fix2-notes.md:33` - `src/combat/motion/PushBoxResolver.ts`
+- `docs/changelog/handfeel-fix2-notes.md:39` - `src/combat/hit/HitResolver2D5.ts`
+- `docs/changelog/handfeel-fix2-notes.md:43` - `src/combat/reaction/ReactionResolver.ts`
+- `docs/changelog/handfeel-fix3-notes.md:60` - `HandfeelReport` is now exported from `src/combat/types.ts`.
+- `docs/changelog/handfeel-pass-notes.md:10` - Reworked reaction motion in `CombatKernel`:
+- `docs/design/02-concept-art-game-design-v0.1.md:227` 3. **后续衍生：** VS Code/Cursor插件——webview嵌入轻量版Phaser渲染，Node侧运行CombatKernel，信号采集层监听workspace事件
+- `docs/design/stage3-combat-system-survey.md:4` 调研范围：`src/combat/` + `src/engine/core/`（两套系统并存）
+- `docs/design/stage3-combat-system-survey.md:15` | **combat/** | `src/combat/` | 活跃，CombatScene 使用 | Stage 2 完成的完整战斗内核 |
+- `docs/design/stage3-combat-system-survey.md:18` `src/engine/core/` 的 `ActorStateMachine`、`DamageFormula`、`ReactionResolver`、`HitDetection`、`Actor` 是 **独立骨架**，不被 `CombatScene` 或 `CombatKernel` 引用。Phase A 调研主体是 `src/combat/`。
+- `docs/design/stage3-combat-system-survey.md:24` ### 1. `src/combat/actors/ActorFactory.ts`
+- `docs/design/stage3-combat-system-survey.md:39` - `src/combat/kernel/CombatKernel.ts`（`reset()` 里调用 6 次 `createActor`）
+- `docs/design/stage3-combat-system-survey.md:40` - `src/game/CombatScene.ts`（间接通过 CombatKernel）
+- `docs/design/stage3-combat-system-survey.md:41` - `src/combat/replay/ReplayRecorder.ts`（cloneActorSnapshot）
+- `docs/design/stage3-combat-system-survey.md:61` ### 2. `src/combat/damage/DamageFormula.ts`
+- `docs/design/stage3-combat-system-survey.md:73` **被依赖**：`src/combat/damage/DamageResolver.ts`（唯一使用方）
+- `docs/design/stage3-combat-system-survey.md:87` ### 3. `src/combat/damage/DamageResolver.ts`
+- `docs/design/stage3-combat-system-survey.md:101` - `src/combat/hit/HitResolutionSystem.ts`（`applyHitDecision` 里调用）
+- `docs/design/stage3-combat-system-survey.md:102` - `src/combat/kernel/SystemContext.ts`（通过 ctx.damageResolver）
+- `docs/design/stage3-combat-system-survey.md:112` ### 4. `src/combat/hit/HitResolutionSystem.ts`
+- `docs/design/stage3-combat-system-survey.md:135` - `src/combat/kernel/CombatKernel.ts`（`this.hitResolution`，注册进 pipeline DETECTION 阶段）
+- `docs/design/stage3-combat-system-survey.md:150` ### 5. `src/combat/hit/HitResolver2D5.ts`
+- `docs/design/stage3-combat-system-survey.md:165` - `src/combat/kernel/CombatKernel.ts`（`this.hitResolver`）
+- `docs/design/stage3-combat-system-survey.md:166` - `src/combat/kernel/SystemContext.ts`（ctx.hitResolver）
+- `docs/design/stage3-combat-system-survey.md:167` - `src/combat/hit/HitResolutionSystem.ts`（`ctx.hitResolver.buildQuery`、`ctx.hitResolver.geometry`）
+- `docs/design/stage3-combat-system-survey.md:175` ### 6. `src/combat/hit/HitDecisionResolver.ts`
+- `docs/design/stage3-combat-system-survey.md:191` - `src/combat/kernel/CombatKernel.ts`（`this.hitDecisionResolver`）
+- `docs/design/stage3-combat-system-survey.md:192` - `src/combat/hit/HitResolutionSystem.ts`（`ctx.hitDecisionResolver.decide`）
+- `docs/design/stage3-combat-system-survey.md:200` ### 7. `src/combat/reaction/ReactionResolver.ts`
+- `docs/design/stage3-combat-system-survey.md:216` - `src/combat/kernel/CombatKernel.ts`（`this.reactionResolver`）
+- `docs/design/stage3-combat-system-survey.md:217` - `src/combat/hit/HitResolutionSystem.ts`（`ctx.reactionResolver.resolve`、`ctx.reactionResolver.apply`）
+- `docs/design/stage3-combat-system-survey.md:232` ### 8. `src/combat/actions/FrameDataAction.ts`
+- `docs/design/stage3-combat-system-survey.md:244` - `src/combat/hit/HitResolutionSystem.ts`（`getAction(inst.actionName)`）
+- `docs/design/stage3-combat-system-survey.md:245` - `src/combat/kernel/CombatKernel.ts`（`getAction` 用于 hitStopProfile、recoilProfile、rootMotion）
+- `docs/design/stage3-combat-system-survey.md:246` - `src/combat/motion/RootMotionController.ts`
+- `docs/design/stage3-combat-system-survey.md:247` - `src/combat/resources/CooldownResourceKernel.ts`
+- `docs/design/stage3-combat-system-survey.md:248` - `src/combat/replay/ReplayRecorder.ts`
+- `docs/design/stage3-combat-system-survey.md:266` ### 9. `src/combat/actions/ActionRegistry.ts`
+- `docs/design/stage3-combat-system-survey.md:294` **与 `src/combat/` 的关系**：**完全独立**，`src/combat/` 不使用此 FSM。`src/combat/` 的状态通过 `Actor.reactionState: ReactionKind` 字段 + `Actor.currentAction` 管理，没有显式 FSM 类。
+- `docs/design/stage3-combat-system-survey.md:306` [CombatKernel.tick()]
+- `docs/design/stage3-combat-system-survey.md:349` [CombatScene.ts] ← Phaser 渲染层，读 CombatKernel.debugSnapshot()
+- `docs/design/stage3-combat-system-survey.md:361` | P0 | `DamageFormula.ts` | **REWRITE** T-A.9 | atkPower 当乘数是结构性错误，FINAL_DIVISOR=1 是掩盖补丁，公式需重建 |
+- `docs/design/stage3-combat-system-survey.md:390` | DamageFormula.ts:33 | `STR_DIVISOR=250` | 力量系数除数 | dcalc 验证，可保留 |
+- `docs/design/stage3-combat-system-survey.md:391` | DamageFormula.ts:38 | `DEF_DIVISOR=200` | 防御公式常数 | dcalc 验证，可保留 |
+- `docs/design/stage3-combat-system-survey.md:392` | DamageFormula.ts:39 | `FINAL_DIVISOR=1` | 伤害缩放补丁 | **删除**，公式重建后不需要 |
+- `docs/design/stage3-combat-system-survey.md:393` | DamageFormula.ts:42-47 | `R_ATK_POWER=1.0` 等 | 未实现的 ratio pass-through | 保留占位，后续填充 |
+- `docs/design/stage3-manifest-survey.md:144` | `src/combat/replay/ReplayRecorder.ts` | 12, 70 | dataSources.actions 字段 |
+- `docs/design/stage3-manifest-survey.md:152` | `src/combat/actions/FrameDataAction.ts` | 5 | 全部 24 个 combatCancelTargets | TS 硬编码 ACTIONS 表 |
+- `docs/design/stage3-manifest-survey.md:153` | `src/combat/actions/FrameDataAction.ts` | 125–167 | 全部 38 个 | ACTIONS 对象定义（TS 真值源） |
+- `docs/design/stage3-manifest-survey.md:154` | `src/combat/kernel/CombatKernel.ts` | 581 | `"Bloodlust"` | 直接字符串引用 |
+- `docs/design/stage3-manifest-survey.md:179` | `src/combat/replay/ReplayRecorder.ts` | 更新 `dataSources.actions` 默认值（从 JSON 路径改为 TS 模块路径或移除） | 路径字符串硬编码 |
+- `docs/design/stage3-manifest-survey.md:208` 3. 修改 `sources.ts`：常量改为 `"src/combat/actions/FrameDataAction.ts#ACTIONS"`
+- `docs/documentation-audit-overlap-report.md:80` | `training-ground-r1-r2-plan.md` | `training-ground-r3-r4-restoration-plan.md` | 同一训练场倡议的连续阶段，共享架构红线(CombatKernel 不引入 Phaser)、相同验收标准、文件清单重叠 |
+- `docs/engineering/2026-06-07-batch234-handoff.md:107` - `src/combat/armor/ArmorResolver.ts`（13 行核心）：`decide()` 返回 hitStopAllowed / controlBlocked
+- `docs/engineering/2026-06-07-batch234-handoff.md:108` - `src/combat/types.ts:202-213` `ArmorProfile`：`baseType: "none"|"super_armor"|"boss_super_armor"|"building_armor"` + immunities{grab/control/damage} + temporaryFlags{invulnerableUntilTick/getUpArmorUntilTick} + hitStopCapFrames + reactionOverride
+- `docs/engineering/2026-06-07-batch234-handoff.md:109` - `src/combat/actors/ActorFactory.ts:29-82`：三种霸体的 profile 常量（building: 不能 launch/knockdown/knockback, hitStopCap=1; boss: hitStopCap=2; super: 可 knockback, cap=3）
+- `docs/engineering/2026-06-07-batch234-handoff.md:124` **蓝本**：`src/combat/combo/ComboCorrection.ts`（130 行）+ `src/combat/types.ts:151-167` `ComboCorrectionState`
+- `docs/engineering/architecture-improvement-plan.md:12` | 1 | CombatKernel 拆分为 15 子系统 | P0 | 3-5天 | 架构基础，降低后续耦合 |
+- `docs/engineering/architecture-improvement-plan.md:28` ### 1. CombatKernel → 15 子系统管道
+- `docs/engineering/architecture-improvement-plan.md:30` **当前问题**：CombatKernel.tick() 是 40 步单体巨方法，893 行。
+- `docs/engineering/architecture-improvement-plan.md:86` - 在 `CombatKernel` 外层包装 `FixedStepSimulation` 类
+- `docs/engineering/architecture-improvement-plan.md:231` // CombatKernel 需支持：
+- `docs/engineering/architecture-improvement-plan.md:267` ├── Day 4-8: CombatKernel → 15 子系统
+- `docs/engineering/architecture-overview.md:10` | 战斗核心 | Pure TS, 无Phaser依赖, 确定性 | CombatKernel, HitResolver2D5, DamageFormula(10乘数链), StatusEffectSystem(14状态), EnemyAI(FSM 9状态+行为树), FrameDataAction(38动作), ReplayRecorder |
+- `docs/engineering/architecture-overview.md:23` → AniAnalyzer ─────────────▶ SklToActionMapper → FrameDataAction → CombatKernel → CombatScene(Phaser)
+- `docs/engineering/author-profile-analysis.md:16` | **当前职位** | 高级/架构级 Web 全栈（非游戏行业） | `src/combat/` 的 DI 管道 + 插件架构、"web术语描述游戏问题"的自我诊断、TypeScript 专家级但 C++ 靠 agent 辅助 |
+- `docs/engineering/combat-attack-hit-reaction-chain.md:8` Combat simulation advances through `FixedStepSimulation` at 60 Hz. Phaser renders and forwards elapsed browser time, but the combat truth lives in `CombatKernel.tick()`.
+- `docs/engineering/combat-attack-hit-reaction-chain.md:35` `CombatKernel.consumeInput()` pulls the highest-priority allowed input from `InputBuffer`. It then maps context-sensitive commands:
+- `docs/engineering/combat-lab-0.2-r3-final-integrated-development-spec.md:416` CombatKernel.ts
+- `docs/engineering/combat-lab-0.2-r3-final-integrated-development-spec.md:471` DamageFormula.ts
+- `docs/engineering/combat-lab-0.2-r3-final-integrated-development-spec.md:570` CombatKernel.tick()
+- `docs/engineering/combat-lab-0.2-r3-final-integrated-development-spec.md:636` constructor(private readonly kernel: CombatKernel) {}
+- `docs/engineering/data-contract-baseline.md:509` | `chr.attackSpeed.value` | 11 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 950 |
+- `docs/engineering/data-contract-baseline.md:510` | `chr.bodyImagePath.value` | 11 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | character/fighter/atequipment/avatar/skin/fm_body% |
+- `docs/engineering/data-contract-baseline.md:511` | `chr.castSpeed.value` | 11 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 1000 |
+- `docs/engineering/data-contract-baseline.md:515` | `chr.job.value` | 11 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | at fighter |
+- `docs/engineering/data-contract-baseline.md:516` | `chr.jumpPower.value` | 11 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 470 |
+- `docs/engineering/data-contract-baseline.md:517` | `chr.jumpSpeed.value` | 11 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 110 |
+- `docs/engineering/data-contract-baseline.md:566` | `chr.moveSpeed.value` | 11 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 880 |
+- `docs/engineering/data-contract-baseline.md:567` | `chr.path` | 11 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | character/fighter/atfighter.chr |
+- `docs/engineering/data-contract-baseline.md:569` | `chr.raw.path` | 11 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | character/fighter/atfighter.chr |
+- `docs/engineering/data-contract-baseline.md:570` | `chr.raw.sections[].name` | 11 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | upgrade weapon attack power rate |
+- `docs/engineering/data-contract-baseline.md:572` | `chr.raw.type` | 11 | string | 22 | 81 | 1 | 42 | 10 | runtime consumer: src/combat/actions/FrameDataActi | document |
+- `docs/engineering/data-contract-baseline.md:573` | `chr.sections[].name` | 11 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | upgrade weapon attack power rate |
+- `docs/engineering/data-contract-baseline.md:580` | `chr.weaponHitInfo[].launch` | 11 | number | 3 | 22 | 1 | 7 | 1 | runtime consumer: src/combat/ai/EnemyAI.ts, src/co | 0.15 |
+- `docs/engineering/data-contract-baseline.md:583` | `chr.weight.value` | 11 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 50000 |
+- `docs/engineering/data-contract-baseline.md:585` | `etc` | 11 | null | 8 | 9 | 1 | 6 | 3 | runtime consumer: src/combat/damage/DamageFormula. |  |
+- `docs/engineering/data-contract-baseline.md:590` | `attacks` | 9 | object(empty) | 2 | 7 | 0 | 4 | 3 | runtime consumer: src/combat/kernel/CombatKernel.t |  |
+- `docs/engineering/data-contract-baseline.md:603` | `chr.darkResistance.value` | 4 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | -20 |
+- `docs/engineering/data-contract-baseline.md:604` | `chr.lightResistance.value` | 4 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 20 |
+- `docs/engineering/data-contract-baseline.md:607` | `chr.weaponWav[].hit` | 4 | string | 5 | 22 | 1 | 11 | 2 | runtime consumer: src/combat/actions/FrameDataActi | r_spear_hit |
+- `docs/engineering/data-contract-baseline.md:617` | `animations{}.frames[].index` | 3 | number | 17 | 25 | 1 | 9 | 6 | runtime consumer: src/combat/kernel/CombatSystem.t | 0 |
+- `docs/engineering/data-contract-baseline.md:621` | `animations{}.path` | 3 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | monster/goblin/animation_goblin2/damage1.ani |
+- `docs/engineering/data-contract-baseline.md:630` | `attacks{}.damageBonus.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 90 |
+- `docs/engineering/data-contract-baseline.md:637` | `attacks{}.liftUp.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 400 |
+- `docs/engineering/data-contract-baseline.md:638` | `attacks{}.path` | 2 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | character/swordman/attackinfo/weaponcomboshort3.at |
+- `docs/engineering/data-contract-baseline.md:639` | `attacks{}.pushAside.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 40 |
+- `docs/engineering/data-contract-baseline.md:642` | `attacks{}.raw.path` | 2 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | character/swordman/attackinfo/weaponcomboshort3.at |
+- `docs/engineering/data-contract-baseline.md:644` | `attacks{}.raw.sections[].name` | 2 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | hit lift up |
+- `docs/engineering/data-contract-baseline.md:646` | `attacks{}.raw.type` | 2 | string | 22 | 81 | 1 | 42 | 10 | runtime consumer: src/combat/actions/FrameDataActi | document |
+- `docs/engineering/data-contract-baseline.md:648` | `attacks{}.sections[].name` | 2 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | hit lift up |
+- `docs/engineering/data-contract-baseline.md:657` | `skills{}.command[]` | 2 | string | 1 | 9 | 1 | 4 | 6 | runtime consumer: src/combat/input/BrowserInputSta | (right) |
+- `docs/engineering/data-contract-baseline.md:663` | `skills{}.durabilityDecreaseRate.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 25 |
+- `docs/engineering/data-contract-baseline.md:671` | `skills{}.icon.frame` | 2 | number | 8 | 24 | 1 | 22 | 7 | runtime consumer: src/combat/actions/FrameDataActi | 0 |
+- `docs/engineering/data-contract-baseline.md:679` | `skills{}.maximumLevel.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 70 |
+- `docs/engineering/data-contract-baseline.md:680` | `skills{}.name.value` | 2 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy |  |
+- `docs/engineering/data-contract-baseline.md:681` | `skills{}.path` | 2 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | skill/swordman/icewave.skl |
+- `docs/engineering/data-contract-baseline.md:683` | `skills{}.purchaseCost.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 25 |
+- `docs/engineering/data-contract-baseline.md:685` | `skills{}.raw.path` | 2 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | skill/swordman/icewave.skl |
+- `docs/engineering/data-contract-baseline.md:688` | `skills{}.raw.sections[].name` | 2 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | skill preloading image |
+- `docs/engineering/data-contract-baseline.md:690` | `skills{}.raw.type` | 2 | string | 22 | 81 | 1 | 42 | 10 | runtime consumer: src/combat/actions/FrameDataActi | document |
+- `docs/engineering/data-contract-baseline.md:691` | `skills{}.requiredLevel.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 30 |
+- `docs/engineering/data-contract-baseline.md:692` | `skills{}.requiredLevelRange.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 2 |
+- `docs/engineering/data-contract-baseline.md:695` | `skills{}.sections[].name` | 2 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | skill preloading image |
+- `docs/engineering/data-contract-baseline.md:696` | `skills{}.skillClass.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 0 |
+- `docs/engineering/data-contract-baseline.md:698` | `skills{}.skillCommandAdvantage.normal` | 2 | number | 4 | 6 | 1 | 5 | 0 | runtime consumer: src/combat/motion/AirbornePhysic | 20 |
+- `docs/engineering/data-contract-baseline.md:719` | `attacks.attack1.hitWav.value` | 1 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | staff_hit |
+- `docs/engineering/data-contract-baseline.md:723` | `attacks.attack1.liftUp.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 300 |
+- `docs/engineering/data-contract-baseline.md:724` | `attacks.attack1.path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | monster/goblin/attackinfo/attack1.atk |
+- `docs/engineering/data-contract-baseline.md:725` | `attacks.attack1.pushAside.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 100 |
+- `docs/engineering/data-contract-baseline.md:728` | `attacks.attack1.raw.path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | monster/goblin/attackinfo/attack1.atk |
+- `docs/engineering/data-contract-baseline.md:730` | `attacks.attack1.raw.sections[].name` | 1 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | no blood |
+- `docs/engineering/data-contract-baseline.md:732` | `attacks.attack1.raw.type` | 1 | string | 22 | 81 | 1 | 42 | 10 | runtime consumer: src/combat/actions/FrameDataActi | document |
+- `docs/engineering/data-contract-baseline.md:734` | `attacks.attack1.sections[].name` | 1 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | no blood |
+- `docs/engineering/data-contract-baseline.md:742` | `chr.weaponWav[].entries[].hit` | 1 | string | 5 | 22 | 1 | 11 | 2 | runtime consumer: src/combat/actions/FrameDataActi | r_dagger_hit |
+- `docs/engineering/data-contract-baseline.md:766` | `dgn.backgroundPos.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 80 |
+- `docs/engineering/data-contract-baseline.md:767` | `dgn.basisLevel.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 31 |
+- `docs/engineering/data-contract-baseline.md:773` | `dgn.experienceIncreasingPoint.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 0.9 |
+- `docs/engineering/data-contract-baseline.md:774` | `dgn.explain.value` | 1 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy |  |
+- `docs/engineering/data-contract-baseline.md:776` | `dgn.imageRefs[].path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | map/cutscene/behemoth.img |
+- `docs/engineering/data-contract-baseline.md:777` | `dgn.imageRefs[].resolved` | 1 | boolean | 5 | 3 | 1 | 4 | 8 | runtime consumer: src/combat/damage/DamageResolver | false |
+- `docs/engineering/data-contract-baseline.md:783` | `dgn.minimumRequiredLevel.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 28 |
+- `docs/engineering/data-contract-baseline.md:784` | `dgn.name.value` | 1 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy |  |
+- `docs/engineering/data-contract-baseline.md:785` | `dgn.path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | dungeon/act3/jungle.dgn |
+- `docs/engineering/data-contract-baseline.md:791` | `dgn.sections[].name` | 1 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | explain |
+- `docs/engineering/data-contract-baseline.md:792` | `dgn.size.height` | 1 | number | 4 | 14 | 1 | 4 | 6 | runtime consumer: src/combat/types.ts, src/data/of | 4 |
+- `docs/engineering/data-contract-baseline.md:793` | `dgn.size.width` | 1 | number | 7 | 17 | 1 | 5 | 6 | runtime consumer: src/combat/hit/HitResolver2D5.ts | 4 |
+- `docs/engineering/data-contract-baseline.md:802` | `files[].path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | players/swordman.json |
+- `docs/engineering/data-contract-baseline.md:806` | `maps[].dungeonId.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 22 |
+- `docs/engineering/data-contract-baseline.md:808` | `maps[].farSightScroll.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 56 |
+- `docs/engineering/data-contract-baseline.md:809` | `maps[].greed.value` | 1 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | nn nn |
+- `docs/engineering/data-contract-baseline.md:811` | `maps[].mapType.value` | 1 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | [normal] |
+- `docs/engineering/data-contract-baseline.md:812` | `maps[].middleSightScroll.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 90 |
+- `docs/engineering/data-contract-baseline.md:816` | `maps[].name.value` | 1 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | PVP 킠쫁 |
+- `docs/engineering/data-contract-baseline.md:817` | `maps[].nearSightScroll.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 110 |
+- `docs/engineering/data-contract-baseline.md:820` | `maps[].path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | map/jungle/e3204(1,2).map |
+- `docs/engineering/data-contract-baseline.md:825` | `maps[].raw.path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | map/jungle/e3204(1,2).map |
+- `docs/engineering/data-contract-baseline.md:826` | `maps[].raw.sections[].name` | 1 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | map name |
+- `docs/engineering/data-contract-baseline.md:828` | `maps[].raw.type` | 1 | string | 22 | 81 | 1 | 42 | 10 | runtime consumer: src/combat/actions/FrameDataActi | document |
+- `docs/engineering/data-contract-baseline.md:829` | `maps[].sections[].name` | 1 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | map name |
+- `docs/engineering/data-contract-baseline.md:841` | `mob.attackDelay.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 1500 |
+- `docs/engineering/data-contract-baseline.md:847` | `mob.hitRecovery.values[]` | 1 | number | 14 | 17 | 1 | 16 | 3 | runtime consumer: src/combat/kernel/CombatKernel.t | 500 |
+- `docs/engineering/data-contract-baseline.md:850` | `mob.level.values[]` | 1 | number | 14 | 17 | 1 | 16 | 3 | runtime consumer: src/combat/kernel/CombatKernel.t | 1 |
+- `docs/engineering/data-contract-baseline.md:851` | `mob.moveSpeed.values[]` | 1 | number | 14 | 17 | 1 | 16 | 3 | runtime consumer: src/combat/kernel/CombatKernel.t | 300 |
+- `docs/engineering/data-contract-baseline.md:852` | `mob.name.value` | 1 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy |  |
+- `docs/engineering/data-contract-baseline.md:853` | `mob.path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | monster/goblin/goblin.mob |
+- `docs/engineering/data-contract-baseline.md:855` | `mob.raw.path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | monster/goblin/goblin.mob |
+- `docs/engineering/data-contract-baseline.md:858` | `mob.raw.sections[].name` | 1 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | speech on situation |
+- `docs/engineering/data-contract-baseline.md:860` | `mob.raw.type` | 1 | string | 22 | 81 | 1 | 42 | 10 | runtime consumer: src/combat/actions/FrameDataActi | document |
+- `docs/engineering/data-contract-baseline.md:863` | `mob.sections[].name` | 1 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | speech on situation |
+- `docs/engineering/data-contract-baseline.md:864` | `mob.sight.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 300 |
+- `docs/engineering/data-contract-baseline.md:865` | `mob.stuckbonusOnDamage.values[]` | 1 | number | 14 | 17 | 1 | 16 | 3 | runtime consumer: src/combat/kernel/CombatKernel.t | 0 |
+- `docs/engineering/data-contract-baseline.md:866` | `mob.warlike.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 60 |
+- `docs/engineering/data-contract-baseline.md:867` | `mob.weight.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 45000 |
+- `docs/engineering/data-contract-baseline.md:868` | `mob.weightDual.values[]` | 1 | number | 14 | 17 | 1 | 16 | 3 | runtime consumer: src/combat/kernel/CombatKernel.t | 45000 |
+- `docs/engineering/data-contract-baseline.md:869` | `mob.widthBox.values[]` | 1 | number | 14 | 17 | 1 | 16 | 3 | runtime consumer: src/combat/kernel/CombatKernel.t | 40 |
+- `docs/engineering/data-contract-baseline.md:906` - **runtime 定义**: src/engine/ + src/game/ + src/combat/ + src/data/official/ + src/dnf-native-combat 内非 producer 文件. dnf-native runtime 子目录 (如 stateMachine, simulation) 还没建, 当前所有 dnf-native 都被算成 producer — Phase 2 起跑后这条会自动转好.
+- `docs/engineering/input-recorder-guide.md:157` startRecording(kernel: CombatKernel): void;
+- `docs/engineering/input-recorder-guide.md:158` stopRecording(kernel: CombatKernel): InputRecording | null;
+- `docs/engineering/input-recorder-guide.md:161` startReplay(kernel: CombatKernel, recording?: InputRecording): boolean;
+- `docs/engineering/input-recorder-guide.md:163` tickReplay(kernel: CombatKernel): void;
+- `docs/planning/2026-05-24-stage1-known-issues.md:146` **症状**: `npm run analyze` → knip 报 24 unused exports + 48 unused types。大部分在 Phaser 渲染层（`src/game/`、`src/combat/`），与 Stage 1 数据管线无关。
+- `docs/planning/2026-05-24-stage2-brainstorm.md:72` - Already in-tree (`DamageFormula.ts` with classic-profile.json). Stage 2:
+- `docs/planning/2026-05-25-carbon-harness-implementation-plan.md:34` - 不改 carbon 业务代码（src/combat/、src/data/、tools/dnf-extract/）。
+- `docs/planning/2026-05-25-carbon-harness-implementation-plan.md:241` description: Review changes under src/combat/ for kernel purity and determinism. Use when files in src/combat/ are added, modified, or refactored — focuses on Phaser-isolation, replay determinism, frame-data provenance, hit/damage/status invariants. NOT for src/game/ or src/data/ general TypeScript review.
+- `docs/planning/2026-05-25-carbon-harness-implementation-plan.md:246` - **验收**: 在 cwd=carbon 时让 Claude "审一下 src/combat/HitResolver2D5.ts"，Claude 自动派 combat-kernel-reviewer agent（不需要用户显式指定）。
+- `docs/planning/2026-05-25-carbon-harness-implementation-plan.md:473` - 跨 ≥3 文件改动 / schema 变更 / src/combat/ 内核改动 / replay 哈希影响
+- `docs/planning/2026-05-25-carbon-harness-implementation-plan.md:511` - Phaser-isolation invariants（src/combat/ 不准 import phaser）
+- `docs/planning/2026-05-25-carbon-harness-implementation-plan.md:515` - **验收**: 让 Claude 派 combat-kernel-reviewer 审一个 src/combat/ 文件，agent 引用 memory.md 中的 invariants。
+- `docs/planning/2026-05-25-carbon-harness-implementation-plan.md:550` > **若未来 CLAUDE.md 扩张超 200 行**：重启 CT1 评估走原决策树（按模块边界拆 `src/combat/CLAUDE.md` / `src/data/CLAUDE.md`）。原决策树内容保留作未来参考：
+- `docs/planning/2026-05-25-carbon-harness-implementation-plan.md:613` | 14 | AG1 | "审一下 src/combat/HitResolver2D5.ts" | Claude 自动派 combat-kernel-reviewer |
+- `docs/planning/2026-05-25-carbon-harness-implementation-plan.md:635` | CT5 combat-kernel-reviewer.memory.md 内容写错 invariants 误导 review | 第一版从现有 combat-kernel-reviewer.md body 中提炼，不自创（CT1 作废后无 src/combat/CLAUDE.md 可提炼） |
+- `docs/planning/2026-05-25-carbon-harness-implementation-plan.md:927` - **Velocity 写入位置** → `ast-grep find_code_by_rule` 写 yaml 规则扫 `*.velocity.x = ...` 模式 + 配对检查白名单 4 文件（ActorFactory / CombatKernel / ReactionResolver / EnemyAI）
+- `docs/planning/2026-05-27-stage2-roadmap.md:127` > ✅ **2026-05-30 更新**：Phase 3 **全部完成** (commits 626e21c, 471c39c)。T3.1-T3.9 全部实装，CombatKernel 跑通命中→伤害→受击→HP 扣减完整闭环。
+- `docs/planning/2026-05-27-stage2-roadmap.md:194` | **T5.3** 最小可玩版本 | swordman 3 个 attack + 2 个 skill + 对上 3 种哥布林 + HP bar UI | 可以在浏览器里"打一场" | ✅ 完成 (CombatScene + CombatKernel, HP bar, goblin/boss/building actors) |
+- `docs/planning/2026-05-30-stage3-truth-driven-refactor.md:83` `src/combat/damage/DamageFormula.ts:132-143` 将 `atkPower=1800` 直接当乘数：
+- `docs/planning/2026-05-30-stage3-truth-driven-refactor.md:146` | **T-A.9** | 重写 `DamageFormula.ts`：新公式 = `(chr.growth.physicalAttack × level + weapon.physAtk) × attack.damageBonus × weapon.damageScalePct × (1 - defRatio)` | 单测：attack1 打 grunt 不一击秒杀（HP 减 5-20 范围） | 6h |
+- `docs/planning/2026-05-30-stage3-truth-driven-refactor.md:277` | `src/combat/actors/ActorFactory.ts` | 删硬编码 stat block，改读 swordman-truth |
+- `docs/planning/2026-05-30-stage3-truth-driven-refactor.md:278` | `src/combat/actions/FrameDataAction.ts` | 双 timeline + 多 atk 重新设计 |
+- `docs/planning/2026-05-30-stage3-truth-driven-refactor.md:279` | `src/combat/hit/HitResolutionSystem.ts` | 推倒重写 |
+- `docs/planning/2026-05-30-stage3-truth-driven-refactor.md:280` | `src/combat/hit/HitDecisionResolver.ts` | 推倒重写 |
+- `docs/planning/2026-05-30-stage3-truth-driven-refactor.md:281` | `src/combat/damage/DamageResolver.ts` | 推倒重写 |
+- `docs/planning/2026-05-30-stage3-truth-driven-refactor.md:282` | `src/combat/damage/DamageFormula.ts` | **完全推倒**，新公式 |
+- `docs/planning/2026-05-30-stage3-truth-driven-refactor.md:283` | `src/combat/reaction/ReactionResolver.ts` | Phase C 推倒 |
+- `docs/planning/2026-05-30-stage3-truth-driven-refactor.md:284` | `src/combat/reaction/HitStopController.ts` | Phase C 真值化 |
+- `docs/planning/2026-05-30-stage3-truth-driven-refactor.md:285` | `src/combat/reaction/RecoilController.ts` | Phase C 真值化 |
+- `docs/planning/2026-06-04-engine-native-rewrite-roadmap.md:10` - **但组装层 ~20%，迁移完成度 ~25%**：engine **没有 orchestrator**（14 系统是散装零件，`GameLoop` 依赖的 `kernel` 接口无任何 class 实现），6 处系统接线断裂，**0 运行时引用**（CombatScene 当前 100% 跑旧的 `src/combat/`，4733 行）。
+- `docs/planning/2026-06-04-engine-native-rewrite-roadmap.md:12` **目标**：让 `src/engine/` 从"测试驱动的目标态骨架"演进为**运行时主线**，最终替换 `src/combat/`，对齐完整 22-system 架构。
+- `docs/planning/2026-06-04-engine-native-rewrite-roadmap.md:34` | **P5 收尾 / combat 退役** | DamageFormula 真值化 + 删 `src/combat/` | 真公式 + truth 测试全绿；combat 移除；`npm run analyze` 通过 | ⬜ |
+- `docs/planning/2026-06-04-engine-native-rewrite-roadmap.md:54` - `System` 接口 `{name, phase, tick(ctx, bus)}` + `EngineContext`（只读 façade，注入子系统句柄；范式参照 `src/combat/kernel/SystemContext.ts`，从头用 class 实现）。
+- `docs/planning/2026-06-04-engine-native-rewrite-roadmap.md:95` 吃满 Stage3 真值，删 `src/combat/`，新主线唯一化。
+- `docs/planning/2026-06-04-engine-native-rewrite-roadmap.md:96` - **DamageFormula 真值化**：engine `DamageFormula.ts`（简化系数版，crit/element 常量）升级为真公式，据 `tests/truth/swordman-reaction-formulas`、`swordman-attack1-truth` 等。engine **没吃到 Stage3 成果**（Stage3 真值落在 `src/combat/` 树），这是必须补的隐性回归源。同期处理 P0 立档的 `combo-correction` pre-existing 失败。
+- `docs/planning/2026-06-04-engine-native-rewrite-roadmap.md:97` - **删除 `src/combat/`**：确认 engine 22 系统全覆盖 combat 行为后退役。注：`src/dnf-native-combat/` 当前 29 文件全是**数据管线**（Stage 1 PVF 提取栈：parsers/pipeline/exporter），战斗运行时层仍需在 `src/engine/` 建——命名空间归属在 P5 厘清。
+- `docs/planning/2026-06-04-engine-native-rewrite-roadmap.md:100` **里程碑**：真公式 + truth 全绿；`src/combat/` 移除；CI 8-gate / `npm run analyze` 通过。
+- `docs/planning/2026-06-04-engine-native-rewrite-roadmap.md:148` - **P5**：`tests/truth/` 6 个全绿 + `npm run analyze` 8-gate 通过 + `src/combat/` 已移除（`git status`）。
+- `docs/planning/crt-003-hitbox-evidence.md:11` **File:** `src/combat/hit/HitResolver2D5.ts` (157 lines)
+- `docs/planning/crt-003-hitbox-evidence.md:35` ### 1.3 Geometry Functions (`src/combat/util/geometry.ts`)
+- `docs/planning/crt-003-hitbox-evidence.md:60` ### 1.4 Hitbox Data Model (`src/combat/types.ts`)
+- `docs/planning/crt-004-ai-evidence.md:11` **File**: `src/combat/ai/EnemyAI.ts` (296 lines)
+- `docs/planning/crt-004-ai-evidence.md:50` **File**: `src/combat/ai/EnemyAIState.ts` (35 lines)
+- `docs/planning/crt-005-formula-evidence.md:6` > **Audit scope**: All 10 multipliers in `DamageFormula.ts` + constants in `classic-profile.json`
+- `docs/planning/crt-005-formula-evidence.md:27` The damage formula in `src/combat/damage/DamageFormula.ts` implements a 10-multiplier chain:
+- `docs/planning/crt-005-formula-evidence.md:201` Comparing `classic-profile.json` with `DamageFormula.ts`:
+- `docs/planning/crt-005-formula-evidence.md:249` **Description**: Two constants (`ELE_COEFF = 0.0045`, `ELE_BASE = 1.05`) are declared at the top of `DamageFormula.ts` and in `classic-profile.json` but are NOT used in the elemental damage calculation. The code uses `1 + elemDiff / 220` instead of `1.05 + 0.0045 x elemStr`.
+- `docs/planning/crt-005-formula-evidence.md:373` | P2 | Add clarifying comments around ELE_COEFF/ELE_BASE as modern-era reference constants in DamageFormula.ts | CRT-005-2 |
+- `docs/planning/crt-005-formula-evidence.md:386` - `src/combat/damage/DamageFormula.ts` — active implementation (audited)
+- `docs/planning/dfo-action-handfeel-replication-plan.md:13` 本地链路：`Input -> InputBuffer -> requestAction -> ActionEntered -> HitQuery -> HitDecision -> Damage -> Reaction -> HitStop/Recoil`，核心文件为 `src/combat/kernel/CombatKernel.ts`、`src/combat/actions/FrameDataAction.ts`。
+- `docs/planning/dnf-pve-1to1-replication-plan.md:206` - `src/combat/actions/FrameDataAction.ts` — `getAction()` 保持同步兼容，优先读取 boot-time loaded manifest
+- `docs/planning/dnf-pve-1to1-replication-plan.md:208` - `src/combat/hit/HitResolver2D5.ts` — sweep/grab_attach 形状、多 hurtbox、snapshot
+- `docs/planning/dnf-pve-1to1-replication-plan.md:209` - `src/combat/damage/DamageFormula.ts` — 完整四路伤害链
+- `docs/planning/dnf-pve-1to1-replication-plan.md:210` - `src/combat/status/StatusEffectSystem.ts` — 14 种 type + resistance
+- `docs/planning/dnf-pve-1to1-replication-plan.md:211` - `src/combat/ai/EnemyAI.ts` — 数据驱动加载
+- `docs/planning/dnf-pve-1to1-replication-plan.md:212` - `src/combat/replay/ReplayRecorder.ts` — combatSchemaHash 自动绑定
+- `docs/planning/dnf-pve-1to1-replication-plan.md:213` - `src/combat/types.ts` — Actor 属性补全
+- `docs/planning/evidence-source-execution-plan.md:18` **已对齐**：11 个技能 level-1 事实已写入 `src/data/official/berserkerSkillFacts.ts` 和 `src/combat/actions/FrameDataAction.ts`，由 `tests/static/official-api-alignment.test.ts` 验证。
+- `docs/planning/evidence-source-execution-plan.md:120` | A3 | 拆分数据层 | 将硬编码值拆为 `officialSkillFacts`（API-backed）+ `localFrameTuning`（本地调参）两个模块 | 数据溯源清晰，API 事实不可被本地调参污染 | `src/data/official/`、`src/combat/actions/` |
+- `docs/planning/evidence-source-execution-plan.md:133` | B1 | 状态异常 Wiki 对齐 | 用 Wiki `Status_Effects` 页和 NamuWiki 状态异常页，校准时长/周期/伤害值。补充 Freeze/Stun/Sleep/Blind 语义骨架 | 异常状态从 "demo 级" 升级为 "wiki-referenced" | `src/combat/status/StatusEffectSystem.ts`、`src/data/manifest/status.ts` |
+- `docs/planning/evidence-source-execution-plan.md:134` | B2 | 伤害公式模块化 | 用 NamuWiki 乘区桶结构，将 `DamageFormula.ts` 重构为模块化乘区（STR/INT factor → 攻击力% → 增伤% → 附加伤害 → 属强附加 → 技能攻击力% → 最终伤害%）。不标"DNF fidelity" | 为未来接入真实数值留好扩展点 | `src/combat/damage/DamageFormula.ts` |
+- `docs/planning/evidence-source-execution-plan.md:135` | B3 | Vim and Vigor 数据驱动 | 将 bleed 应用的 eligible-skill 列表从硬编码改为数据配置，按技能 class 标记 | 新增技能自动获得 bleed，无需逐一修改 | `src/combat/buffs/BuffLifecycleSystem.ts`、`src/data/official/` |
+- `docs/planning/gaps-needing-external-data.md:61` - **位置**: `dnfPhysicsConstants.ts` vs `CombatKernel.ts:769`
+- `docs/planning/gaps-needing-external-data.md:90` - **位置**: `CombatKernel.ts:190` — allowed set 仅 18 个
+- `docs/planning/p0-p1-code-fix-plan.md:13` **文件**: `src/combat/resources/CooldownResourceKernel.ts:12`
+- `docs/planning/p0-p1-code-fix-plan.md:22` **文件**: `src/combat/status/StatusEffectSystem.ts:75`
+- `docs/planning/p0-p1-code-fix-plan.md:32` **文件**: `src/combat/kernel/CombatKernel.ts:725`
+- `docs/planning/p0-p1-code-fix-plan.md:41` **文件**: `src/combat/kernel/CombatKernel.ts:456,653`
+- `docs/planning/p0-p1-code-fix-plan.md:54` **文件**: `src/combat/kernel/CombatKernel.ts:190,310-318`
+- `docs/planning/p0-p1-code-fix-plan.md:75` - `CombatKernel` 构造 `EnemyAIController()` 不传 bossConfigs
+- `docs/planning/p0-p1-code-fix-plan.md:80` 2. `CombatKernel` init — import boss-patterns.json，调用 `this.enemyAI.loadBossConfigs(configs)`
+- `docs/planning/p0-p1-code-fix-plan.md:102` **文件**: `src/combat/kernel/CombatKernel.ts:187-201,222-224`, `src/combat/status/StatusEffectSystem.ts`
+- `docs/planning/p0-p1-code-fix-plan.md:120` **文件**: `src/combat/ai/EnemyAI.ts:225`
+- `docs/planning/pvf-skl-extraction-plan.md:139` 3. Output TypeScript code compatible with `src/combat/actions/FrameDataAction.ts` format
+- `docs/planning/training-ground-r1-r2-plan.md:59` [CombatKernel 战斗真相层]   ←—— 一行不动 ————    │
+- `docs/planning/training-ground-r1-r2-plan.md:75` 5. CombatKernel 不 import 任何 phaser 相关模块。
+- `docs/planning/training-ground-r1-r2-plan.md:91` src/combat/input/RunCommandDetector.ts       ✅
+- `docs/planning/training-ground-r1-r2-plan.md:92` src/combat/ai/EnemyAI.ts                     ✅
+- `docs/planning/training-ground-r1-r2-plan.md:93` src/combat/ai/EnemyAIState.ts                ✅
+- `docs/planning/training-ground-r1-r2-plan.md:104` src/combat/types.ts                          ✅ (ActionName 扩展)
+- `docs/planning/training-ground-r1-r2-plan.md:105` src/combat/actions/FrameDataAction.ts        ✅ (注册新 Action)
+- `docs/planning/training-ground-r1-r2-plan.md:106` src/combat/kernel/CombatKernel.ts            ✅ (consumeInput + AI tick + 4向移动)
+- `docs/planning/training-ground-r1-r2-plan.md:107` src/combat/actors/ActorFactory.ts            ✅ (创建 enemy 时挂 ai 配置)
+- `docs/planning/training-ground-r1-r2-plan.md:108` src/combat/input/BrowserInputState.ts        ✅ (暴露 release-edge 给 RunCommandDetector)
+- `docs/planning/training-ground-r1-r2-plan.md:129` // src/combat/types.ts
+- `docs/planning/training-ground-r1-r2-plan.md:154` **原方案**将 Walk/Run 定义为 FrameDataAction，通过 `totalFrames` + `cancelPolicy` 管理生命周期。**实际实现推翻了这一方案**，改用 `LocomotionController` (`src/combat/motion/LocomotionController.ts`) 直接处理位移：
+- `docs/planning/training-ground-r1-r2-plan.md:178` `RunCommandDetector` (`src/combat/input/RunCommandDetector.ts`) 已实现，与文档方案一致。
+- `docs/planning/training-ground-r1-r2-plan.md:182` `CombatKernel.consumeInput()` 的 allowed 集合已包含 Walk/Run，LocomotionController 接管实际消费。
+- `docs/planning/training-ground-r1-r2-plan.md:286` `src/combat/ai/EnemyAI.ts` 已实现完整的 AI 状态机：
+- `docs/planning/training-ground-r1-r2-plan.md:297` `CombatKernel.tickEnemyAI()` 在 pipeline 步骤 05.5 位置调用，在所有 enemy actor 上跑 EnemyAI.tick。
+- `docs/planning/training-ground-r3-r4-restoration-plan.md:8` > 本文档是给开发的指导，不是规格变更。所有内核红线（HitResolver2D5 决定命中、FeedbackController 不写战斗状态、Phaser Scene 不决定命中、CombatKernel 不 import Phaser）继续守住。
+- `docs/planning/training-ground-r3-r4-restoration-plan.md:56` 3. z 轴位移走 RootMotion 或 CombatKernel 内的明确分支，不允许 Phaser 端 tween actor.position.z；
+- `docs/planning/training-ground-r3-r4-restoration-plan.md:57` 4. AudioUnlockGate 不进 CombatKernel，只挂在 Scene 层；
+- `docs/planning/training-ground-r3-r4-restoration-plan.md:58` 5. 慢动作 / 单帧步进只动 FixedStepSimulation，不动 CombatKernel.tick 自身；
+- `docs/planning/training-ground-r3-r4-restoration-plan.md:69` ✅ src/combat/motion/MovementInputProvider.ts         （Walk/Run 的 4 向接口）
+- `docs/planning/training-ground-r3-r4-restoration-plan.md:83` ✅ src/combat/types.ts                          // ActorBounds 新增 zMin/zMax；MovementInputSnapshot 类型
+- `docs/planning/training-ground-r3-r4-restoration-plan.md:84` ✅ src/combat/motion/RootMotionController.ts    // apply 保持只处理 combat action 的帧脚本位移
+- `docs/planning/training-ground-r3-r4-restoration-plan.md:85` ✅ src/combat/kernel/CombatKernel.ts            // 引入 MovementInputProvider + LocomotionController；clamp position.z；isMovementHeld 4 向
+- `docs/planning/training-ground-r3-r4-restoration-plan.md:86` ✅ src/combat/kernel/FixedStepSimulation.ts     // setSlowMotion(factor) + armSingleStep()
+- `docs/planning/training-ground-r3-r4-restoration-plan.md:87` ✅ src/combat/input/BrowserInputState.ts        // F6→F9 迁移 ForceDownPlayer
+- `docs/planning/training-ground-r3-r4-restoration-plan.md:109` Z 轴移动通过 `LocomotionController` (`src/combat/motion/LocomotionController.ts`) 实现。Walk/Run 不再是 FrameDataAction，而是直接读 held input 每 tick 推位置：
+- `docs/planning/training-ground-r3-r4-restoration-plan.md:119` - MovementInputProvider: `src/combat/motion/MovementInputProvider.ts` ✅
+- `docs/planning/training-ground-r3-r4-restoration-plan.md:121` - CombatKernel.worldBounds = { xMin: 64, xMax: 1820, zMin: -120, zMax: 120 } ✅
+- `docs/planning/training-ground-r3-r4-restoration-plan.md:256` 4. mass 在 CombatKernel 不参与命中决策，只参与击退缩放和 PushBox 推开比例；
+- `docs/planning/training-ground-r3-r4-restoration-plan.md:351` 4. 不要在 CombatKernel 里 import phaser；
+- `docs/plans/2026-05-21-dnf-data-layer-design.md:26` `src/combat/types.ts` 同步 Provenance 类型 union 加 `"pvf_extraction"`。
+- `docs/plans/2026-05-21-dnf-data-layer-design.md:55` 1. 改 `src/combat/types.ts` Provenance union 加 `"pvf_extraction"`
+- `docs/plans/2026-05-21-dnf-native-kernel-design.md:5` > **关键决策**：开 `dnf-native` 分支重写战斗 kernel，**保留所有 verified 资产**（tools / src/data/official/dnf / src/game 渲染层 / src/extraction），**抛弃手调战斗逻辑**（src/combat/ 整个 / 38 个 手调 action / ReactionProfile 预设）。
+- `docs/plans/2026-05-21-dnf-native-kernel-design.md:41` 跟现有 `src/combat/` 系统的关键差异（DNF 有项目无）：
+- `docs/plans/2026-05-21-dnf-native-kernel-design.md:204` │   │   ├── CombatKernel.ts           # tick pipeline (按 DNF 10 phase: Input/State/Anim/Proc/Physics/Hit/Resolution/Status/VFX/Network)
+- `docs/plans/2026-05-21-dnf-native-kernel-design.md:221` │   │   └── DamageFormula.ts          # 含 damage_bonus + weapon_damage_apply
+- `docs/plans/2026-05-21-dnf-native-kernel-design.md:328` 2. 删 `src/combat/` 暂留作对照（不删）
+- `docs/plans/2026-05-21-dnf-native-kernel-design.md:338` | **改造复用** | src/combat/kernel/CombatKernel.ts (作 parameter 参考) / src/data/manifest/ (新 dnf-native 版本) / src/combat/replay/ / src/game/ (加 toggle) | 修改后用 |
+- `docs/plans/2026-05-21-dnf-native-kernel-design.md:339` | **保留作对照** | src/combat/ 整个 | dnf-native ship 前不删 |
+- `docs/plans/2026-05-21-phase4-stepped-rollout.md:29` 1. **新文件** `src/combat/motion/AirbornePhysicsSystem.ts`
+- `docs/plans/2026-05-21-phase4-stepped-rollout.md:56` 2. **Pipeline 插入点**：`CombatKernel.buildPipeline()` 的 DETECTION phase，**ReactionMotion 之前**：
+- `docs/plans/2026-05-21-phase4-stepped-rollout.md:77` | **CombatKernel:524 Bloodlust grab** | ⚠️ **需验证** grab 期间 reactionState ≠ "none"（否则 AirbornePhysics 会干预 grab 同步）|
+- `docs/plans/2026-05-21-phase4-stepped-rollout.md:98` 3. **`CombatKernel.ts:349` `requestAction()`**：加 Jump 起跳钩子
+- `docs/plans/2026-05-21-phase4-stepped-rollout.md:152` 在 `src/combat/types.ts` 的 `Vec3` 接口上落档明确的坐标系翻译表：
+- `docs/plans/2026-06-10-stage4-stabilization-24h-plan.md:17` - Finish `InputRecorder` migration from `src/combat/replay/` to `src/engine/replay/`.
+- `docs/plans/2026-06-10-stage4-stabilization-24h-plan.md:144` - No repo file references `src/combat/replay/InputRecorder.ts`.
+- `docs/plans/2026-06-10-stage4-stabilization-24h-plan.md:168` ].every((p) => !/CombatKernel/.test(readTextSafe(join(ROOT, p)) || "CombatKernel"));
+- `docs/plans/2026-06-10-stage4-stabilization-24h-plan.md:204` rg -n "src/combat/replay/InputRecorder|src/engine/replay/InputRecorder" src tests docs scripts CLAUDE.md
+- `docs/plans/2026-06-10-stage4-stabilization-24h-plan.md:209` - No remaining repo reference to `src/combat/replay/InputRecorder.ts`
+- `docs/plans/2026-06-10-stage4-stabilization-24h-plan.md:601` - Repo source no longer references deleted `src/combat/replay/InputRecorder.ts`.
+- `docs/reports/2026-05-31-stage3-completion.md:82` - 影响：3 个 CombatKernel 测试无法运行（预存在问题）
+- `docs/reports/2026-05-31-stage3-completion.md:135` - `src/combat/types/DualTimelineAction.ts`
+- `docs/reports/2026-05-31-stage3-completion.md:147` - `src/combat/hit/HitResolutionSystem.ts`
+- `docs/reports/2026-05-31-stage3-completion.md:148` - `src/combat/reaction/ReactionResolver.ts`
+- `docs/reports/2026-05-31-stage3-completion.md:149` - `src/combat/kernel/CombatKernel.ts`
+- `docs/research/2026-05-21-phase4-4b-jump-velocity-integration.md:5` **推荐位置**：`src/combat/kernel/CombatKernel.ts` 中 `requestAction()` 方法的 `applyInstantActionEffect()` 之后（line 349）。
+- `docs/research/2026-05-21-phase4-4b-jump-velocity-integration.md:15` // CombatKernel.requestAction() 中，第 349 行后添加：
+- `docs/research/2026-05-21-phase4-4b-jump-velocity-integration.md:132` - scenario-hash test（CombatKernel.runDeterministicScenario）会因为 Jump 高度变化改变哈希值
+- `docs/research/2026-05-21-phase4-4b-jump-velocity-integration.md:149` 2. **Step 4B.2**（预计 1h）：在 CombatKernel.requestAction() 内添加 Jump 起跳钩子，赋值 velocity.y = 7.17
+- `docs/research/2026-05-21-phase4-4b-jump-velocity-integration.md:165` | Jump 起跳钩子放哪？ | CombatKernel.requestAction() line 349 之后，赋值 actor.velocity.y |
+- `docs/research/batch-b-wiki-calibration.md:14` This document cross-references structured combat data from DFO World Wiki, NamuWiki, and the dcalc community project against the project's current runtime data in `src/data/manifest/` and `src/combat/actions/FrameDataAction.ts`.
+- `docs/research/batch-b-wiki-calibration.md:93` **Recommendation**: The project's `eleFactorDivisor: 220` is only used in the damage formula if explicitly implementing ÷220 arithmetic. Since the actual computation likely uses `eleCoefficient: 0.0045`, the divisor field may be vestigial. Verify in `DamageFormula.ts` whether the divisor is actually used, or whether only the coefficient matters.
+- `docs/research/batch-b-wiki-calibration.md:133` **Gap**: The project's damage type definitions exist but the full stat→damage routing through `DamageFormula.ts` needs verification. The `classic-profile.json` `pveDefaults` show all four stat types but `playerIndependentAtk: 900` is a placeholder value.
+- `docs/research/batch-b-wiki-calibration.md:228` File: `src/combat/actions/FrameDataAction.ts`
+- `docs/research/batch-b-wiki-calibration.md:547` - `src/combat/actions/FrameDataAction.ts` — hardcoded action definitions
+- `docs/research/combat/code-level-dnf-replication-gap-assessment.md:13` **实际代码：** `src/combat/actions/FrameDataAction.ts`，共 97 行。
+- `docs/research/combat/code-level-dnf-replication-gap-assessment.md:51` 1. **零对象型技能（projectile/active object）**：`CombatKernel.ts:374` 行遍历 `action.active` 直接生成 hit query，没有独立的 projectile/object entity 生命周期。RagingFury 的 blood pillars 仍是 action active windows 直接生成多段 hitbox，不是独立 entity。
+- `docs/research/combat/code-level-dnf-replication-gap-assessment.md:60` **实际代码：** `src/combat/damage/DamageFormula.ts`，共 44 行。
+- `docs/research/combat/code-level-dnf-replication-gap-assessment.md:116` **实际代码：** `src/combat/status/StatusEffectSystem.ts`，共 104 行。
+- `docs/research/combat/code-level-dnf-replication-gap-assessment.md:135` - **状态触发散落在 kernel 里**：`CombatKernel.ts:459` 行硬编码 `RagingFury + vim_and_vigor → applyBleed`，未完全数据化。
+- `docs/research/combat/code-level-dnf-replication-gap-assessment.md:245` **实际代码：** `src/combat/replay/ReplayRecorder.ts`，共 70 行。
+- `docs/research/combat/code-level-dnf-replication-gap-assessment.md:325` | **CombatKernel** | **633** | **架构正确** | 核心管线已完备 |
+- `docs/research/combat/dnf-dfo-research-vs-current-system-technical-report.md:25` - `src/combat/kernel/CombatKernel.ts`
+- `docs/research/combat/dnf-dfo-research-vs-current-system-technical-report.md:26` - `src/combat/actions/FrameDataAction.ts`
+- `docs/research/combat/dnf-dfo-research-vs-current-system-technical-report.md:27` - `src/combat/types.ts`
+- `docs/research/combat/dnf-dfo-research-vs-current-system-technical-report.md:28` - `src/combat/hit/HitResolver2D5.ts`
+- `docs/research/combat/dnf-dfo-research-vs-current-system-technical-report.md:29` - `src/combat/hit/HitDecisionResolver.ts`
+- `docs/research/combat/dnf-dfo-research-vs-current-system-technical-report.md:30` - `src/combat/damage/DamageFormula.ts`
+- `docs/research/combat/dnf-dfo-research-vs-current-system-technical-report.md:31` - `src/combat/status/StatusEffectSystem.ts`
+- `docs/research/combat/dnf-dfo-research-vs-current-system-technical-report.md:32` - `src/combat/ai/EnemyAI.ts`
+- `docs/research/combat/dnf-dfo-research-vs-current-system-technical-report.md:33` - `src/combat/replay/ReplayRecorder.ts`
+- `docs/research/combat/dnf-dfo-research-vs-current-system-technical-report.md:77` 当前 `CombatKernel` 拥有 simulation 状态，Phaser `CombatScene` 只负责固定步进、输入事件注入、渲染刷新、相机、HUD、音效与反馈事件监听。这符合研究报告和浏览器游戏架构里“simulation 不依赖 renderer”的基础要求。
+- `docs/research/combat/dnf-dfo-research-vs-current-system-technical-report.md:81` 继续要求：保持 `CombatKernel` 不依赖 Phaser；未来资源抽取、技能数据、AI 数据也应先进入 combat/data 层，再由 renderer 订阅状态。
+- `docs/research/combat/dnf-dfo-research-vs-current-system-technical-report.md:128` - 当前动作表仍集中在 `src/combat/actions/FrameDataAction.ts`，属于手写 TS 数据。
+- `docs/research/reaction-formula-reverse-engineering.md:333` - [src/combat/reaction/ReactionResolver.ts](../../src/combat/reaction/ReactionResolver.ts) 现有反应逻辑
+- `docs/research/reference/community/damage-formula-audit-from-dcalc.md:175` - [ ] 将伤害公式结构写入 `src/combat/damage/DamageFormula.ts`
+- `docs/research/reference/community/damage-formula-audit-from-dcalc.md:176` - [ ] 在 `CombatKernel.ts` 中集成简化的伤害计算
+- `docs/research/reference/neople-api-combat-implementation-audit.md:50` | `BuffLifecycleSystem.ts`: `vim_and_vigor` / `CombatKernel` RagingFury bleed gating | Only gates RagingFury bleed behind `vim_and_vigor`; status uses local bleed profile. | `혈기왕성`: `Gore Cross` size +10%, bleed chance 100%, bleed duration 7s, bleed damage 14; RagingFury official text says Blood Incarnate acquisition adds bleeding to hit enemies. | Partial. Gating concept matches text, but bleed duration/damage/chance are local baseline and RagingFury-specific values are not level-table driven. |
+- `docs/research/reference/neople-api-combat-implementation-audit.md:52` | `DamageFormula.ts` | Demo formula: base, counter 1.25, critical 1.5, extra multipliers, floor result. | Open API can expose skill option values and character status/equipment data, but not full damage formula, final stat buckets, defense formula, rounding order, or live server calculation pipeline. | API-not-covered / baseline. Do not claim DNF formula fidelity. |
+- `docs/research/reference/official-api-wiki-whole-code-audit.md:38` | Skill action metadata | `src/combat/actions/FrameDataAction.ts`, `src/combat/resources/CooldownResourceKernel.ts` | API level 1 cooldown/MP/hit-count facts are now represented for UpwardSlash, MountainousWheel, RagingFury, Bloodlust, Frenzy, QuickRebound, Backstep, Derange, Diehard. | Wiki broadly agrees on semantics but conflicts on some stale cooldown values, so API wins. | **Pass for represented API facts.** Frame windows, hitboxes, cancel windows, hitstop/recoil remain local baseline. |
+- `docs/research/reference/official-api-wiki-whole-code-audit.md:40` | Bloodlust | `FrameDataAction.ts`, `CombatKernel.ts`, tests | API: 6s CD, MP 37, grab/eruption/ungrabbable-target values exposed. | Wiki supports command/semantic shape: grab target, fallback on ungrabbable targets, bleed interaction. | **Partial pass.** CD/MP and branch semantics present. Official damage values and exact hold/cast/invulnerability behavior are still local. |
+- `docs/research/reference/official-api-wiki-whole-code-audit.md:42` | QuickRebound | `FrameDataAction.ts`, `CombatKernel.ts` | API level 1: MP 1, 5s CD, min invul 0.3s, max invul 3s, release armor 0.3s. | Wiki supports dungeon invulnerability/armor duration and PvP split. | **Pass for level 1 PVE facts.** Higher-level scaling and PvP profile are not implemented. |
+- `docs/research/reference/official-api-wiki-whole-code-audit.md:44` | Derange | `FrameDataAction.ts`, `BuffLifecycleSystem.ts`, `CombatKernel.ts` | API level 1 exposes 5s CD, 0.5s casting, skill attack, speed, resistance, hit recovery, hitstun/recoil, INT and defense penalties. | Wiki semantics align with buff behavior. | **Partial pass.** Level-1 modifiers are replay-visible; cast timing, duration level table, and deeper stat integration are incomplete. |
+- `docs/research/reference/official-api-wiki-whole-code-audit.md:45` | Diehard | `FrameDataAction.ts`, `BuffLifecycleSystem.ts`, `CombatKernel.ts` | API level 1 exposes MP 40, 10s CD, 0.3s casting, 50% HP threshold, 20% max-HP recovery, 31s duration, defense/hit-recovery values. | Wiki semantics align: low-HP healing/defense/recovery. | **Partial pass.** Low-HP gate and level-1 buff/heal are implemented. Cast animation and full level scaling are incomplete. |
+- `docs/research/reference/official-api-wiki-whole-code-audit.md:46` | BloodyCross | `BuffLifecycleSystem.ts`, `CombatKernel.ts` damage multipliers | API level 1 exposes skill attack 28.7%, base speed, 70/60/50 HP stages and speed/evasion values. | Wiki supports low-HP staged passive behavior. | **Partial pass.** Thresholds and level-1 modifiers are represented. Evasion and movement/attack-speed runtime effects are not fully integrated. |
+- `docs/research/reference/official-api-wiki-whole-code-audit.md:47` | Vim and Vigor / bleed gating | `BuffLifecycleSystem.ts`, `CombatKernel.ts`, `StatusEffectSystem.ts` | API level 1 exposes Gore Cross size +10%, bleed chance 100%, duration 7s, bleed damage 14; skill text says post-class skills gain bleeding. | Wiki supports blood/bleed relationship. | **Improved partial.** Eligible implemented Berserker post-class hit skills now include Vim and Vigor bleed with 420F duration and damage 14; the eligible-skill list still needs data-driven expansion as more skills are implemented. |
+- `docs/research/reference/official-api-wiki-whole-code-audit.md:49` | Damage formula | `DamageFormula.ts`, `DamageResolver.ts`, `CombatKernel.ts`, `src/data/official/berserkerSkillFacts.ts` | API gives skill option values but not full damage formula or rounding order. | Wiki pages provide skill tables and some status behavior, not the full modern damage formula. | **Improved evidence layer.** Official level-1 damage option values are archived as structured skill facts. Runtime formula is still demo-grade: base * counter/crit/extra multipliers. Do not claim DNF damage fidelity until full formula buckets are modeled. |
+- `docs/testing/2026-06-03-full-qa-report.md:18` > **用户澄清**：`src/engine/` 是**新版本主线 = 目标架构**（真值系统自底向上反推），目的是**替换**旧的 `src/combat/`。
+- `docs/testing/2026-06-03-full-qa-report.md:21` > - `src/engine/` = **新目标架构**（留，绝不删）；`src/combat/` = **待替换的旧实现**（当前仍在线服役）。
+- `docs/testing/2026-06-03-full-qa-report.md:70` - **影响**：与 active 内核 `src/combat/` **功能重复**（两套 ReactionResolver/DamageFormula/AirbornePhysicsSystem/EnemyAI/HitDetection/ComboCorrection）；污染 codegraph 同名符号的 impact/callees 计数；维护者易混淆"哪套是真"。
+- `docs/testing/2026-06-03-full-qa-report.md:72` 1. 若是 Stage 2 早期引擎原型、已被 `src/combat/` 取代 → **删除** `engine/{core,ai,input,loader}` + 对应 test，或迁入 `legacy/`；
+- `docs/testing/2026-06-03-full-qa-report.md:111` - 核心链路：**命中→伤害→反应→HP** 单一确定路径，收敛在 `src/combat/hit/HitResolutionSystem.ts:44-129`（`applyHitDecision`）：`hitResolver.buildQuery → hitDecisionResolver.decide → damageResolver.apply`(L70，10-乘子 DNF 公式 `DamageFormula.ts:85`)`→ reactionResolver.resolve/apply`(L74/78，`velocityY = liftUp × launch × weightFactor`，D9=B stub weight 68000)`→ hpAfter≤0 → death.kill`(L123)。无断链。
+- `docs/testing/2026-06-03-full-qa-report.md:151` - 对照：`src/combat/reaction/ReactionResolver` 首提交 **4-28**（项目基线），末次 **5-31**（Stage3 仍在改）→ **老牌主线，持续活跃**。
+- `docs/testing/2026-06-03-full-qa-report.md:202` **调查发现 berserker 在 `src/combat` 内核是 first-class 活功能**，深度贯穿 9 个内核模块（CombatKernel / FrameDataAction / HitResolutionSystem / BuffLifecycleSystem / ReactionResolver / CooldownResourceKernel / PushBoxResolver / BrowserInputState / types）——RagingFury/Frenzy/Derange/Diehard/BloodyCross 等技能都活跃实现。
+- `docs/testing/2026-06-03-full-qa-report.md:232` **与现役 `src/combat/` 概念 1:1 平行但更简约**；独有 FNV-1a 确定性 PRNG（现役无）。次日 5-31 即被 Stage3 绕过，从未驱动一帧。**留=零成本（无 import → tree-shake 不进 bundle）但继续漂移；删=去 1095 行 + 6 test + 改 consistency 门禁。等用户决策 A（删）/B（留+标注）。**
+- `docs/testing/2026-06-04-dnf-native-mainline-qa.md:11` | 定位 | `src/engine/` = 新目标架构（骨架成、待 wire）；`src/combat/` = 待替换旧实现（4733 行，运行时在用） |
+- `docs/testing/2026-06-04-dnf-native-mainline-qa.md:86` - DamageFormula.ts:15 `MITIGATION_K=200` ⚠️ 无显式 local_baseline 标记，来源含糊
+- `docs/testing/2026-06-04-dnf-native-mainline-qa.md:106` - `GameLoop.ts` 有 `tick()` 但它只是**调用 `this.kernel.tick()` 的循环外壳**，`kernel` 是它依赖的接口——engine 里**没有任何 class 实现这个 kernel** 来串联 14 系统。combat 侧对应物是 `CombatKernel`（688 行、编排 25 子系统、6 阶段 pipeline INPUT→LOGIC→DETECTION→RESOLVE→RECORD→FLUSH）。**14 系统现在是散装零件，没有心脏把它们按确定性顺序串成一帧。**
+- `docs/testing/2026-06-04-dnf-native-mainline-qa.md:122` **🔴 CombatScene 切换难度高（已亲核）**：`CombatScene.ts:125-126` `new CombatKernel({enableReplay:true})` + `new FixedStepSimulation(kernel)`，且 6+ 处 `kernel.bus.on(...)` 订阅 7 类事件（ReactionApplied/HitConfirmed/DamageNumberRequested/GrabAttached/VfxRequested/...）。深字段宽接口耦合。
+- `docs/testing/automated-test-loop.md:95` | `runtime-evidence.json` | CombatKernel 运行时证据 |
+- `docs/testing/engine-truth-coverage-matrix.md:10` | `tests/truth/engine-damage-truth.test.ts` | `src/engine/core/DamageFormula.ts` | atkBonus = 1 + damageBonus%/100（+90%→×1.9, -40%→×0.6 不坍缩）+ damageScalePct 流过 + 复合 | ✅ 绿 |
+- `docs/testing/engine-truth-coverage-matrix.md:13` **此前**：`tests/truth/` 6 个测试 **全 target `src/combat/`**（CombatKernel/ReactionResolver），0 个守 engine。新主线伤害/reaction 逻辑裸奔。
+- `docs/testing/qa-audit-2026-06-01.md:33` 但凡经依赖链触达 `swordman.ts` 这行裸 re-export 的测试(40 个,因 import CombatKernel→...→truth/swordman)全部连环挂。
+- `docs/testing/qa-audit-2026-06-01.md:76` 调 `kernel.reset()` **复用同一实例**(不 new),`inputState.clearAll()`(`CombatKernel.ts:126`)
+- `docs/testing/qa-audit-2026-06-01.md:84` - **证据**: `CombatKernel.ts:116-122` 默认场景 actor = `player/grunt/dummy/imp/boss/building`,
+- `docs/testing/qa-audit-2026-06-01.md:138` 真实 CombatKernel 仿真(requestAction("attack3") + tick×12)实得 **`light_stagger`**。
+- `docs/testing/test-results-2026-05-31.md:32` - 输入未正确传递到 CombatKernel
+- `docs/verification/gameloop-60hz-verification.md:124` 借鉴了 `src/combat/kernel/FixedStepSimulation.ts` 的稳定模式：
+- `docs/wiki/Home.md:33` `src/combat/` 是纯 TypeScript 战斗内核，不应直接依赖 Phaser。Phaser 只在 `src/game/` 渲染层使用。
+- `docs/wiki/Home.md:108` src/combat/
+- `docs/wiki/Home.md:119` kernel/                        # CombatKernel 与固定步进模拟
+- `docs/wiki/Home.md:146` ### 7.1 战斗内核：`CombatKernel`
+- `docs/wiki/Home.md:148` `src/combat/kernel/CombatKernel.ts` 是项目最核心的文件。
+- `docs/wiki/Home.md:195` - 创建 `CombatKernel`；
+- `docs/wiki/Home.md:212` src/combat/actions/FrameDataAction.ts
+- `docs/wiki/Home.md:284` src/combat/input/BrowserInputState.ts
+- `docs/wiki/Home.md:399` 1. `src/combat/` 不允许 import Phaser；
+- `docs/wiki/Home.md:424` src/combat/
+- `docs/wiki/Home.md:478` 4. 读 `src/combat/actions/FrameDataAction.ts`，理解技能数据怎么写；
+- `docs/wiki/Home.md:479` 5. 读 `src/combat/kernel/CombatKernel.ts`，理解 Tick 流程；
+- `CLAUDE.md:17` | Stage 2 | 22-system DNF 原生引擎层（[field-matrix](docs/engineering/22-system-field-matrix.md), [roadmap](docs/planning/2026-05-27-stage2-roadmap.md)） | ✅ **完成** (2026-05-30) — Phase 0-5 全部完成。CombatKernel 命中→伤害→受击→HP 闭环，ReplayRecorder stateHash 确定性验证，CombatScene 最小可玩版本（HP bar + swordman + 3 种哥布林）。76 静态测试全绿，M3 里程碑达成 |
+- `CLAUDE.md:130` src/combat/         Pure TS combat kernel (FrameDataAction, HitResolver2D5, DamageFormula, ...) — engine 蓝本,只读
+- `CLAUDE.md:271` - 跨 ≥3 文件改动 / schema 变更 / src/combat/ 或 src/dnf-native-combat/ 内核改动 / replay 哈希影响
+- `CLAUDE.md:281` **优先 `mcp__fast-context__fast_context_search`**（本仓三轮实测：Q1 kernel tick 主循环 / Q2 damage 链路 fast-context 都比 Grep 更聚焦——Grep 在 `combat/` 下散到 ai/reaction/hit/resources 多个目录，fast-context 直击 `combat/kernel/{CombatKernel,FixedStepSimulation,CombatSystem}.ts` 和 `combat/damage/{DamageResolver,DamageFormula}.ts` 核心）。
+- `CLAUDE.md:284` - **已知精确符号名**（如 `CombatKernel` / `DamageResolver` / `HitResolutionSystem`）→ 直接 Grep
+- `CLAUDE.md:285` - **跨多目录链路追踪**（input → action → kernel → damage）→ 第一次 Grep 容易猜错命名（本仓 input 实际是 `BrowserInputState` / `RunCommandDetector` / `FrameDataAction`，不是常规的 `enqueueAction`）→ 先 fast-context 探路或 `ls src/combat/input/`
+
+## 下一步建议
+
+1. 把 truth tests 从 `src/combat/*` 迁到 `src/engine/*` 对等实现。
+2. 把 static tests 里仍直接构造 `CombatKernel` 的用例分批迁出或归档。
+3. 清理 runtime manifest / status provenance 里仍引用 `src/combat/*` 的 sourceRef。
+4. 只有当上面几类归零后，才进入真正的 `src/combat/` 删除批次。
