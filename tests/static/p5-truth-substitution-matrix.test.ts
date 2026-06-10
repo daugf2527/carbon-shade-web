@@ -14,6 +14,7 @@ const requiredRows = [
   "hit-resolution-weapon-timeline.test.ts",
   "engine-reaction-truth.test.ts",
   "engine-damage-truth.test.ts",
+  "weaponTimelineFlattener",
 ];
 
 for (const needle of requiredRows) {

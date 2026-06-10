@@ -38,6 +38,10 @@ assert.ok(
   "audit should capture swordman-attack1-truth as a combat-bound truth blocker",
 );
 assert.ok(
+  !payload.truthImports.some((entry: { file: string }) => entry.file.includes("tests/truth/hit-resolution-weapon-timeline.test.ts")),
+  "audit should stop reporting hit-resolution-weapon-timeline once the truth gate moves to engine weapon timeline surfaces",
+);
+assert.ok(
   !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/data/manifest/sources.ts")),
   "audit should stop reporting sources.ts once ACTION_MANIFEST_DATA_SOURCE no longer points at src/combat",
 );
