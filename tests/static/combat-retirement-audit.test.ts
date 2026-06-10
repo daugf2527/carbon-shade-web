@@ -47,13 +47,13 @@ assert.ok(
 );
 assert.equal(
   payload.summary.runtimeCouplingKinds["type-only"],
-  2,
-  "audit should shrink type-only combat coupling to the remaining debug snapshot edges after manifest action types are extracted",
+  1,
+  "audit should shrink type-only combat coupling to the remaining CombatScene debug snapshot edge after RenderAdapter moves to runtime debug types",
 );
 assert.equal(
   payload.summary.runtimeImportCount,
-  5,
-  "audit should reduce runtime combat coupling to five external files after loader and bootActionManifest move behind a runtime action-manifest facade",
+  4,
+  "audit should reduce runtime combat coupling to four external files after RenderAdapter moves to runtime debug types",
 );
 assert.ok(
   !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/data/manifest/ai.ts")),
@@ -90,6 +90,10 @@ assert.ok(
 assert.ok(
   payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/runtime/data/ActionManifestRuntime.ts")),
   "audit should capture the temporary runtime action-manifest facade while combat action data is still sourced from combat",
+);
+assert.ok(
+  !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/game/RenderAdapter.ts")),
+  "audit should stop reporting RenderAdapter once DebugSnapshot moves to runtime debug types",
 );
 assert.ok(
   payload.runtimeImports.some((entry: { kind: string; file: string }) => entry.kind === "source-ref" && entry.file.includes("src/data/manifest/status/default.json")),

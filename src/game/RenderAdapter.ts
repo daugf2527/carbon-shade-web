@@ -1,4 +1,4 @@
-import type { DebugSnapshot } from "../combat/debug/DebugOverlay.js";
+import type { DebugSnapshot } from "../runtime/debug/DebugSnapshot.js";
 export class RenderAdapter {
   constructor(private canvas: HTMLCanvasElement, private ctx = canvas.getContext("2d")!) {}
   render(snapshot: DebugSnapshot): void {

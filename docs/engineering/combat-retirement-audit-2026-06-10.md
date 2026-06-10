@@ -1,9 +1,9 @@
 # Combat Retirement Audit (2026-06-10)
 
-- 生成时间: 2026-06-10T12:03:39.932Z
+- 生成时间: 2026-06-10T12:08:43.092Z
 - src/combat 文件数: 46
-- 运行时/脚本依赖: 5
-- runtime 分层: type-only=2, runtime-value=2, source-ref=2
+- 运行时/脚本依赖: 4
+- runtime 分层: type-only=1, runtime-value=2, source-ref=2
 - truth 测试依赖: 5
 - static 测试依赖: 36
 - browser 测试依赖: 0
@@ -39,7 +39,6 @@
 - `src/data/manifest/status/default.json:281` "sourceRef": "src/combat/status/StatusEffectSystem.ts#legacy-rupture-baseline",
 - `src/game/CombatScene.ts:3` import type { DebugSnapshot } from "../combat/debug/DebugOverlay.js";
 - `src/game/CombatScene.ts:4` import { FixedStepSimulation } from "../combat/kernel/FixedStepSimulation.js";
-- `src/game/RenderAdapter.ts:1` import type { DebugSnapshot } from "../combat/debug/DebugOverlay.js";
 - `src/runtime/data/ActionManifestRuntime.ts:1` import { ACTIONS, loadFromManifest } from "../../combat/actions/FrameDataAction.js";
 
 ## Truth 测试依赖
