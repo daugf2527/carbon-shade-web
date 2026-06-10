@@ -104,12 +104,12 @@ const docFiles = [
 const runtimeMatchers = [
   { kind: "source-ref", pattern: /"sourceRef":\s*"src\/combat\// },
   { kind: "source-ref", pattern: /ACTION_MANIFEST_DATA_SOURCE\s*=\s*"src\/combat\// },
-  { kind: "type-only", pattern: /import\s+type\s+.*from\s+["'][^"']*combat\// },
-  { kind: "runtime-value", pattern: /import\s+(?!type\b).*from\s+["'][^"']*combat\// },
+  { kind: "type-only", pattern: /import\s+type\s+.*from\s+["'](?:combat\/|[^"']*\/combat\/)/ },
+  { kind: "runtime-value", pattern: /import\s+(?!type\b).*from\s+["'](?:combat\/|[^"']*\/combat\/)/ },
 ];
 const testImportPatterns = [
-  /from\s+["'][^"']*combat\//,
-  /import\s+["'][^"']*combat\//,
+  /from\s+["'](?:combat\/|[^"']*\/combat\/)/,
+  /import\s+["'](?:combat\/|[^"']*\/combat\/)/,
 ];
 const docMentionPatterns = [
   /src\/combat\//,
