@@ -52,8 +52,8 @@ assert.equal(
 );
 assert.equal(
   payload.summary.runtimeImportCount,
-  3,
-  "audit should reduce runtime combat coupling to three external files once status manifest provenance stops referencing src/combat",
+  2,
+  "audit should reduce runtime combat coupling to two external files once action manifest storage moves into runtime data",
 );
 assert.ok(
   !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/data/manifest/ai.ts")),
@@ -88,8 +88,8 @@ assert.ok(
   "audit should stop reporting bootActionManifest once loadFromManifest moves behind a runtime facade",
 );
 assert.ok(
-  payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/runtime/data/ActionManifestRuntime.ts")),
-  "audit should capture the temporary runtime action-manifest facade while combat action data is still sourced from combat",
+  !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/runtime/data/ActionManifestRuntime.ts")),
+  "audit should stop reporting ActionManifestRuntime once the runtime manifest store no longer imports combat action data",
 );
 assert.ok(
   !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/game/RenderAdapter.ts")),
