@@ -10,7 +10,7 @@
 // flagged `experimental` + `requiresManualVerification: true` until .exe
 // reverse engineering closes the unit.
 
-import type { Provenance } from "../../../combat/types.js";
+import type { Provenance } from "../../../runtime/data/CombatDataTypes.js";
 import type { DnfNumericFact } from "./physics.js";
 import { DNF_PHYSICS_RAW } from "./physics.js";
 

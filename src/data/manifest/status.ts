@@ -1,4 +1,4 @@
-import type { StatusEffectType, StatusManifest, StatusProfile } from "../../combat/types.js";
+import type { StatusEffectType, StatusManifest, StatusProfile } from "../../runtime/data/CombatDataTypes.js";
 import statusManifestJson from "./status/default.json" with { type: "json" };
 import pveProfileJson from "./status/pve-profile.json" with { type: "json" };
 

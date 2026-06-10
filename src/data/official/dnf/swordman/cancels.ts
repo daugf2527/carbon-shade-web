@@ -18,7 +18,7 @@
 // purchase cost, and the implicit source-motion name (from the cancel<X>
 // filename convention).
 
-import type { Provenance } from "../../../../combat/types.js";
+import type { Provenance } from "../../../../runtime/data/CombatDataTypes.js";
 
 const cancelProv = (sklName: string): Provenance => ({
   sourceType: "pvf_extraction",

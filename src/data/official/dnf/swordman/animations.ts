@@ -29,7 +29,7 @@
 //   hold). Explicit event tags need either a parser upgrade or DNF.exe
 //   reverse engineering; we tag them requiresManualVerification.
 
-import type { Provenance } from "../../../../combat/types.js";
+import type { Provenance } from "../../../../runtime/data/CombatDataTypes.js";
 
 const aniProv = (aniName: string): Provenance => ({
   sourceType: "pvf_extraction",

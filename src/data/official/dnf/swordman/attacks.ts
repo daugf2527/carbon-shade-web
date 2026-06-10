@@ -22,7 +22,7 @@
 //
 // Fields not populated in any swordman .atk are still typed for schema completeness.
 
-import type { Provenance } from "../../../../combat/types.js";
+import type { Provenance } from "../../../../runtime/data/CombatDataTypes.js";
 
 const atkProv = (atkPath: string): Provenance => ({
   sourceType: "pvf_extraction",

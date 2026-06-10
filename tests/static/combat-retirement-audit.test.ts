@@ -45,9 +45,26 @@ assert.ok(
   payload.runtimeImports.some((entry: { kind: string; file: string }) => entry.kind === "runtime-value" && entry.file.includes("src/game/CombatScene.ts")),
   "audit should classify CombatScene edge as runtime-value coupling",
 );
+assert.equal(
+  payload.summary.runtimeCouplingKinds["type-only"],
+  6,
+  "audit should shrink type-only combat coupling after shared runtime data types are extracted",
+);
 assert.ok(
-  payload.runtimeImports.some((entry: { kind: string; file: string }) => entry.kind === "type-only" && entry.file.includes("src/data/official/dnf/physics.ts")),
-  "audit should classify official truth provenance imports as type-only coupling",
+  !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/data/manifest/ai.ts")),
+  "audit should stop reporting src/data/manifest/ai.ts once EnemyAIState moves to runtime types",
+);
+assert.ok(
+  !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/data/manifest/aiTypes.ts")),
+  "audit should stop reporting src/data/manifest/aiTypes.ts once manifest metadata types stop importing combat types",
+);
+assert.ok(
+  !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/data/official/dnf/physics.ts")),
+  "audit should stop reporting src/data/official/dnf/physics.ts once provenance types move to runtime types",
+);
+assert.ok(
+  payload.runtimeImports.some((entry: { kind: string; file: string }) => entry.kind === "type-only" && entry.file.includes("src/data/manifest/hash.ts")),
+  "audit should still capture the remaining manifest action-type coupling after the shared data-type extraction",
 );
 assert.ok(
   payload.runtimeImports.some((entry: { kind: string; file: string }) => entry.kind === "source-ref" && entry.file.includes("src/data/manifest/status/default.json")),

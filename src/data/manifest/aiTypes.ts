@@ -1,4 +1,4 @@
-import type { BaseArmorType, Provenance } from "../../combat/types.js";
+import type { BaseArmorType, Provenance } from "../../runtime/data/CombatDataTypes.js";
 
 export type EnemyManifestId = "grunt" | "dummy" | "imp" | "boss" | "building";
 export type EnemyManifestField =

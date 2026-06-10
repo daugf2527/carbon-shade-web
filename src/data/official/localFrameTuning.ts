@@ -12,7 +12,7 @@
 // from local tuning per evidence-source-execution-plan.md.
 // ============================================================================
 
-import type { HitReactionProfile } from "../../combat/types.js";
+import type { HitReactionProfile } from "../../runtime/data/CombatDataTypes.js";
 
 // --- Reaction Profiles (Local Baseline) ---
 // All hitstun/knockback/launch/gravity/down/getUp values are hand-tuned.

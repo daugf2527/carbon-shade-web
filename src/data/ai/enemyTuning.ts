@@ -1,4 +1,4 @@
-import type { EnemyAIState } from "../../combat/ai/EnemyAIState.js";
+import type { EnemyAIState } from "../../runtime/data/EnemyAIState.js";
 import { ENEMY_TUNING } from "../manifest/ai.js";
 import type { EnemyManifestId } from "../manifest/aiTypes.js";
 

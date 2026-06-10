@@ -26,7 +26,7 @@
 // in character/swordman/animation/). They are deferred to a future extraction
 // pass that scans character/common/.
 
-import type { Provenance } from "../../../../combat/types.js";
+import type { Provenance } from "../../../../runtime/data/CombatDataTypes.js";
 
 const baselineProv: Provenance = {
   sourceType: "local_baseline",

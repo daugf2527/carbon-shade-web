@@ -26,7 +26,7 @@
 //   dungeon / pvp / warroom / death tower — empty sections that flag
 //                                scene availability (presence => enabled).
 
-import type { Provenance } from "../../../../combat/types.js";
+import type { Provenance } from "../../../../runtime/data/CombatDataTypes.js";
 
 const sklProv = (sklName: string): Provenance => ({
   sourceType: "pvf_extraction",

@@ -8,7 +8,7 @@
 // native convention. The project's Vec3 currently uses {x, z, y} with y=height
 // — Phase 4 must reconcile this before runtime consumption.
 
-import type { Provenance } from "../../../combat/types.js";
+import type { Provenance } from "../../../runtime/data/CombatDataTypes.js";
 
 const PVF_HEADER_PROV: Provenance = {
   sourceType: "pvf_extraction",

@@ -5,7 +5,7 @@
 // units = px/s (closed by the API's grep'd usage in atmage scripts).
 // See docs/research/2026-05-21-dnf-air-physics-phase1.md.
 
-import type { Provenance } from "../../../combat/types.js";
+import type { Provenance } from "../../../runtime/data/CombatDataTypes.js";
 import type { DnfNumericFact } from "./physics.js";
 import { DNF_PHYSICS_RAW } from "./physics.js";
 

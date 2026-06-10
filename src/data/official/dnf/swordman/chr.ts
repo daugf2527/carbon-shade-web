@@ -18,7 +18,7 @@
 // authentic to the file; the engine indexes it differently from per-stat
 // vectors.
 
-import type { Provenance } from "../../../../combat/types.js";
+import type { Provenance } from "../../../../runtime/data/CombatDataTypes.js";
 import type { DnfNumericFact } from "../physics.js";
 
 const PVF_PROV = (notes?: string): Provenance => ({
