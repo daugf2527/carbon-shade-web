@@ -7,7 +7,7 @@
 
 ### 1. 核心模块：InputRecorder.ts
 
-**位置**: `src/combat/replay/InputRecorder.ts`
+**位置**: `src/engine/replay/InputRecorder.ts`
 
 **功能**:
 - 录制用户输入（按键按下/释放）
@@ -154,7 +154,7 @@ interface InputEvent {
 ## 文件清单
 
 ### 新增文件
-- `src/combat/replay/InputRecorder.ts` - 核心录制/回放逻辑
+- `src/engine/replay/InputRecorder.ts` - 核心录制/回放逻辑
 - `tests/static/input-recorder.test.ts` - 单元测试
 - `docs/engineering/input-recorder-guide.md` - 使用指南
 - `docs/engineering/input-recording-example.json` - 示例录制文件

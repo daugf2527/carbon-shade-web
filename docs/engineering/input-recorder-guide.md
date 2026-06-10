@@ -147,7 +147,7 @@ scene.inputRecorder.startReplay(scene.kernel);
 
 ### 实现位置
 
-- **InputRecorder**: `src/combat/replay/InputRecorder.ts`
+- **InputRecorder**: `src/engine/replay/InputRecorder.ts`
 - **CombatScene 集成**: `src/game/CombatScene.ts`
 
 ### 核心方法

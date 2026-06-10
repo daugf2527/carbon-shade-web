@@ -521,7 +521,7 @@ const kernelHasSceneApi = /requestAction\(/.test(engineKernelSrc) && /debugSnaps
 const engineCtxSrc = readTextSafe(join(ROOT, "src/engine/kernel/EngineContext.ts")) || "";
 const busHasSubscribe = /\bon\(type:/.test(engineCtxSrc) && /readonly archive/.test(engineCtxSrc);
 // Peripherals adapted (no CombatKernel import in any of the 3 wired components)
-const peripheralsAdapted = ["src/game/TouchControls.ts", "src/combat/replay/InputRecorder.ts", "src/game/layers/DebugLayer.ts"]
+const peripheralsAdapted = ["src/game/TouchControls.ts", "src/engine/replay/InputRecorder.ts", "src/game/layers/DebugLayer.ts"]
   .every((p) => !/CombatKernel/.test(readTextSafe(join(ROOT, p)) || "CombatKernel"));
 checks.push({
   name: "maturity/p3.1-runtime-switch",
@@ -719,19 +719,31 @@ checks.push({
 });
 
 // 32. skill-action infra §3 — cancelWindow 谓词接入 ActionSystem 取消链(把 cancel-window 谓词接活)
+// 成熟度真检(防假绿,2026-06-08):不止验"代码路径在",还要验"config 是否真供给"——cancelWindows
+// map 仅由 define(name, anim, cancelWindow) 第三参填充。若全项目零处传第三参，谓词恒空转(no-op)，
+// 此时应诚实报 wired-but-no-config，而非笼统 cancelWired=true(那正是门禁自己掉进二元陷阱)。
 const actionSysSrc = readTextSafe(join(ROOT, "src/engine/kernel/systems/ActionSystem.ts")) || "";
-const cancelWired = /isInCancelWindow\(/.test(actionSysSrc)
+const cancelPredicateWired = /isInCancelWindow\(/.test(actionSysSrc)
   && /cancelWindows/.test(actionSysSrc)
   && /inCancelWindow/.test(actionSysSrc);
+// 扫 CombatScene 的 actions.define(...) 调用是否真传了 cancelWindow config(第三参)。
+// define 全在 CombatScene.defineActions()，形如 define("attack1", attack(4,1))——第二参是带逗号的
+// 函数调用，所以不能数逗号(会被内层逗号骗)。真传 config 时调用里必含 cancelWindow/parseCancelWindow
+// 标识，据此检测；当前全是 2 参 → 无标识 → configSupplied=false(诚实：map 恒空、谓词 no-op)。
+const combatSceneForCancel = readTextSafe(join(ROOT, "src/game/CombatScene.ts")) || "";
+const cancelConfigSupplied = /\.define\([^)]*(?:cancelWindow|parseCancelWindow|CancelWindow)/.test(combatSceneForCancel);
+const cancelWired = cancelPredicateWired; // 谓词路径就位(向后兼容既有 claim)
 checks.push({
   name: "maturity/skill-action-cancel-chain",
   claimSite: "skill-action infra §3 (cancelWindow→ActionSystem) + changelog",
-  claim: "cancelWindow 谓词接入 ActionSystem gating(cancel 窗口内可取消进新 action,无 cancelWindow 的基础攻击不可取消零回归)",
+  claim: cancelConfigSupplied
+    ? "cancelWindow 谓词接入 ActionSystem gating + 有 action 注册真 cancelWindow config(取消链生效)"
+    : "cancelWindow 谓词已接入 ActionSystem.tick gating，但当前零 action 传 cancelWindow config → map 恒空、谓词 no-op(地基就位待数据，诚实标注)",
   truthSite: "src/engine/kernel/systems/ActionSystem.ts + core/CancelWindow.ts",
-  truth: `cancelWired=${cancelWired}`,
-  drift: cancelWired
+  truth: `predicateWired=${cancelPredicateWired}, configSupplied=${cancelConfigSupplied}`,
+  drift: cancelPredicateWired
     ? null
-    : `cancel-chain 退化:期望 ActionSystem gating 用 isInCancelWindow + cancelWindows 存储,实得 cancelWired=${cancelWired}`,
+    : `cancel-chain 退化:期望 ActionSystem gating 用 isInCancelWindow + cancelWindows 存储,实得 predicateWired=${cancelPredicateWired}`,
 });
 
 // ── 评估 drift ──────────────────────────────────────────────────────────
