@@ -54,6 +54,26 @@ function matchLines(filePath, patterns) {
   return hits;
 }
 
+function matchLinesWithKinds(filePath, matchers) {
+  const rel = normalize(filePath);
+  const lines = readText(filePath).split(/\r?\n/);
+  const hits = [];
+  lines.forEach((line, index) => {
+    for (const matcher of matchers) {
+      if (matcher.pattern.test(line)) {
+        hits.push({
+          kind: matcher.kind,
+          file: rel,
+          line: index + 1,
+          text: line.trim(),
+        });
+        break;
+      }
+    }
+  });
+  return hits;
+}
+
 function uniqueByFile(entries) {
   const seen = new Set();
   return entries.filter((entry) => {
@@ -81,11 +101,11 @@ const docFiles = [
   join(ROOT, "CLAUDE.md"),
 ].filter((file) => resolve(file) !== DEFAULT_DOC);
 
-const runtimeImportPatterns = [
-  /from\s+["'][^"']*combat\//,
-  /import\s+["'][^"']*combat\//,
-  /"sourceRef":\s*"src\/combat\//,
-  /ACTION_MANIFEST_DATA_SOURCE\s*=\s*"src\/combat\//,
+const runtimeMatchers = [
+  { kind: "source-ref", pattern: /"sourceRef":\s*"src\/combat\// },
+  { kind: "source-ref", pattern: /ACTION_MANIFEST_DATA_SOURCE\s*=\s*"src\/combat\// },
+  { kind: "type-only", pattern: /import\s+type\s+.*from\s+["'][^"']*combat\// },
+  { kind: "runtime-value", pattern: /import\s+(?!type\b).*from\s+["'][^"']*combat\// },
 ];
 const testImportPatterns = [
   /from\s+["'][^"']*combat\//,
@@ -97,7 +117,7 @@ const docMentionPatterns = [
   /\bDamageFormula\.ts\b/,
 ];
 
-const runtimeImports = uniqueByFile(runtimeFiles.flatMap((file) => matchLines(file, runtimeImportPatterns)));
+const runtimeImports = uniqueByFile(runtimeFiles.flatMap((file) => matchLinesWithKinds(file, runtimeMatchers)));
 const truthImports = uniqueByFile(truthFiles.flatMap((file) => matchLines(file, testImportPatterns)));
 const staticImports = uniqueByFile(staticFiles.flatMap((file) => matchLines(file, testImportPatterns)));
 const browserImports = uniqueByFile(browserFiles.flatMap((file) => matchLines(file, testImportPatterns)));
@@ -106,6 +126,26 @@ const docsMentions = uniqueByFile(docFiles.flatMap((file) => matchLines(file, do
 function uniqueFileCount(entries) {
   return new Set(entries.map((entry) => entry.file)).size;
 }
+
+function uniqueFileCountByKind(entries) {
+  const buckets = {
+    "type-only": new Set(),
+    "runtime-value": new Set(),
+    "source-ref": new Set(),
+  };
+  for (const entry of entries) {
+    if (entry.kind in buckets) {
+      buckets[entry.kind].add(entry.file);
+    }
+  }
+  return {
+    "type-only": buckets["type-only"].size,
+    "runtime-value": buckets["runtime-value"].size,
+    "source-ref": buckets["source-ref"].size,
+  };
+}
+
+const runtimeCouplingKinds = uniqueFileCountByKind(runtimeImports);
 
 const payload = {
   generatedAt: new Date().toISOString(),
@@ -117,6 +157,7 @@ const payload = {
     staticImportCount: uniqueFileCount(staticImports),
     browserImportCount: uniqueFileCount(browserImports),
     docsMentionCount: uniqueFileCount(docsMentions),
+    runtimeCouplingKinds,
   },
   combatFiles,
   runtimeImports,
@@ -133,6 +174,7 @@ function renderMarkdown(data) {
   lines.push(`- 生成时间: ${data.generatedAt}`);
   lines.push(`- src/combat 文件数: ${data.summary.combatFileCount}`);
   lines.push(`- 运行时/脚本依赖: ${data.summary.runtimeImportCount}`);
+  lines.push(`- runtime 分层: type-only=${data.summary.runtimeCouplingKinds["type-only"]}, runtime-value=${data.summary.runtimeCouplingKinds["runtime-value"]}, source-ref=${data.summary.runtimeCouplingKinds["source-ref"]}`);
   lines.push(`- truth 测试依赖: ${data.summary.truthImportCount}`);
   lines.push(`- static 测试依赖: ${data.summary.staticImportCount}`);
   lines.push(`- browser 测试依赖: ${data.summary.browserImportCount}`);
@@ -142,6 +184,7 @@ function renderMarkdown(data) {
   lines.push("");
   lines.push("- P5 `src/combat/` 退役尚未具备删除条件。");
   lines.push("- 主要阻塞来自四类：运行时源引用、truth 测试、static 测试、文档/SSOT。");
+  lines.push("- runtime 外部耦合已经可分层：`type-only` 可优先迁移；`runtime-value` 次之；`source-ref` 最后清理。");
   lines.push("- 这份清单是删 `src/combat/` 前的最小硬证据，不再靠人工 grep 回忆。");
   lines.push("");
 
@@ -169,10 +212,12 @@ function renderMarkdown(data) {
 
   lines.push("## 下一步建议");
   lines.push("");
-  lines.push("1. 把 truth tests 从 `src/combat/*` 迁到 `src/engine/*` 对等实现。");
-  lines.push("2. 把 static tests 里仍直接构造 `CombatKernel` 的用例分批迁出或归档。");
-  lines.push("3. 清理 runtime manifest / status provenance 里仍引用 `src/combat/*` 的 sourceRef。");
-  lines.push("4. 只有当上面几类归零后，才进入真正的 `src/combat/` 删除批次。");
+  lines.push("1. 先清 `type-only` 耦合：`src/data/official/*`、`src/data/manifest/*` 这些只吃 combat type 的文件优先迁出。");
+  lines.push("2. 再清 `runtime-value` 耦合：`src/game/*`、manifest loader 这类真正执行 combat 逻辑的边。");
+  lines.push("3. 最后清 `source-ref`：manifest/status provenance 的 `src/combat/*` 字符串引用。");
+  lines.push("4. 把 truth tests 从 `src/combat/*` 迁到 `src/engine/*` 对等实现。");
+  lines.push("5. 把 static tests 里仍直接构造 `CombatKernel` 的用例分批迁出或归档。");
+  lines.push("6. 只有当上面几类归零后，才进入真正的 `src/combat/` 删除批次。");
   lines.push("");
   return lines.join("\n");
 }

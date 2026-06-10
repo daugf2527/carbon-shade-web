@@ -1,17 +1,19 @@
 # Combat Retirement Audit (2026-06-10)
 
-- 生成时间: 2026-06-10T10:41:09.925Z
+- 生成时间: 2026-06-10T11:07:58.551Z
 - src/combat 文件数: 46
 - 运行时/脚本依赖: 22
+- runtime 分层: type-only=20, runtime-value=3, source-ref=2
 - truth 测试依赖: 5
 - static 测试依赖: 59
 - browser 测试依赖: 0
-- 文档引用: 59
+- 文档引用: 60
 
 ## 结论
 
 - P5 `src/combat/` 退役尚未具备删除条件。
 - 主要阻塞来自四类：运行时源引用、truth 测试、static 测试、文档/SSOT。
+- runtime 外部耦合已经可分层：`type-only` 可优先迁移；`runtime-value` 次之；`source-ref` 最后清理。
 - 这份清单是删 `src/combat/` 前的最小硬证据，不再靠人工 grep 回忆。
 
 ## 运行时/脚本依赖
@@ -391,6 +393,16 @@
 - `docs/engineering/input-recorder-guide.md:158` stopRecording(kernel: CombatKernel): InputRecording | null;
 - `docs/engineering/input-recorder-guide.md:161` startReplay(kernel: CombatKernel, recording?: InputRecording): boolean;
 - `docs/engineering/input-recorder-guide.md:163` tickReplay(kernel: CombatKernel): void;
+- `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:5` - `tests/truth/` 不再把关键真值守在 `src/combat/*`
+- `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:7` - `src/combat/` 删除前，truth gate 可以完全站在 engine 侧
+- `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:13` | `tests/truth/reaction-routing.test.ts` | `src/combat/reaction/ReactionResolver.ts` | `tests/truth/engine-reaction-truth.test.ts` | 部分覆盖 | 拆成 engine routing-only truth，去掉 combat `ReactionResolver` import |
+- `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:14` | `tests/truth/reaction-velocity.test.ts` | `src/combat/reaction/ReactionResolver.ts` | `tests/truth/engine-reaction-truth.test.ts` | 部分覆盖 | 把 velocity 断言迁到 engine `applyHitReaction` / `KnockbackPhysics` 组合路径 |
+- `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:15` | `tests/truth/swordman-attack1-truth.test.ts` | `src/combat/kernel/CombatKernel.ts` | `tests/truth/engine-damage-truth.test.ts` | 缺完整替身 | 需要一个 engine 侧 attack1 端到端 truth，用 EngineKernel 或更小闭环替代 CombatKernel |
+- `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:16` | `tests/truth/swordman-reaction-formulas.test.ts` | `src/combat/kernel/CombatKernel.ts` | `tests/truth/engine-reaction-truth.test.ts` | 缺完整替身 | 需要 engine 侧“动作→命中→reaction kind” truth 闭环，覆盖 attack1 / attack3 / dashattack |
+- `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:17` | `tests/truth/hit-resolution-weapon-timeline.test.ts` | `src/combat/types/DualTimelineAction.ts` | 无 | 缺失 | 先在 engine 侧建立 weapon timeline flatten / hitbox 提取 truth，摆脱 combat dual timeline type |
+- `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:28` 1. 现在 5 个仍绑 `src/combat/*` 的 truth 里，2 个已经有 engine 层部分替身，3 个没有。
+- `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:29` 2. 最危险缺口不是单点公式，而是 `CombatKernel` 端到端 truth 还没被 engine 闭环接住。
+- `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:41` - 两份一起看，才能安排 `src/combat/` 退役的下一批可执行工作。
 - `docs/planning/2026-05-24-stage1-known-issues.md:146` **症状**: `npm run analyze` → knip 报 24 unused exports + 48 unused types。大部分在 Phaser 渲染层（`src/game/`、`src/combat/`），与 Stage 1 数据管线无关。
 - `docs/planning/2026-05-24-stage2-brainstorm.md:72` - Already in-tree (`DamageFormula.ts` with classic-profile.json). Stage 2:
 - `docs/planning/2026-05-25-carbon-harness-implementation-plan.md:34` - 不改 carbon 业务代码（src/combat/、src/data/、tools/dnf-extract/）。
@@ -601,7 +613,9 @@
 
 ## 下一步建议
 
-1. 把 truth tests 从 `src/combat/*` 迁到 `src/engine/*` 对等实现。
-2. 把 static tests 里仍直接构造 `CombatKernel` 的用例分批迁出或归档。
-3. 清理 runtime manifest / status provenance 里仍引用 `src/combat/*` 的 sourceRef。
-4. 只有当上面几类归零后，才进入真正的 `src/combat/` 删除批次。
+1. 先清 `type-only` 耦合：`src/data/official/*`、`src/data/manifest/*` 这些只吃 combat type 的文件优先迁出。
+2. 再清 `runtime-value` 耦合：`src/game/*`、manifest loader 这类真正执行 combat 逻辑的边。
+3. 最后清 `source-ref`：manifest/status provenance 的 `src/combat/*` 字符串引用。
+4. 把 truth tests 从 `src/combat/*` 迁到 `src/engine/*` 对等实现。
+5. 把 static tests 里仍直接构造 `CombatKernel` 的用例分批迁出或归档。
+6. 只有当上面几类归零后，才进入真正的 `src/combat/` 删除批次。

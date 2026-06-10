@@ -26,6 +26,10 @@ assert.ok(payload.summary.truthImportCount > 0, "audit should report truth tests
 assert.ok(payload.summary.staticImportCount > 0, "audit should report static tests still bound to combat");
 assert.ok(payload.summary.docsMentionCount > 0, "audit should report docs still mentioning src/combat");
 assert.ok(Array.isArray(payload.runtimeImports), "runtime import details should be listed");
+assert.ok(payload.summary.runtimeCouplingKinds, "audit payload should include runtime coupling kind summary");
+assert.ok(payload.summary.runtimeCouplingKinds["type-only"] > 0, "audit should classify type-only combat coupling");
+assert.ok(payload.summary.runtimeCouplingKinds["runtime-value"] > 0, "audit should classify runtime-value combat coupling");
+assert.ok(payload.summary.runtimeCouplingKinds["source-ref"] > 0, "audit should classify source-ref combat coupling");
 assert.ok(Array.isArray(payload.truthImports), "truth import details should be listed");
 assert.ok(Array.isArray(payload.staticImports), "static import details should be listed");
 assert.ok(Array.isArray(payload.docsMentions), "doc mention details should be listed");
@@ -36,6 +40,18 @@ assert.ok(
 assert.ok(
   payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/data/manifest/sources.ts")),
   "audit should capture runtime/source-manifest combat coupling",
+);
+assert.ok(
+  payload.runtimeImports.some((entry: { kind: string; file: string }) => entry.kind === "runtime-value" && entry.file.includes("src/game/CombatScene.ts")),
+  "audit should classify CombatScene edge as runtime-value coupling",
+);
+assert.ok(
+  payload.runtimeImports.some((entry: { kind: string; file: string }) => entry.kind === "type-only" && entry.file.includes("src/data/official/dnf/physics.ts")),
+  "audit should classify official truth provenance imports as type-only coupling",
+);
+assert.ok(
+  payload.runtimeImports.some((entry: { kind: string; file: string }) => entry.kind === "source-ref" && entry.file.includes("src/data/manifest/status/default.json")),
+  "audit should classify manifest sourceRef edges separately",
 );
 assert.ok(
   payload.runtimeImports.every((entry: { file: string }) => !entry.file.startsWith("src/combat/")),
