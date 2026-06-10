@@ -10,8 +10,8 @@ const requiredRows = [
   "tests/static/action-cancel-probe.test.ts",
   "tests/static/architecture.test.ts",
   "tests/static/combat-chain-regression.test.ts",
-  "tests/static/manifest-provenance.test.ts",
-  "tests/static/schema-hash-freshness.test.ts",
+  "tests/static/replay-hash.test.ts",
+  "tests/static/official-api-alignment.test.ts",
 ];
 
 for (const needle of requiredRows) {
@@ -35,8 +35,16 @@ assert.ok(
   "static blocker matrix should show that the data-surface bucket has been cleared",
 );
 assert.ok(
-  source.includes("| `replay-input` | 2 |"),
-  "static blocker matrix should show that the replay-input bucket has been reduced to the remaining replay-only blockers",
+  source.includes("| `replay-input` | 0 |"),
+  "static blocker matrix should show that the replay-input bucket has been cleared",
+);
+assert.ok(
+  !source.includes("tests/static/manifest-provenance.test.ts"),
+  "static blocker matrix should stop listing manifest-provenance once replay metadata moves to runtime",
+);
+assert.ok(
+  !source.includes("tests/static/schema-hash-freshness.test.ts"),
+  "static blocker matrix should stop listing schema-hash-freshness once replay metadata moves to runtime",
 );
 assert.ok(
   !source.includes("tests/static/run-detector.test.ts"),

@@ -1,7 +1,7 @@
 import { assert } from "./test-utils.js";
-import type { ActionName, FrameDataAction, StatusProvenanceField } from "../../src/combat/types.js";
-import { ACTIONS, getAction, loadFromManifest } from "../../src/combat/actions/FrameDataAction.js";
-import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";
+import type { ActionName, FrameDataAction, StatusProvenanceField } from "../../src/runtime/data/CombatDataTypes.js";
+import { ACTIONS, getInstalledActionManifest, installActionManifest } from "../../src/runtime/data/ActionManifestRuntime.js";
+import { createReplayMetadata } from "../../src/runtime/replay/ReplayMetadata.js";
 import { cloneEnemyTuning, enemyTuning } from "../../src/data/ai/enemyTuning.js";
 import { computeActionsHash, computeDamageManifestHash, computeEnemyManifestHash, computeStatusManifestHash, type DamageManifest } from "../../src/data/manifest/hash.js";
 import classicDamageProfile from "../../src/data/manifest/damage/classic-profile.json" with { type: "json" };
@@ -14,6 +14,10 @@ import { initializeActionManifestForRuntime } from "../../src/game/bootActionMan
 
 function cloneActions(): Record<ActionName, FrameDataAction> {
   return JSON.parse(JSON.stringify(ACTIONS)) as Record<ActionName, FrameDataAction>;
+}
+
+function getAction(name: ActionName): FrameDataAction {
+  return getInstalledActionManifest()[name];
 }
 
 {
@@ -38,7 +42,7 @@ function cloneActions(): Record<ActionName, FrameDataAction> {
   assert.equal(getAction("RagingFury").totalFrames, runtimeActions.RagingFury.totalFrames);
   assert.equal(result.manifestHash, computeActionsHash(runtimeActions));
   assert.equal(result.dataSource, "src/runtime/data/ActionManifestRuntime.ts#ACTIONS");
-  loadFromManifest(loaded);
+  installActionManifest(loaded);
 }
 
 {
@@ -105,20 +109,20 @@ function cloneActions(): Record<ActionName, FrameDataAction> {
   changed.RagingFury.totalFrames += 1;
   assert.notEqual(computeActionsHash(changed), manifestHash, "action manifest hash should change when action data changes");
 
-  const recorder = new ReplayRecorder();
+  const metadata = createReplayMetadata();
   const statusManifestHash = computeStatusManifestHash(DEFAULT_STATUS_MANIFEST);
   const enemyManifestHash = computeEnemyManifestHash(DEFAULT_ENEMY_MANIFEST);
   const damageManifestHash = computeDamageManifestHash(classicDamageProfile as DamageManifest);
-  assert.equal(recorder.metadata.combatSchemaHash, manifestHash);
-  assert.equal(recorder.metadata.manifestHash, manifestHash);
-  assert.equal(recorder.metadata.statusManifestHash, statusManifestHash);
-  assert.equal(recorder.metadata.enemyManifestHash, enemyManifestHash);
-  assert.equal(recorder.metadata.damageManifestHash, damageManifestHash);
-  assert.equal(recorder.metadata.sourcePolicyVersion, SOURCE_POLICY_VERSION);
-  assert.equal(recorder.metadata.dataSources.actions, "src/runtime/data/ActionManifestRuntime.ts#ACTIONS");
-  assert.equal(recorder.metadata.dataSources.status, "src/data/manifest/status/default.json#profiles");
-  assert.equal(recorder.metadata.dataSources.ai, "src/data/manifest/ai/enemy-default.json#profiles");
-  assert.equal(recorder.metadata.dataSources.damage, "src/data/manifest/damage/classic-profile.json#constants");
+  assert.equal(metadata.combatSchemaHash, manifestHash);
+  assert.equal(metadata.manifestHash, manifestHash);
+  assert.equal(metadata.statusManifestHash, statusManifestHash);
+  assert.equal(metadata.enemyManifestHash, enemyManifestHash);
+  assert.equal(metadata.damageManifestHash, damageManifestHash);
+  assert.equal(metadata.sourcePolicyVersion, SOURCE_POLICY_VERSION);
+  assert.equal(metadata.dataSources.actions, "src/runtime/data/ActionManifestRuntime.ts#ACTIONS");
+  assert.equal(metadata.dataSources.status, "src/data/manifest/status/default.json#profiles");
+  assert.equal(metadata.dataSources.ai, "src/data/manifest/ai/enemy-default.json#profiles");
+  assert.equal(metadata.dataSources.damage, "src/data/manifest/damage/classic-profile.json#constants");
 }
 
 {

@@ -1,11 +1,11 @@
 # Combat Retirement Audit (2026-06-10)
 
-- 生成时间: 2026-06-10T12:36:51.935Z
+- 生成时间: 2026-06-10T12:52:43.041Z
 - src/combat 文件数: 46
 - 运行时/脚本依赖: 1
 - runtime 分层: type-only=1, runtime-value=1, source-ref=0
 - truth 测试依赖: 5
-- static 测试依赖: 36
+- static 测试依赖: 34
 - browser 测试依赖: 0
 - 文档引用: 61
 
@@ -76,9 +76,6 @@
 - `tests/static/jump-hit-down-movement.test.ts:3` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 - `tests/static/jump-skill-down-movement.test.ts:3` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 - `tests/static/jump-x-cancel-stuck-airborne.test.ts:5` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/manifest-provenance.test.ts:2` import type { ActionName, FrameDataAction, StatusProvenanceField } from "../../src/combat/types.js";
-- `tests/static/manifest-provenance.test.ts:3` import { ACTIONS, getAction, loadFromManifest } from "../../src/combat/actions/FrameDataAction.js";
-- `tests/static/manifest-provenance.test.ts:4` import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";
 - `tests/static/movement-bounds.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 - `tests/static/official-api-alignment.test.ts:2` import { getAction } from "../../src/combat/actions/FrameDataAction.js";
 - `tests/static/official-api-alignment.test.ts:3` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
@@ -88,7 +85,6 @@
 - `tests/static/replay-performance.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 - `tests/static/replay-schema.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 - `tests/static/replay.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/schema-hash-freshness.test.ts:2` import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";
 - `tests/static/status-buff.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 - `tests/static/status-profile.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 - `tests/static/tick-benchmark.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
@@ -310,22 +306,20 @@
 - `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:42` | `tests/static/jump-hit-down-movement.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
 - `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:43` | `tests/static/jump-skill-down-movement.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
 - `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:44` | `tests/static/jump-x-cancel-stuck-airborne.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:45` | `tests/static/manifest-provenance.test.ts` | `replay-input` | `import type { ActionName, FrameDataAction, StatusProvenanceField } from "../../src/combat/types.js";`<br>`import { ACTIONS, getAction, loadFromManifest } from "../../src/combat/actions/FrameDataAction.js";`<br>`import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";` | P5-B |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:46` | `tests/static/movement-bounds.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:47` | `tests/static/official-api-alignment.test.ts` | `kernel-shell` | `import { getAction } from "../../src/combat/actions/FrameDataAction.js";`<br>`import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:48` | `tests/static/replay-hash.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";`<br>`import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";`<br>`import { createActor } from "../../src/combat/actors/ActorFactory.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:49` | `tests/static/replay-performance.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:50` | `tests/static/replay-schema.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:51` | `tests/static/replay.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:52` | `tests/static/schema-hash-freshness.test.ts` | `replay-input` | `import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";` | P5-B |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:53` | `tests/static/status-buff.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:54` | `tests/static/status-profile.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:55` | `tests/static/tick-benchmark.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:56` | `tests/static/walk-run-z.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:57` | `tests/static/walk-run.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:61` 1. static blocker 的真正主阻塞不是零散类型，而是 32 个直接依赖 `CombatKernel` / `FixedStepSimulation` 的 `kernel-shell` 用例。
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:62` 2. `data-surface` 已清零，说明动作表/类型/事件壳这层可以独立迁出，不必和 `CombatKernel` 主迁移绑在一起。
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:64` 4. `replay-input` 还剩 2 个文件，说明 replay / input 工具链仍是 `src/combat/` 删除前的独立尾巴。
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:45` | `tests/static/movement-bounds.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:46` | `tests/static/official-api-alignment.test.ts` | `kernel-shell` | `import { getAction } from "../../src/combat/actions/FrameDataAction.js";`<br>`import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:47` | `tests/static/replay-hash.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";`<br>`import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";`<br>`import { createActor } from "../../src/combat/actors/ActorFactory.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:48` | `tests/static/replay-performance.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:49` | `tests/static/replay-schema.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:50` | `tests/static/replay.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:51` | `tests/static/status-buff.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:52` | `tests/static/status-profile.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:53` | `tests/static/tick-benchmark.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:54` | `tests/static/walk-run-z.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:55` | `tests/static/walk-run.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:59` 1. static blocker 的真正主阻塞不是零散类型，而是 32 个直接依赖 `CombatKernel` / `FixedStepSimulation` 的 `kernel-shell` 用例。
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:60` 2. `data-surface` 已清零，说明动作表/类型/事件壳这层可以独立迁出，不必和 `CombatKernel` 主迁移绑在一起。
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:62` 4. `replay-input` 已清零，说明 replay metadata 这类静态校验已能直接落在 runtime 入口，不再阻塞 `src/combat/` 删除。
 - `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:5` - `tests/truth/` 不再把关键真值守在 `src/combat/*`
 - `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:7` - `src/combat/` 删除前，truth gate 可以完全站在 engine 侧
 - `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:13` | `tests/truth/reaction-routing.test.ts` | `src/combat/reaction/ReactionResolver.ts` | `tests/truth/engine-reaction-truth.test.ts` | 部分覆盖 | 拆成 engine routing-only truth，去掉 combat `ReactionResolver` import |
