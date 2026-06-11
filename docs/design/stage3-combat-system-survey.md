@@ -4,6 +4,10 @@
 调研范围：`src/combat/` + `src/engine/core/`（两套系统并存）  
 目标：识别 Phase A 重写边界
 
+> Status: research snapshot
+> Authoritative successor: `docs/engineering/combat-retirement-audit-2026-06-10.md`
+> Notes: useful for forensic reading, not for present ownership decisions.
+
 ---
 
 ## 重要前置发现：两套系统并存

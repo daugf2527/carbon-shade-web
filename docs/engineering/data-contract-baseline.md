@@ -1,5 +1,9 @@
 # Data Contract Baseline (Stage 1 shard fields)
 
+> Status: supporting evidence snapshot
+> Authoritative successor: `docs/engineering/combat-retirement-audit-2026-06-10.md`
+> Notes: keep as field evidence, not as a current runtime ownership map.
+
 **生成时间**: 2026-05-29T03:01:48.804Z  
 **生成脚本**: `scripts/data-contract-audit.mjs`  
 **扫描范围**: 16 shards, 843 unique field paths  

@@ -186,6 +186,16 @@ screenshots/
 
 所有重要判断都应沉淀在 `docs/`。
 
+### 文档收口规则
+
+如果一个改动新增或更新 Markdown：
+
+1. 先判断哪份文档是 entry doc
+2. 先更新 entry doc，再更新 supporting doc
+3. 已有 overview 时，不再平行再写一份 overview，避免 duplicate narrative
+4. 旧文档仍有价值时，改为 relabel，而不是让它继续和当前口径竞争
+5. 具体规则查 `docs/engineering/documentation-pruning-policy.md`
+
 当前建议文档结构：
 
 ```text

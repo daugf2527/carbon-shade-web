@@ -2,13 +2,15 @@
 
 > Last updated: 2026-05-28
 >
-> ⚠️ **Branch context**：项目当前在 `dnf-native` 分支。本 index 仍以 `master` 时代（Combat Lab 0.2/0.3, handfeel/fix6, ~5-15）为骨架编排，**Stage 1 / Stage 2 (dnf-native) 的最新文档没有完整反映在下表里**。dnf-native 时代的权威入口：
-> - 当前真值：[`engineering/22-system-field-matrix.md`](engineering/22-system-field-matrix.md)、[`engineering/nut-validation-2026-05-27.md`](engineering/nut-validation-2026-05-27.md)
-> - 路线图：[`planning/2026-05-27-stage2-roadmap.md`](planning/2026-05-27-stage2-roadmap.md)、[`planning/2026-05-27-resolved-decisions.md`](planning/2026-05-27-resolved-decisions.md)
-> - Stage 1 完成档：[`changelog/2026-05-24-stage1-complete.md`](changelog/2026-05-24-stage1-complete.md)
-> - Audit 链：[`engineering/audit-2026-05-25-full-pipeline-static.md`](engineering/audit-2026-05-25-full-pipeline-static.md)、[`engineering/audit-2026-05-27-ten-commits.md`](engineering/audit-2026-05-27-ten-commits.md)
+> Current branch context: `dnf-native`
 >
-> 下表 0.2/0.3 时代条目作历史快照保留，新会话查 dnf-native 当前事实请走上面链接 + `CLAUDE.md "Current state"` 段。
+> Current entry path:
+> - engine migration trunk: [`planning/2026-06-04-engine-native-rewrite-roadmap.md`](planning/2026-06-04-engine-native-rewrite-roadmap.md)
+> - combat retirement evidence: [`engineering/combat-retirement-audit-2026-06-10.md`](engineering/combat-retirement-audit-2026-06-10.md)
+> - static blocker inventory: [`engineering/p5-static-blocker-matrix-2026-06-10.md`](engineering/p5-static-blocker-matrix-2026-06-10.md)
+> - pruning rules: [`engineering/documentation-pruning-policy.md`](engineering/documentation-pruning-policy.md)
+>
+> Historical docs remain below as evidence, but the entry path above is the current trunk.
 
 This index categorizes all project documentation by status. Navigate by category to find relevant documents.
 
@@ -38,8 +40,8 @@ Documents that accurately describe the present codebase and actively maintained 
 | `design/tuning-baseline.md` | Living combat parameter values (currently in use) |
 | `engineering/combat-lab-0.2-r3-final-integrated-development-spec.md` | Master engineering specification — the authoritative spec for the current codebase |
 | `engineering/combat-attack-hit-reaction-chain.md` | Attack → hit → reaction chain (matches current implementation) |
-| `engineering/architecture-overview.md` | Current layer map for Combat Lab and evidence tiers |
-| `engineering/architecture-improvement-plan.md` | Current architecture refactor plan for Combat Lab 0.4+ |
+| `engineering/architecture-overview.md` | Supporting snapshot — historical layer map, not the current engine migration trunk |
+| `engineering/architecture-improvement-plan.md` | Superseded planning snapshot — keep for pre-engine-native context only |
 | `engineering/art-asset-pipeline-spec.md` | Art asset pipeline specification for protagonist sprite generation |
 | `changelog/2026-06-06-engine-truth-wiring-batch.md` | Engine 真值化批次：09-Status/08-Resource/03-AI/hitstun/水平击退 + scenario·replay/D 组/cancel-window（11 commit）|
 | `changelog/fix6-normalized-sprite-pipeline.md` | Current rendering pipeline: normalized fixed-cell spritesheets |
@@ -76,6 +78,7 @@ Documents describing desired future states, planned work, or proposed architectu
 | `engineering/02-technical-design-document-v0.1.md` | Superseded — superseded by `combat-lab-0.2-r3-final-integrated-development-spec.md`; retained as architecture vision reference |
 | `engineering/03-development-workflow-v0.1.md` | Historical context — written for ChatGPT era; workflow principles still valid; all ChatGPT references should be read as Claude Code |
 | `planning/dnf-combat-systems-master-spec.md` | 79-system taxonomy across P0-P4 for full DNF replication |
+| `planning/2026-06-04-engine-native-rewrite-roadmap.md` | Current engine migration trunk — use this as the top planning entry point |
 | `planning/dfo-action-handfeel-replication-plan.md` | Living alignment document — tracks pending DFO handfeel items |
 | `planning/runtime-observability-three-phase-plan.md` | Runtime observability: three-phase telemetry, profiling, and replay validation plan |
 | `planning/crt-002-frame-evidence.md` | Frame evidence target and provenance plan |

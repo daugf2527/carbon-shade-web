@@ -1,6 +1,10 @@
 # Carbon Shade 架构纵览
 
 > Combat Lab 0.3 | 目标: 70-85-classic-pre-metastasis | 2026-05-12
+>
+> Status: supporting snapshot
+> Authoritative successor: `docs/planning/2026-06-04-engine-native-rewrite-roadmap.md`
+> Notes: keep for historical layer mapping, not for current migration status.
 
 ## 10层架构
 

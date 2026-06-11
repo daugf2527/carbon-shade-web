@@ -69,3 +69,9 @@ Tell reviewers exactly what to inspect first.
 ## Notes / Follow-ups
 
 Add known tradeoffs, deferred work, or follow-up issues here.
+
+## Documentation pruning / convergence
+
+- [ ] entry doc updated
+- [ ] duplicate narrative avoided
+- [ ] stale doc relabeled or linked instead of silently competing

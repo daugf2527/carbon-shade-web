@@ -3,6 +3,8 @@
 > **目的**：每条核心事实指定 **单一真源 (Single Source of Truth)**，其他方写 derived view 必须 link 不放数字——否则改 SOT 一处剩 N 处不知，制造横向漂移。
 >
 > 与 `scripts/consistency-check.mjs` 配套：consistency-check 扫"derived 是否还跟 SOT 一致"。
+>
+> 补充：文档入口与口径收口规则以 `docs/engineering/documentation-pruning-policy.md` 为准。
 
 ---
 
@@ -97,6 +99,7 @@
    - 找 SOT？没有 → 建 SOT
    - 写 derived → 用 link，不抄数字
    - 加进 consistency-check CHECKS 数组
+7. **文档入口漂移时**，以 `docs/engineering/documentation-pruning-policy.md` 作为口径收口规则，不再让 `docs/README.md` 承担历史总汇编角色。
 
 ---
 

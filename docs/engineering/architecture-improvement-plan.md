@@ -2,6 +2,10 @@
 
 > 基于 2026-05-12 架构评审，针对「手感到位」和「demo→产品」的完整解决方案
 > 研究来源：6 个并行 agent（WebSearch + Firecrawl + 本地文档）+ 现有代码分析
+>
+> Status: superseded planning snapshot
+> Authoritative successor: `docs/planning/2026-06-04-engine-native-rewrite-roadmap.md`
+> Notes: preserve for pre-engine-native refactor context only.
 
 ---
 
