@@ -1,13 +1,13 @@
 # Combat Retirement Audit (2026-06-10)
 
-- 生成时间: 2026-06-10T13:09:38.157Z
+- 生成时间: 2026-06-11T06:59:38.217Z
 - src/combat 文件数: 46
-- 运行时/脚本依赖: 1
-- runtime 分层: type-only=1, runtime-value=1, source-ref=0
-- truth 测试依赖: 3
-- static 测试依赖: 34
+- 运行时/脚本依赖: 0
+- runtime 分层: type-only=0, runtime-value=0, source-ref=0
+- truth 测试依赖: 0
+- static 测试依赖: 31
 - browser 测试依赖: 0
-- 文档引用: 61
+- 文档引用: 62
 
 ## 结论
 
@@ -18,27 +18,15 @@
 
 ## 运行时/脚本依赖
 
-- `src/game/CombatScene.ts:3` import type { DebugSnapshot } from "../combat/debug/DebugOverlay.js";
-- `src/game/CombatScene.ts:4` import { FixedStepSimulation } from "../combat/kernel/FixedStepSimulation.js";
+(none)
 
 ## Truth 测试依赖
 
-- `tests/truth/reaction-velocity.test.ts:11` import { ReactionResolver } from "../../src/combat/reaction/ReactionResolver.js";
-- `tests/truth/reaction-velocity.test.ts:12` import type { Actor, HitDecision } from "../../src/combat/types.js";
-- `tests/truth/swordman-attack1-truth.test.ts:18` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/truth/swordman-reaction-formulas.test.ts:16` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/truth/swordman-reaction-formulas.test.ts:17` import type { ReactionKind } from "../../src/combat/types.js";
-- `tests/truth/swordman-reaction-formulas.test.ts:18` import type { CombatEvent } from "../../src/combat/events/CombatEventBus.js";
+(none)
 
 ## Static 测试依赖
 
-- `tests/static/action-cancel-probe.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/action-cancel-probe.test.ts:3` import type { ActionName, Actor } from "../../src/combat/types.js";
-- `tests/static/architecture.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/architecture.test.ts:3` import { FixedStepSimulation } from "../../src/combat/kernel/FixedStepSimulation.js";
 - `tests/static/armor.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/auto-combat.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/auto-combat.test.ts:3` import type { ActionName, Actor } from "../../src/combat/types.js";
 - `tests/static/combat-chain-regression.test.ts:2` import type { ActionName, Actor } from "../../src/combat/types.js";
 - `tests/static/combat-chain-regression.test.ts:3` import { createActor } from "../../src/combat/actors/ActorFactory.js";
 - `tests/static/combat-chain-regression.test.ts:4` import { getAction } from "../../src/combat/actions/FrameDataAction.js";
@@ -113,44 +101,44 @@
 - `docs/changelog/handfeel-pass-notes.md:10` - Reworked reaction motion in `CombatKernel`:
 - `docs/design/02-concept-art-game-design-v0.1.md:227` 3. **后续衍生：** VS Code/Cursor插件——webview嵌入轻量版Phaser渲染，Node侧运行CombatKernel，信号采集层监听workspace事件
 - `docs/design/stage3-combat-system-survey.md:4` 调研范围：`src/combat/` + `src/engine/core/`（两套系统并存）
-- `docs/design/stage3-combat-system-survey.md:15` | **combat/** | `src/combat/` | 活跃，CombatScene 使用 | Stage 2 完成的完整战斗内核 |
-- `docs/design/stage3-combat-system-survey.md:18` `src/engine/core/` 的 `ActorStateMachine`、`DamageFormula`、`ReactionResolver`、`HitDetection`、`Actor` 是 **独立骨架**，不被 `CombatScene` 或 `CombatKernel` 引用。Phase A 调研主体是 `src/combat/`。
-- `docs/design/stage3-combat-system-survey.md:24` ### 1. `src/combat/actors/ActorFactory.ts`
-- `docs/design/stage3-combat-system-survey.md:39` - `src/combat/kernel/CombatKernel.ts`（`reset()` 里调用 6 次 `createActor`）
-- `docs/design/stage3-combat-system-survey.md:40` - `src/game/CombatScene.ts`（间接通过 CombatKernel）
-- `docs/design/stage3-combat-system-survey.md:41` - `src/combat/replay/ReplayRecorder.ts`（cloneActorSnapshot）
-- `docs/design/stage3-combat-system-survey.md:61` ### 2. `src/combat/damage/DamageFormula.ts`
-- `docs/design/stage3-combat-system-survey.md:73` **被依赖**：`src/combat/damage/DamageResolver.ts`（唯一使用方）
-- `docs/design/stage3-combat-system-survey.md:87` ### 3. `src/combat/damage/DamageResolver.ts`
-- `docs/design/stage3-combat-system-survey.md:101` - `src/combat/hit/HitResolutionSystem.ts`（`applyHitDecision` 里调用）
-- `docs/design/stage3-combat-system-survey.md:102` - `src/combat/kernel/SystemContext.ts`（通过 ctx.damageResolver）
-- `docs/design/stage3-combat-system-survey.md:112` ### 4. `src/combat/hit/HitResolutionSystem.ts`
-- `docs/design/stage3-combat-system-survey.md:135` - `src/combat/kernel/CombatKernel.ts`（`this.hitResolution`，注册进 pipeline DETECTION 阶段）
-- `docs/design/stage3-combat-system-survey.md:150` ### 5. `src/combat/hit/HitResolver2D5.ts`
-- `docs/design/stage3-combat-system-survey.md:165` - `src/combat/kernel/CombatKernel.ts`（`this.hitResolver`）
-- `docs/design/stage3-combat-system-survey.md:166` - `src/combat/kernel/SystemContext.ts`（ctx.hitResolver）
-- `docs/design/stage3-combat-system-survey.md:167` - `src/combat/hit/HitResolutionSystem.ts`（`ctx.hitResolver.buildQuery`、`ctx.hitResolver.geometry`）
-- `docs/design/stage3-combat-system-survey.md:175` ### 6. `src/combat/hit/HitDecisionResolver.ts`
-- `docs/design/stage3-combat-system-survey.md:191` - `src/combat/kernel/CombatKernel.ts`（`this.hitDecisionResolver`）
-- `docs/design/stage3-combat-system-survey.md:192` - `src/combat/hit/HitResolutionSystem.ts`（`ctx.hitDecisionResolver.decide`）
-- `docs/design/stage3-combat-system-survey.md:200` ### 7. `src/combat/reaction/ReactionResolver.ts`
-- `docs/design/stage3-combat-system-survey.md:216` - `src/combat/kernel/CombatKernel.ts`（`this.reactionResolver`）
-- `docs/design/stage3-combat-system-survey.md:217` - `src/combat/hit/HitResolutionSystem.ts`（`ctx.reactionResolver.resolve`、`ctx.reactionResolver.apply`）
-- `docs/design/stage3-combat-system-survey.md:232` ### 8. `src/combat/actions/FrameDataAction.ts`
-- `docs/design/stage3-combat-system-survey.md:244` - `src/combat/hit/HitResolutionSystem.ts`（`getAction(inst.actionName)`）
-- `docs/design/stage3-combat-system-survey.md:245` - `src/combat/kernel/CombatKernel.ts`（`getAction` 用于 hitStopProfile、recoilProfile、rootMotion）
-- `docs/design/stage3-combat-system-survey.md:246` - `src/combat/motion/RootMotionController.ts`
-- `docs/design/stage3-combat-system-survey.md:247` - `src/combat/resources/CooldownResourceKernel.ts`
-- `docs/design/stage3-combat-system-survey.md:248` - `src/combat/replay/ReplayRecorder.ts`
-- `docs/design/stage3-combat-system-survey.md:266` ### 9. `src/combat/actions/ActionRegistry.ts`
-- `docs/design/stage3-combat-system-survey.md:294` **与 `src/combat/` 的关系**：**完全独立**，`src/combat/` 不使用此 FSM。`src/combat/` 的状态通过 `Actor.reactionState: ReactionKind` 字段 + `Actor.currentAction` 管理，没有显式 FSM 类。
-- `docs/design/stage3-combat-system-survey.md:306` [CombatKernel.tick()]
-- `docs/design/stage3-combat-system-survey.md:349` [CombatScene.ts] ← Phaser 渲染层，读 CombatKernel.debugSnapshot()
-- `docs/design/stage3-combat-system-survey.md:361` | P0 | `DamageFormula.ts` | **REWRITE** T-A.9 | atkPower 当乘数是结构性错误，FINAL_DIVISOR=1 是掩盖补丁，公式需重建 |
-- `docs/design/stage3-combat-system-survey.md:390` | DamageFormula.ts:33 | `STR_DIVISOR=250` | 力量系数除数 | dcalc 验证，可保留 |
-- `docs/design/stage3-combat-system-survey.md:391` | DamageFormula.ts:38 | `DEF_DIVISOR=200` | 防御公式常数 | dcalc 验证，可保留 |
-- `docs/design/stage3-combat-system-survey.md:392` | DamageFormula.ts:39 | `FINAL_DIVISOR=1` | 伤害缩放补丁 | **删除**，公式重建后不需要 |
-- `docs/design/stage3-combat-system-survey.md:393` | DamageFormula.ts:42-47 | `R_ATK_POWER=1.0` 等 | 未实现的 ratio pass-through | 保留占位，后续填充 |
+- `docs/design/stage3-combat-system-survey.md:19` | **combat/** | `src/combat/` | 活跃，CombatScene 使用 | Stage 2 完成的完整战斗内核 |
+- `docs/design/stage3-combat-system-survey.md:22` `src/engine/core/` 的 `ActorStateMachine`、`DamageFormula`、`ReactionResolver`、`HitDetection`、`Actor` 是 **独立骨架**，不被 `CombatScene` 或 `CombatKernel` 引用。Phase A 调研主体是 `src/combat/`。
+- `docs/design/stage3-combat-system-survey.md:28` ### 1. `src/combat/actors/ActorFactory.ts`
+- `docs/design/stage3-combat-system-survey.md:43` - `src/combat/kernel/CombatKernel.ts`（`reset()` 里调用 6 次 `createActor`）
+- `docs/design/stage3-combat-system-survey.md:44` - `src/game/CombatScene.ts`（间接通过 CombatKernel）
+- `docs/design/stage3-combat-system-survey.md:45` - `src/combat/replay/ReplayRecorder.ts`（cloneActorSnapshot）
+- `docs/design/stage3-combat-system-survey.md:65` ### 2. `src/combat/damage/DamageFormula.ts`
+- `docs/design/stage3-combat-system-survey.md:77` **被依赖**：`src/combat/damage/DamageResolver.ts`（唯一使用方）
+- `docs/design/stage3-combat-system-survey.md:91` ### 3. `src/combat/damage/DamageResolver.ts`
+- `docs/design/stage3-combat-system-survey.md:105` - `src/combat/hit/HitResolutionSystem.ts`（`applyHitDecision` 里调用）
+- `docs/design/stage3-combat-system-survey.md:106` - `src/combat/kernel/SystemContext.ts`（通过 ctx.damageResolver）
+- `docs/design/stage3-combat-system-survey.md:116` ### 4. `src/combat/hit/HitResolutionSystem.ts`
+- `docs/design/stage3-combat-system-survey.md:139` - `src/combat/kernel/CombatKernel.ts`（`this.hitResolution`，注册进 pipeline DETECTION 阶段）
+- `docs/design/stage3-combat-system-survey.md:154` ### 5. `src/combat/hit/HitResolver2D5.ts`
+- `docs/design/stage3-combat-system-survey.md:169` - `src/combat/kernel/CombatKernel.ts`（`this.hitResolver`）
+- `docs/design/stage3-combat-system-survey.md:170` - `src/combat/kernel/SystemContext.ts`（ctx.hitResolver）
+- `docs/design/stage3-combat-system-survey.md:171` - `src/combat/hit/HitResolutionSystem.ts`（`ctx.hitResolver.buildQuery`、`ctx.hitResolver.geometry`）
+- `docs/design/stage3-combat-system-survey.md:179` ### 6. `src/combat/hit/HitDecisionResolver.ts`
+- `docs/design/stage3-combat-system-survey.md:195` - `src/combat/kernel/CombatKernel.ts`（`this.hitDecisionResolver`）
+- `docs/design/stage3-combat-system-survey.md:196` - `src/combat/hit/HitResolutionSystem.ts`（`ctx.hitDecisionResolver.decide`）
+- `docs/design/stage3-combat-system-survey.md:204` ### 7. `src/combat/reaction/ReactionResolver.ts`
+- `docs/design/stage3-combat-system-survey.md:220` - `src/combat/kernel/CombatKernel.ts`（`this.reactionResolver`）
+- `docs/design/stage3-combat-system-survey.md:221` - `src/combat/hit/HitResolutionSystem.ts`（`ctx.reactionResolver.resolve`、`ctx.reactionResolver.apply`）
+- `docs/design/stage3-combat-system-survey.md:236` ### 8. `src/combat/actions/FrameDataAction.ts`
+- `docs/design/stage3-combat-system-survey.md:248` - `src/combat/hit/HitResolutionSystem.ts`（`getAction(inst.actionName)`）
+- `docs/design/stage3-combat-system-survey.md:249` - `src/combat/kernel/CombatKernel.ts`（`getAction` 用于 hitStopProfile、recoilProfile、rootMotion）
+- `docs/design/stage3-combat-system-survey.md:250` - `src/combat/motion/RootMotionController.ts`
+- `docs/design/stage3-combat-system-survey.md:251` - `src/combat/resources/CooldownResourceKernel.ts`
+- `docs/design/stage3-combat-system-survey.md:252` - `src/combat/replay/ReplayRecorder.ts`
+- `docs/design/stage3-combat-system-survey.md:270` ### 9. `src/combat/actions/ActionRegistry.ts`
+- `docs/design/stage3-combat-system-survey.md:298` **与 `src/combat/` 的关系**：**完全独立**，`src/combat/` 不使用此 FSM。`src/combat/` 的状态通过 `Actor.reactionState: ReactionKind` 字段 + `Actor.currentAction` 管理，没有显式 FSM 类。
+- `docs/design/stage3-combat-system-survey.md:310` [CombatKernel.tick()]
+- `docs/design/stage3-combat-system-survey.md:353` [CombatScene.ts] ← Phaser 渲染层，读 CombatKernel.debugSnapshot()
+- `docs/design/stage3-combat-system-survey.md:365` | P0 | `DamageFormula.ts` | **REWRITE** T-A.9 | atkPower 当乘数是结构性错误，FINAL_DIVISOR=1 是掩盖补丁，公式需重建 |
+- `docs/design/stage3-combat-system-survey.md:394` | DamageFormula.ts:33 | `STR_DIVISOR=250` | 力量系数除数 | dcalc 验证，可保留 |
+- `docs/design/stage3-combat-system-survey.md:395` | DamageFormula.ts:38 | `DEF_DIVISOR=200` | 防御公式常数 | dcalc 验证，可保留 |
+- `docs/design/stage3-combat-system-survey.md:396` | DamageFormula.ts:39 | `FINAL_DIVISOR=1` | 伤害缩放补丁 | **删除**，公式重建后不需要 |
+- `docs/design/stage3-combat-system-survey.md:397` | DamageFormula.ts:42-47 | `R_ATK_POWER=1.0` 等 | 未实现的 ratio pass-through | 保留占位，后续填充 |
 - `docs/design/stage3-manifest-survey.md:144` | `src/combat/replay/ReplayRecorder.ts` | 12, 70 | dataSources.actions 字段 |
 - `docs/design/stage3-manifest-survey.md:152` | `src/combat/actions/FrameDataAction.ts` | 5 | 全部 24 个 combatCancelTargets | TS 硬编码 ACTIONS 表 |
 - `docs/design/stage3-manifest-survey.md:153` | `src/combat/actions/FrameDataAction.ts` | 125–167 | 全部 38 个 | ACTIONS 对象定义（TS 真值源） |
@@ -161,14 +149,14 @@
 - `docs/engineering/2026-06-07-batch234-handoff.md:108` - `src/combat/types.ts:202-213` `ArmorProfile`：`baseType: "none"|"super_armor"|"boss_super_armor"|"building_armor"` + immunities{grab/control/damage} + temporaryFlags{invulnerableUntilTick/getUpArmorUntilTick} + hitStopCapFrames + reactionOverride
 - `docs/engineering/2026-06-07-batch234-handoff.md:109` - `src/combat/actors/ActorFactory.ts:29-82`：三种霸体的 profile 常量（building: 不能 launch/knockdown/knockback, hitStopCap=1; boss: hitStopCap=2; super: 可 knockback, cap=3）
 - `docs/engineering/2026-06-07-batch234-handoff.md:124` **蓝本**：`src/combat/combo/ComboCorrection.ts`（130 行）+ `src/combat/types.ts:151-167` `ComboCorrectionState`
-- `docs/engineering/architecture-improvement-plan.md:12` | 1 | CombatKernel 拆分为 15 子系统 | P0 | 3-5天 | 架构基础，降低后续耦合 |
-- `docs/engineering/architecture-improvement-plan.md:28` ### 1. CombatKernel → 15 子系统管道
-- `docs/engineering/architecture-improvement-plan.md:30` **当前问题**：CombatKernel.tick() 是 40 步单体巨方法，893 行。
-- `docs/engineering/architecture-improvement-plan.md:86` - 在 `CombatKernel` 外层包装 `FixedStepSimulation` 类
-- `docs/engineering/architecture-improvement-plan.md:231` // CombatKernel 需支持：
-- `docs/engineering/architecture-improvement-plan.md:267` ├── Day 4-8: CombatKernel → 15 子系统
-- `docs/engineering/architecture-overview.md:10` | 战斗核心 | Pure TS, 无Phaser依赖, 确定性 | CombatKernel, HitResolver2D5, DamageFormula(10乘数链), StatusEffectSystem(14状态), EnemyAI(FSM 9状态+行为树), FrameDataAction(38动作), ReplayRecorder |
-- `docs/engineering/architecture-overview.md:23` → AniAnalyzer ─────────────▶ SklToActionMapper → FrameDataAction → CombatKernel → CombatScene(Phaser)
+- `docs/engineering/architecture-improvement-plan.md:16` | 1 | CombatKernel 拆分为 15 子系统 | P0 | 3-5天 | 架构基础，降低后续耦合 |
+- `docs/engineering/architecture-improvement-plan.md:32` ### 1. CombatKernel → 15 子系统管道
+- `docs/engineering/architecture-improvement-plan.md:34` **当前问题**：CombatKernel.tick() 是 40 步单体巨方法，893 行。
+- `docs/engineering/architecture-improvement-plan.md:90` - 在 `CombatKernel` 外层包装 `FixedStepSimulation` 类
+- `docs/engineering/architecture-improvement-plan.md:235` // CombatKernel 需支持：
+- `docs/engineering/architecture-improvement-plan.md:271` ├── Day 4-8: CombatKernel → 15 子系统
+- `docs/engineering/architecture-overview.md:14` | 战斗核心 | Pure TS, 无Phaser依赖, 确定性 | CombatKernel, HitResolver2D5, DamageFormula(10乘数链), StatusEffectSystem(14状态), EnemyAI(FSM 9状态+行为树), FrameDataAction(38动作), ReplayRecorder |
+- `docs/engineering/architecture-overview.md:27` → AniAnalyzer ─────────────▶ SklToActionMapper → FrameDataAction → CombatKernel → CombatScene(Phaser)
 - `docs/engineering/author-profile-analysis.md:16` | **当前职位** | 高级/架构级 Web 全栈（非游戏行业） | `src/combat/` 的 DI 管道 + 插件架构、"web术语描述游戏问题"的自我诊断、TypeScript 专家级但 C++ 靠 agent 辅助 |
 - `docs/engineering/combat-attack-hit-reaction-chain.md:8` Combat simulation advances through `FixedStepSimulation` at 60 Hz. Phaser renders and forwards elapsed browser time, but the combat truth lives in `CombatKernel.tick()`.
 - `docs/engineering/combat-attack-hit-reaction-chain.md:35` `CombatKernel.consumeInput()` pulls the highest-priority allowed input from `InputBuffer`. It then maps context-sensitive commands:
@@ -176,146 +164,143 @@
 - `docs/engineering/combat-lab-0.2-r3-final-integrated-development-spec.md:471` DamageFormula.ts
 - `docs/engineering/combat-lab-0.2-r3-final-integrated-development-spec.md:570` CombatKernel.tick()
 - `docs/engineering/combat-lab-0.2-r3-final-integrated-development-spec.md:636` constructor(private readonly kernel: CombatKernel) {}
-- `docs/engineering/data-contract-baseline.md:509` | `chr.attackSpeed.value` | 11 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 950 |
-- `docs/engineering/data-contract-baseline.md:510` | `chr.bodyImagePath.value` | 11 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | character/fighter/atequipment/avatar/skin/fm_body% |
-- `docs/engineering/data-contract-baseline.md:511` | `chr.castSpeed.value` | 11 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 1000 |
-- `docs/engineering/data-contract-baseline.md:515` | `chr.job.value` | 11 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | at fighter |
-- `docs/engineering/data-contract-baseline.md:516` | `chr.jumpPower.value` | 11 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 470 |
-- `docs/engineering/data-contract-baseline.md:517` | `chr.jumpSpeed.value` | 11 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 110 |
-- `docs/engineering/data-contract-baseline.md:566` | `chr.moveSpeed.value` | 11 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 880 |
-- `docs/engineering/data-contract-baseline.md:567` | `chr.path` | 11 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | character/fighter/atfighter.chr |
-- `docs/engineering/data-contract-baseline.md:569` | `chr.raw.path` | 11 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | character/fighter/atfighter.chr |
-- `docs/engineering/data-contract-baseline.md:570` | `chr.raw.sections[].name` | 11 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | upgrade weapon attack power rate |
-- `docs/engineering/data-contract-baseline.md:572` | `chr.raw.type` | 11 | string | 22 | 81 | 1 | 42 | 10 | runtime consumer: src/combat/actions/FrameDataActi | document |
-- `docs/engineering/data-contract-baseline.md:573` | `chr.sections[].name` | 11 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | upgrade weapon attack power rate |
-- `docs/engineering/data-contract-baseline.md:580` | `chr.weaponHitInfo[].launch` | 11 | number | 3 | 22 | 1 | 7 | 1 | runtime consumer: src/combat/ai/EnemyAI.ts, src/co | 0.15 |
-- `docs/engineering/data-contract-baseline.md:583` | `chr.weight.value` | 11 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 50000 |
-- `docs/engineering/data-contract-baseline.md:585` | `etc` | 11 | null | 8 | 9 | 1 | 6 | 3 | runtime consumer: src/combat/damage/DamageFormula. |  |
-- `docs/engineering/data-contract-baseline.md:590` | `attacks` | 9 | object(empty) | 2 | 7 | 0 | 4 | 3 | runtime consumer: src/combat/kernel/CombatKernel.t |  |
-- `docs/engineering/data-contract-baseline.md:603` | `chr.darkResistance.value` | 4 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | -20 |
-- `docs/engineering/data-contract-baseline.md:604` | `chr.lightResistance.value` | 4 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 20 |
-- `docs/engineering/data-contract-baseline.md:607` | `chr.weaponWav[].hit` | 4 | string | 5 | 22 | 1 | 11 | 2 | runtime consumer: src/combat/actions/FrameDataActi | r_spear_hit |
-- `docs/engineering/data-contract-baseline.md:617` | `animations{}.frames[].index` | 3 | number | 17 | 25 | 1 | 9 | 6 | runtime consumer: src/combat/kernel/CombatSystem.t | 0 |
-- `docs/engineering/data-contract-baseline.md:621` | `animations{}.path` | 3 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | monster/goblin/animation_goblin2/damage1.ani |
-- `docs/engineering/data-contract-baseline.md:630` | `attacks{}.damageBonus.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 90 |
-- `docs/engineering/data-contract-baseline.md:637` | `attacks{}.liftUp.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 400 |
-- `docs/engineering/data-contract-baseline.md:638` | `attacks{}.path` | 2 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | character/swordman/attackinfo/weaponcomboshort3.at |
-- `docs/engineering/data-contract-baseline.md:639` | `attacks{}.pushAside.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 40 |
-- `docs/engineering/data-contract-baseline.md:642` | `attacks{}.raw.path` | 2 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | character/swordman/attackinfo/weaponcomboshort3.at |
-- `docs/engineering/data-contract-baseline.md:644` | `attacks{}.raw.sections[].name` | 2 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | hit lift up |
-- `docs/engineering/data-contract-baseline.md:646` | `attacks{}.raw.type` | 2 | string | 22 | 81 | 1 | 42 | 10 | runtime consumer: src/combat/actions/FrameDataActi | document |
-- `docs/engineering/data-contract-baseline.md:648` | `attacks{}.sections[].name` | 2 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | hit lift up |
-- `docs/engineering/data-contract-baseline.md:657` | `skills{}.command[]` | 2 | string | 1 | 9 | 1 | 4 | 6 | runtime consumer: src/combat/input/BrowserInputSta | (right) |
-- `docs/engineering/data-contract-baseline.md:663` | `skills{}.durabilityDecreaseRate.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 25 |
-- `docs/engineering/data-contract-baseline.md:671` | `skills{}.icon.frame` | 2 | number | 8 | 24 | 1 | 22 | 7 | runtime consumer: src/combat/actions/FrameDataActi | 0 |
-- `docs/engineering/data-contract-baseline.md:679` | `skills{}.maximumLevel.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 70 |
-- `docs/engineering/data-contract-baseline.md:680` | `skills{}.name.value` | 2 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy |  |
-- `docs/engineering/data-contract-baseline.md:681` | `skills{}.path` | 2 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | skill/swordman/icewave.skl |
-- `docs/engineering/data-contract-baseline.md:683` | `skills{}.purchaseCost.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 25 |
-- `docs/engineering/data-contract-baseline.md:685` | `skills{}.raw.path` | 2 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | skill/swordman/icewave.skl |
-- `docs/engineering/data-contract-baseline.md:688` | `skills{}.raw.sections[].name` | 2 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | skill preloading image |
-- `docs/engineering/data-contract-baseline.md:690` | `skills{}.raw.type` | 2 | string | 22 | 81 | 1 | 42 | 10 | runtime consumer: src/combat/actions/FrameDataActi | document |
-- `docs/engineering/data-contract-baseline.md:691` | `skills{}.requiredLevel.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 30 |
-- `docs/engineering/data-contract-baseline.md:692` | `skills{}.requiredLevelRange.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 2 |
-- `docs/engineering/data-contract-baseline.md:695` | `skills{}.sections[].name` | 2 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | skill preloading image |
-- `docs/engineering/data-contract-baseline.md:696` | `skills{}.skillClass.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 0 |
-- `docs/engineering/data-contract-baseline.md:698` | `skills{}.skillCommandAdvantage.normal` | 2 | number | 4 | 6 | 1 | 5 | 0 | runtime consumer: src/combat/motion/AirbornePhysic | 20 |
-- `docs/engineering/data-contract-baseline.md:719` | `attacks.attack1.hitWav.value` | 1 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | staff_hit |
-- `docs/engineering/data-contract-baseline.md:723` | `attacks.attack1.liftUp.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 300 |
-- `docs/engineering/data-contract-baseline.md:724` | `attacks.attack1.path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | monster/goblin/attackinfo/attack1.atk |
-- `docs/engineering/data-contract-baseline.md:725` | `attacks.attack1.pushAside.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 100 |
-- `docs/engineering/data-contract-baseline.md:728` | `attacks.attack1.raw.path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | monster/goblin/attackinfo/attack1.atk |
-- `docs/engineering/data-contract-baseline.md:730` | `attacks.attack1.raw.sections[].name` | 1 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | no blood |
-- `docs/engineering/data-contract-baseline.md:732` | `attacks.attack1.raw.type` | 1 | string | 22 | 81 | 1 | 42 | 10 | runtime consumer: src/combat/actions/FrameDataActi | document |
-- `docs/engineering/data-contract-baseline.md:734` | `attacks.attack1.sections[].name` | 1 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | no blood |
-- `docs/engineering/data-contract-baseline.md:742` | `chr.weaponWav[].entries[].hit` | 1 | string | 5 | 22 | 1 | 11 | 2 | runtime consumer: src/combat/actions/FrameDataActi | r_dagger_hit |
-- `docs/engineering/data-contract-baseline.md:766` | `dgn.backgroundPos.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 80 |
-- `docs/engineering/data-contract-baseline.md:767` | `dgn.basisLevel.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 31 |
-- `docs/engineering/data-contract-baseline.md:773` | `dgn.experienceIncreasingPoint.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 0.9 |
-- `docs/engineering/data-contract-baseline.md:774` | `dgn.explain.value` | 1 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy |  |
-- `docs/engineering/data-contract-baseline.md:776` | `dgn.imageRefs[].path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | map/cutscene/behemoth.img |
-- `docs/engineering/data-contract-baseline.md:777` | `dgn.imageRefs[].resolved` | 1 | boolean | 5 | 3 | 1 | 4 | 8 | runtime consumer: src/combat/damage/DamageResolver | false |
-- `docs/engineering/data-contract-baseline.md:783` | `dgn.minimumRequiredLevel.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 28 |
-- `docs/engineering/data-contract-baseline.md:784` | `dgn.name.value` | 1 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy |  |
-- `docs/engineering/data-contract-baseline.md:785` | `dgn.path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | dungeon/act3/jungle.dgn |
-- `docs/engineering/data-contract-baseline.md:791` | `dgn.sections[].name` | 1 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | explain |
-- `docs/engineering/data-contract-baseline.md:792` | `dgn.size.height` | 1 | number | 4 | 14 | 1 | 4 | 6 | runtime consumer: src/combat/types.ts, src/data/of | 4 |
-- `docs/engineering/data-contract-baseline.md:793` | `dgn.size.width` | 1 | number | 7 | 17 | 1 | 5 | 6 | runtime consumer: src/combat/hit/HitResolver2D5.ts | 4 |
-- `docs/engineering/data-contract-baseline.md:802` | `files[].path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | players/swordman.json |
-- `docs/engineering/data-contract-baseline.md:806` | `maps[].dungeonId.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 22 |
-- `docs/engineering/data-contract-baseline.md:808` | `maps[].farSightScroll.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 56 |
-- `docs/engineering/data-contract-baseline.md:809` | `maps[].greed.value` | 1 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | nn nn |
-- `docs/engineering/data-contract-baseline.md:811` | `maps[].mapType.value` | 1 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | [normal] |
-- `docs/engineering/data-contract-baseline.md:812` | `maps[].middleSightScroll.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 90 |
-- `docs/engineering/data-contract-baseline.md:816` | `maps[].name.value` | 1 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | PVP 킠쫁 |
-- `docs/engineering/data-contract-baseline.md:817` | `maps[].nearSightScroll.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 110 |
-- `docs/engineering/data-contract-baseline.md:820` | `maps[].path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | map/jungle/e3204(1,2).map |
-- `docs/engineering/data-contract-baseline.md:825` | `maps[].raw.path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | map/jungle/e3204(1,2).map |
-- `docs/engineering/data-contract-baseline.md:826` | `maps[].raw.sections[].name` | 1 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | map name |
-- `docs/engineering/data-contract-baseline.md:828` | `maps[].raw.type` | 1 | string | 22 | 81 | 1 | 42 | 10 | runtime consumer: src/combat/actions/FrameDataActi | document |
-- `docs/engineering/data-contract-baseline.md:829` | `maps[].sections[].name` | 1 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | map name |
-- `docs/engineering/data-contract-baseline.md:841` | `mob.attackDelay.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 1500 |
-- `docs/engineering/data-contract-baseline.md:847` | `mob.hitRecovery.values[]` | 1 | number | 14 | 17 | 1 | 16 | 3 | runtime consumer: src/combat/kernel/CombatKernel.t | 500 |
-- `docs/engineering/data-contract-baseline.md:850` | `mob.level.values[]` | 1 | number | 14 | 17 | 1 | 16 | 3 | runtime consumer: src/combat/kernel/CombatKernel.t | 1 |
-- `docs/engineering/data-contract-baseline.md:851` | `mob.moveSpeed.values[]` | 1 | number | 14 | 17 | 1 | 16 | 3 | runtime consumer: src/combat/kernel/CombatKernel.t | 300 |
-- `docs/engineering/data-contract-baseline.md:852` | `mob.name.value` | 1 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy |  |
-- `docs/engineering/data-contract-baseline.md:853` | `mob.path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | monster/goblin/goblin.mob |
-- `docs/engineering/data-contract-baseline.md:855` | `mob.raw.path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | monster/goblin/goblin.mob |
-- `docs/engineering/data-contract-baseline.md:858` | `mob.raw.sections[].name` | 1 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | speech on situation |
-- `docs/engineering/data-contract-baseline.md:860` | `mob.raw.type` | 1 | string | 22 | 81 | 1 | 42 | 10 | runtime consumer: src/combat/actions/FrameDataActi | document |
-- `docs/engineering/data-contract-baseline.md:863` | `mob.sections[].name` | 1 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | speech on situation |
-- `docs/engineering/data-contract-baseline.md:864` | `mob.sight.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 300 |
-- `docs/engineering/data-contract-baseline.md:865` | `mob.stuckbonusOnDamage.values[]` | 1 | number | 14 | 17 | 1 | 16 | 3 | runtime consumer: src/combat/kernel/CombatKernel.t | 0 |
-- `docs/engineering/data-contract-baseline.md:866` | `mob.warlike.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 60 |
-- `docs/engineering/data-contract-baseline.md:867` | `mob.weight.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 45000 |
-- `docs/engineering/data-contract-baseline.md:868` | `mob.weightDual.values[]` | 1 | number | 14 | 17 | 1 | 16 | 3 | runtime consumer: src/combat/kernel/CombatKernel.t | 45000 |
-- `docs/engineering/data-contract-baseline.md:869` | `mob.widthBox.values[]` | 1 | number | 14 | 17 | 1 | 16 | 3 | runtime consumer: src/combat/kernel/CombatKernel.t | 40 |
-- `docs/engineering/data-contract-baseline.md:906` - **runtime 定义**: src/engine/ + src/game/ + src/combat/ + src/data/official/ + src/dnf-native-combat 内非 producer 文件. dnf-native runtime 子目录 (如 stateMachine, simulation) 还没建, 当前所有 dnf-native 都被算成 producer — Phase 2 起跑后这条会自动转好.
+- `docs/engineering/data-contract-baseline.md:513` | `chr.attackSpeed.value` | 11 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 950 |
+- `docs/engineering/data-contract-baseline.md:514` | `chr.bodyImagePath.value` | 11 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | character/fighter/atequipment/avatar/skin/fm_body% |
+- `docs/engineering/data-contract-baseline.md:515` | `chr.castSpeed.value` | 11 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 1000 |
+- `docs/engineering/data-contract-baseline.md:519` | `chr.job.value` | 11 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | at fighter |
+- `docs/engineering/data-contract-baseline.md:520` | `chr.jumpPower.value` | 11 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 470 |
+- `docs/engineering/data-contract-baseline.md:521` | `chr.jumpSpeed.value` | 11 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 110 |
+- `docs/engineering/data-contract-baseline.md:570` | `chr.moveSpeed.value` | 11 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 880 |
+- `docs/engineering/data-contract-baseline.md:571` | `chr.path` | 11 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | character/fighter/atfighter.chr |
+- `docs/engineering/data-contract-baseline.md:573` | `chr.raw.path` | 11 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | character/fighter/atfighter.chr |
+- `docs/engineering/data-contract-baseline.md:574` | `chr.raw.sections[].name` | 11 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | upgrade weapon attack power rate |
+- `docs/engineering/data-contract-baseline.md:576` | `chr.raw.type` | 11 | string | 22 | 81 | 1 | 42 | 10 | runtime consumer: src/combat/actions/FrameDataActi | document |
+- `docs/engineering/data-contract-baseline.md:577` | `chr.sections[].name` | 11 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | upgrade weapon attack power rate |
+- `docs/engineering/data-contract-baseline.md:584` | `chr.weaponHitInfo[].launch` | 11 | number | 3 | 22 | 1 | 7 | 1 | runtime consumer: src/combat/ai/EnemyAI.ts, src/co | 0.15 |
+- `docs/engineering/data-contract-baseline.md:587` | `chr.weight.value` | 11 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 50000 |
+- `docs/engineering/data-contract-baseline.md:589` | `etc` | 11 | null | 8 | 9 | 1 | 6 | 3 | runtime consumer: src/combat/damage/DamageFormula. |  |
+- `docs/engineering/data-contract-baseline.md:594` | `attacks` | 9 | object(empty) | 2 | 7 | 0 | 4 | 3 | runtime consumer: src/combat/kernel/CombatKernel.t |  |
+- `docs/engineering/data-contract-baseline.md:607` | `chr.darkResistance.value` | 4 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | -20 |
+- `docs/engineering/data-contract-baseline.md:608` | `chr.lightResistance.value` | 4 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 20 |
+- `docs/engineering/data-contract-baseline.md:611` | `chr.weaponWav[].hit` | 4 | string | 5 | 22 | 1 | 11 | 2 | runtime consumer: src/combat/actions/FrameDataActi | r_spear_hit |
+- `docs/engineering/data-contract-baseline.md:621` | `animations{}.frames[].index` | 3 | number | 17 | 25 | 1 | 9 | 6 | runtime consumer: src/combat/kernel/CombatSystem.t | 0 |
+- `docs/engineering/data-contract-baseline.md:625` | `animations{}.path` | 3 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | monster/goblin/animation_goblin2/damage1.ani |
+- `docs/engineering/data-contract-baseline.md:634` | `attacks{}.damageBonus.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 90 |
+- `docs/engineering/data-contract-baseline.md:641` | `attacks{}.liftUp.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 400 |
+- `docs/engineering/data-contract-baseline.md:642` | `attacks{}.path` | 2 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | character/swordman/attackinfo/weaponcomboshort3.at |
+- `docs/engineering/data-contract-baseline.md:643` | `attacks{}.pushAside.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 40 |
+- `docs/engineering/data-contract-baseline.md:646` | `attacks{}.raw.path` | 2 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | character/swordman/attackinfo/weaponcomboshort3.at |
+- `docs/engineering/data-contract-baseline.md:648` | `attacks{}.raw.sections[].name` | 2 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | hit lift up |
+- `docs/engineering/data-contract-baseline.md:650` | `attacks{}.raw.type` | 2 | string | 22 | 81 | 1 | 42 | 10 | runtime consumer: src/combat/actions/FrameDataActi | document |
+- `docs/engineering/data-contract-baseline.md:652` | `attacks{}.sections[].name` | 2 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | hit lift up |
+- `docs/engineering/data-contract-baseline.md:661` | `skills{}.command[]` | 2 | string | 1 | 9 | 1 | 4 | 6 | runtime consumer: src/combat/input/BrowserInputSta | (right) |
+- `docs/engineering/data-contract-baseline.md:667` | `skills{}.durabilityDecreaseRate.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 25 |
+- `docs/engineering/data-contract-baseline.md:675` | `skills{}.icon.frame` | 2 | number | 8 | 24 | 1 | 22 | 7 | runtime consumer: src/combat/actions/FrameDataActi | 0 |
+- `docs/engineering/data-contract-baseline.md:683` | `skills{}.maximumLevel.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 70 |
+- `docs/engineering/data-contract-baseline.md:684` | `skills{}.name.value` | 2 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy |  |
+- `docs/engineering/data-contract-baseline.md:685` | `skills{}.path` | 2 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | skill/swordman/icewave.skl |
+- `docs/engineering/data-contract-baseline.md:687` | `skills{}.purchaseCost.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 25 |
+- `docs/engineering/data-contract-baseline.md:689` | `skills{}.raw.path` | 2 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | skill/swordman/icewave.skl |
+- `docs/engineering/data-contract-baseline.md:692` | `skills{}.raw.sections[].name` | 2 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | skill preloading image |
+- `docs/engineering/data-contract-baseline.md:694` | `skills{}.raw.type` | 2 | string | 22 | 81 | 1 | 42 | 10 | runtime consumer: src/combat/actions/FrameDataActi | document |
+- `docs/engineering/data-contract-baseline.md:695` | `skills{}.requiredLevel.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 30 |
+- `docs/engineering/data-contract-baseline.md:696` | `skills{}.requiredLevelRange.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 2 |
+- `docs/engineering/data-contract-baseline.md:699` | `skills{}.sections[].name` | 2 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | skill preloading image |
+- `docs/engineering/data-contract-baseline.md:700` | `skills{}.skillClass.value` | 2 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 0 |
+- `docs/engineering/data-contract-baseline.md:702` | `skills{}.skillCommandAdvantage.normal` | 2 | number | 4 | 6 | 1 | 5 | 0 | runtime consumer: src/combat/motion/AirbornePhysic | 20 |
+- `docs/engineering/data-contract-baseline.md:723` | `attacks.attack1.hitWav.value` | 1 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | staff_hit |
+- `docs/engineering/data-contract-baseline.md:727` | `attacks.attack1.liftUp.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 300 |
+- `docs/engineering/data-contract-baseline.md:728` | `attacks.attack1.path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | monster/goblin/attackinfo/attack1.atk |
+- `docs/engineering/data-contract-baseline.md:729` | `attacks.attack1.pushAside.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 100 |
+- `docs/engineering/data-contract-baseline.md:732` | `attacks.attack1.raw.path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | monster/goblin/attackinfo/attack1.atk |
+- `docs/engineering/data-contract-baseline.md:734` | `attacks.attack1.raw.sections[].name` | 1 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | no blood |
+- `docs/engineering/data-contract-baseline.md:736` | `attacks.attack1.raw.type` | 1 | string | 22 | 81 | 1 | 42 | 10 | runtime consumer: src/combat/actions/FrameDataActi | document |
+- `docs/engineering/data-contract-baseline.md:738` | `attacks.attack1.sections[].name` | 1 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | no blood |
+- `docs/engineering/data-contract-baseline.md:746` | `chr.weaponWav[].entries[].hit` | 1 | string | 5 | 22 | 1 | 11 | 2 | runtime consumer: src/combat/actions/FrameDataActi | r_dagger_hit |
+- `docs/engineering/data-contract-baseline.md:770` | `dgn.backgroundPos.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 80 |
+- `docs/engineering/data-contract-baseline.md:771` | `dgn.basisLevel.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 31 |
+- `docs/engineering/data-contract-baseline.md:777` | `dgn.experienceIncreasingPoint.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 0.9 |
+- `docs/engineering/data-contract-baseline.md:778` | `dgn.explain.value` | 1 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy |  |
+- `docs/engineering/data-contract-baseline.md:780` | `dgn.imageRefs[].path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | map/cutscene/behemoth.img |
+- `docs/engineering/data-contract-baseline.md:781` | `dgn.imageRefs[].resolved` | 1 | boolean | 5 | 3 | 1 | 4 | 8 | runtime consumer: src/combat/damage/DamageResolver | false |
+- `docs/engineering/data-contract-baseline.md:787` | `dgn.minimumRequiredLevel.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 28 |
+- `docs/engineering/data-contract-baseline.md:788` | `dgn.name.value` | 1 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy |  |
+- `docs/engineering/data-contract-baseline.md:789` | `dgn.path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | dungeon/act3/jungle.dgn |
+- `docs/engineering/data-contract-baseline.md:795` | `dgn.sections[].name` | 1 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | explain |
+- `docs/engineering/data-contract-baseline.md:796` | `dgn.size.height` | 1 | number | 4 | 14 | 1 | 4 | 6 | runtime consumer: src/combat/types.ts, src/data/of | 4 |
+- `docs/engineering/data-contract-baseline.md:797` | `dgn.size.width` | 1 | number | 7 | 17 | 1 | 5 | 6 | runtime consumer: src/combat/hit/HitResolver2D5.ts | 4 |
+- `docs/engineering/data-contract-baseline.md:806` | `files[].path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | players/swordman.json |
+- `docs/engineering/data-contract-baseline.md:810` | `maps[].dungeonId.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 22 |
+- `docs/engineering/data-contract-baseline.md:812` | `maps[].farSightScroll.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 56 |
+- `docs/engineering/data-contract-baseline.md:813` | `maps[].greed.value` | 1 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | nn nn |
+- `docs/engineering/data-contract-baseline.md:815` | `maps[].mapType.value` | 1 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | [normal] |
+- `docs/engineering/data-contract-baseline.md:816` | `maps[].middleSightScroll.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 90 |
+- `docs/engineering/data-contract-baseline.md:820` | `maps[].name.value` | 1 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | PVP 킠쫁 |
+- `docs/engineering/data-contract-baseline.md:821` | `maps[].nearSightScroll.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 110 |
+- `docs/engineering/data-contract-baseline.md:824` | `maps[].path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | map/jungle/e3204(1,2).map |
+- `docs/engineering/data-contract-baseline.md:829` | `maps[].raw.path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | map/jungle/e3204(1,2).map |
+- `docs/engineering/data-contract-baseline.md:830` | `maps[].raw.sections[].name` | 1 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | map name |
+- `docs/engineering/data-contract-baseline.md:832` | `maps[].raw.type` | 1 | string | 22 | 81 | 1 | 42 | 10 | runtime consumer: src/combat/actions/FrameDataActi | document |
+- `docs/engineering/data-contract-baseline.md:833` | `maps[].sections[].name` | 1 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | map name |
+- `docs/engineering/data-contract-baseline.md:845` | `mob.attackDelay.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 1500 |
+- `docs/engineering/data-contract-baseline.md:851` | `mob.hitRecovery.values[]` | 1 | number | 14 | 17 | 1 | 16 | 3 | runtime consumer: src/combat/kernel/CombatKernel.t | 500 |
+- `docs/engineering/data-contract-baseline.md:854` | `mob.level.values[]` | 1 | number | 14 | 17 | 1 | 16 | 3 | runtime consumer: src/combat/kernel/CombatKernel.t | 1 |
+- `docs/engineering/data-contract-baseline.md:855` | `mob.moveSpeed.values[]` | 1 | number | 14 | 17 | 1 | 16 | 3 | runtime consumer: src/combat/kernel/CombatKernel.t | 300 |
+- `docs/engineering/data-contract-baseline.md:856` | `mob.name.value` | 1 | string | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy |  |
+- `docs/engineering/data-contract-baseline.md:857` | `mob.path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | monster/goblin/goblin.mob |
+- `docs/engineering/data-contract-baseline.md:859` | `mob.raw.path` | 1 | string | 24 | 26 | 1 | 30 | 30 | runtime consumer: src/combat/damage/DamageFormula. | monster/goblin/goblin.mob |
+- `docs/engineering/data-contract-baseline.md:862` | `mob.raw.sections[].name` | 1 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | speech on situation |
+- `docs/engineering/data-contract-baseline.md:864` | `mob.raw.type` | 1 | string | 22 | 81 | 1 | 42 | 10 | runtime consumer: src/combat/actions/FrameDataActi | document |
+- `docs/engineering/data-contract-baseline.md:867` | `mob.sections[].name` | 1 | string | 19 | 31 | 1 | 22 | 15 | runtime consumer: src/combat/actions/FrameDataActi | speech on situation |
+- `docs/engineering/data-contract-baseline.md:868` | `mob.sight.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 300 |
+- `docs/engineering/data-contract-baseline.md:869` | `mob.stuckbonusOnDamage.values[]` | 1 | number | 14 | 17 | 1 | 16 | 3 | runtime consumer: src/combat/kernel/CombatKernel.t | 0 |
+- `docs/engineering/data-contract-baseline.md:870` | `mob.warlike.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 60 |
+- `docs/engineering/data-contract-baseline.md:871` | `mob.weight.value` | 1 | number | 18 | 33 | 1 | 23 | 8 | runtime consumer: src/combat/buffs/BuffLifecycleSy | 45000 |
+- `docs/engineering/data-contract-baseline.md:872` | `mob.weightDual.values[]` | 1 | number | 14 | 17 | 1 | 16 | 3 | runtime consumer: src/combat/kernel/CombatKernel.t | 45000 |
+- `docs/engineering/data-contract-baseline.md:873` | `mob.widthBox.values[]` | 1 | number | 14 | 17 | 1 | 16 | 3 | runtime consumer: src/combat/kernel/CombatKernel.t | 40 |
+- `docs/engineering/data-contract-baseline.md:910` - **runtime 定义**: src/engine/ + src/game/ + src/combat/ + src/data/official/ + src/dnf-native-combat 内非 producer 文件. dnf-native runtime 子目录 (如 stateMachine, simulation) 还没建, 当前所有 dnf-native 都被算成 producer — Phase 2 起跑后这条会自动转好.
 - `docs/engineering/input-recorder-guide.md:157` startRecording(kernel: CombatKernel): void;
 - `docs/engineering/input-recorder-guide.md:158` stopRecording(kernel: CombatKernel): InputRecording | null;
 - `docs/engineering/input-recorder-guide.md:161` startReplay(kernel: CombatKernel, recording?: InputRecording): boolean;
 - `docs/engineering/input-recorder-guide.md:163` tickReplay(kernel: CombatKernel): void;
 - `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:3` 依据 [docs/planning/2026-06-04-engine-native-rewrite-roadmap.md](../planning/2026-06-04-engine-native-rewrite-roadmap.md)，P5 不只是 truth 迁移，还要求 static gate 脱离 `src/combat/*`。
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:13` | `kernel-shell` | 32 | 直接 new / 驱动 CombatKernel 或 FixedStepSimulation，是真正的 static 主阻塞。 | 优先给这组补 engine 对等 harness 或归档策略。 |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:13` | `kernel-shell` | 29 | 直接 new / 驱动 CombatKernel 或 FixedStepSimulation，是真正的 static 主阻塞。 | 优先给这组补 engine 对等 harness 或归档策略。 |
 - `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:14` | `combat-subsystems` | 2 | 绕过 CombatKernel 但仍直接拼装 combat 子系统，适合作为中间迁移批次。 | 按功能把几条链迁到 engine core/system 对等实现。 |
 - `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:16` | `data-surface` | 0 | 只绑定动作表/类型/事件壳，属于最便宜的清理层。 | 先把这层从 src/combat/* 拆到 data/runtime 入口。 |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:22` | `tests/static/action-cancel-probe.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";`<br>`import type { ActionName, Actor } from "../../src/combat/types.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:23` | `tests/static/architecture.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";`<br>`import { FixedStepSimulation } from "../../src/combat/kernel/FixedStepSimulation.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:24` | `tests/static/armor.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:25` | `tests/static/auto-combat.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";`<br>`import type { ActionName, Actor } from "../../src/combat/types.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:26` | `tests/static/combat-chain-regression.test.ts` | `combat-subsystems` | `import type { ActionName, Actor } from "../../src/combat/types.js";`<br>`import { createActor } from "../../src/combat/actors/ActorFactory.js";`<br>`import { getAction } from "../../src/combat/actions/FrameDataAction.js";`<br>`import { HitResolver2D5 } from "../../src/combat/hit/HitResolver2D5.js";`<br>`import { HitDecisionResolver } from "../../src/combat/hit/HitDecisionResolver.js";`<br>`import { DamageResolver } from "../../src/combat/damage/DamageResolver.js";`<br>`import { ReactionResolver } from "../../src/combat/reaction/ReactionResolver.js";`<br>`import { StatusEffectSystem } from "../../src/combat/status/StatusEffectSystem.js";`<br>`import { CombatEventBus } from "../../src/combat/events/CombatEventBus.js";` | P5-C |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:27` | `tests/static/combo-correction.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:28` | `tests/static/damage-routing.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:29` | `tests/static/death-barrier-multihit.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:30` | `tests/static/death-loop.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";`<br>`import { CombatEventPriority } from "../../src/combat/events/CombatEventBus.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:31` | `tests/static/debug-actions.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:32` | `tests/static/dfo-replica.test.ts` | `kernel-shell` | `import { getAction } from "../../src/combat/actions/FrameDataAction.js";`<br>`import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:33` | `tests/static/enemy-ai.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:34` | `tests/static/fuzz-combat.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:35` | `tests/static/handfeel-fix2.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:36` | `tests/static/hit-shape.test.ts` | `combat-subsystems` | `import type { HitBoxFrameWindow } from "../../src/combat/types.js";`<br>`import { createActor } from "../../src/combat/actors/ActorFactory.js";`<br>`import { HitResolver2D5 } from "../../src/combat/hit/HitResolver2D5.js";`<br>`import { HitDecisionResolver } from "../../src/combat/hit/HitDecisionResolver.js";`<br>`import { getAction } from "../../src/combat/actions/FrameDataAction.js";` | P5-C |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:37` | `tests/static/input-buffer.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:38` | `tests/static/jump-attack-hit-recoil.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:39` | `tests/static/jump-attack-z-detailed.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:40` | `tests/static/jump-attack-z-position.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:41` | `tests/static/jump-down-movement.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:42` | `tests/static/jump-hit-down-movement.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:43` | `tests/static/jump-skill-down-movement.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:44` | `tests/static/jump-x-cancel-stuck-airborne.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:45` | `tests/static/movement-bounds.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:46` | `tests/static/official-api-alignment.test.ts` | `kernel-shell` | `import { getAction } from "../../src/combat/actions/FrameDataAction.js";`<br>`import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:47` | `tests/static/replay-hash.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";`<br>`import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";`<br>`import { createActor } from "../../src/combat/actors/ActorFactory.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:48` | `tests/static/replay-performance.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:49` | `tests/static/replay-schema.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:50` | `tests/static/replay.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:51` | `tests/static/status-buff.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:52` | `tests/static/status-profile.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:53` | `tests/static/tick-benchmark.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:54` | `tests/static/walk-run-z.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:55` | `tests/static/walk-run.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:59` 1. static blocker 的真正主阻塞不是零散类型，而是 32 个直接依赖 `CombatKernel` / `FixedStepSimulation` 的 `kernel-shell` 用例。
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:60` 2. `data-surface` 已清零，说明动作表/类型/事件壳这层可以独立迁出，不必和 `CombatKernel` 主迁移绑在一起。
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:62` 4. `replay-input` 已清零，说明 replay metadata 这类静态校验已能直接落在 runtime 入口，不再阻塞 `src/combat/` 删除。
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:22` | `tests/static/armor.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:23` | `tests/static/combat-chain-regression.test.ts` | `combat-subsystems` | `import type { ActionName, Actor } from "../../src/combat/types.js";`<br>`import { createActor } from "../../src/combat/actors/ActorFactory.js";`<br>`import { getAction } from "../../src/combat/actions/FrameDataAction.js";`<br>`import { HitResolver2D5 } from "../../src/combat/hit/HitResolver2D5.js";`<br>`import { HitDecisionResolver } from "../../src/combat/hit/HitDecisionResolver.js";`<br>`import { DamageResolver } from "../../src/combat/damage/DamageResolver.js";`<br>`import { ReactionResolver } from "../../src/combat/reaction/ReactionResolver.js";`<br>`import { StatusEffectSystem } from "../../src/combat/status/StatusEffectSystem.js";`<br>`import { CombatEventBus } from "../../src/combat/events/CombatEventBus.js";` | P5-C |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:24` | `tests/static/combo-correction.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:25` | `tests/static/damage-routing.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:26` | `tests/static/death-barrier-multihit.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:27` | `tests/static/death-loop.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";`<br>`import { CombatEventPriority } from "../../src/combat/events/CombatEventBus.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:28` | `tests/static/debug-actions.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:29` | `tests/static/dfo-replica.test.ts` | `kernel-shell` | `import { getAction } from "../../src/combat/actions/FrameDataAction.js";`<br>`import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:30` | `tests/static/enemy-ai.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:31` | `tests/static/fuzz-combat.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:32` | `tests/static/handfeel-fix2.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:33` | `tests/static/hit-shape.test.ts` | `combat-subsystems` | `import type { HitBoxFrameWindow } from "../../src/combat/types.js";`<br>`import { createActor } from "../../src/combat/actors/ActorFactory.js";`<br>`import { HitResolver2D5 } from "../../src/combat/hit/HitResolver2D5.js";`<br>`import { HitDecisionResolver } from "../../src/combat/hit/HitDecisionResolver.js";`<br>`import { getAction } from "../../src/combat/actions/FrameDataAction.js";` | P5-C |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:34` | `tests/static/input-buffer.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:35` | `tests/static/jump-attack-hit-recoil.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:36` | `tests/static/jump-attack-z-detailed.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:37` | `tests/static/jump-attack-z-position.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:38` | `tests/static/jump-down-movement.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:39` | `tests/static/jump-hit-down-movement.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:40` | `tests/static/jump-skill-down-movement.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:41` | `tests/static/jump-x-cancel-stuck-airborne.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:42` | `tests/static/movement-bounds.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:43` | `tests/static/official-api-alignment.test.ts` | `kernel-shell` | `import { getAction } from "../../src/combat/actions/FrameDataAction.js";`<br>`import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:44` | `tests/static/replay-hash.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";`<br>`import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";`<br>`import { createActor } from "../../src/combat/actors/ActorFactory.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:45` | `tests/static/replay-performance.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:46` | `tests/static/replay-schema.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:47` | `tests/static/replay.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:48` | `tests/static/status-buff.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:49` | `tests/static/status-profile.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:50` | `tests/static/tick-benchmark.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:51` | `tests/static/walk-run-z.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:52` | `tests/static/walk-run.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:56` 1. static blocker 的真正主阻塞不是零散类型，而是 32 个直接依赖 `CombatKernel` / `FixedStepSimulation` 的 `kernel-shell` 用例。
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:57` 2. `data-surface` 已清零，说明动作表/类型/事件壳这层可以独立迁出，不必和 `CombatKernel` 主迁移绑在一起。
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:59` 4. `replay-input` 已清零，说明 replay metadata 这类静态校验已能直接落在 runtime 入口，不再阻塞 `src/combat/` 删除。
 - `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:5` - `tests/truth/` 不再把关键真值守在 `src/combat/*`
 - `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:7` - `src/combat/` 删除前，truth gate 可以完全站在 engine 侧
 - `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:14` | `tests/truth/reaction-velocity.test.ts` | `src/combat/reaction/ReactionResolver.ts` | `tests/truth/engine-reaction-truth.test.ts` | 部分覆盖 | 把 velocity 断言迁到 engine `applyHitReaction` / `KnockbackPhysics` 组合路径 |
@@ -425,15 +410,15 @@
 - `docs/planning/training-ground-r3-r4-restoration-plan.md:121` - CombatKernel.worldBounds = { xMin: 64, xMax: 1820, zMin: -120, zMax: 120 } ✅
 - `docs/planning/training-ground-r3-r4-restoration-plan.md:256` 4. mass 在 CombatKernel 不参与命中决策，只参与击退缩放和 PushBox 推开比例；
 - `docs/planning/training-ground-r3-r4-restoration-plan.md:351` 4. 不要在 CombatKernel 里 import phaser；
-- `docs/plans/2026-05-21-dnf-data-layer-design.md:26` `src/combat/types.ts` 同步 Provenance 类型 union 加 `"pvf_extraction"`。
-- `docs/plans/2026-05-21-dnf-data-layer-design.md:55` 1. 改 `src/combat/types.ts` Provenance union 加 `"pvf_extraction"`
-- `docs/plans/2026-05-21-dnf-native-kernel-design.md:5` > **关键决策**：开 `dnf-native` 分支重写战斗 kernel，**保留所有 verified 资产**（tools / src/data/official/dnf / src/game 渲染层 / src/extraction），**抛弃手调战斗逻辑**（src/combat/ 整个 / 38 个 手调 action / ReactionProfile 预设）。
-- `docs/plans/2026-05-21-dnf-native-kernel-design.md:41` 跟现有 `src/combat/` 系统的关键差异（DNF 有项目无）：
-- `docs/plans/2026-05-21-dnf-native-kernel-design.md:204` │   │   ├── CombatKernel.ts           # tick pipeline (按 DNF 10 phase: Input/State/Anim/Proc/Physics/Hit/Resolution/Status/VFX/Network)
-- `docs/plans/2026-05-21-dnf-native-kernel-design.md:221` │   │   └── DamageFormula.ts          # 含 damage_bonus + weapon_damage_apply
-- `docs/plans/2026-05-21-dnf-native-kernel-design.md:328` 2. 删 `src/combat/` 暂留作对照（不删）
-- `docs/plans/2026-05-21-dnf-native-kernel-design.md:338` | **改造复用** | src/combat/kernel/CombatKernel.ts (作 parameter 参考) / src/data/manifest/ (新 dnf-native 版本) / src/combat/replay/ / src/game/ (加 toggle) | 修改后用 |
-- `docs/plans/2026-05-21-dnf-native-kernel-design.md:339` | **保留作对照** | src/combat/ 整个 | dnf-native ship 前不删 |
+- `docs/plans/2026-05-21-dnf-data-layer-design.md:30` `src/combat/types.ts` 同步 Provenance 类型 union 加 `"pvf_extraction"`。
+- `docs/plans/2026-05-21-dnf-data-layer-design.md:59` 1. 改 `src/combat/types.ts` Provenance union 加 `"pvf_extraction"`
+- `docs/plans/2026-05-21-dnf-native-kernel-design.md:9` > **关键决策**：开 `dnf-native` 分支重写战斗 kernel，**保留所有 verified 资产**（tools / src/data/official/dnf / src/game 渲染层 / src/extraction），**抛弃手调战斗逻辑**（src/combat/ 整个 / 38 个 手调 action / ReactionProfile 预设）。
+- `docs/plans/2026-05-21-dnf-native-kernel-design.md:45` 跟现有 `src/combat/` 系统的关键差异（DNF 有项目无）：
+- `docs/plans/2026-05-21-dnf-native-kernel-design.md:208` │   │   ├── CombatKernel.ts           # tick pipeline (按 DNF 10 phase: Input/State/Anim/Proc/Physics/Hit/Resolution/Status/VFX/Network)
+- `docs/plans/2026-05-21-dnf-native-kernel-design.md:225` │   │   └── DamageFormula.ts          # 含 damage_bonus + weapon_damage_apply
+- `docs/plans/2026-05-21-dnf-native-kernel-design.md:332` 2. 删 `src/combat/` 暂留作对照（不删）
+- `docs/plans/2026-05-21-dnf-native-kernel-design.md:342` | **改造复用** | src/combat/kernel/CombatKernel.ts (作 parameter 参考) / src/data/manifest/ (新 dnf-native 版本) / src/combat/replay/ / src/game/ (加 toggle) | 修改后用 |
+- `docs/plans/2026-05-21-dnf-native-kernel-design.md:343` | **保留作对照** | src/combat/ 整个 | dnf-native ship 前不删 |
 - `docs/plans/2026-05-21-phase4-stepped-rollout.md:29` 1. **新文件** `src/combat/motion/AirbornePhysicsSystem.ts`
 - `docs/plans/2026-05-21-phase4-stepped-rollout.md:56` 2. **Pipeline 插入点**：`CombatKernel.buildPipeline()` 的 DETECTION phase，**ReactionMotion 之前**：
 - `docs/plans/2026-05-21-phase4-stepped-rollout.md:77` | **CombatKernel:524 Bloodlust grab** | ⚠️ **需验证** grab 期间 reactionState ≠ "none"（否则 AirbornePhysics 会干预 grab 同步）|
@@ -445,6 +430,11 @@
 - `docs/plans/2026-06-10-stage4-stabilization-24h-plan.md:204` rg -n "src/combat/replay/InputRecorder|src/engine/replay/InputRecorder" src tests docs scripts CLAUDE.md
 - `docs/plans/2026-06-10-stage4-stabilization-24h-plan.md:209` - No remaining repo reference to `src/combat/replay/InputRecorder.ts`
 - `docs/plans/2026-06-10-stage4-stabilization-24h-plan.md:601` - Repo source no longer references deleted `src/combat/replay/InputRecorder.ts`.
+- `docs/plans/2026-06-11-engine-migration-24h-and-7day-plan.md:7` **Architecture:** The codebase is already in a split state: the live scene runs `EngineKernel`, but the scene shell still imports two `src/combat` artifacts and the validation trunk still leans on `CombatKernel`. The plan therefore moves in two ordered lanes: first close the runtime shell gap in `CombatScene`, then migrate truth/static blockers by bucket instead of attempting a big-bang `src/combat` delete.
+- `docs/plans/2026-06-11-engine-migration-24h-and-7day-plan.md:45` - Shift validation trunk away from `CombatKernel` in waves, starting with truth and the `kernel-shell` bucket.
+- `docs/plans/2026-06-11-engine-migration-24h-and-7day-plan.md:51` - Do not delete `src/combat/` this week.
+- `docs/plans/2026-06-11-engine-migration-24h-and-7day-plan.md:231` For reaction-velocity assertions, bind to engine actor state and replay hashes rather than `src/combat/reaction/ReactionResolver.js`.
+- `docs/plans/2026-06-11-engine-migration-24h-and-7day-plan.md:294` - `architecture.test.ts`: keep as a migration guard, not a `CombatKernel` behavior test
 - `docs/reports/2026-05-31-stage3-completion.md:82` - 影响：3 个 CombatKernel 测试无法运行（预存在问题）
 - `docs/reports/2026-05-31-stage3-completion.md:135` - `src/combat/types/DualTimelineAction.ts`
 - `docs/reports/2026-05-31-stage3-completion.md:147` - `src/combat/hit/HitResolutionSystem.ts`
