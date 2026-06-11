@@ -3,14 +3,14 @@
 依据 [docs/planning/2026-06-04-engine-native-rewrite-roadmap.md](../planning/2026-06-04-engine-native-rewrite-roadmap.md)，P5 不只是 truth 迁移，还要求 static gate 脱离 `src/combat/*`。
 
 - 数据来源: [docs/engineering/combat-retirement-audit-2026-06-10.md](./combat-retirement-audit-2026-06-10.md)
-- 当前 static blocker 文件数: 34
-- 一级分层: kernel-shell=32, combat-subsystems=2, replay-input=0, data-surface=0
+- 当前 static blocker 文件数: 31
+- 一级分层: kernel-shell=29, combat-subsystems=2, replay-input=0, data-surface=0
 
 ## 分层说明
 
 | 分层 | 文件数 | 含义 | 下一步 |
 |---|---:|---|---|
-| `kernel-shell` | 32 | 直接 new / 驱动 CombatKernel 或 FixedStepSimulation，是真正的 static 主阻塞。 | 优先给这组补 engine 对等 harness 或归档策略。 |
+| `kernel-shell` | 29 | 直接 new / 驱动 CombatKernel 或 FixedStepSimulation，是真正的 static 主阻塞。 | 优先给这组补 engine 对等 harness 或归档策略。 |
 | `combat-subsystems` | 2 | 绕过 CombatKernel 但仍直接拼装 combat 子系统，适合作为中间迁移批次。 | 按功能把几条链迁到 engine core/system 对等实现。 |
 | `replay-input` | 0 | replay metadata / 输入工具尾巴已从 static gate 清出。 | 保持新入口落在 runtime/engine，避免测试回流到 combat facade。 |
 | `data-surface` | 0 | 只绑定动作表/类型/事件壳，属于最便宜的清理层。 | 先把这层从 src/combat/* 拆到 data/runtime 入口。 |
@@ -19,10 +19,7 @@
 
 | static test | 分层 | 当前 combat 绑定 | 迁移顺序 |
 |---|---|---|---|
-| `tests/static/action-cancel-probe.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";`<br>`import type { ActionName, Actor } from "../../src/combat/types.js";` | P5-D |
-| `tests/static/architecture.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";`<br>`import { FixedStepSimulation } from "../../src/combat/kernel/FixedStepSimulation.js";` | P5-D |
 | `tests/static/armor.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-| `tests/static/auto-combat.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";`<br>`import type { ActionName, Actor } from "../../src/combat/types.js";` | P5-D |
 | `tests/static/combat-chain-regression.test.ts` | `combat-subsystems` | `import type { ActionName, Actor } from "../../src/combat/types.js";`<br>`import { createActor } from "../../src/combat/actors/ActorFactory.js";`<br>`import { getAction } from "../../src/combat/actions/FrameDataAction.js";`<br>`import { HitResolver2D5 } from "../../src/combat/hit/HitResolver2D5.js";`<br>`import { HitDecisionResolver } from "../../src/combat/hit/HitDecisionResolver.js";`<br>`import { DamageResolver } from "../../src/combat/damage/DamageResolver.js";`<br>`import { ReactionResolver } from "../../src/combat/reaction/ReactionResolver.js";`<br>`import { StatusEffectSystem } from "../../src/combat/status/StatusEffectSystem.js";`<br>`import { CombatEventBus } from "../../src/combat/events/CombatEventBus.js";` | P5-C |
 | `tests/static/combo-correction.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
 | `tests/static/damage-routing.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |

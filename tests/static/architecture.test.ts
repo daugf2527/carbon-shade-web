@@ -1,27 +1,8 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { assert } from "./test-utils.js";
-import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-import { FixedStepSimulation } from "../../src/combat/kernel/FixedStepSimulation.js";
-
-const combatKernel = new CombatKernel();
-assert.ok(
-  combatKernel.bus
-  && combatKernel.hitResolver
-  && combatKernel.damageResolver
-  && combatKernel.reactionResolver
-  && combatKernel.hitStop
-  && combatKernel.recoil
-  && combatKernel.status
-  && combatKernel.buffs
-  && combatKernel.cooldowns
-  && combatKernel.death
-  && combatKernel.replay,
-);
-
-const combatSimulation = new FixedStepSimulation(combatKernel);
-combatSimulation.update(17);
-assert.equal(combatKernel.tickCount, 1);
+import { EngineKernel } from "../../src/engine/kernel/EngineKernel.js";
+import { FixedStepSimulation } from "../../src/runtime/loop/FixedStepSimulation.js";
 
 const combatSceneSource = readFileSync(
   path.resolve("src/game/CombatScene.ts"),
@@ -36,3 +17,15 @@ assert.ok(
   !combatSceneSource.includes("../combat/debug/DebugOverlay.js"),
   "CombatScene should not import combat DebugSnapshot types",
 );
+
+const kernel = new EngineKernel(42);
+const simulation = new FixedStepSimulation(kernel);
+simulation.update(17);
+assert.equal(kernel.tickCount, 1, "runtime-owned fixed-step loop should tick the engine kernel");
+
+const snapshot = kernel.debugSnapshot();
+assert.equal(typeof snapshot.tick, "number", "engine debugSnapshot should expose runtime tick shape");
+assert.equal(typeof snapshot.lastHit.tick, "number", "engine debugSnapshot should expose runtime lastHit shape");
+assert.equal(typeof snapshot.performance.actorCount, "number", "engine debugSnapshot should expose runtime performance counters");
+
+console.log("architecture: runtime shell guard verified");
