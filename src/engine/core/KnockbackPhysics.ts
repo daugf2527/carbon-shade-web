@@ -11,8 +11,9 @@
  * conflated "add velocity.{x,y,z} to Actor" with "add a knockback work-state", which are different.
  *
  * ── TRUTH SOURCING (CLAUDE.md confidence tiers) ──────────────────────────────────
- *   initial velocityX  = pushAside × pushBack × facing × weightFactor   (same formula family as
- *                        the vertical launch already shipped). pushAside ← atk (PVF tier3, e.g.
+ *   initial velocityX  = pushAside × pushBack × facing   (same formula family as
+ *                        the vertical launch already shipped; NO weightFactor — chr.weight is
+ *                        audio-only, Tier-1). pushAside ← atk (PVF tier3, e.g.
  *                        attack1=30 px/s), pushBack ← weaponHitInfo[slot] (PVF, slot0=0 slot3=0.2).
  *   friction (decay)   = LOCAL_BASELINE 0.72/tick — PVF carries no horizontal-friction constant
  *                        (dnfPhysicsConstants has none); mirrored from combat ReactionProfiles

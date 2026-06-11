@@ -9,6 +9,12 @@ const checks = [
   ["docs/engineering/architecture-improvement-plan.md", "Status:"],
   ["docs/design/stage3-combat-system-survey.md", "Status:"],
   ["docs/engineering/data-contract-baseline.md", "Status:"],
+  ["docs/planning/2026-05-21-extraction-pipeline-design.md", "Status:"],
+  ["docs/planning/2026-05-26-stage1.5-revised-plan.md", "Status:"],
+  ["docs/plans/2026-05-21-dnf-data-layer-design.md", "Status:"],
+  ["docs/plans/2026-05-21-dnf-native-kernel-design.md", "Status:"],
+  ["docs/plans/2026-05-22-stage1-data-pipeline-design.md", "Status:"],
+  ["docs/testing/session-summary-2026-05-31.md", "Status:"],
 ];
 
 for (const [file, needle] of checks) {

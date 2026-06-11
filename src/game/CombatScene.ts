@@ -9,7 +9,7 @@ import { DebugLayer } from "./layers/DebugLayer.js";
 import { getCombatSpriteSpec, _debugLastPlayerSprite, type SpriteSpec } from "./SpriteFrameLibrary.js";
 import { getRuntimeEvidenceCollector, recordKernelCombatEvidence } from "../runtime/evidence/RuntimeEvidenceCollector.js";
 import { TouchControls } from "./TouchControls.js";
-import { InputRecorder } from "../combat/replay/InputRecorder.js";
+import { InputRecorder } from "../engine/replay/InputRecorder.js";
 // Engine imports (P3.1 — runtime switch from CombatKernel to EngineKernel)
 import { EngineKernel } from "../engine/kernel/EngineKernel.js";
 import { Actor, statsFromPlayerShard, statsFromGoblinTruth } from "../engine/core/Actor.js";

@@ -59,9 +59,9 @@ const files = [
 ];
 
 // Stringify enum maps so JSON output is consistent (int keys → string keys).
-function stringifyKeys(obj) {
-  const out = {};
-  for (const [k, v] of Object.entries(obj)) out[String(k)] = v;
+function stringifyKeys(obj: Record<string, unknown>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(obj)) out[String(k)] = String(v);
   return out;
 }
 

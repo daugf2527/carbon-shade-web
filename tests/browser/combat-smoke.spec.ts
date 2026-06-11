@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
+// @ts-expect-error — .mjs script has no type declarations (build tooling, not typed)
 import { buildBrowserSmokePayload } from "../../scripts/browser-smoke-evidence.mjs";
 
 type DiagnosticBag = {

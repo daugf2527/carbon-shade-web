@@ -105,7 +105,7 @@ export class CombatResolutionSystem implements EngineSystem {
         group.add(defender.id);
         const actionName = attacker.currentActionName;
         const atk = actionName ? ATTACKS[actionName] : undefined;
-        const slot = (actionName && WEAPON_SLOT_ROUTING[actionName]) ?? 0;
+        const slot = (actionName ? WEAPON_SLOT_ROUTING[actionName] : undefined) ?? 0;
         const weaponInfo = WEAPON_HIT_INFO[slot];
         // Damage (PVF truth): atkBonus = 1 + damageBonus%/100 (null → 1.0). Negative bonus like
         // attack1 -15% → 0.85 reduces; NOT value/100 which would make negatives go negative.

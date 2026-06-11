@@ -42,7 +42,7 @@ assert.equal(exported.assets.failed.length, 1);
 assert.equal(exported.combat.sceneReady, true);
 assert.equal(exported.combat.tick, 42);
 assert.equal(exported.combat.finalStateHash, "state-1");
-assert.equal(exported.combat.eventTypes.HitConfirmed, 2);
+assert.equal(exported.combat.eventTypes?.HitConfirmed, 2);
 assert.equal(exported.dynamicManifests.length, 1);
 assert.equal(exported.dynamicManifests[0]?.status, "loaded");
 

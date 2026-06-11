@@ -13,12 +13,18 @@
  * All fields are PVF-extracted from skills[id].cancelWindow (tier1-ish — concrete numbers, not
  * invented). Unlike combo-correction's hand-tuned gauge constants, these are real client data.
  *
- * ── HONEST WIRING STATUS (predicate built, FSM/skill-action integration pending) ──
- * The engine has no skill actions yet (the 19 cancel-window skills aren't engine actions) and no
- * command-sequence parser. So this predicate is not yet called by the runtime FSM — it is the
- * verifiable foundation (parse + frame test) the future cancel/combo system will sit on. The
- * basic attacks engine DOES run (attack1-3) carry NO cancelWindow in the shard, so we do NOT
- * invent cancel frames for them (that would be local_baseline guessing, the combo-gauge mistake).
+ * ── HONEST WIRING STATUS (predicate wired into ActionSystem.tick, but config never supplied) ──
+ * `isInCancelWindow` IS now called by the runtime (ActionSystem.tick:69, skill-action §3 wiring).
+ * BUT it is effectively a no-op today: ActionSystem's `cancelWindows` map is populated only by
+ * `define(name, anim, cancelWindow)` — and EVERY define() call in CombatScene passes just 2 args
+ * (no cancelWindow), so the map is ALWAYS empty → cancelCfg is always undefined → the predicate is
+ * never evaluated against real config. The basic attacks engine DOES run (attack1-3) carry NO
+ * cancelWindow in the shard, so we do NOT invent cancel frames for them (that would be
+ * local_baseline guessing, the combo-gauge mistake). This stays the verifiable foundation (parse +
+ * frame test) the future cancel/combo system will sit on — once a skill action registers a real
+ * cancelWindow config, the wiring lights up. `canCancelInto` / `cancelAllowedForWeapon` below have
+ * NO caller yet (the group/weapon gates the future cancel resolver will use); kept as the
+ * companion predicates of that foundation, not dead code to delete.
  */
 
 export interface CancelWindowConfig {

@@ -84,10 +84,10 @@ export interface ChrTruth {
 
 export interface AtkTruth {
   path: string;
-  liftUp?: PvfFact<number>;
-  pushAside?: PvfFact<number>;
-  damageBonus?: PvfFact<number>;
-  attackKind?: string;    // "physic" | "magic" | ...
+  liftUp?: PvfFact<number> | null;
+  pushAside?: PvfFact<number> | null;
+  damageBonus?: PvfFact<number> | null;
+  attackKind?: string | null;    // "physic" | "magic" | ...
   element?: string;
   hitReaction?: string;   // "hit_down" | "hit_lift_up" | "hit_horizon" | ...
   causesDown?: boolean;

@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import type { PvfDocument } from "../types/PvfDocument.js";
 import type { AniDocument } from "../types/AniDef.js";
 import type { NutTextDocument } from "../types/NutDef.js";
@@ -28,7 +28,7 @@ function spawnWithTimeout(
   executablePath: string,
   args: string[],
   timeoutMs: number,
-): { child: ReturnType<typeof spawn>; clearWatchdog: () => void; timedOut: () => boolean } {
+): { child: ChildProcessWithoutNullStreams; clearWatchdog: () => void; timedOut: () => boolean } {
   const child = spawn(executablePath, args, {
     cwd: process.cwd(),
     stdio: ["pipe", "pipe", "pipe"],

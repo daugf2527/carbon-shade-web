@@ -22,7 +22,9 @@ const p = k.player;
 const grunt = k.actors.find(a => a.id === "grunt")!;
 
 // 1. 玩家真值 stat (来自 SWORDMAN_TRUTH.chr.growth)
-assert.ok(p.physAtk >= 50 && p.physAtk <= 150, `player physAtk should be PVF truth ~83, got ${p.physAtk}`);
+const physAtk = p.physAtk;
+assert.ok(physAtk !== undefined, "player physAtk must be set (PVF truth)");
+assert.ok(physAtk >= 50 && physAtk <= 150, `player physAtk should be PVF truth ~83, got ${physAtk}`);
 assert.ok(p.resources.maxHp >= 800 && p.resources.maxHp <= 1100, `player maxHp should be PVF truth ~953, got ${p.resources.maxHp}`);
 assert.equal(p.level, 70, "player level should be 70");
 

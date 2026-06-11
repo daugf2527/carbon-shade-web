@@ -4,7 +4,7 @@
  * PVF-truth-driven (Wave 2, 2026-06-05). Upgraded from the Phase-3 stub that only
  * read two bools (liftUp/pushAside). Now routes from the atk `hitReaction` string and
  * derives the vertical launch velocity from PVF truth (atk `liftUp.value` ×
- * weaponHitInfo `launch` × weightFactor), mirroring the combat-side
+ * weaponHitInfo `launch`), mirroring the combat-side
  * `src/combat/reaction/ReactionResolver.ts` (`routeFromHitReaction` +
  * `calculatePvfVelocity`) but adapted to the engine Actor model.
  *
@@ -200,7 +200,8 @@ export function applyHitReaction(
   }
 
   // Horizontal knockback (velocityX → KnockbackState.vx) — twin of the vertical launch above
-  // (P4 GAP now filled). Truth: pushAside × pushBack × facing × weightFactor. pushBack=0 (basic
+  // (P4 GAP now filled). Truth: pushAside × pushBack × facing (NO weightFactor — chr.weight is
+  // audio-only, Tier-1; see the OVERTURNED note above). pushBack=0 (basic
   // attacks, slot0) → no slide → zero regression. Applied for grounded reactions (not airborne,
   // which already carries the actor through the air).
   if (kind !== "airborne" && defender.hp > 0 && defender.armorProfile.canBeKnockedBack) {

@@ -46,9 +46,10 @@ export interface ActorStats {
   /** Jump launch velocity (PVF chr.jumpPower, swordman=430, unit ambiguous — see truth-coverage-matrix).
    *  Omit/0 → actor cannot jump. Monsters generally don't jump. */
   readonly jumpPower?: number;
-  /** Body weight (PVF chr.weight/mob.weight: swordman 68000, goblin 45000). Drives the launch/knockback
-   *  weightFactor (heavier = harder to launch). NOTE unit is PVF-tagged "audio-only" — its physical
-   *  meaning is research-unconfirmed (requiresManualVerification), but the per-entity VALUE is real PVF. */
+  /** Body weight (PVF chr.weight/mob.weight: swordman 68000, goblin 45000). NOTE PVF-tagged
+   *  "audio-only" (Tier-1, dnf_enum_header.nut → sq_GetObjectWeight for sound selection) — it does
+   *  NOT participate in launch/knockback physics (the old weightFactor was overturned). The
+   *  per-entity VALUE is real PVF, kept for fidelity / future audio. */
   readonly weight?: number;
 }
 

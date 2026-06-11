@@ -458,7 +458,7 @@ export class EngineKernel implements EngineContext, Tickable {
       const kb = a.knockback?.active ? `,kbvx=${a.knockback.vx.toFixed(3)}` : "";
       const fz = a.frozenFrames > 0 ? `,fz=${a.frozenFrames}` : "";
       parts.push(
-        `${a.id}:hp=${a.hp},mp=${a.mp.toFixed(3)},st=${a.fsm.state},x=${a.x.toFixed(3)},y=${a.y.toFixed(3)}` +
+        `${a.id}:hp=${a.hp},mp=${a.mp.toFixed(3)},st=${a.fsm.state},x=${a.x.toFixed(3)},y=${a.y.toFixed(3)},z=${a.z.toFixed(3)}` +
         `${kb}${fz}${st ? `,status=${st}` : ""}${cd ? `,cd=${cd}` : ""}`,
       );
     }

@@ -33,6 +33,7 @@ export interface CharacterGrowthBase {
 
 export interface MonsterStats {
   readonly hpMax: number;
+  readonly mpMax: number;
   readonly physicalAttack: number;
   readonly physicalDefense: number;
   readonly moveSpeed: number;
@@ -49,7 +50,7 @@ export function monsterStatsAtLevel(
   abilityCategory: AbilityCategory,
   charGrowth: CharacterGrowthBase,
   moveSpeed = 350,
-  weight = 45000, // PVF mob.weight (goblin default); drives launch weightFactor
+  weight = 45000, // PVF mob.weight (goblin default); audio-only classification, NOT launch physics
 ): MonsterStats {
   const lv = Math.max(1, Math.min(baseLevel, 70));
   const baseHP = statAtLevel(charGrowth.hpMax, lv);
@@ -57,6 +58,7 @@ export function monsterStatsAtLevel(
   const baseDEF = statAtLevel(charGrowth.physicalDefense, lv);
   return {
     hpMax: Math.round(applyMod(baseHP, abilityCategory["hp max"])),
+    mpMax: 0, // monsters have no MP pool (08-Resource); explicit so Actor.mp is never undefined
     physicalAttack: Math.round(applyMod(baseATK, abilityCategory["equipment_physical_attack"]) * 10) / 10,
     physicalDefense: Math.round(applyMod(baseDEF, abilityCategory["equipment_physical_defense"]) * 10) / 10,
     moveSpeed,

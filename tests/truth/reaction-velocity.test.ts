@@ -36,7 +36,7 @@ function createMockActor(actionName?: string): Actor {
     buffs: [],
     locomotion: { mode: "idle" } as any,
     currentAction: actionName ? { actionName, lockedFacing: "right" } as any : undefined,
-  } as Actor;
+  } as unknown as Actor;
 }
 
 function createMockDecision(): HitDecision {

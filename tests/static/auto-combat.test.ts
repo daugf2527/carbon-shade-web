@@ -9,7 +9,7 @@ const LONG_RUN_TICKS = 1200;
 function livingTargets(kernel: CombatKernel): Actor[] {
   return TARGET_ORDER
     .map(id => kernel.actors.find(actor => actor.id === id))
-    .filter((actor): actor is Actor => Boolean(actor) && !actor.flags.dead && actor.resources.hp > 0);
+    .filter((actor): actor is Actor => actor !== undefined && !actor.flags.dead && actor.resources.hp > 0);
 }
 
 function currentTarget(kernel: CombatKernel): Actor | null {

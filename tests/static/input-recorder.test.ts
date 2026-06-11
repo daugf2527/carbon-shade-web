@@ -1,5 +1,5 @@
 import { assert } from "./test-utils.js";
-import { InputRecorder } from "../../src/combat/replay/InputRecorder.js";
+import { InputRecorder } from "../../src/engine/replay/InputRecorder.js";
 import { EngineKernel } from "../../src/engine/kernel/EngineKernel.js";
 import { Actor } from "../../src/engine/core/Actor.js";
 
