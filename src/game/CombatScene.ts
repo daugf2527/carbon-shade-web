@@ -1,7 +1,7 @@
 // @ts-nocheck
 import Phaser from "phaser";
-import type { DebugSnapshot } from "../combat/debug/DebugOverlay.js";
-import { FixedStepSimulation } from "../combat/kernel/FixedStepSimulation.js";
+import type { DebugSnapshot } from "../runtime/debug/DebugSnapshot.js";
+import { FixedStepSimulation } from "../runtime/loop/FixedStepSimulation.js";
 import { CameraController } from "./CameraController.js";
 import { AudioUnlockGate } from "./audio/AudioUnlockGate.js";
 import { DnfLayeredSprite } from "./DnfLayeredSprite.js";
@@ -230,8 +230,8 @@ export class CombatScene extends Phaser.Scene {
       this.kernel.addActor(mon, false);
     }
 
-    // ── FixedStepSimulation unchanged (P3.1: EngineKernel satisfies TickableKernel via structural typing) ──
-    this.simulation = new FixedStepSimulation(this.kernel as unknown as import("../combat/kernel/FixedStepSimulation.js").TickableKernel);
+    // ── Runtime-owned fixed-step loop (P5 runtime shell) ──
+    this.simulation = new FixedStepSimulation(this.kernel);
     this.cameraController = new CameraController(this.worldWidth, this.worldHeight);
     this.debugLayer = new DebugLayer(this, this.groundLineY);
     this.audioGate = (this.game.registry.get("audioGate") as AudioUnlockGate | undefined) ?? null;

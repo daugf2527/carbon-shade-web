@@ -21,26 +21,34 @@ const payload = JSON.parse(run.stdout);
 assert.equal(payload.passed, true, "audit payload should mark itself passed when scan succeeds");
 assert.ok(payload.summary, "audit payload should include summary");
 assert.ok(payload.summary.combatFileCount > 0, "audit should count src/combat files");
-assert.ok(payload.summary.runtimeImportCount > 0, "audit should report runtime combat imports");
-assert.ok(payload.summary.truthImportCount > 0, "audit should report truth tests still bound to combat");
+assert.equal(payload.summary.runtimeImportCount, 0, "audit should report runtime combat imports as fully cleared");
+assert.equal(payload.summary.truthImportCount, 0, "audit should report truth tests fully migrated off combat");
 assert.ok(payload.summary.staticImportCount > 0, "audit should report static tests still bound to combat");
 assert.ok(payload.summary.docsMentionCount > 0, "audit should report docs still mentioning src/combat");
 assert.ok(Array.isArray(payload.runtimeImports), "runtime import details should be listed");
 assert.ok(payload.summary.runtimeCouplingKinds, "audit payload should include runtime coupling kind summary");
-assert.ok(payload.summary.runtimeCouplingKinds["type-only"] > 0, "audit should classify type-only combat coupling");
-assert.ok(payload.summary.runtimeCouplingKinds["runtime-value"] > 0, "audit should classify runtime-value combat coupling");
+assert.equal(payload.summary.runtimeCouplingKinds["type-only"], 0, "audit should classify type-only combat coupling as cleared");
+assert.equal(payload.summary.runtimeCouplingKinds["runtime-value"], 0, "audit should classify runtime-value combat coupling as cleared");
 assert.equal(payload.summary.runtimeCouplingKinds["source-ref"], 0, "audit should report source-ref combat coupling as cleared once action manifest provenance moves to runtime");
 assert.equal(
   payload.summary.truthImportCount,
-  3,
-  "audit should shrink combat-bound truth blockers to the remaining three tests after reaction-routing moves to engine",
+  0,
+  "audit should clear combat-bound truth blockers once the remaining truth tests move to engine",
 );
 assert.ok(Array.isArray(payload.truthImports), "truth import details should be listed");
 assert.ok(Array.isArray(payload.staticImports), "static import details should be listed");
 assert.ok(Array.isArray(payload.docsMentions), "doc mention details should be listed");
 assert.ok(
-  payload.truthImports.some((entry: { file: string }) => entry.file.includes("tests/truth/swordman-attack1-truth.test.ts")),
-  "audit should capture swordman-attack1-truth as a combat-bound truth blocker",
+  !payload.truthImports.some((entry: { file: string }) => entry.file.includes("tests/truth/swordman-attack1-truth.test.ts")),
+  "audit should stop reporting swordman-attack1-truth once its coverage moves to engine surfaces",
+);
+assert.ok(
+  !payload.truthImports.some((entry: { file: string }) => entry.file.includes("tests/truth/reaction-velocity.test.ts")),
+  "audit should stop reporting reaction-velocity once its coverage moves to engine surfaces",
+);
+assert.ok(
+  !payload.truthImports.some((entry: { file: string }) => entry.file.includes("tests/truth/swordman-reaction-formulas.test.ts")),
+  "audit should stop reporting swordman-reaction-formulas once its coverage moves to engine surfaces",
 );
 assert.ok(
   !payload.truthImports.some((entry: { file: string }) => entry.file.includes("tests/truth/hit-resolution-weapon-timeline.test.ts")),
@@ -54,19 +62,15 @@ assert.ok(
   !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/data/manifest/sources.ts")),
   "audit should stop reporting sources.ts once ACTION_MANIFEST_DATA_SOURCE no longer points at src/combat",
 );
-assert.ok(
-  payload.runtimeImports.some((entry: { kind: string; file: string }) => entry.kind === "runtime-value" && entry.file.includes("src/game/CombatScene.ts")),
-  "audit should classify CombatScene edge as runtime-value coupling",
-);
 assert.equal(
   payload.summary.runtimeCouplingKinds["type-only"],
-  1,
-  "audit should shrink type-only combat coupling to the remaining CombatScene debug snapshot edge after RenderAdapter moves to runtime debug types",
+  0,
+  "audit should clear the final CombatScene type-only edge after DebugSnapshot moves to runtime types",
 );
 assert.equal(
   payload.summary.runtimeImportCount,
-  1,
-  "audit should reduce runtime combat coupling by file-count to the remaining CombatScene external edge",
+  0,
+  "audit should clear runtime combat coupling once CombatScene moves to runtime-owned loop/debug surfaces",
 );
 assert.ok(
   !payload.runtimeImports.some((entry: { file: string }) => entry.file.includes("src/data/manifest/ai.ts")),
@@ -114,8 +118,8 @@ assert.ok(
 );
 assert.equal(
   payload.summary.runtimeCouplingKinds["runtime-value"],
-  1,
-  "audit should shrink runtime-value combat coupling to the remaining CombatScene fixed-step edge",
+  0,
+  "audit should clear runtime-value combat coupling once CombatScene stops importing combat FixedStepSimulation",
 );
 assert.ok(
   payload.runtimeImports.every((entry: { file: string }) => !entry.file.startsWith("src/combat/")),

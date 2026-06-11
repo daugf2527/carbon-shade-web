@@ -26,6 +26,8 @@ import { AnimationSystem } from "../../src/engine/kernel/systems/AnimationSystem
 import { CombatResolutionSystem } from "../../src/engine/kernel/systems/CombatResolutionSystem.js";
 import { StatusSystem } from "../../src/engine/kernel/systems/StatusSystem.js";
 import { ResourceSystem } from "../../src/engine/kernel/systems/ResourceSystem.js";
+import type { DebugSnapshot } from "../../src/runtime/debug/DebugSnapshot.js";
+import { FixedStepSimulation } from "../../src/runtime/loop/FixedStepSimulation.js";
 
 const DUNGEON_BASIS_LEVEL = 31; // PVF jungle.dgn basisLevel (same as CombatScene)
 const swGrowth = SWORDMAN_TRUTH.chr.growth as unknown as {
@@ -105,4 +107,19 @@ const GROWTH: CharGrowth = {
     assert.ok(Number.isFinite(a.mp), `S2 ${a.id}.mp stayed finite through 120 ticks, got ${a.mp}`);
   }
   console.log(`S2 OK: full create() roster (5 actors) ticked 120× without throw — stateHash=${kernel.lastStateHash.slice(0, 40)}…`);
+}
+
+// S3: runtime shell lock — the scene path must use the runtime-owned fixed-step loop and expose
+// a runtime DebugSnapshot shape from the engine kernel.
+{
+  const kernel = new EngineKernel(42);
+  const simulation = new FixedStepSimulation(kernel);
+  const snapshot: DebugSnapshot = kernel.debugSnapshot();
+
+  assert.equal(kernel.constructor.name, "EngineKernel", "S3 kernel should stay on the engine mainline");
+  assert.equal(simulation.constructor.name, "FixedStepSimulation", "S3 scene loop should use the runtime-owned fixed-step shell");
+  assert.equal(typeof snapshot.tick, "number", "S3 debug snapshot should expose a numeric tick");
+  assert.equal(typeof snapshot.lastHit.tick, "number", "S3 debug snapshot should expose runtime lastHit shape");
+  assert.equal(typeof snapshot.performance.actorCount, "number", "S3 debug snapshot should expose runtime performance counters");
+  console.log(`S3 OK: runtime loop + debug snapshot contract locked (tick=${snapshot.tick})`);
 }

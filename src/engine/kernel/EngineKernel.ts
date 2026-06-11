@@ -19,6 +19,8 @@ import type { Tickable } from "../core/GameLoop.js";
 import type { ReactionState } from "../core/ReactionResolver.js";
 import { freshScenarioBooleans, type EngineScenarioBooleans } from "../core/ScenarioBooleans.js";
 import { statusFingerprint } from "../core/StatusEffects.js";
+import type { DebugSnapshot } from "../../runtime/debug/DebugSnapshot.js";
+import type { LastHitTraceSnapshot } from "../../runtime/data/RuntimeScenarioTypes.js";
 import type { EngineContext, EngineEvent, EngineEventBus, EngineEventHandler } from "./EngineContext.js";
 import type { EngineSystem } from "./EngineSystem.js";
 import { Fnv1aPrng } from "./Fnv1aPrng.js";
@@ -136,6 +138,8 @@ export class EngineKernel implements EngineContext, Tickable {
 
   // Lightweight replay record (B4). One frame pushed at the end of every tick().
   private _replayFrames: EngineReplayFrame[] = [];
+  private _lastHitSnapshot: LastHitTraceSnapshot = { tick: 0 };
+  private _lastHitArchiveSize = 0;
 
   /** World boundary (P3.1 — hardcoded, same as combat kernel default). */
   readonly worldBounds = { xMin: 96, xMax: 2730, zMin: -180, zMax: 180 };
@@ -193,6 +197,8 @@ export class EngineKernel implements EngineContext, Tickable {
     this._bus = new SimpleEventBus();
     this._scenario = freshScenarioBooleans();
     this._replayFrames = [];
+    this._lastHitSnapshot = { tick: 0 };
+    this._lastHitArchiveSize = 0;
     // Clear cross-cutting system state (timers, script vars, clock) on scene switch.
     for (const sys of this._systems) sys.reset?.();
     for (const { actor, isPlayer } of actors) this.addActor(actor, isPlayer ?? false);
@@ -286,7 +292,7 @@ export class EngineKernel implements EngineContext, Tickable {
   }
 
   /** Produce a render-oriented snapshot of the current tick (equivalent to combat's debugSnapshot). */
-  debugSnapshot(tickCostMs?: number): Record<string, unknown> {
+  debugSnapshot(tickCostMs?: number): DebugSnapshot {
     const actors = this._actors.map((a) => ({
       id: a.id,
       hp: a.hp,
@@ -296,26 +302,30 @@ export class EngineKernel implements EngineContext, Tickable {
       action: a.currentActionName,
       dead: a.isDead,
       facing: a.facing === 1 ? "right" : "left",
-      lockedFacing: undefined as string | undefined,
-      locomotion: undefined as string | undefined,
+      lockedFacing: a.facing === 1 ? "right" : "left",
+      locomotion: a.locomotion,
       hitFlashRemaining: 0,
       visualRecoilRemaining: 0,
       visualRecoilX: 0,
       visualRecoilZ: 0,
-      buffs: a.buffs,
+      buffs: a.buffs.map((buff) => ({
+        type: buff.type,
+        stacks: buff.stacks,
+        expiresAtTick: buff.expiresAtTick,
+      })),
       localFrame: a.animationPlayer.currentFrame?.index ?? 0,
-      status: [] as unknown[],
+      status: a.statusEffects.map((status) => status.kind),
     }));
     return {
       tick: this._tickCount,
       actors,
-      lastHit: { actionName: null, finalReaction: null, targetActorId: null, damage: 0 },
+      lastHit: this.resolveLastHitSnapshot(),
       eventCount: this._bus.archive.length,
       scenario: this._scenario,
       performance: {
         actorCount: this._actors.length,
         eventArchiveSize: this._bus.archive.length,
-        poolStatus: "ok",
+        poolStatus: "stable",
         tickCostMs,
       },
     };
@@ -469,5 +479,42 @@ export class EngineKernel implements EngineContext, Tickable {
     }
     parts.push(`prng=${this._prng.nextU32().toString(16)}`);
     return parts.join("|");
+  }
+
+  private resolveLastHitSnapshot(): LastHitTraceSnapshot {
+    const archive = this._bus.archive;
+    if (this._lastHitArchiveSize === archive.length) return this._lastHitSnapshot;
+    this._lastHitArchiveSize = archive.length;
+
+    for (let i = archive.length - 1; i >= 0; i -= 1) {
+      const event = archive[i];
+      if (event.type !== "HitConfirmed") continue;
+      const payload = event.payload as {
+        attackerId?: string;
+        defenderId?: string;
+        targetId?: string;
+        actionName?: string | null;
+        finalReaction?: string;
+        dmg?: number;
+        finalDamage?: number;
+        hpAfter?: number;
+        armorBaseType?: string;
+      };
+      this._lastHitSnapshot = {
+        tick: event.tick,
+        attackerId: payload.attackerId,
+        targetId: payload.targetId ?? payload.defenderId,
+        hitAccepted: true,
+        actionName: payload.actionName ?? undefined,
+        finalReaction: payload.finalReaction,
+        armorBaseType: payload.armorBaseType,
+        finalDamage: payload.finalDamage ?? payload.dmg,
+        hpAfter: payload.hpAfter,
+      };
+      return this._lastHitSnapshot;
+    }
+
+    this._lastHitSnapshot = { tick: 0 };
+    return this._lastHitSnapshot;
   }
 }

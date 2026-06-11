@@ -1,124 +1,135 @@
 /**
- * T-C.5: ReactionResolver PVF velocity calculation (D9=B stub coefficients)
+ * reaction-velocity.test.ts — engine truth guard for launch/knockback velocity wiring.
  *
- * 验证 H2 公式:
- *   velocityY = liftUp × weaponHitInfo.launch × weightFactor
- *   velocityX = pushAside × weaponHitInfo.pushBack × weightFactor × direction
- *   weightFactor = max(0.1, 1 - 68000 / 150000) ≈ 0.547 (stub target weight)
+ * Keeps the old file's intent but moves it onto the engine mainline: PVF liftUp / pushAside /
+ * weaponHitInfo slot coefficients must flow into the engine's airborne + knockback work states
+ * instead of the retired combat ReactionResolver.
  */
 
 import { assert } from "../static/test-utils.js";
-import { ReactionResolver } from "../../src/combat/reaction/ReactionResolver.js";
-import type { Actor, HitDecision } from "../../src/combat/types.js";
-import SWORDMAN_ATTACKS from "../../src/data/manifest/truth/swordman-attacks.json" with { type: "json" };
+import { applyHitReaction } from "../../src/engine/core/ReactionResolver.js";
+import { Actor, type ActorStats } from "../../src/engine/core/Actor.js";
 
-const SWORDMAN_WEAPON_HIT_INFO = [
-  { launch: 0, pushBack: 0, damageScalePct: 90 },
-  { launch: 0, pushBack: -0.1, damageScalePct: 70 },
-  { launch: -0.95, pushBack: 0.1, damageScalePct: 100 },
-  { launch: 0, pushBack: 0.2, damageScalePct: 120 },
-  { launch: 0, pushBack: 0, damageScalePct: 100 },
-  { launch: 0, pushBack: -0.15, damageScalePct: 60 },
-];
+const STATS: ActorStats = {
+  hpMax: 10000,
+  mpMax: 0,
+  moveSpeed: 300,
+  physicalAttack: 10,
+  physicalDefense: 5,
+};
 
-// Stub weight factor (target weight = 68000)
-const STUB_WEIGHT_FACTOR = Math.max(0.1, 1 - 68000 / 150000); // ≈ 0.547
-
-function createMockActor(actionName?: string): Actor {
-  return {
-    id: "test",
-    position: { x: 0, y: 0, z: 0 },
-    velocity: { x: 0, y: 0, z: 0 },
-    facing: "right",
-    flags: { dead: false },
-    handfeel: { reactionRemaining: 0, downRemaining: 0, getUpRemaining: 0 },
-    comboCorrection: { launchResistance: 1, stunReliefFrames: 0 } as any,
-    buffs: [],
-    locomotion: { mode: "idle" } as any,
-    currentAction: actionName ? { actionName, lockedFacing: "right" } as any : undefined,
-  } as unknown as Actor;
+function freshDefender(): Actor {
+  return new Actor("def", "monster", STATS);
 }
 
-function createMockDecision(): HitDecision {
-  return {
-    hitbox: { impactSnapX: 4, attackLevel: 1, reactionProfile: undefined } as any,
-  } as HitDecision;
-}
-
-// Test 1: attack3 (slot 0, launch=0/pushBack=0) → launch profile fallback
+// 1. attack3 truth: slot0 launch=0 falls back to liftUp body → airborne.vy = 300.
 {
-  const resolver = new ReactionResolver();
-  const target = createMockActor();
-  const attacker = createMockActor("attack3");
-  const decision = createMockDecision();
+  const def = freshDefender();
+  const reaction = applyHitReaction(
+    def,
+    {
+      hitReaction: "hit_lift_up",
+      liftUpValue: 300,
+      causesDown: true,
+      attackLevel: 2,
+      weaponLaunch: 0,
+    },
+    50,
+    0,
+  );
 
-  resolver.apply(target, "launch", decision, attacker, 0);
-
-  assert.ok(target.velocity.y > 0, `attack3 launch should fall back to profile velocityY, got ${target.velocity.y}`);
-  assert.ok(target.velocity.x > 0, `attack3 launch should fall back to profile velocityX, got ${target.velocity.x}`);
-  console.log("✓ Test 1: attack3 launch fallback");
+  assert.equal(reaction.kind, "airborne", `attack3 should route to airborne, got ${reaction.kind}`);
+  assert.ok(def.airborne !== null, "attack3 should create an airborne work state");
+  assert.equal(def.airborne?.vy, 300, `slot0 launch=0 should fall back to liftUp=300, got ${def.airborne?.vy}`);
+  console.log("✓ Test 1: attack3 launch fallback -> airborne.vy=300");
 }
 
-// Test 2: chargecrashfinish (slot 3, pushBack=0.2) → X velocity
+// 2. chargecrashfinish truth: pushAside 300 × pushBack 0.2 = 60 px/s rightward.
 {
-  const resolver = new ReactionResolver();
-  const target = createMockActor();
-  const attacker = createMockActor("chargecrashfinish");
-  const decision = createMockDecision();
+  const def = freshDefender();
+  const reaction = applyHitReaction(
+    def,
+    {
+      hitReaction: "hit_down",
+      causesDown: true,
+      attackLevel: 2,
+      pushAsideValue: 300,
+      weaponPushBack: 0.2,
+      attackerFacing: 1,
+    },
+    50,
+    0,
+  );
 
-  resolver.apply(target, "knockback", decision, attacker, 0);
-
-  const action = SWORDMAN_ATTACKS.chargecrashfinish as any;
-  const slot3 = SWORDMAN_WEAPON_HIT_INFO[3];
-  const expectedX = action.pushAside.value * slot3.pushBack * STUB_WEIGHT_FACTOR * 1; // 400 * 0.2 * 0.547 ≈ 43.7
-  assert.ok(Math.abs(target.velocity.x - expectedX) < 1, `chargecrashfinish velocityX ≈ ${expectedX.toFixed(1)}, got ${target.velocity.x.toFixed(1)}`);
-  console.log("✓ Test 2: chargecrashfinish pushBack");
+  assert.equal(reaction.kind, "down", `chargecrashfinish-style hit should route to down, got ${reaction.kind}`);
+  assert.ok(def.knockback !== null, "non-zero pushBack should create a knockback work state");
+  assert.equal(def.knockback?.vx, 60, `pushAside 300 × pushBack 0.2 should yield vx=60, got ${def.knockback?.vx}`);
+  console.log("✓ Test 2: chargecrashfinish knockback truth -> vx=60");
 }
 
-// Test 3: fallback to profile when actionName not in SWORDMAN_ATTACKS
+// 3. unknown/legacy path stays usable: liftUp legacy bool still routes airborne without invented velocity.
 {
-  const resolver = new ReactionResolver();
-  const target = createMockActor();
-  const attacker = createMockActor("unknown_action");
-  const decision = createMockDecision();
+  const def = freshDefender();
+  const reaction = applyHitReaction(def, { liftUp: true }, 50, 0);
 
-  resolver.apply(target, "launch", decision, attacker, 0);
-
-  // Should fallback to profile (not PVF), velocity will be from profile
-  assert.ok(target.velocity.y !== 0 || target.velocity.x !== 0, "fallback to profile when action unknown");
-  console.log("✓ Test 3: fallback to profile");
+  assert.equal(reaction.kind, "airborne", `legacy liftUp bool should still route airborne, got ${reaction.kind}`);
+  assert.equal(reaction.launchVy, 0, `legacy path without truth values should keep vy=0, got ${reaction.launchVy}`);
+  console.log("✓ Test 3: legacy liftUp path preserved");
 }
 
-// Test 4: facing direction affects X velocity sign
+// 4. facing direction flips horizontal knockback sign.
 {
-  const resolver = new ReactionResolver();
-  const target = createMockActor();
-  const attacker = createMockActor("chargecrashfinish");
-  attacker.currentAction!.lockedFacing = "left";
-  const decision = createMockDecision();
+  const right = freshDefender();
+  applyHitReaction(
+    right,
+    {
+      hitReaction: "hit_down",
+      causesDown: true,
+      pushAsideValue: 300,
+      weaponPushBack: 0.2,
+      attackerFacing: 1,
+    },
+    50,
+    0,
+  );
 
-  resolver.apply(target, "knockback", decision, attacker, 0);
+  const left = freshDefender();
+  applyHitReaction(
+    left,
+    {
+      hitReaction: "hit_down",
+      causesDown: true,
+      pushAsideValue: 300,
+      weaponPushBack: 0.2,
+      attackerFacing: -1,
+    },
+    50,
+    0,
+  );
 
-  const action = SWORDMAN_ATTACKS.chargecrashfinish as any;
-  const slot3 = SWORDMAN_WEAPON_HIT_INFO[3];
-  const expectedX = action.pushAside.value * slot3.pushBack * STUB_WEIGHT_FACTOR * -1; // negative for left
-  assert.ok(Math.abs(target.velocity.x - expectedX) < 1, `facing left → negative velocityX`);
-  console.log("✓ Test 4: facing direction");
+  assert.equal(right.knockback?.vx, 60, `right-facing hit should push positive, got ${right.knockback?.vx}`);
+  assert.equal(left.knockback?.vx, -60, `left-facing hit should push negative, got ${left.knockback?.vx}`);
+  console.log("✓ Test 4: facing direction flips knockback sign");
 }
 
-// Test 5: attack1 (slot 0, pushBack=0) → no X velocity from PVF
+// 5. attack1 slot0 pushBack=0 keeps horizontal velocity at zero.
 {
-  const resolver = new ReactionResolver();
-  const target = createMockActor();
-  const attacker = createMockActor("attack1");
-  const decision = createMockDecision();
+  const def = freshDefender();
+  applyHitReaction(
+    def,
+    {
+      hitReaction: "hit_down",
+      causesDown: false,
+      attackLevel: 1,
+      pushAsideValue: 30,
+      weaponPushBack: 0,
+      attackerFacing: 1,
+    },
+    50,
+    0,
+  );
 
-  resolver.apply(target, "light_stagger", decision, attacker, 0);
-
-  const attack1 = SWORDMAN_ATTACKS.attack1 as any;
-  const slot0 = SWORDMAN_WEAPON_HIT_INFO[0];
-  const expectedX = attack1.pushAside.value * slot0.pushBack * STUB_WEIGHT_FACTOR * 1; // 30 * 0 * 0.547 = 0
-  assert.equal(target.velocity.x, expectedX, "attack1 slot 0 pushBack=0 → velocityX=0");
+  assert.equal(def.knockback, null, "slot0 pushBack=0 should not create knockback state");
   console.log("✓ Test 5: attack1 no pushback");
 }
 

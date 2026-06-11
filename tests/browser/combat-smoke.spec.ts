@@ -468,3 +468,48 @@ test.skip("combat scene boots, runs deterministic scenario, and validates all co
   expect(diagnostics.badResponses, "bad responses").toEqual([]);
   expect(globalPassed, "all chain assertions passed").toBe(true);
 });
+
+test("combat scene create path boots with engine kernel and runtime loop shell", async ({ page }) => {
+  test.setTimeout(40_000);
+  const diagnostics = attachDiagnostics(page);
+
+  await page.goto("/?scene=combat", { waitUntil: "domcontentloaded", timeout: 20_000 });
+  await expect(page.locator("canvas")).toBeVisible({ timeout: 15_000 });
+  await page.waitForFunction(
+    () => Boolean((window as any).combatLab?.kernelReady),
+    undefined,
+    { polling: 100, timeout: 30_000 },
+  );
+  await page.waitForTimeout(500);
+
+  const state = await page.evaluate(() => {
+    const runtime = (window as any).combatLab;
+    const scene = runtime?.scene;
+    const kernel = runtime?.kernel;
+    const snapshot = kernel?.debugSnapshot?.();
+
+    return {
+      kernelCtor: kernel?.constructor?.name ?? null,
+      simulationCtor: scene?.simulation?.constructor?.name ?? null,
+      snapshot: snapshot
+        ? {
+          tickType: typeof snapshot.tick,
+          lastHitTickType: typeof snapshot.lastHit?.tick,
+          actorCountType: typeof snapshot.performance?.actorCount,
+          tick: snapshot.tick,
+        }
+        : null,
+    };
+  });
+
+  expect(diagnostics.consoleErrors, "console errors").toEqual([]);
+  expect(diagnostics.pageErrors, "page errors").toEqual([]);
+  expect(diagnostics.failedRequests, "failed requests").toEqual([]);
+  expect(diagnostics.badResponses, "bad responses").toEqual([]);
+  expect(state.kernelCtor).toBe("EngineKernel");
+  expect(state.simulationCtor).toBe("FixedStepSimulation");
+  expect(state.snapshot?.tickType).toBe("number");
+  expect(state.snapshot?.lastHitTickType).toBe("number");
+  expect(state.snapshot?.actorCountType).toBe("number");
+  expect((state.snapshot?.tick ?? 0) > 0).toBe(true);
+});

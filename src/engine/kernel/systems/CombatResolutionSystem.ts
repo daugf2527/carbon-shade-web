@@ -189,10 +189,17 @@ export class CombatResolutionSystem implements EngineSystem {
             }
           }
         }
+        const reactionLabel = reactionKindToCombatLabel(defender.reaction);
         ctx.bus.emit("HitConfirmed", {
           attackerId: attacker.id,
           defenderId: defender.id,
+          targetId: defender.id,
+          actionName,
           dmg,
+          finalDamage: dmg,
+          hpAfter: defender.hp,
+          finalReaction: reactionLabel,
+          armorBaseType: defender.armorProfile.baseType,
           tick: ctx.tickCount,
         });
         // P3.1: emit render-oriented events for scene consumers.
@@ -201,7 +208,6 @@ export class CombatResolutionSystem implements EngineSystem {
           amount: dmg,
           tick: ctx.tickCount,
         });
-        const reactionLabel = reactionKindToCombatLabel(defender.reaction);
         ctx.bus.emit("ReactionApplied", {
           targetActorId: defender.id,
           finalReaction: reactionLabel,
