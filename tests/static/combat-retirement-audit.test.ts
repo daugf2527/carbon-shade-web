@@ -141,6 +141,42 @@ assert.ok(
   !payload.staticImports.some((entry: { file: string }) => entry.file.includes("tests/static/socd-cleaner.test.ts")),
   "audit should stop reporting socd-cleaner once it migrates to runtime input surfaces",
 );
+assert.ok(
+  !payload.staticImports.some((entry: { file: string }) => entry.file.includes("tests/static/jump-attack-z-position.test.ts")),
+  "audit should stop reporting jump-attack-z-position once it migrates to the engine jump harness",
+);
+assert.ok(
+  !payload.staticImports.some((entry: { file: string }) => entry.file.includes("tests/static/jump-attack-z-detailed.test.ts")),
+  "audit should stop reporting jump-attack-z-detailed once it migrates to the engine jump harness",
+);
+assert.ok(
+  !payload.staticImports.some((entry: { file: string }) => entry.file.includes("tests/static/jump-attack-hit-recoil.test.ts")),
+  "audit should stop reporting jump-attack-hit-recoil once it migrates to the engine jump harness",
+);
+assert.ok(
+  !payload.staticImports.some((entry: { file: string }) => entry.file.includes("tests/static/replay.test.ts")),
+  "audit should stop reporting replay.test once it migrates to the engine replay surface",
+);
+assert.ok(
+  !payload.staticImports.some((entry: { file: string }) => entry.file.includes("tests/static/replay-hash.test.ts")),
+  "audit should stop reporting replay-hash once it migrates to the engine replay surface",
+);
+assert.ok(
+  !payload.staticImports.some((entry: { file: string }) => entry.file.includes("tests/static/replay-schema.test.ts")),
+  "audit should stop reporting replay-schema once it migrates to the engine replay surface",
+);
+assert.ok(
+  !payload.staticImports.some((entry: { file: string }) => entry.file.includes("tests/static/replay-performance.test.ts")),
+  "audit should stop reporting replay-performance once it migrates to the engine replay surface",
+);
+assert.ok(
+  !payload.staticImports.some((entry: { file: string }) => entry.file.includes("tests/static/enemy-ai.test.ts")),
+  "audit should stop reporting enemy-ai once it migrates to the engine AI surface",
+);
+assert.ok(
+  !payload.staticImports.some((entry: { file: string }) => entry.file.includes("tests/static/fuzz-combat.test.ts")),
+  "audit should stop reporting fuzz-combat once it migrates to the engine replay/input surface",
+);
 
 console.log(
   `combat-retirement-audit: combatFiles=${payload.summary.combatFileCount} runtime=${payload.summary.runtimeImportCount} truth=${payload.summary.truthImportCount} static=${payload.summary.staticImportCount} docs=${payload.summary.docsMentionCount}`,

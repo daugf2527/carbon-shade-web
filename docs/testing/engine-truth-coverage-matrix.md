@@ -66,7 +66,9 @@ EngineKernel 的 3 个 stub（`runDeterministicScenario` / `scenario` / `replay`
 | S5 | 同 seed → 同 finalStateHash | 91 帧逐帧一致 |
 | S6 | 不同 seed → 不同 finalStateHash | seed 42 vs 99 发散（PRNG 折进 hash） |
 
-**scenario 7 boolean 诚实覆盖**（engine 现有 player+grunt+5 action + bleed DOT StatusSystem + armor profile 系统(Batch 3a) + DownSystem(Stage 4B-B1),能观测 **6/7**）：
+**scenario 7 boolean 诚实覆盖**（engine 现有 player+grunt+5 action + bleed DOT StatusSystem + armor profile 系统(Batch 3a) + DownSystem(Stage 4B-B1)，能观测 **6/7**）：
+
+> ⚠️ **"6/7 可观测" 的诚实分级**（避免顶层 summary 把代价 frame 掉）：6 个里只有 **3 个是真实战斗流程自然涌现**（normalHit / launch / bleed — 玩家攻击序列会自然产生）；另 **3 个靠自验脚本临时注入状态触发**（armorHit / buildingArmorBlocked 临时给 grunt 设 `armorProfile`，quickRebound 临时 `force(DOWN)+intent`）——**真实战斗里没有任何怪带 armor**（armor 非 .mob 字段、值 local_baseline，DNF.exe 不可得，见第三节 armor 缺口），玩家正常游玩观测不到这 3 个。它们证明的是"系统对人为注入的状态有正确反应"，不是"真实战斗会产生这些状态"。
 
 | boolean | 状态 | 缺口原因 / 观测点 |
 |---|---|---|
@@ -209,7 +211,7 @@ DNF action 有取消窗口(cancel window):动画某帧范围内可取消进其�
 | C4 | 无 cancelWindow → null | 不造帧(避免 combo-gauge 式臆测)|
 | C5 | 覆盖 sanity | 恰 19/205 skills 有可解析窗口 |
 
-**⚠️ 诚实接线状态(谓词就位,FSM/skill-action 接线待后续)**:engine 暂无 skill actions(这 19 个 cancel skill 不是 engine action)也无指令序列解析器,故谓词暂未被运行时 FSM 调用——是未来 cancel/combo 系统的可验证地基。**与 D 组同性质**(机械先于数据/接线),**但与已跳过的 06-Combo correction 不同**:cancelWindow 有真 PVF 真值(cancelWindowStart=50 是客户端数据),非手调 gauge 常数。engine 现役的基础攻击(attack1-3)shard 里**无 cancelWindow**,故**不为它们臆造取消帧**(那是 combo-gauge 式 local_baseline 猜测)。
+**⚠️ 诚实接线状态(谓词已接进 ActionSystem.tick，但 config 恒空 → 实际 no-op)**:`isInCancelWindow` 自 skill-action §3 起**已被 ActionSystem.tick:69 调用**，但今天是**空转**——ActionSystem 的 `cancelWindows` map 仅由 `define(name, anim, cancelWindow)` 第三参填充，而 CombatScene 里**每个 define() 都只传 2 参**（无 cancelWindow）→ map 恒空 → cancelCfg 恒 undefined → 谓词从不对真实 config 求值。是未来 cancel/combo 系统的可验证地基（一旦某 skill action 注册真 cancelWindow config，接线即生效）。**与 D 组同性质**(机械先于数据/接线)，**但与已跳过的 06-Combo correction 不同**:cancelWindow 有真 PVF 真值(cancelWindowStart=50 是客户端数据)，非手调 gauge 常数。engine 现役的基础攻击(attack1-3)shard 里**无 cancelWindow**，故**不为它们臆造取消帧**(那是 combo-gauge 式 local_baseline 猜测)。
 
 ## 十二、水平击退：pushAside 真值驱动（2026-06-06，纠正上轮"架构决策"误判）
 

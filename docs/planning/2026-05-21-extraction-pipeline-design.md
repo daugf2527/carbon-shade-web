@@ -1,5 +1,9 @@
 # DNF 数据提取全自动管线设计
 
+> Status: superseded pipeline design snapshot
+> Authoritative successor: `docs/planning/2026-06-04-engine-native-rewrite-roadmap.md`
+> Notes: keep for early extract-to-runtime pipeline rationale, not for current engine migration ownership.
+
 > 2026-05-21。基于 dnf-extract 能力评估（`2026-05-21-dnf-extract-assessment.md`）和现有脚本审计结果，设计闭环的 PVF → SQLite → Runtime JSON 自动化管线。
 
 ## 0. 现状审计：现有工具盘点

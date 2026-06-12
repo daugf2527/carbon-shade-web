@@ -1,5 +1,9 @@
 # dnf-native Kernel 设计（2026-05-21）
 
+> Status: superseded kernel design snapshot
+> Authoritative successor: `docs/planning/2026-06-04-engine-native-rewrite-roadmap.md`
+> Notes: keep for branch-origin rationale, not for current engine migration status.
+
 > 7 个并行 agent 数据驱动反推汇总。从 PVF 真值反推 kernel 拓扑，不依赖项目历史或一般游戏开发经验。
 >
 > **关键决策**：开 `dnf-native` 分支重写战斗 kernel，**保留所有 verified 资产**（tools / src/data/official/dnf / src/game 渲染层 / src/extraction），**抛弃手调战斗逻辑**（src/combat/ 整个 / 38 个 手调 action / ReactionProfile 预设）。

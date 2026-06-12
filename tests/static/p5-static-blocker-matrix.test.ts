@@ -7,8 +7,7 @@ const DOC = join(ROOT, "docs", "engineering", "p5-static-blocker-matrix-2026-06-
 const source = readFileSync(DOC, "utf-8");
 
 const requiredRows = [
-  "tests/static/combat-chain-regression.test.ts",
-  "tests/static/replay-hash.test.ts",
+  "tests/static/jump-x-cancel-stuck-airborne.test.ts",
   "tests/static/official-api-alignment.test.ts",
 ];
 
@@ -29,12 +28,16 @@ assert.ok(
   "static blocker matrix should cite the retirement audit evidence",
 );
 assert.ok(
-  source.includes("- 当前 static blocker 文件数: 31"),
-  "static blocker matrix should report 31 remaining combat-bound static files after the first kernel-shell batch",
+  source.includes("- 当前 static blocker 文件数: 15"),
+  "static blocker matrix should report 15 remaining combat-bound static files after the combat-subsystems batch",
 );
 assert.ok(
-  source.includes("| `kernel-shell` | 29 |"),
-  "first static migration batch should reduce kernel-shell blockers by three files",
+  source.includes("| `kernel-shell` | 15 |"),
+  "static blocker matrix should preserve the 15-file kernel-shell remainder after Day 6",
+);
+assert.ok(
+  source.includes("| `combat-subsystems` | 0 |"),
+  "static blocker matrix should show that the combat-subsystems bucket has been cleared",
 );
 assert.ok(
   source.includes("| `data-surface` | 0 |"),
@@ -71,6 +74,54 @@ assert.ok(
 assert.ok(
   !source.includes("tests/static/socd-cleaner.test.ts"),
   "static blocker matrix should stop listing socd-cleaner once it migrates to runtime input surfaces",
+);
+assert.ok(
+  !source.includes("tests/static/jump-down-movement.test.ts"),
+  "static blocker matrix should stop listing jump-down-movement once it migrates to the engine locomotion harness",
+);
+assert.ok(
+  !source.includes("tests/static/jump-hit-down-movement.test.ts"),
+  "static blocker matrix should stop listing jump-hit-down-movement once it migrates to the engine locomotion harness",
+);
+assert.ok(
+  !source.includes("tests/static/jump-skill-down-movement.test.ts"),
+  "static blocker matrix should stop listing jump-skill-down-movement once it migrates to the engine locomotion harness",
+);
+assert.ok(
+  !source.includes("tests/static/jump-attack-z-position.test.ts"),
+  "static blocker matrix should stop listing jump-attack-z-position once it migrates to the engine jumpattack harness",
+);
+assert.ok(
+  !source.includes("tests/static/jump-attack-z-detailed.test.ts"),
+  "static blocker matrix should stop listing jump-attack-z-detailed once it migrates to the engine jumpattack harness",
+);
+assert.ok(
+  !source.includes("tests/static/jump-attack-hit-recoil.test.ts"),
+  "static blocker matrix should stop listing jump-attack-hit-recoil once it migrates to the engine jumpattack harness",
+);
+assert.ok(
+  !source.includes("tests/static/replay.test.ts"),
+  "static blocker matrix should stop listing replay.test once it migrates to the engine replay surface",
+);
+assert.ok(
+  !source.includes("tests/static/replay-hash.test.ts"),
+  "static blocker matrix should stop listing replay-hash once it migrates to the engine replay surface",
+);
+assert.ok(
+  !source.includes("tests/static/replay-schema.test.ts"),
+  "static blocker matrix should stop listing replay-schema once it migrates to the engine replay surface",
+);
+assert.ok(
+  !source.includes("tests/static/replay-performance.test.ts"),
+  "static blocker matrix should stop listing replay-performance once it migrates to the engine replay surface",
+);
+assert.ok(
+  !source.includes("tests/static/combat-chain-regression.test.ts"),
+  "static blocker matrix should stop listing combat-chain-regression once it migrates to the engine subsystem harness",
+);
+assert.ok(
+  !source.includes("tests/static/hit-shape.test.ts"),
+  "static blocker matrix should stop listing hit-shape once its geometry assertions move to engine-owned helpers",
 );
 
 console.log("p5-static-blocker-matrix: required rows and buckets present");

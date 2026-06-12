@@ -1,5 +1,9 @@
 # Stage 1 数据管线设计（2026-05-22）
 
+> Status: superseded stage pipeline design snapshot
+> Authoritative successor: `docs/planning/2026-06-04-engine-native-rewrite-roadmap.md`
+> Notes: keep for Stage 1 implementation history and parser/database rationale, not as a current entry doc.
+
 > 本文档是 [v2 design](2026-05-22-dnf-native-v2-design.md) 实施第一阶段的细化设计：dnf-extract 工具改造 + 5-stage pipeline + SQLite 入库 + entity-centric runtime JSON。
 >
 > Scope 锚定：[`docs/plans/2026-05-22-dnf-native-v2-design.md`](2026-05-22-dnf-native-v2-design.md) §0.5（PVE-only），13 system 完整 1:1，PVF 字段读但 ignore。

@@ -1,5 +1,9 @@
 # Phase 3 Data Layer Design — DNF Truth Base（2026-05-21）
 
+> Status: superseded data-layer design snapshot
+> Authoritative successor: `docs/planning/2026-06-04-engine-native-rewrite-roadmap.md`
+> Notes: preserve as early truth-base design context, not as the current runtime data contract.
+
 落档 [Combat Lab DNF alignment pivot](2026-05-21-dnf-alignment-pivot.md) 的 Phase 3 数据层设计。本期**只落档，不接 runtime**；Phase 4 物理引擎重写时才消费。
 
 ## 1. 目录结构

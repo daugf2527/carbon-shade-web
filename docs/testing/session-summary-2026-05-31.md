@@ -1,5 +1,9 @@
 # 自动化测试循环会话总结
 
+> Status: historical session summary
+> Authoritative successor: `docs/testing/automated-test-loop.md`
+> Notes: keep as one-session troubleshooting evidence, not as the standing test-process entry doc.
+
 **日期**: 2026-05-31  
 **时长**: ~1 小时（15:38 - 16:30+）  
 **目标**: 建立 10 分钟自动化测试循环

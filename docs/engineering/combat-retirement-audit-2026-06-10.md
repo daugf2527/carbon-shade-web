@@ -1,11 +1,11 @@
 # Combat Retirement Audit (2026-06-10)
 
-- 生成时间: 2026-06-11T06:59:38.217Z
+- 生成时间: 2026-06-12T01:29:29.634Z
 - src/combat 文件数: 46
 - 运行时/脚本依赖: 0
 - runtime 分层: type-only=0, runtime-value=0, source-ref=0
 - truth 测试依赖: 0
-- static 测试依赖: 31
+- static 测试依赖: 10
 - browser 测试依赖: 0
 - 文档引用: 62
 
@@ -26,16 +26,6 @@
 
 ## Static 测试依赖
 
-- `tests/static/armor.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/combat-chain-regression.test.ts:2` import type { ActionName, Actor } from "../../src/combat/types.js";
-- `tests/static/combat-chain-regression.test.ts:3` import { createActor } from "../../src/combat/actors/ActorFactory.js";
-- `tests/static/combat-chain-regression.test.ts:4` import { getAction } from "../../src/combat/actions/FrameDataAction.js";
-- `tests/static/combat-chain-regression.test.ts:5` import { HitResolver2D5 } from "../../src/combat/hit/HitResolver2D5.js";
-- `tests/static/combat-chain-regression.test.ts:6` import { HitDecisionResolver } from "../../src/combat/hit/HitDecisionResolver.js";
-- `tests/static/combat-chain-regression.test.ts:7` import { DamageResolver } from "../../src/combat/damage/DamageResolver.js";
-- `tests/static/combat-chain-regression.test.ts:8` import { ReactionResolver } from "../../src/combat/reaction/ReactionResolver.js";
-- `tests/static/combat-chain-regression.test.ts:9` import { StatusEffectSystem } from "../../src/combat/status/StatusEffectSystem.js";
-- `tests/static/combat-chain-regression.test.ts:10` import { CombatEventBus } from "../../src/combat/events/CombatEventBus.js";
 - `tests/static/combo-correction.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 - `tests/static/damage-routing.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 - `tests/static/death-barrier-multihit.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
@@ -44,36 +34,11 @@
 - `tests/static/debug-actions.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 - `tests/static/dfo-replica.test.ts:2` import { getAction } from "../../src/combat/actions/FrameDataAction.js";
 - `tests/static/dfo-replica.test.ts:3` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/enemy-ai.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/fuzz-combat.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 - `tests/static/handfeel-fix2.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/hit-shape.test.ts:2` import type { HitBoxFrameWindow } from "../../src/combat/types.js";
-- `tests/static/hit-shape.test.ts:3` import { createActor } from "../../src/combat/actors/ActorFactory.js";
-- `tests/static/hit-shape.test.ts:4` import { HitResolver2D5 } from "../../src/combat/hit/HitResolver2D5.js";
-- `tests/static/hit-shape.test.ts:5` import { HitDecisionResolver } from "../../src/combat/hit/HitDecisionResolver.js";
-- `tests/static/hit-shape.test.ts:6` import { getAction } from "../../src/combat/actions/FrameDataAction.js";
-- `tests/static/input-buffer.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/jump-attack-hit-recoil.test.ts:3` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/jump-attack-z-detailed.test.ts:3` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/jump-attack-z-position.test.ts:3` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/jump-down-movement.test.ts:3` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/jump-hit-down-movement.test.ts:3` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/jump-skill-down-movement.test.ts:3` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/jump-x-cancel-stuck-airborne.test.ts:5` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/movement-bounds.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 - `tests/static/official-api-alignment.test.ts:2` import { getAction } from "../../src/combat/actions/FrameDataAction.js";
 - `tests/static/official-api-alignment.test.ts:3` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/replay-hash.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/replay-hash.test.ts:3` import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";
-- `tests/static/replay-hash.test.ts:4` import { createActor } from "../../src/combat/actors/ActorFactory.js";
-- `tests/static/replay-performance.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/replay-schema.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/replay.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 - `tests/static/status-buff.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 - `tests/static/status-profile.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/tick-benchmark.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/walk-run-z.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-- `tests/static/walk-run.test.ts:2` import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
 
 ## Browser 测试依赖
 
@@ -264,43 +229,27 @@
 - `docs/engineering/input-recorder-guide.md:161` startReplay(kernel: CombatKernel, recording?: InputRecording): boolean;
 - `docs/engineering/input-recorder-guide.md:163` tickReplay(kernel: CombatKernel): void;
 - `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:3` 依据 [docs/planning/2026-06-04-engine-native-rewrite-roadmap.md](../planning/2026-06-04-engine-native-rewrite-roadmap.md)，P5 不只是 truth 迁移，还要求 static gate 脱离 `src/combat/*`。
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:13` | `kernel-shell` | 29 | 直接 new / 驱动 CombatKernel 或 FixedStepSimulation，是真正的 static 主阻塞。 | 优先给这组补 engine 对等 harness 或归档策略。 |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:14` | `combat-subsystems` | 2 | 绕过 CombatKernel 但仍直接拼装 combat 子系统，适合作为中间迁移批次。 | 按功能把几条链迁到 engine core/system 对等实现。 |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:13` | `kernel-shell` | 15 | 直接 new / 驱动 CombatKernel 或 FixedStepSimulation，是真正的 static 主阻塞。 | 优先给这组补 engine 对等 harness 或归档策略。 |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:14` | `combat-subsystems` | 0 | 绕过 CombatKernel 但仍直接拼装 combat 子系统，适合作为中间迁移批次。 | 按功能把几条链迁到 engine core/system 对等实现。 |
 - `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:16` | `data-surface` | 0 | 只绑定动作表/类型/事件壳，属于最便宜的清理层。 | 先把这层从 src/combat/* 拆到 data/runtime 入口。 |
 - `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:22` | `tests/static/armor.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:23` | `tests/static/combat-chain-regression.test.ts` | `combat-subsystems` | `import type { ActionName, Actor } from "../../src/combat/types.js";`<br>`import { createActor } from "../../src/combat/actors/ActorFactory.js";`<br>`import { getAction } from "../../src/combat/actions/FrameDataAction.js";`<br>`import { HitResolver2D5 } from "../../src/combat/hit/HitResolver2D5.js";`<br>`import { HitDecisionResolver } from "../../src/combat/hit/HitDecisionResolver.js";`<br>`import { DamageResolver } from "../../src/combat/damage/DamageResolver.js";`<br>`import { ReactionResolver } from "../../src/combat/reaction/ReactionResolver.js";`<br>`import { StatusEffectSystem } from "../../src/combat/status/StatusEffectSystem.js";`<br>`import { CombatEventBus } from "../../src/combat/events/CombatEventBus.js";` | P5-C |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:24` | `tests/static/combo-correction.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:25` | `tests/static/damage-routing.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:26` | `tests/static/death-barrier-multihit.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:27` | `tests/static/death-loop.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";`<br>`import { CombatEventPriority } from "../../src/combat/events/CombatEventBus.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:28` | `tests/static/debug-actions.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:29` | `tests/static/dfo-replica.test.ts` | `kernel-shell` | `import { getAction } from "../../src/combat/actions/FrameDataAction.js";`<br>`import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:30` | `tests/static/enemy-ai.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:31` | `tests/static/fuzz-combat.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:32` | `tests/static/handfeel-fix2.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:33` | `tests/static/hit-shape.test.ts` | `combat-subsystems` | `import type { HitBoxFrameWindow } from "../../src/combat/types.js";`<br>`import { createActor } from "../../src/combat/actors/ActorFactory.js";`<br>`import { HitResolver2D5 } from "../../src/combat/hit/HitResolver2D5.js";`<br>`import { HitDecisionResolver } from "../../src/combat/hit/HitDecisionResolver.js";`<br>`import { getAction } from "../../src/combat/actions/FrameDataAction.js";` | P5-C |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:34` | `tests/static/input-buffer.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:35` | `tests/static/jump-attack-hit-recoil.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:36` | `tests/static/jump-attack-z-detailed.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:37` | `tests/static/jump-attack-z-position.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:38` | `tests/static/jump-down-movement.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:39` | `tests/static/jump-hit-down-movement.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:40` | `tests/static/jump-skill-down-movement.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:41` | `tests/static/jump-x-cancel-stuck-airborne.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:42` | `tests/static/movement-bounds.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:43` | `tests/static/official-api-alignment.test.ts` | `kernel-shell` | `import { getAction } from "../../src/combat/actions/FrameDataAction.js";`<br>`import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:44` | `tests/static/replay-hash.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";`<br>`import { ReplayRecorder } from "../../src/combat/replay/ReplayRecorder.js";`<br>`import { createActor } from "../../src/combat/actors/ActorFactory.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:45` | `tests/static/replay-performance.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:46` | `tests/static/replay-schema.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:47` | `tests/static/replay.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:48` | `tests/static/status-buff.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:49` | `tests/static/status-profile.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:50` | `tests/static/tick-benchmark.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:51` | `tests/static/walk-run-z.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:52` | `tests/static/walk-run.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:56` 1. static blocker 的真正主阻塞不是零散类型，而是 32 个直接依赖 `CombatKernel` / `FixedStepSimulation` 的 `kernel-shell` 用例。
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:57` 2. `data-surface` 已清零，说明动作表/类型/事件壳这层可以独立迁出，不必和 `CombatKernel` 主迁移绑在一起。
-- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:59` 4. `replay-input` 已清零，说明 replay metadata 这类静态校验已能直接落在 runtime 入口，不再阻塞 `src/combat/` 删除。
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:23` | `tests/static/combo-correction.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:24` | `tests/static/damage-routing.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:25` | `tests/static/death-barrier-multihit.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:26` | `tests/static/death-loop.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";`<br>`import { CombatEventPriority } from "../../src/combat/events/CombatEventBus.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:27` | `tests/static/debug-actions.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:28` | `tests/static/dfo-replica.test.ts` | `kernel-shell` | `import { getAction } from "../../src/combat/actions/FrameDataAction.js";`<br>`import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:29` | `tests/static/enemy-ai.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:30` | `tests/static/fuzz-combat.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:31` | `tests/static/handfeel-fix2.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:32` | `tests/static/jump-x-cancel-stuck-airborne.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:33` | `tests/static/official-api-alignment.test.ts` | `kernel-shell` | `import { getAction } from "../../src/combat/actions/FrameDataAction.js";`<br>`import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:34` | `tests/static/status-buff.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:35` | `tests/static/status-profile.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:36` | `tests/static/tick-benchmark.test.ts` | `kernel-shell` | `import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";` | P5-D |
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:40` 1. static blocker 的真正主阻塞不是零散类型，而是 15 个直接依赖 `CombatKernel` / `FixedStepSimulation` 的 `kernel-shell` 用例。
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:41` 2. `data-surface` 已清零，说明动作表/类型/事件壳这层可以独立迁出，不必和 `CombatKernel` 主迁移绑在一起。
+- `docs/engineering/p5-static-blocker-matrix-2026-06-10.md:43` 4. `replay-input` 还剩 0 个文件，说明 replay / input 工具链仍是 `src/combat/` 删除前的独立尾巴。
 - `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:5` - `tests/truth/` 不再把关键真值守在 `src/combat/*`
 - `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:7` - `src/combat/` 删除前，truth gate 可以完全站在 engine 侧
 - `docs/engineering/p5-truth-substitution-matrix-2026-06-10.md:14` | `tests/truth/reaction-velocity.test.ts` | `src/combat/reaction/ReactionResolver.ts` | `tests/truth/engine-reaction-truth.test.ts` | 部分覆盖 | 把 velocity 断言迁到 engine `applyHitReaction` / `KnockbackPhysics` 组合路径 |
