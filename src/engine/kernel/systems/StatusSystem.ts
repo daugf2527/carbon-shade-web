@@ -35,6 +35,11 @@ export class StatusSystem implements EngineSystem {
       for (const actor of ctx.actors) {
         if (this.pendingBleed.has(actor.id) && !actor.isDead) {
           applyBleed(actor, ctx.tickCount);
+          ctx.bus.emit("StatusApplied", {
+            actorId: actor.id,
+            type: "bleed",
+            tick: ctx.tickCount,
+          });
         }
       }
       this.pendingBleed.clear();

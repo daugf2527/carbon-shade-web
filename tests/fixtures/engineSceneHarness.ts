@@ -12,6 +12,8 @@ import { HitstunSystem } from "../../src/engine/kernel/systems/HitstunSystem.js"
 import { HitStopSystem } from "../../src/engine/kernel/systems/HitStopSystem.js";
 import { DownSystem } from "../../src/engine/kernel/systems/DownSystem.js";
 import { AirborneSystem } from "../../src/engine/kernel/systems/AirborneSystem.js";
+import { MovementSystem } from "../../src/engine/kernel/systems/MovementSystem.js";
+import { JumpSystem } from "../../src/engine/kernel/systems/JumpSystem.js";
 import { KnockbackSystem } from "../../src/engine/kernel/systems/KnockbackSystem.js";
 import { StatusSystem } from "../../src/engine/kernel/systems/StatusSystem.js";
 
@@ -96,6 +98,25 @@ export function buildEngineSceneKernel(seed = 42) {
   kernel.addActor(grunt, false);
 
   return { kernel, player, grunt, actions };
+}
+
+export function buildEngineJumpMovementKernel(seed = 42) {
+  const scene = buildEngineSceneKernel(seed);
+  scene.kernel.registerSystem(new MovementSystem());
+  scene.kernel.registerSystem(new JumpSystem());
+  return scene;
+}
+
+export function tickUntil(
+  kernel: EngineKernel,
+  predicate: () => boolean,
+  maxTicks: number,
+): number {
+  for (let i = 0; i < maxTicks; i += 1) {
+    kernel.tick();
+    if (predicate()) return i + 1;
+  }
+  return -1;
 }
 
 export function primeTargetForAction(

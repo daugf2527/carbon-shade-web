@@ -94,6 +94,8 @@ interface CombatStats {
   fpsSamples60: number[];
 }
 
+type RuntimeEventDowngrade = "GrabAttached" | "VfxRequested";
+
 function makeCombatStats(tick: number): CombatStats {
   return {
     sessionStartTick: tick, hits: 0, misses: 0, armorBlocks: 0,
@@ -136,6 +138,7 @@ export class CombatScene extends Phaser.Scene {
   private touchControls: TouchControls | null = null;
   private readonly inputRecorder = new InputRecorder();
   private recIndicator: Phaser.GameObjects.Text | null = null;
+  private readonly warnedRuntimeDowngrades = new Set<RuntimeEventDowngrade>();
 
   constructor() {
     super("combat");
@@ -532,9 +535,12 @@ export class CombatScene extends Phaser.Scene {
       });
     });
 
-    // GrabAttached / VfxRequested — engine doesn't emit these yet (P4), keep stub handlers
-    this.kernel.bus.on("GrabAttached", _event => { /* P4 */ });
-    this.kernel.bus.on("VfxRequested", _event => { /* P4 */ });
+    this.kernel.bus.on("GrabAttached", () => {
+      this.warnRuntimeDowngrade("GrabAttached", "engine runtime does not render grab attachment feedback yet");
+    });
+    this.kernel.bus.on("VfxRequested", () => {
+      this.warnRuntimeDowngrade("VfxRequested", "engine runtime does not render requested VFX yet");
+    });
   }
 
   private bindStatsListeners(): void {
@@ -567,10 +573,17 @@ export class CombatScene extends Phaser.Scene {
       const id = p.actorId ?? "unknown";
       s.deaths[id] = (s.deaths[id] ?? 0) + 1;
     });
-    // StatusApplied — engine doesn't emit this yet (P4).
-    // IMPORTANT: emit端 (combat StatusEffectSystem) payload 字段是 `type` 不是 `kind`。
-    // P4 实装读 payload 时用 `payload.type` (StatusEffectType)，不用 `payload.kind`。
-    this.kernel.bus.on("StatusApplied", _event => { /* P4 */ });
+    this.kernel.bus.on("StatusApplied", event => {
+      const p = event.payload as { actorId?: string; type?: string };
+      if (!p.type) return;
+      s.statusApplied[p.type] = (s.statusApplied[p.type] ?? 0) + 1;
+    });
+  }
+
+  private warnRuntimeDowngrade(eventType: RuntimeEventDowngrade, reason: string): void {
+    if (this.warnedRuntimeDowngrades.has(eventType)) return;
+    this.warnedRuntimeDowngrades.add(eventType);
+    console.warn(`[CombatScene] ${eventType} downgraded: ${reason}`);
   }
 
   printStats(): void {

@@ -189,7 +189,7 @@ export class CombatResolutionSystem implements EngineSystem {
             }
           }
         }
-        const reactionLabel = reactionKindToCombatLabel(defender.reaction);
+        const reactionLabel = reactionKindToCombatLabel(defender.reaction, defender.armorProfile.baseType);
         ctx.bus.emit("HitConfirmed", {
           attackerId: attacker.id,
           defenderId: defender.id,
@@ -245,8 +245,12 @@ export class CombatResolutionSystem implements EngineSystem {
 }
 
 /** Map engine ReactionState.kind → combat-style reaction label for scene consumers. */
-function reactionKindToCombatLabel(reaction: ReactionState | null): string {
+function reactionKindToCombatLabel(
+  reaction: ReactionState | null,
+  armorBaseType: string = "none",
+): string {
   if (!reaction) return "none";
+  if (reaction.kind === "hit" && armorBaseType !== "none") return "armor_feedback_only";
   switch (reaction.kind) {
     case "airborne": return "launch";
     case "down": return "downed";

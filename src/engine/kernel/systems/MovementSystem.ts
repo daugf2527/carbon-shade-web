@@ -60,6 +60,7 @@ export class MovementSystem implements EngineSystem {
   tick(ctx: EngineContext): void {
     const dt = ctx.tickMs / 1000;
     const tick = ctx.tickCount;
+    const bounds = ctx.worldBounds;
 
     for (const actor of ctx.actors) {
       if (actor.frozenFrames > 0) { actor.locomotion = "idle"; continue; } // hit-stop: no movement while frozen
@@ -95,6 +96,13 @@ export class MovementSystem implements EngineSystem {
 
       if (dir !== 0) actor.x += dir * xVel * dashMul * dt;
       if (zDir !== 0) actor.z += zDir * zVel * dashMul * dt;
+
+      if (bounds) {
+        if (actor.x < bounds.xMin) actor.x = bounds.xMin;
+        else if (actor.x > bounds.xMax) actor.x = bounds.xMax;
+        if (actor.z < bounds.zMin) actor.z = bounds.zMin;
+        else if (actor.z > bounds.zMax) actor.z = bounds.zMax;
+      }
 
       actor.locomotion = dir === 0 && zDir === 0 ? "idle" : ds.running ? "run" : "walk";
     }
