@@ -1,35 +1,24 @@
-// Test: Jump 后 ArrowDown 移动是否正常
 import { assert } from "./test-utils.js";
-import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+import { buildEngineJumpMovementKernel, tickUntil } from "../fixtures/engineSceneHarness.js";
 
-const kernel = new CombatKernel({ enableReplay: false });
-const player = kernel.player;
+const { kernel, player } = buildEngineJumpMovementKernel(42);
+const startZ = player.z;
 
-// 记录初始 z 位置
-const startZ = player.position.z;
-
-// 执行 Jump
-kernel.press("KeyC");
+player.intent = { attack: false, dir: 0, button: "jump" };
 kernel.tick();
-kernel.release("KeyC");
+player.intent = { attack: false, dir: 0 };
 
-// Jump 持续 72 帧
-for (let i = 0; i < 72; i++) {
-  kernel.tick();
-}
+const landedAt = tickUntil(kernel, () => player.y === 0 && !player.airborne?.active, 120);
+assert.ok(landedAt > 0, "engine jump should land within 120 ticks");
+assert.equal(player.y, 0, "player should be grounded after the engine jump settles");
+assert.equal(player.airborne, null, "airborne state should clear on landing");
 
-// Jump 应该结束了
-assert.equal(player.currentAction, undefined, "Jump should end after 72 frames");
-assert.equal(player.position.y, 0, "Player should be on ground after Jump");
+player.intent = { attack: false, dir: 0, zDir: 1 };
+for (let i = 0; i < 10; i += 1) kernel.tick();
+player.intent = { attack: false, dir: 0, zDir: 0 };
+kernel.tick();
 
-// 现在按 ArrowDown 移动
-kernel.press("ArrowDown");
-for (let i = 0; i < 10; i++) {
-  kernel.tick();
-}
-kernel.release("ArrowDown");
+assert.ok(player.z > startZ, `player should move deeper into the lane after landing (${startZ} → ${player.z})`);
+assert.equal(player.locomotion, "idle", "releasing z movement should return locomotion to idle");
 
-// 检查是否向下移动了
-assert.ok(player.position.z > startZ, `Player should move down (z increased from ${startZ} to ${player.position.z})`);
-
-console.log(`✓ Jump 后 ArrowDown 移动正常: z ${startZ} → ${player.position.z}`);
+console.log(`jump-down-movement: landed at +${landedAt} ticks and restored z movement (${startZ} → ${player.z})`);

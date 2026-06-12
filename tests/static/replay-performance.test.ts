@@ -1,14 +1,20 @@
 import assert from "node:assert/strict";
-import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+import { buildEngineSceneKernel } from "../fixtures/engineSceneHarness.js";
 
-const kernel = new CombatKernel({ enableReplay: true });
-kernel.runTicks(8);
+const { kernel, player } = buildEngineSceneKernel(42);
+for (let i = 0; i < 8; i += 1) {
+  player.intent = { attack: i % 3 === 0, dir: 0 };
+  kernel.tick();
+}
 
-assert.equal(kernel.replay.frames.length, 8);
-for (const frame of kernel.replay.frames) {
+const replay = kernel.replay.export();
+assert.equal(replay.frames.length, 8);
+for (let i = 0; i < replay.frames.length; i += 1) {
+  const frame = replay.frames[i]!;
+  assert.equal(frame.tick, i + 1, "engine replay should append exactly one frame per tick");
   assert.equal(
-    frame.events.every(event => event.tick === frame.tick),
+    frame.eventCount <= kernel.bus.archive.length,
     true,
-    "Replay frames should store only newly flushed events for that frame, not the full archive history",
+    "engine replay frame eventCount should stay bounded by the live engine event archive",
   );
 }

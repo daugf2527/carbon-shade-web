@@ -1,64 +1,45 @@
-// Test: Jump 过程中被打中，落地后 ArrowDown 是否正常
 import { assert } from "./test-utils.js";
-import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+import { buildEngineJumpMovementKernel, tickUntil } from "../fixtures/engineSceneHarness.js";
 
-const kernel = new CombatKernel({ enableReplay: false });
-const player = kernel.player;
-const grunt = kernel.actors.find(a => a.id === "grunt")!;
+const { kernel, player, grunt } = buildEngineJumpMovementKernel(42);
+grunt.x = player.x + 30;
+grunt.z = player.z;
+grunt.facing = -1;
 
-// 将敌人移到玩家附近
-grunt.position.x = player.position.x + 100;
-grunt.position.z = player.position.z;
+const startZ = player.z;
 
-// 记录初始 z 位置
-const startZ = player.position.z;
-
-// 玩家执行 Jump
-kernel.press("KeyC");
+player.intent = { attack: false, dir: 0, button: "jump" };
 kernel.tick();
-kernel.release("KeyC");
+player.intent = { attack: false, dir: 0 };
+for (let i = 0; i < 10; i += 1) kernel.tick();
 
-// Jump 10 帧后
-for (let i = 0; i < 10; i++) {
-  kernel.tick();
-}
+kernel.requestAction(grunt.id, "attack1");
+const hitAt = tickUntil(
+  kernel,
+  () =>
+    kernel.bus.archive.some((event) => (
+      event.type === "HitConfirmed" &&
+      (event.payload as { defenderId?: string }).defenderId === player.id
+    )),
+  20,
+);
 
-console.log(`Jump 10 帧后: action=${player.currentAction?.actionName}, reactionState=${player.reactionState}, y=${player.position.y}`);
+assert.ok(hitAt > 0, "grunt attack should hit the airborne player");
+assert.ok(player.hp < player.stats.hpMax, "the airborne hit should reduce player hp");
 
-// 敌人攻击玩家
-kernel.requestAction(grunt, "attack1");
-for (let i = 0; i < 20; i++) {
-  kernel.tick();
-}
+const recoveredAt = tickUntil(
+  kernel,
+  () => player.y === 0 && !player.airborne?.active && player.reaction === null && player.currentActionName === null,
+  120,
+);
+assert.ok(recoveredAt > 0, "player should recover from the airborne hit and land within 120 ticks");
 
-console.log(`被打中后: action=${player.currentAction?.actionName}, reactionState=${player.reactionState}, y=${player.position.y}, reactionRemaining=${player.handfeel.reactionRemaining}`);
+player.intent = { attack: false, dir: 0, zDir: 1 };
+for (let i = 0; i < 10; i += 1) kernel.tick();
+player.intent = { attack: false, dir: 0, zDir: 0 };
+kernel.tick();
 
-// 等待落地和 reactionState 恢复（最多 100 帧）
-for (let i = 0; i < 100; i++) {
-  kernel.tick();
-  if (!player.currentAction && player.position.y === 0 && player.reactionState === "none") {
-    console.log(`第 ${i} 帧恢复正常: reactionState=${player.reactionState}`);
-    break;
-  }
-}
+assert.ok(player.z > startZ, `player should move down after jump-hit recovery (${startZ} → ${player.z})`);
+assert.equal(player.locomotion, "idle", "releasing z movement after recovery should return locomotion to idle");
 
-console.log(`恢复后: action=${player.currentAction?.actionName}, reactionState=${player.reactionState}, y=${player.position.y}`);
-
-// 现在按 ArrowDown 移动
-kernel.press("ArrowDown");
-for (let i = 0; i < 10; i++) {
-  kernel.tick();
-}
-kernel.release("ArrowDown");
-
-// 检查是否向下移动了
-const moved = player.position.z > startZ;
-console.log(`ArrowDown 移动结果: z ${startZ} → ${player.position.z}, moved=${moved}`);
-
-if (!moved) {
-  console.log(`DEBUG: reactionState=${player.reactionState}, currentAction=${player.currentAction?.actionName}, reactionRemaining=${player.handfeel.reactionRemaining}`);
-}
-
-assert.ok(moved, `Player should move down after Jump+Hit (z should increase from ${startZ}, but reactionState=${player.reactionState})`);
-
-console.log(`✓ Jump 过程中被打中后 ArrowDown 移动正常`);
+console.log(`jump-hit-down-movement: hit at +${hitAt} ticks, recovered at +${recoveredAt}, z ${startZ} → ${player.z}`);

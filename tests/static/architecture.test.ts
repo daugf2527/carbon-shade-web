@@ -17,6 +17,18 @@ assert.ok(
   !combatSceneSource.includes("../combat/debug/DebugOverlay.js"),
   "CombatScene should not import combat DebugSnapshot types",
 );
+assert.ok(
+  !combatSceneSource.includes('this.kernel.bus.on("GrabAttached", _event => { /* P4 */ });'),
+  "CombatScene should not leave GrabAttached as a silent stub",
+);
+assert.ok(
+  !combatSceneSource.includes('this.kernel.bus.on("VfxRequested", _event => { /* P4 */ });'),
+  "CombatScene should not leave VfxRequested as a silent stub",
+);
+assert.ok(
+  !combatSceneSource.includes('this.kernel.bus.on("StatusApplied", _event => { /* P4 */ });'),
+  "CombatScene should not leave StatusApplied as a silent stub",
+);
 
 const kernel = new EngineKernel(42);
 const simulation = new FixedStepSimulation(kernel);

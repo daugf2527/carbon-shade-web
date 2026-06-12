@@ -1,103 +1,115 @@
 import { assert } from "./test-utils.js";
-import type { HitBoxFrameWindow } from "../../src/combat/types.js";
-import { createActor } from "../../src/combat/actors/ActorFactory.js";
-import { HitResolver2D5 } from "../../src/combat/hit/HitResolver2D5.js";
-import { HitDecisionResolver } from "../../src/combat/hit/HitDecisionResolver.js";
-import { getAction } from "../../src/combat/actions/FrameDataAction.js";
+import {
+  buildHitGeometryQueryFromOffset,
+  hitGeometryOverlap,
+  type HitGeometryQuery,
+  type HurtGeometryRect,
+} from "../../src/engine/core/HitGeometry.js";
 
-function beginActiveAction(): void {
-  player.currentAction = {
-    id: "shape-action",
-    actionName: "RagingFury",
-    ownerId: player.id,
-    startTick: 0,
-    localFrame: 1,
-    phase: "active",
-    commandSource: "debug",
-    lockedFacing: player.facing,
-    facingLocked: true,
-    movementLocked: true,
-    activeHitboxIds: [],
-    alreadyHitByGroup: new Map(),
-    hitConfirmed: false,
-    armorHitConfirmed: false,
-    downedHitConfirmed: false,
-    whiffed: false,
-    cancelTokens: [],
-    interrupted: false,
-    hitStopFrozen: false,
-  };
+function hurtRect(x: number, y: number, z: number, w = 36, h = 48, d = 22): HurtGeometryRect {
+  return { x, y, z, w, h, d };
 }
 
-const player = createActor("player", "player", "player", 260, 0);
-const resolver = new HitResolver2D5();
-const decisions = new HitDecisionResolver();
-const base = getAction("RagingFury").active[0];
-assert.ok(base);
+function query(
+  shape: HitGeometryQuery["shape"],
+  overrides: Partial<{
+    radius: number;
+    offsetX: number;
+    offsetY: number;
+    offsetZ: number;
+    w: number;
+    h: number;
+    d: number;
+    attackerX: number;
+    attackerY: number;
+    attackerZ: number;
+    facing: 1 | -1;
+  }> = {},
+): HitGeometryQuery {
+  return buildHitGeometryQueryFromOffset({
+    shape,
+    offsetX: 0,
+    offsetY: 0,
+    offsetZ: -30,
+    w: 300,
+    h: 80,
+    d: 60,
+    attackerX: 260,
+    attackerY: 0,
+    attackerZ: 0,
+    facing: 1,
+    ...overrides,
+  });
+}
 
-beginActiveAction();
-const circleAoE: HitBoxFrameWindow = {
-  ...base,
-  id: "test_circle_aoe",
-  hitGroupId: "test_circle_aoe",
-  shape: "circle",
-  offsetX: 0,
-  offsetZ: 0,
-  offsetY: 26,
-  radius: 150,
-  w: 300,
-  d: 300,
-  h: 80,
-};
+{
+  const circleAoE = query("circle", {
+    offsetX: 0,
+    offsetY: 26,
+    offsetZ: 0,
+    w: 300,
+    h: 80,
+    d: 300,
+    radius: 150,
+  });
+  const inside = hurtRect(260 + 149, 26, 0);
+  const outside = hurtRect(260 + 190, 26, 0);
 
-const inside = createActor("inside", "enemy", "enemy", player.position.x + 149, 0);
-const outside = createActor("outside", "enemy", "enemy", player.position.x + 190, 0);
-const query = resolver.buildQuery(1, player, circleAoE);
+  const insideGeometry = hitGeometryOverlap(circleAoE, inside);
+  assert.equal(insideGeometry.overlap, true, "150px circle AoE should overlap a target whose center is inside the radius");
 
-const insideGeometry = resolver.geometry(query, inside);
-const insideDecision = decisions.decide(1, query, circleAoE, player, inside, insideGeometry);
-assert.equal(insideGeometry.overlap, true, "150px circle AoE should overlap a target whose center is inside the radius");
-assert.equal(insideDecision.accepted, true);
+  const outsideGeometry = hitGeometryOverlap(circleAoE, outside);
+  assert.equal(outsideGeometry.overlap, false, "150px circle AoE should reject a target fully outside the radius");
+}
 
-const outsideGeometry = resolver.geometry(query, outside);
-const outsideDecision = decisions.decide(1, query, circleAoE, player, outside, outsideGeometry);
-assert.equal(outsideGeometry.overlap, false, "150px circle AoE should reject a target fully outside the radius");
-assert.equal(outsideDecision.accepted, false);
+{
+  const rectQuery = query("rect", {
+    offsetX: 0,
+    offsetY: 0,
+    offsetZ: 0,
+    w: 50,
+    h: 80,
+    d: 60,
+  });
+  const rectTarget = hurtRect(260 + 20, 26, 0);
+  const rectGeometry = hitGeometryOverlap(rectQuery, rectTarget);
+  assert.equal(rectQuery.shape, "rect", "Legacy hitboxes should default to rect shape");
+  assert.equal(rectGeometry.overlap, true, "Legacy rectangle hit behavior must remain intact");
+}
 
-const rectTarget = createActor("rect-target", "enemy", "enemy", player.position.x + 70, 0);
-const rectQuery = resolver.buildQuery(1, player, base);
-const rectDecision = decisions.decide(1, rectQuery, base, player, rectTarget, resolver.geometry(rectQuery, rectTarget));
-assert.equal(rectQuery.shape, "rect", "Legacy hitboxes should default to rect shape");
-assert.equal(rectDecision.accepted, true, "Legacy rectangle hit behavior must remain intact");
+{
+  const grabQuery = query("grab_attach", {
+    offsetX: 50,
+    offsetY: 0,
+    offsetZ: 0,
+    w: 100,
+    h: 60,
+    d: 40,
+  });
+  const grabNear = hurtRect(260 + 80, 26, 0);
+  const grabEdge = hurtRect(260 + 40, 26, 0);
+  assert.equal(hitGeometryOverlap(grabQuery, grabNear).overlap, true, "grab_attach should use the local narrowed grab window");
+  assert.equal(hitGeometryOverlap(grabQuery, grabEdge).overlap, false, "grab_attach should not claim official geometry beyond the local narrowed window");
+}
 
-const grabAttach: HitBoxFrameWindow = {
-  ...base,
-  id: "test_grab_attach",
-  hitGroupId: "test_grab_attach",
-  shape: "grab_attach",
-  offsetX: 50,
-  w: 100,
-  d: 40,
-  h: 60,
-};
-const grabQuery = resolver.buildQuery(1, player, grabAttach);
-const grabNear = createActor("grab-near", "enemy", "enemy", player.position.x + 80, 0);
-const grabEdge = createActor("grab-edge", "enemy", "enemy", player.position.x + 40, 0);
-assert.equal(resolver.geometry(grabQuery, grabNear).overlap, true, "grab_attach should use the local narrowed grab window");
-assert.equal(resolver.geometry(grabQuery, grabEdge).overlap, false, "grab_attach should not claim official geometry beyond the local narrowed window");
-
-const sweepBox: HitBoxFrameWindow = {
-  ...base,
-  id: "test_sweep",
-  hitGroupId: "test_sweep",
-  shape: "sweep",
-  offsetX: 40,
-  w: 80,
-  d: 40,
-  h: 60,
-};
-const sweepQuery = resolver.buildQuery(1, player, sweepBox);
-const rectEquivalentQuery = resolver.buildQuery(1, player, { ...sweepBox, shape: "rect" });
-const sweepEdge = createActor("sweep-edge", "enemy", "enemy", player.position.x + 117, 0);
-assert.equal(resolver.geometry(rectEquivalentQuery, sweepEdge).overlap, false, "baseline rect should miss the edge target");
-assert.equal(resolver.geometry(sweepQuery, sweepEdge).overlap, true, "sweep should extend the active path along X and catch the edge target");
+{
+  const sweepQuery = query("sweep", {
+    offsetX: 40,
+    offsetY: 0,
+    offsetZ: 0,
+    w: 80,
+    h: 60,
+    d: 40,
+  });
+  const rectEquivalentQuery = query("rect", {
+    offsetX: 40,
+    offsetY: 0,
+    offsetZ: 0,
+    w: 80,
+    h: 60,
+    d: 40,
+  });
+  const sweepEdge = hurtRect(260 + 117, 26, 0);
+  assert.equal(hitGeometryOverlap(rectEquivalentQuery, sweepEdge).overlap, false, "baseline rect should miss the edge target");
+  assert.equal(hitGeometryOverlap(sweepQuery, sweepEdge).overlap, true, "sweep should extend the active path along X and catch the edge target");
+}

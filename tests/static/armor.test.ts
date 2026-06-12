@@ -1,4 +1,52 @@
 import { assert } from "./test-utils.js";
-import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
-const k = new CombatKernel(); const p=k.player; const building=k.actors.find(a=>a.id==="building")!; building.position.x=k.player.position.x + 90; const hp=building.resources.hp; k.requestAction(p,"UpwardSlash"); k.runTicks(12); assert.ok(building.resources.hp < hp, "BuildingArmor should take damage"); assert.equal(building.reactionState, "armor_feedback_only", "BuildingArmor should block launch/control"); assert.equal(building.position.y, 0);
-const boss = k.actors.find(a=>a.id==="boss")!; boss.position.x=k.player.position.x + 90; k.hitStop.clear(); k.recoil.clear(); k.requestAction(p,"UpwardSlash"); k.runTicks(12); assert.equal(boss.reactionState, "armor_feedback_only", "BossSuperArmor should not launch");
+import { Actor } from "../../src/engine/core/Actor.js";
+import { BOSS_SUPER_ARMOR, BUILDING_ARMOR } from "../../src/engine/core/ArmorProfile.js";
+import {
+  buildEngineSceneKernel,
+  buildSceneLikeGruntStats,
+  primeTargetForAction,
+} from "../fixtures/engineSceneHarness.js";
+
+{
+  const { kernel, player } = buildEngineSceneKernel(42);
+  const building = new Actor("building", "monster", buildSceneLikeGruntStats());
+  building.armorProfile = BUILDING_ARMOR;
+  kernel.addActor(building, false);
+  primeTargetForAction(kernel, player, building, 1, 30);
+
+  const hpBefore = building.hp;
+  let finalReaction: string | null = null;
+  kernel.bus.on("HitConfirmed", (event) => {
+    const payload = event.payload as { targetId?: string; finalReaction?: string };
+    if (payload.targetId === "building") finalReaction = payload.finalReaction ?? null;
+  });
+
+  kernel.requestAction(player.id, "attack3");
+  for (let i = 0; i < 16; i += 1) kernel.tick();
+
+  assert.ok(building.hp < hpBefore, "BuildingArmor should still take damage");
+  assert.equal(finalReaction, "armor_feedback_only", "BuildingArmor should block launch/control");
+  assert.equal(building.y, 0, "BuildingArmor target should stay grounded");
+  assert.equal(building.airborne, null, "BuildingArmor target should not enter airborne state");
+}
+
+{
+  const { kernel, player } = buildEngineSceneKernel(42);
+  const boss = new Actor("boss", "monster", buildSceneLikeGruntStats());
+  boss.armorProfile = BOSS_SUPER_ARMOR;
+  kernel.addActor(boss, false);
+  primeTargetForAction(kernel, player, boss, 1, 30);
+
+  let finalReaction: string | null = null;
+  kernel.bus.on("HitConfirmed", (event) => {
+    const payload = event.payload as { targetId?: string; finalReaction?: string };
+    if (payload.targetId === "boss") finalReaction = payload.finalReaction ?? null;
+  });
+
+  kernel.requestAction(player.id, "attack3");
+  for (let i = 0; i < 16; i += 1) kernel.tick();
+
+  assert.equal(finalReaction, "armor_feedback_only", "BossSuperArmor should not launch");
+  assert.equal(boss.y, 0, "BossSuperArmor target should stay grounded");
+  assert.equal(boss.airborne, null, "BossSuperArmor target should not enter airborne state");
+}

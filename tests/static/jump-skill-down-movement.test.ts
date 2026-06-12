@@ -1,53 +1,32 @@
-// Test: Jump 过程中按技能，落地后 ArrowDown 是否正常
 import { assert } from "./test-utils.js";
-import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+import { buildEngineJumpMovementKernel, tickUntil } from "../fixtures/engineSceneHarness.js";
 
-const kernel = new CombatKernel({ enableReplay: false });
-const player = kernel.player;
+const { kernel, player } = buildEngineJumpMovementKernel(42);
+const startZ = player.z;
 
-// 记录初始 z 位置
-const startZ = player.position.z;
-
-// 执行 Jump
-kernel.press("KeyC");
+player.intent = { attack: false, dir: 0, button: "jump" };
 kernel.tick();
-kernel.release("KeyC");
+player.intent = { attack: false, dir: 0 };
+for (let i = 0; i < 10; i += 1) kernel.tick();
 
-// Jump 10 帧后按技能（Z 键）
-for (let i = 0; i < 10; i++) {
-  kernel.tick();
-}
-
-console.log(`Jump 10 帧后: action=${player.currentAction}, reactionState=${player.reactionState}, y=${player.position.y}`);
-
-kernel.press("KeyZ");
+// Legacy CombatKernel collapsed the mid-jump skill hotkey path into jumpattack.
+kernel.requestAction(player.id, "jumpattack");
 kernel.tick();
-kernel.release("KeyZ");
+assert.equal(player.currentActionName, "jumpattack", "mid-jump action request should enter jumpattack");
 
-console.log(`按 Z 后: action=${player.currentAction}, reactionState=${player.reactionState}, y=${player.position.y}`);
+const settledAt = tickUntil(
+  kernel,
+  () => player.y === 0 && !player.airborne?.active && player.currentActionName === null,
+  120,
+);
+assert.ok(settledAt > 0, "jumpattack follow-up should settle back to the ground within 120 ticks");
 
-// 等待动作结束（最多 100 帧）
-for (let i = 0; i < 100; i++) {
-  kernel.tick();
-  if (!player.currentAction && player.position.y === 0) {
-    console.log(`动作在第 ${i} 帧结束: reactionState=${player.reactionState}`);
-    break;
-  }
-}
+player.intent = { attack: false, dir: 0, zDir: 1 };
+for (let i = 0; i < 10; i += 1) kernel.tick();
+player.intent = { attack: false, dir: 0, zDir: 0 };
+kernel.tick();
 
-console.log(`动作结束后: action=${player.currentAction}, reactionState=${player.reactionState}, y=${player.position.y}`);
+assert.ok(player.z > startZ, `player should move down after the jumpattack follow-up (${startZ} → ${player.z})`);
+assert.equal(player.locomotion, "idle", "releasing z movement after jumpattack should return locomotion to idle");
 
-// 现在按 ArrowDown 移动
-kernel.press("ArrowDown");
-for (let i = 0; i < 10; i++) {
-  kernel.tick();
-}
-kernel.release("ArrowDown");
-
-// 检查是否向下移动了
-const moved = player.position.z > startZ;
-console.log(`ArrowDown 移动结果: z ${startZ} → ${player.position.z}, moved=${moved}`);
-
-assert.ok(moved, `Player should move down after Jump+Skill (z should increase from ${startZ})`);
-
-console.log(`✓ Jump 过程中按技能后 ArrowDown 移动正常`);
+console.log(`jump-skill-down-movement: jumpattack settled at +${settledAt} ticks and restored z movement (${startZ} → ${player.z})`);

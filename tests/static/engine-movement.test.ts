@@ -39,6 +39,7 @@ function makeKernel(): { kernel: EngineKernel; actions: ActionSystem } {
     hpMax: 180, mpMax: 140, moveSpeed: MOVE_SPEED,
     physicalAttack: 45, physicalDefense: 7.5,
   });
+  player.x = 200;
   k.addActor(player, true);
   return { kernel: k, actions };
 }
@@ -105,10 +106,10 @@ function makeKernel(): { kernel: EngineKernel; actions: ActionSystem } {
 {
   const { kernel: k } = makeKernel();
   const p = k.player;
-  p.x = 0;
+  p.x = 200;
   p.intent = { attack: false, dir: 1 };
   for (let i = 0; i < 10; i++) k.tick();
-  const expected = 10 * X_VEL / 60;
+  const expected = 200 + 10 * X_VEL / 60;
   assert.ok(
     Math.abs(p.x - expected) < 0.1,
     `M5 10-tick walk: expected x≈${expected.toFixed(1)}, got ${p.x.toFixed(1)}`,
@@ -121,7 +122,7 @@ function makeKernel(): { kernel: EngineKernel; actions: ActionSystem } {
   function runWalk(): number {
     const { kernel: k } = makeKernel();
     const p = k.player;
-    p.x = 0;
+    p.x = 200;
     p.intent = { attack: false, dir: 1 };
     for (let i = 0; i < 30; i++) k.tick();
     return p.x;
@@ -163,10 +164,10 @@ function makeKernel(): { kernel: EngineKernel; actions: ActionSystem } {
 {
   const { kernel: k } = makeKernel();
   const p = k.player;
-  p.x = 0; p.z = 0;
+  p.x = 200; p.z = 0;
   p.intent = { attack: false, dir: 1, zDir: -1 };
   for (let i = 0; i < 10; i++) k.tick();
-  const expectedX = 10 * X_VEL / 60;
+  const expectedX = 200 + 10 * X_VEL / 60;
   const expectedZ = -(10 * Z_VEL / 60);
   assert.ok(Math.abs(p.x - expectedX) < 0.1, `M9 diagonal x: ${p.x.toFixed(1)} vs ${expectedX.toFixed(1)}`);
   assert.ok(Math.abs(p.z - expectedZ) < 0.1, `M9 diagonal z: ${p.z.toFixed(1)} vs ${expectedZ.toFixed(1)}`);
@@ -177,7 +178,7 @@ function makeKernel(): { kernel: EngineKernel; actions: ActionSystem } {
 {
   const { kernel: k } = makeKernel();
   const p = k.player;
-  p.x = 0;
+  p.x = 200;
   // First tap right
   p.intent = { attack: false, dir: 1 };
   k.tick(); // tick 1: rising edge, records tap
@@ -200,11 +201,11 @@ function makeKernel(): { kernel: EngineKernel; actions: ActionSystem } {
 {
   const { kernel: k } = makeKernel();
   const p = k.player;
-  p.x = 0;
+  p.x = 200;
   p.intent = { attack: false, dir: 1 };
   for (let i = 0; i < 5; i++) k.tick();
   assert.equal(p.locomotion, "walk", "M11 locomotion = walk (single tap)");
-  const expectedX = 5 * X_VEL / 60;
+  const expectedX = 200 + 5 * X_VEL / 60;
   assert.ok(Math.abs(p.x - expectedX) < 0.5, "M11 walk speed");
   console.log(`M11 OK: single tap = walk (x=${p.x.toFixed(1)})`);
 }
@@ -213,7 +214,7 @@ function makeKernel(): { kernel: EngineKernel; actions: ActionSystem } {
 {
   const { kernel: k } = makeKernel();
   const p = k.player;
-  p.x = 0;
+  p.x = 200;
   // Trigger dash
   p.intent = { attack: false, dir: 1 }; k.tick();
   p.intent = { attack: false, dir: 0 }; k.tick();

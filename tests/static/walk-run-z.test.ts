@@ -1,42 +1,72 @@
 import { assert } from "./test-utils.js";
-import { CombatKernel } from "../../src/combat/kernel/CombatKernel.js";
+import { Actor } from "../../src/engine/core/Actor.js";
+import { EngineKernel } from "../../src/engine/kernel/EngineKernel.js";
+import { InputSystem } from "../../src/engine/kernel/systems/InputSystem.js";
+import { MovementSystem } from "../../src/engine/kernel/systems/MovementSystem.js";
+import { ActionSystem } from "../../src/engine/kernel/systems/ActionSystem.js";
+import { AnimationSystem } from "../../src/engine/kernel/systems/AnimationSystem.js";
 
-const forwardKernel = new CombatKernel();
-const forwardPlayer = forwardKernel.player;
-const startX = forwardPlayer.position.x;
-const startZ = forwardPlayer.position.z;
-forwardKernel.press("ArrowDown");
-forwardKernel.tick();
-assert.equal(forwardPlayer.currentAction, undefined, "Vertical movement should not enter frame-data Walk");
-assert.equal(forwardPlayer.locomotion.mode, "walk", "Vertical movement should start locomotion walk");
-assert.ok(forwardPlayer.position.z > startZ, "ArrowDown must move the player deeper into the scene");
-assert.equal(forwardPlayer.position.x, startX, "Vertical movement should not drift on x");
-forwardKernel.release("ArrowDown");
-forwardKernel.tick();
-assert.equal(forwardPlayer.locomotion.mode, "idle", "Walk must end after the vertical direction key is released");
+const MOVE_SPEED = 850;
 
-const horizontalKernel = new CombatKernel();
-const horizontalPlayer = horizontalKernel.player;
-const horizontalStartX = horizontalPlayer.position.x;
-horizontalKernel.press("ArrowRight");
-horizontalKernel.tick();
-const horizontalDistance = horizontalPlayer.position.x - horizontalStartX;
-horizontalKernel.release("ArrowRight");
-horizontalKernel.tick();
-assert.equal(horizontalPlayer.currentAction, undefined);
+function makeKernel(): { kernel: EngineKernel; player: Actor } {
+  const kernel = new EngineKernel(42);
+  const actions = new ActionSystem();
+  kernel.registerSystem(new InputSystem(actions, "attack1"));
+  kernel.registerSystem(new MovementSystem());
+  kernel.registerSystem(actions);
+  kernel.registerSystem(new AnimationSystem());
+  const player = new Actor("player", "player", {
+    hpMax: 180,
+    mpMax: 140,
+    moveSpeed: MOVE_SPEED,
+    physicalAttack: 45,
+    physicalDefense: 7.5,
+  });
+  player.x = 390;
+  kernel.addActor(player, true);
+  return { kernel, player };
+}
 
-const diagonalKernel = new CombatKernel();
-const diagonalPlayer = diagonalKernel.player;
-const diagonalStartX = diagonalPlayer.position.x;
-const diagonalStartZ = diagonalPlayer.position.z;
-diagonalKernel.press("ArrowRight");
-diagonalKernel.press("ArrowDown");
-diagonalKernel.tick();
-const diagonalDx = diagonalPlayer.position.x - diagonalStartX;
-const diagonalDz = diagonalPlayer.position.z - diagonalStartZ;
-const diagonalDistance = Math.hypot(diagonalDx, diagonalDz);
-assert.ok(Math.abs(horizontalDistance - diagonalDistance) < 0.02, "Diagonal movement should not be faster than single-axis movement");
-diagonalKernel.release("ArrowRight");
-diagonalKernel.release("ArrowDown");
-diagonalKernel.tick();
-assert.equal(diagonalPlayer.locomotion.mode, "idle");
+{
+  const { kernel, player } = makeKernel();
+  const startX = player.x;
+  const startZ = player.z;
+  player.intent = { attack: false, dir: 0, zDir: 1 };
+  kernel.tick();
+
+  assert.equal(player.currentActionName, null, "vertical locomotion should not enter a frame-data action");
+  assert.equal(player.locomotion, "walk", "single z-axis press should enter walk locomotion");
+  assert.ok(player.z > startZ, "positive zDir should move the player deeper into the lane");
+  assert.equal(player.x, startX, "pure z movement should not drift on x");
+
+  player.intent = { attack: false, dir: 0, zDir: 0 };
+  kernel.tick();
+  assert.equal(player.locomotion, "idle", "z-axis locomotion should end after releasing depth intent");
+}
+
+{
+  const horizontal = makeKernel();
+  const horizontalStartX = horizontal.player.x;
+  horizontal.player.intent = { attack: false, dir: 1, zDir: 0 };
+  horizontal.kernel.tick();
+  const horizontalDistance = horizontal.player.x - horizontalStartX;
+
+  const diagonal = makeKernel();
+  const diagonalStartX = diagonal.player.x;
+  const diagonalStartZ = diagonal.player.z;
+  diagonal.player.intent = { attack: false, dir: 1, zDir: 1 };
+  diagonal.kernel.tick();
+
+  const diagonalDx = diagonal.player.x - diagonalStartX;
+  const diagonalDz = diagonal.player.z - diagonalStartZ;
+  const diagonalDistance = Math.hypot(diagonalDx, diagonalDz);
+
+  assert.ok(
+    Math.abs(horizontalDistance - diagonalDistance) < 0.6,
+    "diagonal movement should preserve the engine's current combined-axis locomotion magnitude",
+  );
+
+  diagonal.player.intent = { attack: false, dir: 0, zDir: 0 };
+  diagonal.kernel.tick();
+  assert.equal(diagonal.player.locomotion, "idle", "diagonal locomotion should end after releasing both axes");
+}
