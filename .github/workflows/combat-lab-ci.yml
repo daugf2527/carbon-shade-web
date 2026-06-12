@@ -102,13 +102,13 @@ jobs:
           retention-days: 3
 
       - name: Configure GitHub Pages
-        if: matrix.node-version == 20 && github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/dnf-native'
         uses: actions/configure-pages@v5
         with:
           enablement: true
 
       - name: Upload GitHub Pages artifact
-        if: matrix.node-version == 20 && github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/dnf-native'
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
@@ -116,7 +116,7 @@ jobs:
   browser-smoke:
     name: Browser Smoke Test (Playwright)
     needs: verify
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/dnf-native'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -167,7 +167,7 @@ jobs:
   deploy-pages:
     name: Deploy GitHub Pages
     needs: [verify, browser-smoke]
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/dnf-native'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:
