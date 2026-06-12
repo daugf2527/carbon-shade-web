@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -140,18 +141,7 @@ if (args.sqliteMode === "partial") {
   process.exit(2);
 }
 
-const compile = spawnSync(process.execPath, [
-  path.join(ROOT, "scripts", "run-tsc.mjs"),
-  "-p",
-  path.join(ROOT, "tsconfig.test.json"),
-], { cwd: ROOT, encoding: "utf8" });
-if (compile.status !== 0) {
-  if (compile.stdout) process.stdout.write(compile.stdout);
-  if (compile.stderr) process.stderr.write(compile.stderr);
-  process.exit(compile.status ?? 1);
-}
-
-const runnerUrl = pathToFileURL(path.join(
+const runnerPath = path.join(
   ROOT,
   ".tmp",
   "test-js",
@@ -160,7 +150,21 @@ const runnerUrl = pathToFileURL(path.join(
   "data",
   "pipeline",
   "pipelineRunner.js",
-)).href;
+);
+const reuseCompiledTestJs = process.env.CARBON_SHADE_REUSE_COMPILED_TEST_JS === "1" && existsSync(runnerPath);
+if (!reuseCompiledTestJs) {
+  const compile = spawnSync(process.execPath, [
+    path.join(ROOT, "scripts", "run-tsc.mjs"),
+    "-p",
+    path.join(ROOT, "tsconfig.test.json"),
+  ], { cwd: ROOT, encoding: "utf8" });
+  if (compile.status !== 0) {
+    if (compile.stdout) process.stdout.write(compile.stdout);
+    if (compile.stderr) process.stderr.write(compile.stderr);
+    process.exit(compile.status ?? 1);
+  }
+}
+const runnerUrl = pathToFileURL(runnerPath).href;
 const { runExtractParsePipeline } = await import(runnerUrl);
 
 // Audit pipeline-closure F2 (2026-05-24): when --ani-file flags were provided,

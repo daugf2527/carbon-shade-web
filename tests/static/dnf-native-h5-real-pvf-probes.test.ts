@@ -23,13 +23,16 @@
 
 export const BASELINE_BUGS = 1; // real-mixed-exit: SQLite ExperimentalWarning on stderr causes exit -1 (dev-only, CI has no PVF)
 
-import { existsSync, statSync } from "node:fs";
-import { mkdir, readFile, rm } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
+import { tmpdir } from "node:os";
 import path from "node:path";
 
 const ROOT = process.cwd();
-const PROBE_TMP = path.join(ROOT, ".tmp", "h5-probe-test");
+// Use a unique temp root per process so static:test parallelism or manual
+// concurrent runs cannot remove probe artifacts mid-suite.
+const PROBE_TMP = await mkdtemp(path.join(tmpdir(), "h5-probe-"));
 const EXTRACT_BIN = path.join(
   ROOT,
   "tools",
@@ -65,6 +68,10 @@ interface CliResult {
 function runCli(argv: string[], timeoutMs = 60000): CliResult {
   const r = spawnSync(process.execPath, [PIPELINE_CLI, ...argv], {
     cwd: ROOT,
+    env: {
+      ...process.env,
+      CARBON_SHADE_REUSE_COMPILED_TEST_JS: "1",
+    },
     encoding: "utf8",
     timeout: timeoutMs,
     maxBuffer: 500 * 1024 * 1024,
@@ -84,9 +91,6 @@ if (!existsSync(EXTRACT_BIN)) {
     `${PVF_PATH} missing — real PVF probes skipped (gracefully)`,
   );
 } else {
-  await rm(PROBE_TMP, { recursive: true, force: true }).catch(() => undefined);
-  await mkdir(PROBE_TMP, { recursive: true });
-
   /* -------------------------------------------------------------------------
    * Section 1 — Single-file extract -> parse for each of the 3 supported
    *             extensions. (Day-10 milestone trio: chr, mob, atk.)
