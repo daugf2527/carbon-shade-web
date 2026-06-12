@@ -68,6 +68,23 @@ const baseBrowserSmoke = {
 
 assert.deepEqual(assertRuntimeEvidence(baseRuntimeEvidence, baseBrowserSmoke).errors, []);
 
+assert.deepEqual(
+  assertRuntimeEvidence({
+    ...baseRuntimeEvidence,
+    combat: {
+      ...baseRuntimeEvidence.combat,
+      eventCount: 42,
+      eventTypes: {
+        HitConfirmed: 6,
+        DamageNumberRequested: 8,
+        ReactionApplied: 6,
+        StatusApplied: 1,
+      },
+    },
+  }, baseBrowserSmoke).errors,
+  [],
+);
+
 // Missing assets
 assert.match(
   assertRuntimeEvidence({

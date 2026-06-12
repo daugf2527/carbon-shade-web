@@ -16,6 +16,14 @@ assert.equal(
 );
 
 const meta = exported.metadata;
+assert.equal(typeof meta.buildHash, "string", "metadata.buildHash required");
+assert.ok(meta.buildHash.length > 0, "metadata.buildHash must be non-empty");
+assert.equal(typeof meta.combatSchemaHash, "string", "metadata.combatSchemaHash required");
+assert.equal(typeof meta.manifestHash, "string", "metadata.manifestHash required");
+assert.equal(typeof meta.statusManifestHash, "string", "metadata.statusManifestHash required");
+assert.equal(typeof meta.enemyManifestHash, "string", "metadata.enemyManifestHash required");
+assert.equal(typeof meta.damageManifestHash, "string", "metadata.damageManifestHash required");
+assert.equal(meta.logicFps, 60, "metadata.logicFps must be 60");
 assert.equal(typeof meta.finalStateHash, "string", "metadata.finalStateHash required");
 assert.equal(meta.finalStateHash, exported.finalStateHash, "metadata.finalStateHash must mirror finalStateHash");
 

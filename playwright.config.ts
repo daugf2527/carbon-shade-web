@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const isCi = Boolean(process.env.CI);
+
 export default defineConfig({
   testDir: "tests/browser",
   outputDir: "test-results/playwright",
@@ -11,8 +13,8 @@ export default defineConfig({
   },
   use: {
     baseURL: "http://127.0.0.1:5173/carbon-shade-web/",
-    // headed：headless 的 RAF 节流会让 delta 飙到 >250ms，FixedStepSimulation 追不上 60 tick/s
-    headless: false,
+    // Local headed runs preserve FPS checks; CI runners have no X server and must launch headless.
+    headless: isCi,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",

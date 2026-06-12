@@ -4,7 +4,7 @@ on:
   push:
   pull_request:
     branches:
-      - master
+      - dnf-native
   workflow_dispatch:
 
 permissions:
@@ -18,12 +18,9 @@ concurrency:
 
 jobs:
   verify:
-    name: Typecheck, Static Test, Build (Node ${{ matrix.node-version }})
+    name: Typecheck, Static Test, Build (Node 22)
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    strategy:
-      matrix:
-        node-version: [22]
 
     steps:
       - name: Checkout repository
@@ -32,7 +29,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 22
           cache: npm
 
       - name: Show tool versions
@@ -80,7 +77,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ci-evidence-node-${{ matrix.node-version }}-${{ github.run_number }}-${{ github.run_attempt }}
+          name: ci-evidence-node-22-${{ github.run_number }}-${{ github.run_attempt }}
           path: |
             .tmp/*.json
             verification/*.json
@@ -91,7 +88,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: failed-build-debug-node-${{ matrix.node-version }}-${{ github.run_number }}-${{ github.run_attempt }}
+          name: failed-build-debug-node-22-${{ github.run_number }}-${{ github.run_attempt }}
           path: |
             dist/
             .tmp/

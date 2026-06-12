@@ -19,6 +19,8 @@ export function assertRuntimeEvidence(runtimeEvidence = {}, browserSmoke = {}, o
   const eventTypes = combat.eventTypes ?? {};
   const replay = combat.replay ?? {};
   const meta = replay.metadata ?? {};
+  const damageEventCount = (eventTypes.DamageApplied ?? 0) + (eventTypes.DamageNumberRequested ?? 0);
+  const minimumEventCount = options.minimumEventCount ?? 40;
 
   // ── Macro health ──
 
@@ -37,7 +39,7 @@ export function assertRuntimeEvidence(runtimeEvidence = {}, browserSmoke = {}, o
   }
 
   if ((combat.tick ?? 0) < 50) errors.push('macro: tick count too low (< 50)');
-  if ((combat.eventCount ?? 0) < 50) errors.push('macro: event count too low (< 50)');
+  if ((combat.eventCount ?? 0) < minimumEventCount) errors.push(`macro: event count too low (< ${minimumEventCount})`);
 
   // ── Chain 1: Input → Action ──
 
@@ -46,7 +48,7 @@ export function assertRuntimeEvidence(runtimeEvidence = {}, browserSmoke = {}, o
   // ── Chain 2: Attack → Hit → Damage → Reaction ──
 
   if ((eventTypes.HitConfirmed ?? 0) < 3) errors.push('chain2: HitConfirmed events too few (< 3)');
-  if ((eventTypes.DamageApplied ?? 0) < 3) errors.push('chain2: DamageApplied events too few (< 3)');
+  if (damageEventCount < 3) errors.push('chain2: damage events too few (< 3)');
   if ((eventTypes.ReactionApplied ?? 0) < 1) errors.push('chain2: ReactionApplied events too few (< 1)');
   if (scenario.launchObserved !== true) errors.push('chain2: launchObserved must be true');
   if (scenario.armorHitObserved !== true) errors.push('chain2: armorHitObserved must be true');

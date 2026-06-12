@@ -469,18 +469,28 @@ test.skip("combat scene boots, runs deterministic scenario, and validates all co
   expect(globalPassed, "all chain assertions passed").toBe(true);
 });
 
-test("combat scene create path boots with engine kernel and runtime loop shell", async ({ page }) => {
+test("combat scene create path boots with engine kernel and runtime loop shell", async ({ page }, testInfo) => {
   test.setTimeout(40_000);
   const diagnostics = attachDiagnostics(page);
+  const results: { check: string; passed: boolean; [key: string]: unknown }[] = [];
 
+  mkdirSync(verificationDir, { recursive: true });
   await page.goto("/?scene=combat", { waitUntil: "domcontentloaded", timeout: 20_000 });
+  results.push({ check: "page_loaded", passed: true });
   await expect(page.locator("canvas")).toBeVisible({ timeout: 15_000 });
+  results.push({ check: "canvas_present", passed: true });
   await page.waitForFunction(
     () => Boolean((window as any).combatLab?.kernelReady),
     undefined,
     { polling: 100, timeout: 30_000 },
   );
+  results.push({ check: "combat_scene_ready", passed: true });
   await page.waitForTimeout(500);
+  await page.evaluate(() => {
+    const runtime = (window as any).combatLab;
+    runtime?.scene?.runScenario?.();
+  });
+  results.push({ check: "scenario_ran", passed: true });
 
   const state = await page.evaluate(() => {
     const runtime = (window as any).combatLab;
@@ -498,9 +508,40 @@ test("combat scene create path boots with engine kernel and runtime loop shell",
           actorCountType: typeof snapshot.performance?.actorCount,
           tick: snapshot.tick,
         }
-        : null,
+      : null,
     };
   });
+  results.push({
+    check: "engine_kernel_ready",
+    passed: state.kernelCtor === "EngineKernel"
+      && state.simulationCtor === "FixedStepSimulation"
+      && state.snapshot?.tickType === "number"
+      && state.snapshot?.lastHitTickType === "number"
+      && state.snapshot?.actorCountType === "number"
+      && (state.snapshot?.tick ?? 0) > 0,
+    state,
+  });
+
+  const runtimeEvidence = await collectRuntimeEvidence(page);
+  writeFileSync(path.join(verificationDir, "runtime-evidence.json"), JSON.stringify(runtimeEvidence, null, 2));
+
+  const diagnosticsClean = diagnostics.consoleErrors.length === 0
+    && diagnostics.pageErrors.length === 0
+    && diagnostics.failedRequests.length === 0
+    && diagnostics.badResponses.length === 0;
+  results.push({ check: "diagnostics_clean", passed: diagnosticsClean });
+
+  const payload = buildBrowserSmokePayload({
+    passed: results.every(result => result.passed !== false),
+    url: page.url(),
+    timestamp: new Date().toISOString(),
+    results,
+    runtimeEvidence,
+    diagnostics,
+  });
+  writeFileSync(path.join(verificationDir, "browser-smoke.json"), JSON.stringify(payload, null, 2));
+  await testInfo.attach("runtime-evidence", { path: path.join(verificationDir, "runtime-evidence.json"), contentType: "application/json" });
+  await testInfo.attach("browser-smoke", { path: path.join(verificationDir, "browser-smoke.json"), contentType: "application/json" });
 
   expect(diagnostics.consoleErrors, "console errors").toEqual([]);
   expect(diagnostics.pageErrors, "page errors").toEqual([]);

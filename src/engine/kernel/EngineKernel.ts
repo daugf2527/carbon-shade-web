@@ -21,6 +21,7 @@ import { freshScenarioBooleans, type EngineScenarioBooleans } from "../core/Scen
 import { statusFingerprint } from "../core/StatusEffects.js";
 import type { DebugSnapshot } from "../../runtime/debug/DebugSnapshot.js";
 import type { LastHitTraceSnapshot } from "../../runtime/data/RuntimeScenarioTypes.js";
+import { createReplayMetadata, type ReplayMetadata } from "../../runtime/replay/ReplayMetadata.js";
 import type { EngineContext, EngineEvent, EngineEventBus, EngineEventHandler } from "./EngineContext.js";
 import type { EngineSystem } from "./EngineSystem.js";
 import { Fnv1aPrng } from "./Fnv1aPrng.js";
@@ -49,7 +50,7 @@ export interface EngineReplayExport {
   readonly frames: readonly EngineReplayFrame[];
   readonly finalStateHash: string;
   /** Mirrors combat replay metadata so RuntimeEvidenceCollector reads finalStateHash uniformly. */
-  readonly metadata: { readonly finalStateHash: string };
+  readonly metadata: ReplayMetadata;
 }
 
 /** Map engine ReactionState.kind → combat-style reaction label for snapshot consumers. */
@@ -446,7 +447,7 @@ export class EngineKernel implements EngineContext, Tickable {
         frameCount: this._replayFrames.length,
         frames: this._replayFrames.slice(),
         finalStateHash: this._lastStateHash,
-        metadata: { finalStateHash: this._lastStateHash },
+        metadata: { ...createReplayMetadata(), finalStateHash: this._lastStateHash },
       }),
     };
   }
